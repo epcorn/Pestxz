@@ -3,8 +3,9 @@ import { IoLockClosed, IoLockOpen } from "react-icons/io5";
 import { TbProgressAlert } from "react-icons/tb";
 
 import { useSelector } from "react-redux";
-import { AlertMessage, ComplaintTable, Loading } from "../components";
-import { useClientAdminDashboardQuery } from "../redux/adminSlice";
+import { useClientAdminDashboardQuery } from "../../redux/adminSlice";
+import Loading from "../Loading";
+import AlertMessage from "../AlertMessage";
 
 const stats = [
   {
@@ -33,7 +34,7 @@ const stats = [
   },
 ];
 
-const Dashboard = () => {
+const ClientDashboard = () => {
   const { user } = useSelector((store) => store.helper);
   const { data, isLoading, error } = useClientAdminDashboardQuery();
 
@@ -82,4 +83,4 @@ const Dashboard = () => {
     </div>
   );
 };
-export default Dashboard;
+export default ClientDashboard;

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useDebugValue, useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
@@ -15,13 +15,13 @@ const UserModal = ({ userDetails }) => {
   const [clients, setClients] = useState([]);
   const dispatch = useDispatch();
   const { isModalOpen, user } = useSelector((store) => store.helper);
-
+  
   const [addUser, { isLoading: addLoading }] = useRegisterUserMutation();
   const [changePassword, { isLoading: updateLoading }] =
-    useChangePasswordMutation();
-
+  useChangePasswordMutation();
+  
   const { data, isLoading, error } = useAllClientsQuery();
-
+  
   useEffect(() => {
     setClients([]);
     if (data) {
@@ -48,6 +48,7 @@ const UserModal = ({ userDetails }) => {
   });
 
   const submit = async (data) => {
+    console.log(data)
     let res;
     if (data.password.length < 5)
       return toast.error("Password must be of 5 characters or greater");
@@ -71,7 +72,7 @@ const UserModal = ({ userDetails }) => {
   };
 
   const formBody = (
-    <div className="grid gap-x-4 mb-4 w-[300px]">
+    <div className="grid gap-x-4 mb-4 w-75">
       <div>
         <InputRow
           label="Full Name"
@@ -144,7 +145,7 @@ const UserModal = ({ userDetails }) => {
   return (
     <FormModal
       onSubmit={handleSubmit(submit)}
-      title={`${userDetails ? "Update" : "Register"} User`}
+      title={`${userDetails ? "Update" : "Register"} Employee`}
       formBody={formBody}
       submitLabel={userDetails ? "Update Password" : "Add User"}
       handleClose={() => dispatch(toggleModal({ name: "user", status: false }))}

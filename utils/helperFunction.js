@@ -1,9 +1,12 @@
 import jwt from "jsonwebtoken";
 import QRCode from "qrcode";
 import fs from "fs";
-import { createCanvas, loadImage } from "canvas";
+import sharp from "sharp";
+// import { createCanvas, loadImage } from "canvas";
+
 import { v2 as cloudinary } from "cloudinary";
 import brevo from "@getbrevo/brevo";
+
 
 export const capitalLetter = (name) => {
   return name
@@ -26,35 +29,94 @@ export const generateToken = (res, userId) => {
   });
 };
 
+//using canvas
+// export const qrCodeGenerator = async ({ link, floor, location }) => {
+//   let loc = location.substring(0, 25);
+//   let subLoc = location.substring(25);
+//   try {
+//     let height = 360,
+//       width = 340,
+//       margin = 6;
+
+//     const qrCode = await QRCode.toDataURL(link, { width, height, margin });
+
+//     // Load the QR code image into a canvas
+//     const canvas = createCanvas(width, height + 95);
+//     const ctx = canvas.getContext("2d");
+//     const qrCodeImg = await loadImage(qrCode);
+//     ctx.drawImage(qrCodeImg, 0, 40);
+
+//     // Add the bottom text to the canvas
+//     ctx.fillStyle = "rgb(255,255,255)";
+//     ctx.font = "20px Arial";
+//     ctx.textAlign = "start";
+//     ctx.fillText(`Floor: ${floor}`, 2, height + 42);
+//     ctx.fillText(`Location: ${loc}`, 2, height + 64);
+//     ctx.fillText(subLoc, 2, height + 86);
+//     ctx.fillStyle = "rgb(32, 125, 192)";
+//     ctx.textAlign = "center";
+//     ctx.font = "italic bold 33px Arial";
+//     ctx.fillText(`Powered By PestXZ`, width / 2, 30);
+
+//     const buf = canvas.toBuffer("image/jpeg");
+//     return buf;
+//   } catch (error) {
+//     console.log("QR Error", error);
+//     return false;
+//   }
+// };
+
+//using sharp
 export const qrCodeGenerator = async ({ link, floor, location }) => {
   let loc = location.substring(0, 25);
   let subLoc = location.substring(25);
+
   try {
-    let height = 360,
-      width = 340,
-      margin = 6;
+    const width = 340;
+    const qrHeight = 360;
+    const totalHeight = qrHeight + 95;
 
-    const qrCode = await QRCode.toDataURL(link, { width, height, margin });
+    // 1. Generate QR Code as a Buffer (instead of DataURL)
+    const qrBuffer = await QRCode.toBuffer(link, { 
+      width: width, 
+      margin: 6 
+    });
 
-    // Load the QR code image into a canvas
-    const canvas = createCanvas(width, height + 95);
-    const ctx = canvas.getContext("2d");
-    const qrCodeImg = await loadImage(qrCode);
-    ctx.drawImage(qrCodeImg, 0, 40);
+    // 2. Create an SVG overlay for the text
+    // SVG handles text placement much like HTML
+    const svgText = `
+      <svg width="${width}" height="${totalHeight}">
+        <style>
+          .branding { fill: rgb(32, 125, 192); font-size: 33px; font-family: Arial; font-weight: bold; font-style: italic; }
+          .details { fill: white; font-size: 20px; font-family: Arial; }
+        </style>
+        
+        <!-- Top Branding -->
+        <text x="50%" y="30" text-anchor="middle" class="branding">Powered By PestXZ</text> 
+        
+        <!-- Bottom Details -->
+        <text x="2" y="${qrHeight + 42}" class="details">Floor: ${floor}</text>
+        <text x="2" y="${qrHeight + 64}" class="details">Location: ${loc}</text>
+        <text x="2" y="${qrHeight + 86}" class="details">${subLoc}</text>
+      </svg>
+    `;
 
-    // Add the bottom text to the canvas
-    ctx.fillStyle = "rgb(255,255,255)";
-    ctx.font = "20px Arial";
-    ctx.textAlign = "start";
-    ctx.fillText(`Floor: ${floor}`, 2, height + 42);
-    ctx.fillText(`Location: ${loc}`, 2, height + 64);
-    ctx.fillText(subLoc, 2, height + 86);
-    ctx.fillStyle = "rgb(32, 125, 192)";
-    ctx.textAlign = "center";
-    ctx.font = "italic bold 33px Arial";
-    ctx.fillText(`Powered By PestXZ`, width / 2, 30);
+    // 3. Use Sharp to put it all together
+    const buf = await sharp({
+      create: {
+        width: width,
+        height: totalHeight,
+        channels: 3,
+        background: { r: 0, g: 0, b: 0 } // Assuming a black background based on your text color choices
+      }
+    })
+    .composite([
+      { input: qrBuffer, top: 40, left: 0 }, // Place the QR code
+      { input: Buffer.from(svgText), top: 0, left: 0 } // Place the text overlay
+    ])
+    .jpeg()
+    .toBuffer();
 
-    const buf = canvas.toBuffer("image/jpeg");
     return buf;
   } catch (error) {
     console.log("QR Error", error);
@@ -62,12 +124,14 @@ export const qrCodeGenerator = async ({ link, floor, location }) => {
   }
 };
 
+
+
 export const uploadFile = async ({ filePath }) => {
   try {
     const result = await cloudinary.uploader.upload(filePath, {
       use_filename: true,
       folder: "Pestxz",
-      quality: 40,
+      quality: 30,
       resource_type: "auto",
     });
 

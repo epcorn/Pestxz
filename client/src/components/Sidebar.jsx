@@ -15,7 +15,8 @@ const navList = [
   {
     icon: <BsBarChartFill className="w-6 h-6 " />,
     name: "Dashboard",
-    to: "/stats",
+    // to: "/stats",
+    to: "/new",
     role: ["Admin", "ClientAdmin"],
   },
   {

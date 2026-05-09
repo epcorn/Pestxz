@@ -1,9 +1,9 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
 
 :root {
   background-color: rgb(241 245 249);
 }
-
-
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}

@@ -20,6 +20,7 @@ import { DeleteModal } from "../components/modals";
 import { useDispatch, useSelector } from "react-redux";
 import { toggleModal } from "../redux/helperSlice";
 
+
 const Services = () => {
   const [update, setUpdate] = useState({
     status: false,
@@ -45,8 +46,10 @@ const Services = () => {
     setValue,
   } = useForm({
     defaultValues: {
-      serviceType: { label: "Service", value: "Service" },
-      serviceName: "",
+      serviceType: {
+        label: "Service",
+        value: "Service"
+      }, serviceName: "",
     },
   });
 
@@ -88,6 +91,11 @@ const Services = () => {
     }
   };
 
+  const services = data?.allServices.filter(s => s.serviceType.label === "Service") || [];
+  const products = data?.allServices.filter(s => s.serviceType.label !== "Service") || [];
+
+  const maxRows = Math.max(services.length, products.length);
+
   return (
     <div>
       {isLoading || isFetching || updateLoading ? (
@@ -98,10 +106,11 @@ const Services = () => {
       {!error && (
         <>
           <form
-            className="md:flex md:space-x-5 justify-center items-center"
+            className="md:flex md:space-x-5 justify-center items-end"
             onSubmit={handleSubmit(submit)}
           >
             <div className="md:w-56">
+
               <Controller
                 name="serviceType"
                 control={control}
@@ -112,6 +121,7 @@ const Services = () => {
                     onChange={onChange}
                     value={value}
                     label="Type"
+                    isClearable={false}
                   />
                 )}
               />
@@ -141,16 +151,17 @@ const Services = () => {
               />
             </div>
           </form>
+          {/* <Test /> */}
           <hr className="h-px mt-5 mb-7 border-0 bg-gray-700" />
           <div className="overflow-y-auto my-4">
             <table className="w-full border whitespace-nowrap border-neutral-500 bg-text">
               <thead>
                 <tr className="h-8 w-full leading-none">
                   <th className="font-bold text-center border-neutral-500 border-2 px-3">
-                    Service Type
+                    Service
                   </th>
                   <th className="font-bold text-center border-neutral-500 border-2 px-3">
-                    Service Name
+                    Product
                   </th>
                   <th className="font-bold text-center border-neutral-500 border-2 w-32 px-3">
                     Action
@@ -167,6 +178,7 @@ const Services = () => {
                       {service.serviceType.label}
                     </td>
                     <td className="px-3 border-r  border-neutral-500">
+
                       {service.serviceName.label}
                     </td>
                     <td className="px-3 flex justify-center h-8 items-center space-x-3 border-r text-center border-neutral-500">

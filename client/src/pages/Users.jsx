@@ -1,6 +1,6 @@
 import { AlertMessage, Button, Loading } from "../components";
 import { useDispatch, useSelector } from "react-redux";
-import { toggleModal } from "../redux/helperSlice";
+import { selectCurrentUser, toggleModal } from "../redux/helperSlice";
 import { DeleteModal, UserModal } from "../components/modals";
 import { useAllUserQuery, useDeleteUserMutation } from "../redux/adminSlice";
 import { useState } from "react";
@@ -39,6 +39,7 @@ const Users = () => {
       toast.error("Error");
     }
   };
+  const user = useSelector(selectCurrentUser);
 
   return (
     <>
@@ -49,11 +50,17 @@ const Users = () => {
       )}
       {!error && data && (
         <div>
-          <Button
-            label="Register User"
-            height="h-10"
-            onClick={() => handleNewUserModal()}
-          />
+          <div className="flex justify-between">
+            <h3 className="text-center grid">
+              <span><strong>Hello {user.name.toUpperCase()}</strong></span>
+              <span><strong>Department:</strong> {user.department}</span>
+            </h3>
+            <Button
+              label="Add Employee"
+              height="h-10"
+              onClick={() => handleNewUserModal()}
+            />
+          </div>
           {isModalOpen.user && <UserModal userDetails={userDetails} />}
           <div className="overflow-y-auto my-4">
             <table className="w-full border whitespace-nowrap border-neutral-500 bg-text">
@@ -65,32 +72,39 @@ const Users = () => {
                   <th className="font-bold text-center border-neutral-500 border-2 w-32 px-3">
                     Email
                   </th>
+                  <th className="font-bold text-center border-neutral-500 border-2 w-32 px-3">
+                    Type
+                  </th>
+
                   <th className="font-bold text-center border-neutral-500 border-2 px-3">
                     {loginUser.role === "ClientAdmin"
                       ? "Department"
                       : "Location"}
                   </th>
-                  <th className="font-bold max-w-[100px] text-center border-neutral-500 border-2 w-40 px-2">
+                  <th className="font-bold max-w-25 text-center border-neutral-500 border-2 w-40 px-2">
                     Action
                   </th>
                 </tr>
               </thead>
               <tbody className="w-full">
-                {data.map((user) => (
+                {data?.map((user) => (
                   <tr
                     key={user._id}
                     className="h-10 text-sm leading-none bg-text border-b border-neutral-500 hover:bg-slate-200"
                   >
                     <td className="px-3 border-r font-normal border-neutral-500">
-                      {user.name}
+                      {user?.name}
                     </td>
                     <td className="px-3 border-r font-normal border-neutral-500">
                       {user.email}
                     </td>
                     <td className="px-3 border-r font-normal border-neutral-500">
+                      {user.role}
+                    </td>
+                    <td className="px-3 border-r font-normal border-neutral-500">
                       {loginUser.role === "ClientAdmin"
                         ? user.department
-                        : user.client.name}
+                        : user?.client?.name}
                     </td>
                     <td className="px-3 flex justify-center items-center border-r font-normal border-neutral-500">
                       <Button
@@ -100,14 +114,14 @@ const Users = () => {
                       />
                       {(user.role === "ClientEmployee" ||
                         user.role === "PestEmployee") && (
-                        <DeleteModal
-                          label="Delete"
-                          title={`Delete`}
-                          handleDelete={handleDelete}
-                          isLoading={deleteLoading}
-                          id={{ id: user._id, name: user.name }}
-                        />
-                      )}
+                          <DeleteModal
+                            label="Delete"
+                            title={`Delete`}
+                            handleDelete={handleDelete}
+                            isLoading={deleteLoading}
+                            id={{ id: user._id, name: user.name }}
+                          />
+                        )}
                     </td>
                   </tr>
                 ))}

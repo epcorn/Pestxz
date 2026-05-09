@@ -25,7 +25,7 @@ const Locations = () => {
           <div className="grid md:grid-cols-2 my-5 mx-2">
             <h6 className="">Address: {data.client.address}</h6>
             <div className="flex md:justify-center space-x-4">
-              <h6 className="text-center">
+              <h6 className="text-left">
                 Contract No: {data.client.contractNo}
               </h6>
               <h6 className="text-center">Email: {data.client.email}</h6>

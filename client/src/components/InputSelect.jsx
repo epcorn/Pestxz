@@ -7,7 +7,9 @@ const InputSelect = ({
   placeholder,
   label,
   isMulti = false,
+  isClearable = true
 }) => {
+
   return (
     <div className="mt-2">
       <label className="block text-md font-medium leading-6 text-gray-900">
@@ -19,7 +21,7 @@ const InputSelect = ({
         placeholder={placeholder}
         isMulti={isMulti}
         className="basic-multi-select"
-        isClearable
+        isClearable={isClearable}
         options={options}
         menuPlacement="auto"
         value={options?.find((c) => c.value === value?.value)}
@@ -27,43 +29,43 @@ const InputSelect = ({
         styles={
           !isMulti
             ? {
-                control: (baseStyles, state) => ({
-                  ...baseStyles,
-                  minHeight: "31px",
-                  height: "32px",
-                  boxShadow: state.isFocused ? null : null,
-                  marginTop: "2px",
-                  borderColor: "#CCCCCC",
-                  borderWidth: "2px",
-                  paddingTop: "0px",
-                }),
+              control: (baseStyles, state) => ({
+                ...baseStyles,
+                minHeight: "31px",
+                height: "32px",
+                boxShadow: state.isFocused ? null : null,
+                marginTop: "2px",
+                borderColor: "#CCCCCC",
+                borderWidth: "2px",
+                paddingTop: "0px",
+              }),
 
-                valueContainer: (provided, state) => ({
-                  ...provided,
-                  height: "30px",
-                  padding: "0 5px",
-                }),
+              valueContainer: (provided, state) => ({
+                ...provided,
+                height: "30px",
+                padding: "0 5px",
+              }),
 
-                input: (provided, state) => ({
-                  ...provided,
-                  margin: "0px",
-                }),
+              input: (provided, state) => ({
+                ...provided,
+                margin: "0px",
+              }),
 
-                indicatorsContainer: (provided, state) => ({
-                  ...provided,
-                  height: "31px",
-                }),
-              }
+              indicatorsContainer: (provided, state) => ({
+                ...provided,
+                height: "31px",
+              }),
+            }
             : {
-                control: (baseStyles, state) => ({
-                  ...baseStyles,
-                  boxShadow: state.isFocused ? null : null,
-                  marginTop: "2px",
-                  borderColor: "#CCCCCC",
-                  borderWidth: "2px",
-                  paddingTop: "0px",
-                }),
-              }
+              control: (baseStyles, state) => ({
+                ...baseStyles,
+                boxShadow: state.isFocused ? null : null,
+                marginTop: "2px",
+                borderColor: "#CCCCCC",
+                borderWidth: "2px",
+                paddingTop: "0px",
+              }),
+            }
         }
       />
     </div>

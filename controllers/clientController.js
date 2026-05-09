@@ -54,6 +54,15 @@ export const getAllClient = async (req, res) => {
   }
 };
 
+export const getClientAssignedEmployee = async (req, res) => {
+  const { email } = req.params;
+  try {
+    if (!email) return res.status(400).json({ msg: "email not provided" });
+    const assignedEmployee = await User.findOne({ email }).select("-password");
+    res.status(200).json(assignedEmployee);
+  } catch (error) {}
+};
+
 export const deleteClient = async (req, res) => {
   const { id } = req.params;
   try {

@@ -96,6 +96,7 @@ const ComplaintModal = ({ locationId }) => {
       form.set("comment", data.comment.label);
     }
 
+    console.log(data)
     try {
       let res;
       if (user.type === "ClientEmployee") {
@@ -115,6 +116,7 @@ const ComplaintModal = ({ locationId }) => {
       toast.error(error?.data?.msg || error.error);
     }
   };
+
 
   const clientFormBody = (
     <div className="grid md:grid-cols-2 gap-y-3 mb-4">

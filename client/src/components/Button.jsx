@@ -22,7 +22,7 @@ const Button = ({
         rounded-lg
         hover:opacity-80
         transition
-        m-1
+        m-1 w-fit
         text-white
         ${width && width}
         ${height ? height : "h-8"}

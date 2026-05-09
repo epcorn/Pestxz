@@ -1,5 +1,6 @@
 import express from "express";
 import {
+  dailyServiceReport,
   getAllComplaints,
   getSingleComplaint,
   newComplaint,
@@ -10,6 +11,7 @@ import {
 const router = express.Router();
 
 router.get("/allComplaints", getAllComplaints);
+router.get("/dailyServiceReport", dailyServiceReport);
 
 router.post("/clientComplaint/:id", newComplaint);
 router.post("/regular/:id", newRegularService);

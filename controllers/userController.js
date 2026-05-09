@@ -37,17 +37,29 @@ export const loginUser = async (req, res) => {
 
   try {
     if (!email || !password)
-      return res.status(400).json({ msg: "Please provide required values" });
+      return res.status(401).json({ msg: "Please provide required values" });
 
     const user = await User.findOne({ email });
+    const director = await User.findOne({email}).select("role")
     if (user && (await user.comparePassword(password))) {
       generateToken(res, user._id);
 
+      if(director === "director"){
+        return res.status(200).json({
+          _id: user._id,
+          name: user.name,
+          role: user.role,
+          type: user.type,
+          department: user.department,
+        })
+      }
       return res.json({
         _id: user._id,
         name: user.name,
         role: user.role,
         type: user.type,
+        department: user.department,
+        client: user?.client,
       });
     } else res.status(400).json({ msg: "Invalid credentials" });
   } catch (error) {

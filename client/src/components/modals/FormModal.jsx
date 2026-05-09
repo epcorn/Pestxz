@@ -10,6 +10,7 @@ const FormModal = ({
   isLoading,
   open,
 }) => {
+  
   return (
     <div
       className={`fixed inset-0 flex justify-center z-50  items-center  transition-colors ${

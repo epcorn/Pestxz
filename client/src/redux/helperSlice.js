@@ -38,5 +38,6 @@ const helperSlice = createSlice({
 
 export const { setCredentials, removeCredentials, toggleModal, setLocation } =
   helperSlice.actions;
+export const selectCurrentUser = (state) => state.helper.user;
 
 export default helperSlice.reducer;

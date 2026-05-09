@@ -17,6 +17,7 @@ import {
   authenticateUser,
   authorizeUser,
 } from "./middleware/authMiddleware.js";
+import { createAdmin } from "./models/userModel.js";
 
 dotenv.config();
 
@@ -38,16 +39,17 @@ app.use(
   "/api/admin",
   authenticateUser,
   authorizeUser("Admin", "ClientAdmin"),
-  adminRoute
+  adminRoute,
 );
 app.use("/api/location", authenticateUser, locationRoute);
 app.use("/api/service", authenticateUser, serviceRoute);
+app.use("/api/director", authenticateUser);
 
 if (process.env.NODE_ENV === "production") {
   const __dirname = path.resolve();
   app.use(express.static(path.join(__dirname, "/client/dist")));
   app.get("*", (req, res) =>
-    res.sendFile(path.resolve(__dirname, "client", "dist", "index.html"))
+    res.sendFile(path.resolve(__dirname, "client", "dist", "index.html")),
   );
 } else {
   app.get("/", (req, res) => {
@@ -58,10 +60,13 @@ if (process.env.NODE_ENV === "production") {
 app.use(notFound);
 
 const port = process.env.PORT || 5000;
+export const MONGOURL = process.env.MONGO_LOCAL;
+
+// createAdmin();
 const connectDB = async () => {
   try {
-    await mongoose.connect(process.env.MONGO_URI);
-    app.listen(port, () => console.log("server is listing"));
+    await mongoose.connect(MONGOURL);
+    app.listen(port, () => console.log("server is listening"));
   } catch (error) {
     console.error(`Error: ${error.message}`);
     process.exit(1);

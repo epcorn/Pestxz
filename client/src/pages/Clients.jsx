@@ -45,7 +45,7 @@ const Clients = () => {
                 <th className="font-bold text-center border-neutral-500 border-2 px-3">
                   Client Name
                 </th>
-                <th className="font-bold text-center border-neutral-500 border-2 px-3">
+                <th className="font-bold text-center border-neutral-500 border-2 px-3 max-w-xs">
                   Address
                 </th>
                 <th className="font-bold text-center border-neutral-500 border-2 w-32 px-3">
@@ -65,7 +65,7 @@ const Clients = () => {
                   <td className="px-3 border-r font-normal border-neutral-500">
                     {client.name}
                   </td>
-                  <td className="px-3 border-r font-normal border-neutral-500">
+                  <td className="px-3 border-r font-normal border-neutral-500 max-w-xs overflow-auto scrollbar-hide" title="Use shift + scroll">
                     {client.address}
                   </td>
                   <td className="px-3 border-r font-normal text-center border-neutral-500">

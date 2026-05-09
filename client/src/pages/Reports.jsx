@@ -1,4 +1,9 @@
+import { useDailyServiceReportQuery } from "../redux/serviceSlice";
+
 const Reports = () => {
-  return <div>Reports</div>;
+  const { data } = useDailyServiceReportQuery()
+  return <div>
+    report
+  </div>;
 };
 export default Reports;

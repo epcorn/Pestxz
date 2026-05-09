@@ -7,7 +7,6 @@ import {
   createBrowserRouter,
   createRoutesFromElements,
 } from "react-router-dom";
-
 import {
   Clients,
   Complaints,
@@ -23,6 +22,7 @@ import {
   Users,
 } from "./pages";
 import { ProtectedRoute } from "./components";
+import NewDashboard from "./pages/NewDashboard";
 
 function App() {
   const Layout = () => {
@@ -42,11 +42,12 @@ function App() {
         <Route index={true} path="/" element={<Landing />} />
         <Route path="" element={<MainLayout />}>
           <Route path="" element={<ProtectedRoute />}>
-            <Route
+            <Route path="dashboard/new" element={<NewDashboard />} />
+            {/* <Route
               index={true}
               path="dashboard/stats"
               element={<Dashboard />}
-            />
+            /> */}
             <Route path="dashboard/complaints" element={<Complaints />} />
             <Route path="/location/:id" element={<SingleLocation />} />
             <Route path="/complaint/:id" element={<SingleComplaint />} />
@@ -58,9 +59,7 @@ function App() {
             <Route path="dashboard/client/:id" element={<SingleClient />} />
           </Route>
 
-          <Route
-            path=""
-            element={<ProtectedRoute roles={["Admin", "ClientAdmin"]} />}
+          <Route path="" element={<ProtectedRoute roles={["Admin", "ClientAdmin"]} />}
           >
             <Route path="dashboard/users" element={<Users />} />
             <Route path="dashboard/reports" element={<Reports />} />

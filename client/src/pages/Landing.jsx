@@ -25,11 +25,12 @@ const Landing = () => {
         navigate("/dashboard/complaints");
         return;
       } else {
-        navigate("/dashboard/stats");
+        // navigate("/dashboard/stats");
+        navigate("/dashboard/new");
       }
     }
   }, [user]);
-
+  
   const submitLogin = async (e) => {
     e.preventDefault();
     try {

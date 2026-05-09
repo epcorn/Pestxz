@@ -39,7 +39,7 @@ export const getAllService = async (req, res) => {
         (item.serviceType.label === "Product" &&
           products.push(item.serviceName)) ||
         (item.serviceType.label === "Service" &&
-          services.push(item.serviceName))
+          services.push(item.serviceName)),
     );
 
     return res.json({ allServices, services, products });
@@ -86,6 +86,11 @@ export const deleteService = async (req, res) => {
   }
 };
 
+export const newClientAdminDashboard = async (req, res) => {
+  const client = await Client.find();
+  res.status(200).json(client);
+};
+
 export const clientAdminDashboard = async (req, res) => {
   try {
     const client = await Client.findById(req.user.client);
@@ -96,7 +101,7 @@ export const clientAdminDashboard = async (req, res) => {
       client: req.user.client,
     })
       .sort("-updatedAt")
-      .populate({ path: "location", select:"floor subLocation location" });
+      .populate({ path: "location", select: "floor subLocation location" });
 
     const complaintData = [complaints.length, 0, 0, 0];
 
@@ -116,4 +121,8 @@ export const clientAdminDashboard = async (req, res) => {
     console.log(error);
     res.status(500).json({ msg: "Server error, try again later" });
   }
+};
+
+export const superUserDashboard = async (req, res) => {
+  const SUcleints = await User;
 };

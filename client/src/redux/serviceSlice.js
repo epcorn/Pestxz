@@ -39,6 +39,12 @@ export const serviceSlice = apiSlice.injectEndpoints({
         body: form,
       }),
     }),
+    dailyServiceReport: builder.query({
+      //new added 08-05-2026
+      query: () => ({
+        url: `/api/service/dailyServiceReport`,
+      }),
+    }),
   }),
 });
 
@@ -48,4 +54,5 @@ export const {
   useUpdateComplaintMutation,
   useAllComplaintsQuery,
   useRegularServiceMutation,
+  useDailyServiceReportQuery, //new added 08-05-2026
 } = serviceSlice;

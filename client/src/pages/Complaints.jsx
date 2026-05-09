@@ -21,10 +21,13 @@ const Complaints = () => {
   const { data: clientLocations, isLoading: locationLoading } =
     useAllLocationsQuery(
       {
-        id: user.role,
+        id: user?.client,
+        // id: user?.role, 
       },
-      { skip: user.role !== "ClientAdmin" }
+      // { skip: !user?.client }
+      { skip: user?.role !== "ClientAdmin" }
     );
+    console.log(clientLocations)
   const { data, isLoading, isFetching, error } = useAllComplaintsQuery({
     search,
     page,
@@ -43,6 +46,7 @@ const Complaints = () => {
     setSearch("");
     setLocation("All");
   };
+
   return (
     <>
       {isLoading || isFetching ? (
@@ -50,51 +54,56 @@ const Complaints = () => {
       ) : (
         error && <AlertMessage>{error?.data?.msg || error.error}</AlertMessage>
       )}
-      <div className="md:flex justify-around">
-        <form onSubmit={handleSearch} className="flex items-center">
-          <div className="flex items-center px-1 bg-white border w-full md:w-60 lg:w-80 rounded border-gray-300 mr-3">
-            <AiOutlineSearch />
-            <input
-              type="text"
-              className="py-1 md:py-1.5 pl-1 w-full focus:outline-none text-sm rounded text-gray-600 placeholder-gray-500"
-              placeholder="Complaint number"
-              value={tempSearch}
-              onChange={(e) => setTempSearch(e.target.value)}
+      <div className="md:flex flex-col justify-around">
+        {/* heading */}
+        <h2 className="text-lg text-center mb-5">Hello <span className="capitalize font-semibold">{user.name}</span>/<span className="text-sm">({user.role})</span></h2>
+
+        {/* search section  */}
+        <div className="flex justify-between">
+          <form onSubmit={handleSearch} className="flex items-center">
+            <div className="flex items-center px-1 bg-white border w-full md:w-60 lg:w-80 rounded border-gray-300 mr-3">
+              <AiOutlineSearch />
+              <input
+                type="text"
+                className="py-1 md:py-1.5 pl-1 w-full focus:outline-none text-sm rounded text-gray-600 placeholder-gray-500"
+                placeholder="Complaint number"
+                value={tempSearch}
+                onChange={(e) => setTempSearch(e.target.value)}
+              />
+              {tempSearch && (
+                <button type="button" onClick={clearSearch}>
+                  <AiOutlineClose color="red" />
+                </button>
+              )}
+            </div>
+            <select
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              className="mr-2 mt-0.5 w-40 py-0.5 h-8.5 px-2 border-2 rounded-md outline-none transition border-neutral-300 focus:border-black disabled:bg-slate-100"
+            >
+              <option>All</option>
+              {clientLocations?.floors.map((item, index) => (
+                <option key={index} value={item}>
+                  {item}
+                </option>
+              ))}
+            </select>
+            <Button type="submit" label="Search" color="bg-black" height="h-8" />
+          </form>
+          {/* new complaint button  */}
+          {user.role === "ClientEmployee" &&
+            <Button
+              label="New Complaint"
+              height="h-9"
+              onClick={() =>
+                dispatch(toggleModal({ name: "complaint", status: true }))
+              }
             />
-            {tempSearch && (
-              <button type="button" onClick={clearSearch}>
-                <AiOutlineClose color="red" />
-              </button>
-            )}
-          </div>
-          <select
-            value={location}
-            onChange={(e) => setLocation(e.target.value)}
-            className="mr-2 mt-0.5 w-40 py-0.5 h-[34px] px-2 border-2 rounded-md outline-none transition border-neutral-300 focus:border-black disabled:bg-slate-100"
-          >
-            <option>All</option>
-            {clientLocations?.floors.map((item, index) => (
-              <option key={index} value={item}>
-                {item}
-              </option>
-            ))}
-          </select>
-          <Button type="submit" label="Search" color="bg-black" height="h-8" />
-        </form>
-        <Button
-          label="New Complaint"
-          height="h-9"
-          onClick={() =>
-            dispatch(toggleModal({ name: "complaint", status: true }))
           }
-        />
+        </div>
       </div>
       {isModalOpen.complaint && <ComplaintModal locationId="New Complaint" />}
-      {data?.complaints?.length < 1 && (
-        <p className="text-center pt-2 text-red-600 font-semibold text-lg">
-          No Complaint Found
-        </p>
-      )}
+
       {data && (
         <>
           <ComplaintTable data={data.complaints} user={user} />
@@ -104,9 +113,8 @@ const Complaints = () => {
                 {pages.map((item) => (
                   <li className="pr-1" key={item}>
                     <button
-                      className={`relative block rounded px-3 py-1.5 text-sm transition-all duration-30  ${
-                        page === item ? "bg-blue-400" : "bg-neutral-700"
-                      } text-white hover:bg-blue-400`}
+                      className={`relative block rounded px-3 py-1.5 text-sm transition-all duration-30  ${page === item ? "bg-blue-400" : "bg-neutral-700"
+                        } text-white hover:bg-blue-400`}
                       onClick={() => setPage(item)}
                     >
                       {item}
@@ -117,6 +125,11 @@ const Complaints = () => {
             </nav>
           )}
         </>
+      )}
+      {data?.complaints?.length < 1 && (
+        <p className="text-center pt-2 text-red-600 font-semibold text-lg">
+          No Complaint Found
+        </p>
       )}
     </>
   );

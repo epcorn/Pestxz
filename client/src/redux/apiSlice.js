@@ -5,10 +5,11 @@ import { removeCredentials } from "./helperSlice";
 const baseQuery = fetchBaseQuery({ baseUrl: "/" });
 const authBaseQuery = async (args, api, extraOption) => {
   const result = await baseQuery(args, api, extraOption);
+  
   if (result.error && result.error.status === 401) {
     toast.error("Unauthorized!! logged out");
     api.dispatch(removeCredentials());
-    return;
+    return result;
   }
   return result;
 };

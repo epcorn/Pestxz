@@ -10,6 +10,7 @@ export const adminSlice = apiSlice.injectEndpoints({
       }),
       invalidatesTags: ["Admin"],
     }),
+   
     allService: builder.query({
       query: () => ({
         url: "/api/location/allServices",
@@ -65,6 +66,21 @@ export const adminSlice = apiSlice.injectEndpoints({
         url: `/api/admin/clientAdminDashboard`,
       }),
     }),
+    newClientAdminDashboard: builder.query({
+      query: () => ({
+        url: `/api/admin/newClientAdminDashboard`,
+      }),
+    }),
+    getClientAssignedEmployee: builder.query({
+      query: (email) => ({
+        url: `/api/admin/getClientAssignedEmployee/${email}`,
+      }),
+    }),
+    superUserDashboard: builder.query({
+      query:()=>({
+        url: `/api/admin/`
+      })
+    })
   }),
 });
 
@@ -78,4 +94,6 @@ export const {
   useChangePasswordMutation,
   useDeleteUserMutation,
   useClientAdminDashboardQuery,
+  useGetClientAssignedEmployeeQuery,
+  useNewClientAdminDashboardQuery,
 } = adminSlice;

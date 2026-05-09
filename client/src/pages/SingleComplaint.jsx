@@ -22,6 +22,7 @@ const SingleComplaint = () => {
       )}
       {data && (
         <div>
+          <h2 className="mb-5 text-center text-2xl">Hello <span className="capitalize font-semibold ">{user.name}</span>/<span className="text-sm">({user.role})</span></h2>
           <div className="flex justify-between md:block">
             <p>Complaint Number: {data.complaintDetails.number}</p>
             <div>

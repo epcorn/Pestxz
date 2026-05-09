@@ -7,7 +7,7 @@ const AlertMessage = ({ children }) => {
   return (
     <div className="rounded-md bg-red-100 p-4">
       <div className="flex justify-center">
-        <div className="flex-shrink-0">
+        <div className="shrink-0">
           <AiOutlineWarning
             className="h-5 w-5 mt-0.5 text-red-600"
             aria-hidden="true"

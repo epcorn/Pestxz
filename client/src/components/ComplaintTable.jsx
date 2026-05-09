@@ -41,7 +41,7 @@ const ComplaintTable = ({ data, user }) => {
               <td className="px-3 border-r text-center border-neutral-500">
                 {dateFormat(complaint.createdAt)}
               </td>
-              <td className="px-3 border-r text-center border-neutral-500">
+              <td className="px-3 border-r text-left border-neutral-500">
                 {user.role === "Admin"
                   ? complaint.client.name
                   : `${complaint.location.floor}, ${complaint.location.location}, ${complaint.location.subLocation}`}
