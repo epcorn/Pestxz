@@ -35,9 +35,9 @@ const User = mongoose.model("User", userSchema);
 export default User;
 
 export const createAdmin = async () => {
-  const email = "vipul@epcorn.com",
+  const email = "stq@epcorn.com",
     password = "12345",
-    name = "Vipul",
+    name = "STQ",
     role = "Admin",
     type = "PestAdmin",
     department = "Pest control";
@@ -46,8 +46,7 @@ export const createAdmin = async () => {
 
     const adminExists = await User.findOne({ email: email });
     if (adminExists) {
-      console.log("Admin already exists!");
-      process.exit();
+      return console.log("Admin already exists!");
     }
     await User.create({
       name: name,
@@ -58,9 +57,9 @@ export const createAdmin = async () => {
       department: department,
     });
     console.log("new admin created! ");
-    process.exit();
+
   } catch (error) {
     console.error("Error creating admin:", error);
-    process.exit(1);
+
   }
 };
