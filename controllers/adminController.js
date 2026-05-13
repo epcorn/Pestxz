@@ -123,6 +123,53 @@ export const clientAdminDashboard = async (req, res) => {
   }
 };
 
-export const superUserDashboard = async (req, res) => {
-  const SUcleints = await User;
+export const adminDashboard = async (req, res) => {
+  const { id } = req.params;
+  try {
+    let client;
+    let complaints = [];
+    let allcomplaints = [];
+    if (id && id !== "select") {
+      client = await Client.findById(id);
+      complaints = await Service.find({
+        type: "Complaint",
+        client: id,
+      })
+        .sort("-updatedAt")
+        .populate({ path: "location", select: "floor subLocation location" });
+    } else {
+      client = await Client.find();
+      complaints = await Service.find({ type: "Complaint" })
+        .sort("-updatedAt")
+        .populate({ path: "location", select: "floor subLocation location" });
+    }
+    allcomplaints = await Service.find({ type: "Complaint" }).populate({
+      path: "location",
+      select: "floor subLocation location",
+    });
+
+    const complaintData = {
+      total: complaints.length,
+      open: 0,
+      inProgress: 0,
+      closed: 0,
+    };
+
+    for (let complaint of complaints) {
+      const status = complaint?.complaintDetails?.status;
+
+      if (status === "Open") complaintData.open += 1;
+      else if (status === "In Progress") complaintData.inProgress += 1;
+      else if (status === "Close") complaintData.closed += 1;
+    }
+
+    return res.json({
+      complaintData: [complaintData],
+      all: allcomplaints,
+      latestComplaints: complaints.slice(0, 7),
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ msg: "Server error, try again later" });
+  }
 };

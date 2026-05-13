@@ -15,13 +15,13 @@ const UserModal = ({ userDetails }) => {
   const [clients, setClients] = useState([]);
   const dispatch = useDispatch();
   const { isModalOpen, user } = useSelector((store) => store.helper);
-  
+
   const [addUser, { isLoading: addLoading }] = useRegisterUserMutation();
   const [changePassword, { isLoading: updateLoading }] =
-  useChangePasswordMutation();
-  
+    useChangePasswordMutation();
+
   const { data, isLoading, error } = useAllClientsQuery();
-  
+
   useEffect(() => {
     setClients([]);
     if (data) {
@@ -48,7 +48,6 @@ const UserModal = ({ userDetails }) => {
   });
 
   const submit = async (data) => {
-    console.log(data)
     let res;
     if (data.password.length < 5)
       return toast.error("Password must be of 5 characters or greater");
@@ -145,7 +144,7 @@ const UserModal = ({ userDetails }) => {
   return (
     <FormModal
       onSubmit={handleSubmit(submit)}
-      title={`${userDetails ? "Update" : "Register"} Employee`}
+      title={`${userDetails ? "Update" : "Add"} Employee`}
       formBody={formBody}
       submitLabel={userDetails ? "Update Password" : "Add User"}
       handleClose={() => dispatch(toggleModal({ name: "user", status: false }))}

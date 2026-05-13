@@ -4,6 +4,7 @@ import Service from "../models/serviceModel.js";
 import {
   capitalLetter,
   qrCodeGenerator,
+  qrCodeGeneratorSVG,
   uploadFile,
 } from "../utils/helperFunction.js";
 import fs from "fs";
@@ -55,8 +56,12 @@ export const addLocation = async (req, res) => {
       locationId = null;
       return res.status(400).json({ msg: "QR upload error. Try again later" });
     }
+    // This line converts your raw SVG template string into a safe Base64 string
+    const base64Svg = Buffer.from(qrData).toString("base64");
 
     newLocation.qr = qrLink;
+    // newLocation.qr = base64Svg; //addded for svg
+
     await newLocation.save();
     locationId = null;
 
@@ -82,7 +87,7 @@ export const getAllLocations = async (req, res) => {
     const locations = await Location.find({ client: clientId });
     const floors = [];
     locations.map(
-      (item) => !floors.includes(item.floor) && floors.push(item.floor)
+      (item) => !floors.includes(item.floor) && floors.push(item.floor),
     );
 
     return res.json({ client, locations, floors });
@@ -190,5 +195,37 @@ export const getLocationDetails = async (req, res) => {
   } catch (error) {
     console.log(error);
     res.status(500).json({ msg: "Server error, try again later" });
+  }
+};
+// added newly
+export const getSingleLocation = async (req, res) => {
+  const { id } = req.params;
+  if (id.length !== 24) {
+    return res.status(404).json({ msg: "Location not found, contact admin" });
+  }
+  try {
+    const location = await Location.findById(id);
+    if (!location)
+      return res.status(404).json({ msg: "Location not found, contact admin" });
+
+    res.status(200).json(location);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ msg: "Server error, try again later" });
+  }
+};
+
+export const assignLocation = async (req, res) => {
+  const { id, userId } = req.body.data;
+  const clientAdmin = req.user.role === "ClientAdmin" && req.user.role;
+  if (clientAdmin === "ClientAdmin") {
+    const assignLocation = await Location.findByIdAndUpdate(
+      id,
+      { employee: userId },
+      { new: true },
+    ).populate("User");
+    res.status(200).json(assignLocation);
+  } else {
+    res.status(500).json({ msg: "server error" });
   }
 };

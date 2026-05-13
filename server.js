@@ -34,7 +34,12 @@ app.use(fileUpload({ useTempFiles: true }));
 if (process.env.NODE_ENV !== "production") app.use(morgan("dev"));
 
 app.use("/api/user", userRoute);
-app.use("/api/client", authenticateUser, authorizeUser("Admin"), clientRoute);
+app.use(
+  "/api/client",
+  authenticateUser,
+  authorizeUser("Admin", "PestEmployee"),
+  clientRoute,
+);
 app.use(
   "/api/admin",
   authenticateUser,
@@ -43,7 +48,6 @@ app.use(
 );
 app.use("/api/location", authenticateUser, locationRoute);
 app.use("/api/service", authenticateUser, serviceRoute);
-app.use("/api/director", authenticateUser);
 
 if (process.env.NODE_ENV === "production") {
   const __dirname = path.resolve();

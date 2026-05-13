@@ -7,7 +7,8 @@ export const registerUser = async (req, res) => {
     if (!name || !password || !email)
       return res.status(400).json({ msg: "Please provide required values" });
 
-    const type = req.user.type;
+    const type =
+      req.user.type === "PestAdmin" ? "PestEmployee" : "ClientEmployee";
     let client = req.user.client;
     if (req.user.role === "Admin") client = req.body.client.value;
 
@@ -40,18 +41,18 @@ export const loginUser = async (req, res) => {
       return res.status(401).json({ msg: "Please provide required values" });
 
     const user = await User.findOne({ email });
-    const director = await User.findOne({email}).select("role")
+    const director = await User.findOne({ email }).select("role");
     if (user && (await user.comparePassword(password))) {
       generateToken(res, user._id);
 
-      if(director === "director"){
+      if (director === "director") {
         return res.status(200).json({
           _id: user._id,
           name: user.name,
           role: user.role,
           type: user.type,
           department: user.department,
-        })
+        });
       }
       return res.json({
         _id: user._id,

@@ -1,4 +1,4 @@
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { DeleteModal, LocationModal } from "../components/modals";
 import {
   useAllLocationsQuery,
@@ -105,7 +105,7 @@ const SingleClient = () => {
                   <th className="font-bold text-center border-neutral-500 border-2 w-28">
                     QR Codes
                   </th>
-                  <th className="font-bold max-w-[100px] text-center border-neutral-500 border-2 px-2">
+                  <th className="font-bold max-w-25 text-center border-neutral-500 border-2 px-2">
                     Action
                   </th>
                 </tr>
@@ -117,7 +117,9 @@ const SingleClient = () => {
                     className="h-9 text-sm leading-none bg-text border-b border-neutral-500 hover:bg-slate-200"
                   >
                     <td className="px-3 border-r font-normal border-neutral-500">
-                      {location.floor}
+                      <Link to={`/location/${location?._id}`}>
+                        {location.floor}
+                      </Link>
                     </td>
                     <td className="px-3 border-r font-normal border-neutral-500">
                       {location.location}, {location.subLocation}

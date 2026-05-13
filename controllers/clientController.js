@@ -46,13 +46,22 @@ export const registerClient = async (req, res) => {
 export const getAllClient = async (req, res) => {
   try {
     const clients = await Client.find();
-
+    if (!clients) return res.status(400).json({ msg: "clients not found" })
     return res.json(clients);
   } catch (error) {
     console.log(error);
     res.status(500).json({ msg: "Server error, try again later" });
   }
 };
+export const getClient = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const client = await Client.findById(id)
+    return
+  } catch (error) {
+
+  }
+}
 
 export const getClientAssignedEmployee = async (req, res) => {
   const { email } = req.params;
@@ -60,7 +69,7 @@ export const getClientAssignedEmployee = async (req, res) => {
     if (!email) return res.status(400).json({ msg: "email not provided" });
     const assignedEmployee = await User.findOne({ email }).select("-password");
     res.status(200).json(assignedEmployee);
-  } catch (error) {}
+  } catch (error) { }
 };
 
 export const deleteClient = async (req, res) => {

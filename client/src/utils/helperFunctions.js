@@ -6,10 +6,51 @@ export const progress = (status) => {
   return text;
 };
 
-export const dateFormat = (date) => {
-  return new Date(date).toLocaleDateString("en-IN", {
-    day: "numeric",
-    month: "numeric",
-    year: "numeric",
-  });
+export const positive = (res, id) => {
+  let style;
+  if (res.id === id && res.rating === true)
+    style = `text-blue-600 active:scale-105`;
+  else style = ``;
+
+  return style;
 };
+export const nagative = (res, id) => {
+  let style;
+  if (res.id === id && res.rating === false)
+    style = `text-red-600 active:scale-105`;
+  else style = ``;
+  
+  return style;
+};
+
+export const dateFormat = (date) => {
+  // return new Date(date).toLocaleDateString("en-IN", {
+  //   day: "numeric",
+  //   month: "numeric",
+  //   year: "numeric",
+  // });
+  return `${date.split("T")[0]}, ${date.split("T")[1].slice(0, 5)}`;
+};
+
+export function decodeBase64Svg(base64String) {
+  if (!base64String) return "";
+
+  try {
+    // 1. Strip all whitespaces, tabs, and newlines (\r, \n)
+    let cleanedString = base64String.replace(/\s/g, "");
+
+    // 2. Fix URL-safe base64 variations if they exist
+    cleanedString = cleanedString.replace(/-/g, "+").replace(/_/g, "/");
+
+    // 3. Add trailing padding if missing
+    while (cleanedString.length % 4 !== 0) {
+      cleanedString += "=";
+    }
+
+    // 4. Safely decode
+    return atob(cleanedString);
+  } catch (error) {
+    console.error("Failed to decode SVG string:", error);
+    return "";
+  }
+}

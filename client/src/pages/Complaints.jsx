@@ -7,17 +7,19 @@ import { useDispatch } from "react-redux";
 import { toggleModal } from "../redux/helperSlice";
 import { ComplaintModal } from "../components/modals";
 import { AiOutlineClose, AiOutlineSearch } from "react-icons/ai";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAllLocationsQuery } from "../redux/locationSlice";
+import { useAllClientsQuery } from "../redux/clientSlice";
 
 const Complaints = () => {
   const [page, setPage] = useState(1);
+  const [myClient, setMyClient] = useState(null)
   const [tempSearch, setTempSearch] = useState("");
   const [search, setSearch] = useState("");
   const [location, setLocation] = useState("All");
   const dispatch = useDispatch();
   const { user, isModalOpen } = useSelector((store) => store.helper);
-
+  
   const { data: clientLocations, isLoading: locationLoading } =
     useAllLocationsQuery(
       {
@@ -25,14 +27,18 @@ const Complaints = () => {
         // id: user?.role, 
       },
       // { skip: !user?.client }
-      { skip: user?.role !== "ClientAdmin" }
+      // { skip: user?.role !== "ClientAdmin" }
     );
-    console.log(clientLocations)
+  const { data: clients } = useAllClientsQuery();
   const { data, isLoading, isFetching, error } = useAllComplaintsQuery({
     search,
     page,
     location,
   });
+
+  useEffect(() => {
+    setMyClient(clients?.find(c => c._id === user?.client))
+  }, [clients])
 
   const pages = Array.from({ length: data?.pages }, (_, index) => index + 1);
 
@@ -56,7 +62,16 @@ const Complaints = () => {
       )}
       <div className="md:flex flex-col justify-around">
         {/* heading */}
-        <h2 className="text-lg text-center mb-5">Hello <span className="capitalize font-semibold">{user.name}</span>/<span className="text-sm">({user.role})</span></h2>
+        <div className="mb-6 text-center">
+          <h2 className="text-2xl font-light text-slate-800">
+            Hello, <span className="capitalize font-semibold text-sky-700">{user.name}</span>
+          </h2>
+          <span className="inline-block mt-1 px-2.5 py-0.5 text-xs font-medium tracking-wide bg-slate-100 text-slate-600 rounded-full border border-slate-200">
+            {user.role}
+          </span>
+        </div>
+
+        <h3 className="text-center font-semibold text-2xl mb-5 ">Complaints from: {myClient?.name}</h3>
 
         {/* search section  */}
         <div className="flex justify-between">
@@ -76,22 +91,26 @@ const Complaints = () => {
                 </button>
               )}
             </div>
-            <select
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              className="mr-2 mt-0.5 w-40 py-0.5 h-8.5 px-2 border-2 rounded-md outline-none transition border-neutral-300 focus:border-black disabled:bg-slate-100"
-            >
-              <option>All</option>
-              {clientLocations?.floors.map((item, index) => (
-                <option key={index} value={item}>
-                  {item}
-                </option>
-              ))}
-            </select>
+            <div className="grid">
+              <label htmlFor="">Select Floors</label>
+              <select
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+                className="mr-2 mt-0.5 w-40 py-0.5 h-8.5 px-2 border-2 rounded-md outline-none transition border-neutral-300 focus:border-black disabled:bg-slate-100"
+              >
+                <option>All</option>
+                {clientLocations?.floors.map((item, index) => (
+                  <option key={index} value={item}>
+                    {item}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             <Button type="submit" label="Search" color="bg-black" height="h-8" />
           </form>
           {/* new complaint button  */}
-          {user.role === "ClientEmployee" &&
+          {user.role === "ClientAdmin" &&
             <Button
               label="New Complaint"
               height="h-9"
@@ -107,6 +126,7 @@ const Complaints = () => {
       {data && (
         <>
           <ComplaintTable data={data.complaints} user={user} />
+
           {pages.length > 1 && (
             <nav className="mb-4">
               <ul className="list-style-none flex justify-center mt-2">

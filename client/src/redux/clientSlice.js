@@ -24,6 +24,7 @@ export const clientSlice = apiSlice.injectEndpoints({
       }),
       invalidatesTags: ["Client"],
     }),
+    
   }),
 });
 

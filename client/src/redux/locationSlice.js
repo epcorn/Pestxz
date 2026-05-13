@@ -16,6 +16,12 @@ export const locationSlice = apiSlice.injectEndpoints({
       }),
       providesTags: ["Location"],
     }),
+    getSingleLocation: builder.query({
+      query: (id) => ({
+        url: `/api/location/${id}`,
+      }),
+      providesTags: ["Location"],
+    }),
     updateLocation: builder.mutation({
       query: ({ id, data }) => ({
         url: `/api/location/${id}`,
@@ -37,13 +43,23 @@ export const locationSlice = apiSlice.injectEndpoints({
       }),
       providesTags: ["Location"],
     }),
+    assignLocation: builder.mutation({
+      query: (data) => ({
+        url: `/api/location/assign`,
+        method:"POST",
+        body: data, 
+      }),
+      invalidatesTags: ["location"],
+    }),
   }),
 });
 
 export const {
   useAddLocationMutation,
   useAllLocationsQuery,
+  useGetSingleLocationQuery,
   useUpdateLocationMutation,
   useDeleteLocationMutation,
   useSingleLocationDetailsQuery,
+  useAssignLocationMutation,
 } = locationSlice;

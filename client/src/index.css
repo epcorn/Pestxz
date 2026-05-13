@@ -1,6 +1,14 @@
 @import "tailwindcss";
 
-
+.inProgress {
+  @apply bg-amber-200 text-amber-700 shadow shadow-amber-200;
+}
+.open{
+  @apply bg-blue-200 text-blue-700 shadow shadow-blue-200
+}
+.close{
+  @apply bg-green-200 text-green-700 shadow shadow-green-200
+}
 :root {
   background-color: rgb(241 245 249);
 }

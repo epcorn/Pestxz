@@ -43,11 +43,11 @@ function App() {
         <Route path="" element={<MainLayout />}>
           <Route path="" element={<ProtectedRoute />}>
             <Route path="dashboard/new" element={<NewDashboard />} />
-            {/* <Route
+            <Route
               index={true}
               path="dashboard/stats"
               element={<Dashboard />}
-            /> */}
+            />
             <Route path="dashboard/complaints" element={<Complaints />} />
             <Route path="/location/:id" element={<SingleLocation />} />
             <Route path="/complaint/:id" element={<SingleComplaint />} />

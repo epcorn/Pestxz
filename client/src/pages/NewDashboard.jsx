@@ -4,12 +4,12 @@ import AdminDashboard from '../components/dashboard/AdminDashboard'
 import { useSelector } from 'react-redux'
 
 function NewDashboard() {
-  const user = useSelector(store => store.helper)
-  console.log(user)
+  const { user } = useSelector(store => store.helper)
+
   return (
     <>
       {user.role === "ClientAdmin" && < ClientDashboard />}
-      <AdminDashboard />
+      {user.role === "Admin" && <AdminDashboard />}
     </>
   )
 }

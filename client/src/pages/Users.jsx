@@ -8,11 +8,18 @@ import { toast } from "react-toastify";
 
 const Users = () => {
   const dispatch = useDispatch();
+  const [toggle, setToggle] = useState('PestEmployee')
   const [userDetails, setUserDetails] = useState(null);
   const { isModalOpen, user: loginUser } = useSelector((store) => store.helper);
 
   const { data, isLoading, isFetching, error } = useAllUserQuery();
   const [deleteUser, { isLoading: deleteLoading }] = useDeleteUserMutation();
+
+  const handleSelect = (e) => {
+    const { value } = e.target;
+    setToggle(value);
+    console.log(data)
+  }
 
   const handleUpdateUserModal = (user) => {
     setUserDetails({
@@ -40,7 +47,7 @@ const Users = () => {
     }
   };
   const user = useSelector(selectCurrentUser);
-
+console.log(user)
   return (
     <>
       {isLoading || isFetching ? (
@@ -55,6 +62,12 @@ const Users = () => {
               <span><strong>Hello {user.name.toUpperCase()}</strong></span>
               <span><strong>Department:</strong> {user.department}</span>
             </h3>
+            {user.role === "Admin" &&
+              <select name="" id="" className="h-fit py-1 px-2 self-center" onChange={handleSelect}>
+                <option value="PestEmployee">PestEmployee</option>
+                <option value="ClientsAdmin">ClientsAdmin</option>
+              </select>
+            }
             <Button
               label="Add Employee"
               height="h-10"

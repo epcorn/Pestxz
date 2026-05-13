@@ -1,10 +1,10 @@
 import express from "express";
 import {
   addService,
+  adminDashboard,
   clientAdminDashboard,
   deleteService,
   editService,
-  newClientAdminDashboard,
 } from "../controllers/adminController.js";
 import {
   deleteUser,
@@ -19,8 +19,8 @@ const router = express.Router();
 router.route("/user").post(registerUser).get(getAllUser);
 router.route("/service").post(addService);
 router.get("/clientAdminDashboard", clientAdminDashboard);
-router.get("/newClientAdminDashboard", newClientAdminDashboard);
-router.get("/getClientAssignedEmployee/:email", getClientAssignedEmployee)
+router.get("/adminDashboard/:id?", adminDashboard);
+router.get("/getClientAssignedEmployee/:email", getClientAssignedEmployee);
 router.route("/singleService/:id").put(editService).delete(deleteService);
 router.route("/singleUser/:id").put(passwordChange).delete(deleteUser);
 

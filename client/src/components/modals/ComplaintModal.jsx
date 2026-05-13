@@ -32,7 +32,7 @@ const ComplaintModal = ({ locationId }) => {
       },
       { skip: user.role !== "ClientAdmin" }
     );
-
+  console.log(data)
   useEffect(() => {
     if (clientLocations) {
       if (floor !== "Select") {
@@ -79,12 +79,12 @@ const ComplaintModal = ({ locationId }) => {
   });
 
   const submit = async (data) => {
-    if (user.type === "PestEmployee") {
-      if (images.length < 1)
-        return toast.error("Atleast one image is required");
-      if (images.length > 2)
-        return toast.error("Maximum 2 images are required");
-    }
+    // if (user.role === "PestEmployee") {
+    //   if (images.length < 1)
+    //     return toast.error("Atleast one image is required");
+    //   if (images.length > 2)
+    //     return toast.error("Maximum 2 images are required");
+    // }
 
     const form = new FormData();
     images.map((image) => form.append("images", image));
@@ -96,13 +96,13 @@ const ComplaintModal = ({ locationId }) => {
       form.set("comment", data.comment.label);
     }
 
-    console.log(data)
+    // console.log(data) 
     try {
       let res;
       if (user.type === "ClientEmployee") {
         res = await addComplaint({
-          id: user.role === "ClientAdmin" ? data.location.value : locationId,
-          form,
+          id: user.role === "ClientAdmin" ? data?.location?.value : locationId,
+          form: form,
         }).unwrap();
       } else if (user.type === "PestEmployee") {
         res = await updateComplaint({ id: locationId, form }).unwrap();
@@ -220,6 +220,7 @@ const ComplaintModal = ({ locationId }) => {
           rules={{ required: "Job comment is required" }}
           render={({ field: { onChange, value, ref } }) => (
             <InputSelect
+              isMulti={false}
               options={operatorComment}
               onChange={onChange}
               value={value}

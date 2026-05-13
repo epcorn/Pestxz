@@ -13,8 +13,13 @@ const locationSchema = new mongoose.Schema(
       ref: "Client",
       required: true,
     },
+    employee: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: false,
+    },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 const Location = mongoose.model("Location", locationSchema);

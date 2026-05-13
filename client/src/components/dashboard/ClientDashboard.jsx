@@ -1,12 +1,13 @@
 import { FaBug } from "react-icons/fa";
 import { IoLockClosed, IoLockOpen } from "react-icons/io5";
 import { TbProgressAlert } from "react-icons/tb";
-
 import { useSelector } from "react-redux";
 import { useClientAdminDashboardQuery } from "../../redux/adminSlice";
 import Loading from "../Loading";
 import AlertMessage from "../AlertMessage";
+import ComplaintTable from "../ComplaintTable";
 
+// Safety extraction of stats
 const stats = [
   {
     id: 1,
@@ -36,22 +37,30 @@ const stats = [
 
 const ClientDashboard = () => {
   const { user } = useSelector((store) => store.helper);
-  const { data, isLoading, error } = useClientAdminDashboardQuery();
+  const {
+    data: adminDash = { latestComplaints: [], complaintData: [] },
+    isLoading,
+    error
+  } = useClientAdminDashboardQuery(user?.client, { skip: !user?.client });
 
 
   return (
-    <div>
+    <section className="p-4 md:p-8 bg-gray-50 min-h-screen font-sans">
       {isLoading ? (
         <Loading />
+      ) : error ? (
+        <AlertMessage>{error?.data?.msg || error.error}</AlertMessage>
       ) : (
-        error && <AlertMessage>{error?.data?.msg || error.error}</AlertMessage>
-      )}
-      {!error && data && (
-        <>
-          <h1 className="text-2xl md:text-4xl font-semibold text-center ">
-            Welcome {user.name}
-          </h1>
-          
+        <div className="max-w-7xl mx-auto">
+          {/* Header */}
+          <div className="mb-8">
+            <p className="text-gray-500 text-sm font-medium">Dashboard Overview</p>
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-800">
+              Welcome, {user?.name}
+            </h1>
+          </div>
+
+          {/* Stat Cards */}
           <div className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
             {stats.map((item, index) => (
               <div
@@ -68,19 +77,30 @@ const ClientDashboard = () => {
                 </dt>
                 <dd className="ml-16 flex items-baseline pb-6">
                   <p className="text-xl font-semibold text-gray-900">
-                    {data?.complaintData[index]}
+                    {adminDash?.complaintData[index]}
                   </p>
                 </dd>
               </div>
             ))}
           </div>
-          <p className="mb-2 text-lg text-gray-600 font-medium mt-3">
-            Latest Complaints Update
-          </p>
-          <ComplaintTable data={data.latestComplaints} user={user} />
-        </>
+
+          {/* Table Section */}
+          <div className="mt-10">
+            <div className="flex items-center justify-between mb-4">
+              <h4 className="text-lg font-bold text-gray-700">All Complaints Update</h4>
+              <span className="text-[10px] font-bold bg-gray-200 text-gray-600 px-2 py-1 rounded-md uppercase">
+                Recent Activity
+              </span>
+            </div>
+
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden p-1">
+              <ComplaintTable data={adminDash.latestComplaints} user={user} />
+            </div>
+          </div>
+        </div>
       )}
-    </div>
+    </section>
   );
 };
+
 export default ClientDashboard;

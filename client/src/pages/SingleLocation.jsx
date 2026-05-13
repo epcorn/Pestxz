@@ -21,6 +21,8 @@ const SingleLocation = () => {
   const [regularService, { isLoading: regularLoading }] =
     useRegularServiceMutation();
 
+  console.log(data)
+
   const {
     formState: { errors },
     handleSubmit,
@@ -89,9 +91,17 @@ const SingleLocation = () => {
       )}
       {data && (
         <div>
-          <h4>Floor - {data.location.floor}</h4>
-          <h4>Location - {data.location.location}</h4>
-          <h4 className="mb-2">Sub Location - {data.location.subLocation}</h4>
+          <div className="grid grid-cols-2">
+            <div>
+              <h4>Floor - {data.location.floor}</h4>
+              <h4>Location - {data.location.location}</h4>
+              <h4 className="mb-2">Sub Location - {data.location.subLocation}</h4>
+            </div>
+            <div className="">
+              <img src={data.location.qr} alt="" className="h-40 ml-auto block" />
+            </div>
+          </div>
+
           {user.type === "ClientEmployee" && (
             <>
               <Button
@@ -157,10 +167,10 @@ const SingleLocation = () => {
             </div>
           )}
           <hr className="h-px my-4 border-0 bg-gray-700" />
-          {data.lastServices.length > 0 && (
+          {data?.lastServices?.length > 0 && (
             <div className="overflow-y-auto my-3">
               <p className="text-center text-lg font-medium mb-3">
-                {`Last ${data.lastServices.length} Recent Services`}
+                {`Last ${data?.lastServices?.length} Recent Services`}
               </p>
               <table className="w-full border whitespace-nowrap border-neutral-500 bg-text">
                 <thead>

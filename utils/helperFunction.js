@@ -7,7 +7,6 @@ import sharp from "sharp";
 import { v2 as cloudinary } from "cloudinary";
 import brevo from "@getbrevo/brevo";
 
-
 export const capitalLetter = (name) => {
   return name
     .toLowerCase()
@@ -77,9 +76,9 @@ export const qrCodeGenerator = async ({ link, floor, location }) => {
     const totalHeight = qrHeight + 95;
 
     // 1. Generate QR Code as a Buffer (instead of DataURL)
-    const qrBuffer = await QRCode.toBuffer(link, { 
-      width: width, 
-      margin: 6 
+    const qrBuffer = await QRCode.toBuffer(link, {
+      width: width,
+      margin: 6,
     });
 
     // 2. Create an SVG overlay for the text
@@ -107,15 +106,15 @@ export const qrCodeGenerator = async ({ link, floor, location }) => {
         width: width,
         height: totalHeight,
         channels: 3,
-        background: { r: 0, g: 0, b: 0 } // Assuming a black background based on your text color choices
-      }
+        background: { r: 0, g: 0, b: 0 }, // Assuming a black background based on your text color choices
+      },
     })
-    .composite([
-      { input: qrBuffer, top: 40, left: 0 }, // Place the QR code
-      { input: Buffer.from(svgText), top: 0, left: 0 } // Place the text overlay
-    ])
-    .jpeg()
-    .toBuffer();
+      .composite([
+        { input: qrBuffer, top: 40, left: 0 }, // Place the QR code
+        { input: Buffer.from(svgText), top: 0, left: 0 }, // Place the text overlay
+      ])
+      .jpeg()
+      .toBuffer();
 
     return buf;
   } catch (error) {
@@ -125,6 +124,61 @@ export const qrCodeGenerator = async ({ link, floor, location }) => {
 };
 
 
+// for converting qr.jpg to svg 
+export const qrCodeGeneratorSVG = async ({ link, floor, location }) => {
+  let loc = location.substring(0, 25);
+  let subLoc = location.substring(25);
+
+  try {
+    const width = 340;
+    const qrHeight = 360;
+    const totalHeight = qrHeight + 95;
+
+    // 1. Generate the inner QR code as pure SVG XML raw content
+    // We use xmlMode: true to extract only the path/inner elements
+    const rawQrSvg = await QRCode.toString(link, {
+      type: "svg",
+      width: width,
+      margin: 6,
+      color: {
+        dark: "#ffffff", // White QR dots to stand out on black background
+        light: "#000000", // Black QR background matching canvas background
+      },
+    });
+
+    // 2. Combine your text layout and QR code into one clean SVG document string
+    const finalSvgString = `
+<svg width="${width}" height="${totalHeight}" viewBox="0 0 ${width} ${totalHeight}" xmlns="w3.org">
+  <style>
+    .branding { fill: rgb(32, 125, 192); font-size: 33px; font-family: Arial, sans-serif; font-weight: bold; font-style: italic; text-anchor: middle; }
+    .details { fill: white; font-size: 20px; font-family: Arial, sans-serif; }
+  </style>
+
+  <!-- Background Base (replaces Sharp creation layer) -->
+  <rect width="100%" height="100%" fill="#000000" />
+
+  <!-- Top Branding Text -->
+  <text x="50%" y="30" class="branding">Powered By PestXZ</text>
+
+  <!-- Embedded QR Code -->
+  <g transform="translate(0, 40)">
+    ${rawQrSvg}
+  </g>
+
+  <!-- Bottom Details Text -->
+  <text x="2" y="${qrHeight + 42}" class="details">Floor: ${floor}</text>
+  <text x="2" y="${qrHeight + 64}" class="details">Location: ${loc}</text>
+  <text x="2" y="${qrHeight + 86}" class="details">${subLoc}</text>
+</svg>
+    `.trim();
+
+    // 3. Return the string to be saved directly into MongoDB
+    return finalSvgString;
+  } catch (error) {
+    console.log("QR Error", error);
+    return false;
+  }
+};
 
 export const uploadFile = async ({ filePath }) => {
   try {
