@@ -32,7 +32,6 @@ const ComplaintModal = ({ locationId }) => {
       },
       { skip: user.role !== "ClientAdmin" }
     );
-  console.log(data)
   useEffect(() => {
     if (clientLocations) {
       if (floor !== "Select") {

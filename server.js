@@ -64,9 +64,9 @@ if (process.env.NODE_ENV === "production") {
 app.use(notFound);
 
 const port = process.env.PORT || 5000;
-export const MONGOURL = process.env.MONGO_LOCAL;
+export const MONGOURL = process.env.MONGO_URI;
 
-// createAdmin();
+createAdmin();
 const connectDB = async () => {
   try {
     await mongoose.connect(MONGOURL);

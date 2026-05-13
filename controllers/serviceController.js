@@ -323,23 +323,23 @@ export const dailyServiceReport = async (req, res) => {
         }
         const filePath = `./tmp/${client.name}_Daily_Service_Report.xlsx`;
         await workbook.xlsx.writeFile(filePath);
-        // const link = await uploadFile({ filePath });
-        // if (link) {
-        //   await sendEmail({
-        //     attachment: [
-        //       {
-        //         url: link,
-        //         name: `${client.name}_Daily_Service_Report.xlsx`,
-        //       },
-        //     ],
-        //     emailList: [{ email: client.email }],
-        //     templateId: 1,
-        //     dynamicData: {
-        //       client: client.name,
-        //       date: moment(yesterday).format("DD/MM/YY"),
-        //     },
-        //   });
-        // }
+        const link = await uploadFile({ filePath });
+        if (link) {
+          await sendEmail({
+            attachment: [
+              {
+                url: link,
+                name: `${client.name}_Daily_Service_Report.xlsx`,
+              },
+            ],
+            emailList: [{ email: client.email }],
+            templateId: 1,
+            dynamicData: {
+              client: client.name,
+              date: moment(yesterday).format("DD/MM/YY"),
+            },
+          });
+        }
       }
     }
 

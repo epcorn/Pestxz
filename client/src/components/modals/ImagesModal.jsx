@@ -2,7 +2,7 @@ import React from 'react'
 import { useDispatch } from 'react-redux'
 import { toggleModal } from '../../redux/helperSlice'
 
-function ImagesModal({ image, isModalOpen }) {
+function ImagesModal({ image, isModalOpen, name }) {
   const dispatch = useDispatch()
   return (
     <div className="w-full h-dvh fixed inset-0 bg-black/80 z-50 flex flex-col items-center justify-center p-4 backdrop-blur-sm">
@@ -10,7 +10,7 @@ function ImagesModal({ image, isModalOpen }) {
       <button
         className="absolute top-4 right-4 text-white text-sm font-medium tracking-wider bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-md transition-colors"
         onClick={() =>
-          dispatch(toggleModal({ name: "PEImages", status: false }))}
+          dispatch(toggleModal({ name: name, status: false }))}
       >
         ✕ CLOSE
       </button>

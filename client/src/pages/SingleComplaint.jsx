@@ -19,7 +19,8 @@ const SingleComplaint = () => {
 
   const { data, isLoading, error } = useSingleComplaintQuery(id);
   const { data: location, isLoading: locaLoading } = useGetSingleLocationQuery(data?.location);
-  // rating && console.log(rating);
+
+  console.log(data)
 
   return (
     <div>
@@ -111,7 +112,7 @@ const SingleComplaint = () => {
                 </tr>
               </thead>
               <tbody>
-                {data.complaintUpdate?.map((complaint) => (
+                {data.complaintUpdate?.map((complaint, i) => (
                   <tr
                     key={complaint._id}
                     className="h-8 text-[14px] border-b border-neutral-500 hover:bg-slate-200"
@@ -122,15 +123,17 @@ const SingleComplaint = () => {
                     <td className="px-3 border-r text-center border-neutral-500">
                       {complaint.image.length > 0 &&
                         < Button
-                          label="Show"
+                          label={`Show(${complaint.image.length})`}
                           small
                           height="h-7"
                           color="bg-green-600 text-xs"
                           onClick={() =>
-                            dispatch(toggleModal({ name: "PEImages", status: true }))
+                            dispatch(toggleModal({
+                              name: `PEImages-${i}`, status: true
+                            }))
                           }
                         />}
-                      {isModalOpen.PEImages && <ImagesModal image={complaint.image} />}
+                      {isModalOpen[`PEImages-${i}`] && <ImagesModal image={complaint.image} name={`PEImages-${i}`} />}
 
                     </td>
                     <td className="px-3 border-r text-center border-neutral-500">
