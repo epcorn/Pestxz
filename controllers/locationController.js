@@ -36,7 +36,7 @@ export const addLocation = async (req, res) => {
     locationId = newLocation._id;
 
     const qrData = await qrCodeGenerator({
-      link: `https://www.pestxz.com/location/${locationId}`,
+      link: `https://pestxz.onrender.com/location/${locationId}`,
       floor: newLocation.floor,
       location: `${newLocation.location}, ${newLocation.subLocation}`,
     });
