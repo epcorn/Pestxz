@@ -59,38 +59,55 @@ const SingleClient = () => {
       )}
       {!error && data?.client && (
         <div>
-          <h2 className="text-center text-2xl text-sky-700 font-semibold">
-            {data.client.name}
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 my-5 mx-2">
-            <div className="mr-auto space-x-4">
-              <h6 className="">
-                Contract No: {data.client.contractNo}
-              </h6>
-              <h6 className="">Email: {data.client.email}</h6>
-            </div>
-            <h6 className="">Address: {data.client.address}</h6>
-          </div>
-          <div className="flex justify-between">
-            <div>
-              <Button
-                height="h-10"
-                color="bg-green-600"
-                label={
-                  <div className="flex items-center">
-                    <MdAddCircle className="w-6 h-6 pr-1" /> New Location
+          <div className="py-5 border-b border-neutral-200">
+            {/* Header Section */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+              <div>
+                <h2 className="text-2xl font-bold text-neutral-900 tracking-tight">
+                  {data.client.name}
+                </h2>
+
+                {/* Meta Information Row */}
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1.5 text-sm text-neutral-500">
+                  <div>
+                    <span className="font-medium text-neutral-700">Contract No:</span> {data.client.contractNo}
                   </div>
-                }
-                onClick={handleNewModal}
-              />
-              {isModalOpen.location && (
-                <LocationModal
-                  clientId={id}
-                  locationDetails={locationDetails}
+                  <span className="hidden sm:inline text-neutral-300">&middot;</span>
+                  <div>
+                    <span className="font-medium text-neutral-700">Email:</span> {data.client.email}
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Button */}
+              <div className="shrink-0">
+                <Button
+                  height="h-10"
+                  color="bg-green-600 hover:bg-green-700 text-white transition-colors"
+                  label={
+                    <div className="flex items-center gap-1 px-1">
+                      <MdAddCircle className="w-5 h-5" />
+                      <span>New Location</span>
+                    </div>
+                  }
+                  onClick={handleNewModal}
                 />
-              )}
+                {isModalOpen.location && (
+                  <LocationModal
+                    clientId={id}
+                    locationDetails={locationDetails}
+                  />
+                )}
+              </div>
+            </div>
+
+            {/* Address Section */}
+            <div className="text-sm text-neutral-600 bg-neutral-50 border border-neutral-200 rounded-lg p-3">
+              <span className="font-semibold text-neutral-800 mr-1">Address:</span>
+              {data.client.address}
             </div>
           </div>
+
           <div className="overflow-y-auto my-4">
             <table className="w-full border whitespace-nowrap border-neutral-500 bg-text">
               <thead>

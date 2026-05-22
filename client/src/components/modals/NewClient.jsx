@@ -24,7 +24,7 @@ const NewClient = () => {
       address: "",
       contractNo: "",
       email: "",
-      password: "",
+      // password: "",
     },
   });
 
@@ -79,7 +79,7 @@ const NewClient = () => {
       </div>
       <div className="mb-3">
         <InputRow
-          label="Admin Email"
+          label="Client Email"
           id="email"
           errors={errors}
           register={register}
@@ -89,7 +89,7 @@ const NewClient = () => {
           {errors.email && "Email is required"}
         </p>
       </div>
-      <div>
+      {/* <div>
         <InputRow
           label="Admin Password"
           id="password"
@@ -100,7 +100,7 @@ const NewClient = () => {
         <p className="text-xs text-red-500 -bottom-4 pl-1">
           {errors.password && "Password is required"}
         </p>
-      </div>
+      </div> */}
     </div>
   );
 

@@ -15,7 +15,7 @@ import {
   passwordChange,
   registerUser,
 } from "../controllers/userController.js";
-import { getClientAssignedEmployee } from "../controllers/clientController.js";
+
 
 const router = express.Router();
 
@@ -25,7 +25,7 @@ router.route("/freq").post(addFrequency).get(getFrequency);
 router.delete("/freq/:id", removeFrequency);
 router.get("/clientAdminDashboard", clientAdminDashboard);
 router.get("/adminDashboard/:id?", adminDashboard);
-router.get("/getClientAssignedEmployee/:email", getClientAssignedEmployee);
+
 router.route("/singleService/:id").put(editService).delete(deleteService);
 router.route("/singleUser/:id").put(passwordChange).delete(deleteUser);
 

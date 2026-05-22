@@ -43,7 +43,7 @@ app.use(
 app.use(
   "/api/admin",
   authenticateUser,
-  authorizeUser("Admin","Operator", "ClientAdmin"),
+  authorizeUser("Admin", "ClientAdmin"),
   adminRoute,
 );
 app.use("/api/location", authenticateUser, locationRoute);

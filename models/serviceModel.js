@@ -27,7 +27,7 @@ const serviceSchema = new mongoose.Schema(
         consumableName: { type: String },
 
         calibration: { type: String },
-        used: { type: String },
+        usedCalibration: { type: String },
 
         action: { type: String },
         comment: { type: String },

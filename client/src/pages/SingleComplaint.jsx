@@ -39,34 +39,64 @@ const SingleComplaint = () => {
             </span>
           </div> */}
 
-          <div className="grid grid-cols-4">
-            <div className="col-span-3">
-              <div className="grid grid-cols-2 mb-2">
-                <p className="flex flex-col md:flex-row md:gap-1"><strong>Complaint Number: </strong> <span>{data.complaintDetails.number}</span></p>
-                <div className="lg:pr-10">
-                  <strong className="pr-2 hidden md:inline-flex">Status: </strong>
-                  <span
-                    className={`inline-flex items-center rounded-md px-2 font-medium ring-1 ring-gray-300
-                      ${progress(data.complaintDetails.status)} `}
-                  >
-                    {data.complaintDetails.status}
-                  </span>
+          <div className="">
+            <div className="">
+              <div className="grid grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-6 p-4 bg-white/60 rounded-lg">
+                {/* Column 1: Metadata */}
+                <div className="space-y-3">
+                  <div className="text-sm">
+                    <span className="font-bold text-gray-700 block mb-0.5">Complaint Number</span>
+                    <span className="text-gray-600 break-all">{data.complaintDetails.number}</span>
+                  </div>
+
+                  <div>
+                    <span className="font-bold text-gray-700 block mb-1">Status</span>
+                    <span className={`inline-flex items-center rounded-md px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset ring-gray-300 ${progress(data.complaintDetails.status)}`}>
+                      {data.complaintDetails.status}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Column 2: People & Location */}
+                <div className="space-y-3">
+                  <div className="text-sm">
+                    <span className="font-bold text-gray-700 block mb-0.5">Raised By</span>
+                    <span className="text-gray-600">{data.complaintDetails.userName}</span>
+                  </div>
+
+                  <div className="text-sm">
+                    <span className="font-bold text-gray-700 block mb-0.5">Location</span>
+                    <span className="text-gray-600 block">
+                      {[location?.location.floor, location?.location.location, location?.location.subLocation]
+                        .filter(Boolean)
+                        .join(", ") || "N/A"}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Column 3: Details (Spans full width on mobile, enters 3rd column on large screens) */}
+                <div className="col-span-2 lg:col-span-1 grid grid-cols-2 lg:block gap-4">
+                  <div className="text-sm">
+                    <span className="font-bold text-gray-700 block mb-0.5">Requested Service</span>
+                    <div className="flex flex-wrap gap-1">
+                      {data.complaintDetails.service?.map((service, index) => (
+                        <span key={index} className="bg-gray-100 text-gray-800 text-xs px-2 py-0.5 rounded">
+                          {service}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="text-sm">
+                    <span className="font-bold text-gray-700 block mb-0.5">Comment</span>
+                    <span className="text-gray-600 block italic">
+                      {data.complaintDetails.comment || "No comments."}
+                    </span>
+                  </div>
                 </div>
               </div>
-              <div className="grid grid-cols-2">
-                <h4 className="*:block"><strong>Raised By: </strong> <span>{data.complaintDetails.userName}</span></h4>
-                <h4 className="*:block"><strong>Location: </strong>
-                  <span>{location?.location.floor || ""}, {location?.location.location || ""},</span>
-                  <span>{location?.location.subLocation || ""}</span>
-                </h4>
-              </div>
-              <div className="grid grid-cols-2">
-                <h4 className="flex flex-col"><strong>Requested service: </strong>
-                  {data.complaintDetails.service?.map((service, index) => (
-                    <span key={index}>{service}</span>
-                  ))}</h4>
-                <h4 className="flex flex-col"><strong>Comment: </strong> <span>{data.complaintDetails.comment}</span></h4>
-              </div>
+
+
               {/* <div>
                 <strong>Images: </strong>{" "}
                 <div className="flex space-x-5">
@@ -77,107 +107,120 @@ const SingleComplaint = () => {
               </div> */}
             </div>
             {/* right side  */}
-            <div className="">
-              <img src={`${location?.location.qr}`} alt={location?.location.location} className="h-44 text-center" />
-              {/* for svg qr*/}
-              {/* <div
+            {/* <div className=""> */}
+            {/* <img src={`${location?.location.qr}`} alt={location?.location.location} className="h-44 text-center" /> */}
+            {/* for svg qr*/}
+            {/* <div
                 className="h-44 w-auto [&>svg]:h-full [&>svg]:w-auto [&>svg]:max-w-full"
                 dangerouslySetInnerHTML={{ __html: decodeBase64Svg(location?.location?.qr) }}
               /> */}
-              {/* <Button type="button" onClick={() => navigate(`/location/${location?.location._id}`)} small={true} label={'Go to Location'} /> */}
+            {/* <Button type="button" onClick={() => navigate(`/location/${location?.location._id}`)} small={true} label={'Go to Location'} /> */}
+            {/* </div> */}
+          </div>
+          {data.complaintUpdate?.length > 0 && (
+  <div className="my-4 overflow-hidden rounded-lg border border-neutral-200 bg-white shadow-sm">
+    
+    {/* DESKTOP HEADER (Hidden on Mobile) */}
+    <div className="hidden md:flex items-center bg-neutral-50 border-b border-neutral-200 text-xs font-bold uppercase tracking-wider text-neutral-500 py-3 px-4 gap-4 text-center">
+      <div className="w-28 text-left shrink-0">Date</div>
+      <div className="w-20 shrink-0">Image</div>
+      <div className="flex-1 text-left">Operator Comment</div>
+      <div className="w-32 shrink-0">Updated By</div>
+      <div className="w-24 shrink-0">Status</div>
+      {(user.role === "ClientAdmin" || user.role === "ClientEmployee") && (
+        <div className="w-28 shrink-0">Feedback</div>
+      )}
+    </div>
+
+    {/* LIST OF ITEMS / MOBILE CARDS */}
+    <div className="divide-y divide-neutral-200">
+      {data.complaintUpdate?.map((complaint, i) => (
+        <div
+          key={complaint._id}
+          className="flex flex-col md:flex-row md:items-center py-4 px-4 text-sm text-neutral-700 hover:bg-neutral-50 transition-colors gap-3 md:gap-4"
+        >
+          {/* 1. Date */}
+          <div className="w-full md:w-28 flex justify-between md:block items-center shrink-0">
+            <span className="md:hidden text-xs font-semibold text-neutral-400 uppercase">Date</span>
+            <span className="text-neutral-500 md:text-neutral-700">{dateFormat(complaint.date)}</span>
+          </div>
+
+          {/* 2. Image Trigger */}
+          <div className="w-full md:w-20 flex justify-between md:block md:text-center items-center shrink-0">
+            <span className="md:hidden text-xs font-semibold text-neutral-400 uppercase">Image</span>
+            <div>
+              {complaint.image.length > 0 ? (
+                <Button
+                  label={`Show (${complaint.image.length})`}
+                  small
+                  height="h-7"
+                  color="bg-green-600 text-xs text-white px-2 py-0.5 rounded"
+                  onClick={() => dispatch(toggleModal({ name: `PEImages-${i}`, status: true }))}
+                />
+              ) : (
+                <span className="text-neutral-400 text-xs">—</span>
+              )}
+              {isModalOpen[`PEImages-${i}`] && <ImagesModal image={complaint.image} name={`PEImages-${i}`} />}
             </div>
           </div>
-          <div className="overflow-y-auto my-4">
-            <table className="w-full border whitespace-nowrap border-neutral-500 bg-text">
-              <thead>
-                <tr className="h-8 w-full leading-none">
-                  <th className="font-bold text-center border-neutral-500 w-40 border-2 px-3">
-                    Date
-                  </th>
-                  <th className="font-bold text-center border-neutral-500 border-2 px-3">
-                    Image
-                  </th>
-                  <th className="font-bold text-center border-neutral-500 border-2 px-3">
-                    Operator Comment
-                  </th>
-                  <th className="font-bold text-center border-neutral-500 border-2 w-32 px-3">
-                    Updated By
-                  </th>
-                  <th className="font-bold text-center border-neutral-500 w-40 border-2 px-3">
-                    Status
-                  </th>
-                  {user.role === "ClientAdmin" || user.role === "ClientEmployee" ?
-                    <th className="font-bold text-center border-neutral-500 w-40 border-2 px-3">
-                      Feedback
-                    </th> : ""
-                  }
-                </tr>
-              </thead>
-              <tbody>
-                {data.complaintUpdate?.map((complaint, i) => (
-                  <tr
-                    key={complaint._id}
-                    className="h-8 text-[14px] border-b border-neutral-500 hover:bg-slate-200"
-                  >
-                    <td className="px-3 border-r text-center border-neutral-500">
-                      {dateFormat(complaint.date)}
-                    </td>
-                    <td className="px-3 border-r text-center border-neutral-500">
-                      {complaint.image.length > 0 &&
-                        < Button
-                          label={`Show(${complaint.image.length})`}
-                          small
-                          height="h-7"
-                          color="bg-green-600 text-xs"
-                          onClick={() =>
-                            dispatch(toggleModal({
-                              name: `PEImages-${i}`, status: true
-                            }))
-                          }
-                        />}
-                      {isModalOpen[`PEImages-${i}`] && <ImagesModal image={complaint.image} name={`PEImages-${i}`} />}
 
-                    </td>
-                    <td className="px-3 border-r text-center border-neutral-500">
-                      {complaint.comment}
-                    </td>
-                    <td className="px-3 border-r text-center border-neutral-500">
-                      {complaint.userName}
-                    </td>
-                    <td className="px-3 border-r text-center border-neutral-500">
-                      <span
-                        className={`inline-flex items-center rounded-md px-2 font-medium ring-1 ring-gray-300
-                      ${progress(complaint.status)} `}
-                      >
-                        {complaint.status}
-                      </span>
-                    </td>
-                    {user.role === "ClientAdmin" || user.role === "ClientEmployee" ?
-                      <td className="px-3 border-r text-center border-neutral-500 ">
-                        <div className={`flex justify-around items-center`}>
-                          <button
-                            className={`"cursor-pointer ${positive(rating, complaint._id)}`}
-                            type="button"
-                            onClick={() => setRating({ id: complaint._id, rating: true })}
-                          >
-                            <FaThumbsUp />
-                          </button>
-                          <button
-                            className="cursor-pointer" onClick={() => setRating({ id: complaint._id, rating: null })}>or</button>
-                          <button
-                            className={`"cursor-pointer ${nagative(rating, complaint._id)}`}
-                            type="button"
-                            onClick={() => setRating({ id: complaint._id, rating: false })}>
-                            <FaThumbsDown />
-                          </button>
-                        </div>
-                      </td> : ""}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          {/* 3. Operator Comment */}
+          <div className="w-full flex-1 flex flex-col md:block items-start justify-between min-w-0">
+            <span className="md:hidden text-xs font-semibold text-neutral-400 uppercase mb-0.5">Comment</span>
+            <p className="break-words text-neutral-800 text-left w-full whitespace-pre-wrap">{complaint.comment}</p>
           </div>
-          {user.rights.scan_scheduled &&
+
+          {/* 4. Updated By */}
+          <div className="w-full md:w-32 flex justify-between md:block md:text-center items-center shrink-0">
+            <span className="md:hidden text-xs font-semibold text-neutral-400 uppercase">Updated By</span>
+            <span className="font-medium md:font-normal truncate max-w-[150px] inline-block md:block">{complaint.userName}</span>
+          </div>
+
+          {/* 5. Status */}
+          <div className="w-full md:w-24 flex justify-between md:block md:text-center items-center shrink-0">
+            <span className="md:hidden text-xs font-semibold text-neutral-400 uppercase">Status</span>
+            <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium border ${progress(complaint.status)}`}>
+              {complaint.status}
+            </span>
+          </div>
+
+          {/* 6. Feedback Actions */}
+          {(user.role === "ClientAdmin" || user.role === "ClientEmployee") && (
+            <div className="w-full md:w-28 flex justify-between md:block md:text-center items-center shrink-0 pt-2.5 md:pt-0 border-t md:border-none border-neutral-100">
+              <span className="md:hidden text-xs font-semibold text-neutral-400 uppercase">Feedback</span>
+              <div className="flex justify-start md:justify-center items-center gap-1">
+                <button
+                  className={`cursor-pointer text-base p-1 transition-transform active:scale-95 ${positive(rating, complaint._id)}`}
+                  type="button"
+                  onClick={() => setRating({ id: complaint._id, rating: true })}
+                >
+                  <FaThumbsUp />
+                </button>
+                <button
+                  className="cursor-pointer text-xs text-neutral-400 hover:text-neutral-600 bg-neutral-100 px-1.5 py-0.5 rounded border border-neutral-200" 
+                  type="button"
+                  onClick={() => setRating({ id: complaint._id, rating: null })}
+                >
+                  Clear
+                </button>
+                <button
+                  className={`cursor-pointer text-base p-1 transition-transform active:scale-95 ${nagative(rating, complaint._id)}`}
+                  type="button"
+                  onClick={() => setRating({ id: complaint._id, rating: false })}
+                >
+                  <FaThumbsDown />
+                </button>
+              </div>
+            </div>
+          )}
+
+        </div>
+      ))}
+    </div>
+  </div>
+)}
+
+          {(user.rights.scan_Scheduled || user.rights.scan_Unscheduled) &&
             data.complaintDetails.status !== "Close" && (
               <>
                 <Button

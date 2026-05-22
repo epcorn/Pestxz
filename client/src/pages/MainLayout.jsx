@@ -4,7 +4,7 @@ import { Sidebar } from "../components";
 const MainLayout = () => {
   return (
     <main>
-      <main className="p-4 pt-20 lg:ml-60 h-auto">
+      <main className="p-4 pt-16 md:pt-20 lg:ml-60 h-auto">
         <Sidebar />
         <Outlet />
       </main>

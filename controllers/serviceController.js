@@ -193,7 +193,7 @@ export const getAllComplaints = async (req, res) => {
   }
 };
 
-export const newRegularService = async (req, res) => {
+export const oldnewRegularService = async (req, res) => {
   const { action } = req.body;
   const { id } = req.params;
   try {
@@ -238,6 +238,63 @@ export const newRegularService = async (req, res) => {
   } catch (error) {
     console.log(error);
     res.status(500).json({ msg: "Server error, try again later" });
+  }
+};
+
+export const newRegularService = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const location = await Location.findById(id);
+
+    if (!location) {
+      return res.status(404).json({
+        msg: "Location not found",
+      });
+    }
+
+    let imageLink = "";
+
+    // upload image if exists
+    if (req.files?.image) {
+      imageLink = await uploadFile({
+        filePath: req.files.image.tempFilePath,
+      });
+    }
+
+    const regularService = {
+      serviceName: req.body.serviceName,
+      scopeName: req.body.scopeName,
+      consumableName: req.body.consumableName,
+
+      calibration: req.body.calibration,
+      usedCalibration: req.body.usedCalibration,
+
+      action: req.body.action,
+      comment: req.body.comment,
+
+      image: imageLink,
+
+      userName: req.user.name,
+    };
+
+    await Service.create({
+      type: "Regular",
+      regularService: [regularService],
+
+      client: location.client,
+      location: id,
+    });
+
+    return res.status(201).json({
+      msg: "Service updated successfully",
+    });
+  } catch (error) {
+    console.log(error);
+
+    return res.status(500).json({
+      msg: "Server error, try again later",
+    });
   }
 };
 

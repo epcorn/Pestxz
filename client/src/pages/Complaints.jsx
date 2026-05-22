@@ -20,14 +20,14 @@ const Complaints = () => {
   const dispatch = useDispatch();
 
   const { user, isModalOpen } = useSelector((store) => store.helper);
-  const { data: clients = [] } = useAllClientsQuery({ skip: user.role !== "Admin" });
+  const { data: clients = [] } = useAllClientsQuery({ skip: user.rights.raise });
 
 
   const { data: clientLocations, isLoading: locationLoading } =
     useAllLocationsQuery({
       id: user.type === "ClientEmployee" ? user.client : myClient
     },
-      // { skip: !user?.client || !location?.client  }
+      { skip: user.type === "ClientEmployee" ? !user?.client : !myClient }
     );
 
   const { data, isLoading, isFetching, error } = useAllComplaintsQuery({
@@ -35,6 +35,7 @@ const Complaints = () => {
     page,
     location: location?.floor || "All",
   });
+  console.log(myClient)
 
   const pages = Array.from({ length: data?.pages }, (_, index) => index + 1);
 
@@ -89,36 +90,36 @@ const Complaints = () => {
             </div>
             <div className="flex gap-2">
               {/* <label htmlFor="">Select Floors</label> */}
-              
-                {user.role === "Admin" &&
-                  <select
-                    value={location.client}
-                    onChange={(e) => { setLocation(prev => ({ ...prev, client: e.target.value })); setMyClient(e.target.value) }}
 
-                    className="mr-2 mt-0.5 w-40 py-0.5 h-8.5 px-2 border-2 rounded-md outline-none transition border-neutral-300 focus:border-black disabled:bg-slate-100"
-                  >
-                    <option value="">--Select Clients--</option>
-                    {clients?.map((client, index) => (
-                      <option key={client._id} value={client._id}>
-                        {client.name}
-                      </option>
-                    ))}
-                  </select>
-                }
+              {user.role === "Admin" &&
                 <select
-                  value={location.floor}
-                  onChange={(e) => setLocation(prev => ({ ...prev, floor: e.target.value }))}
+                  value={location.client}
+                  onChange={(e) => { setLocation(prev => ({ ...prev, client: e.target.value })); setMyClient(e.target.value) }}
 
                   className="mr-2 mt-0.5 w-40 py-0.5 h-8.5 px-2 border-2 rounded-md outline-none transition border-neutral-300 focus:border-black disabled:bg-slate-100"
                 >
-                  <option value="">--Select Floor--</option>
-                  {clientLocations?.floors.map((item, index) => (
-                    <option key={index} value={item}>
-                      {item}
+                  <option value="">--Select Clients--</option>
+                  {clients?.map((client, index) => (
+                    <option key={client._id} value={client._id}>
+                      {client.name}
                     </option>
                   ))}
                 </select>
-              
+              }
+              <select
+                value={location.floor}
+                onChange={(e) => setLocation(prev => ({ ...prev, floor: e.target.value }))}
+
+                className="mr-2 mt-0.5 w-40 py-0.5 h-8.5 px-2 border-2 rounded-md outline-none transition border-neutral-300 focus:border-black disabled:bg-slate-100"
+              >
+                <option value="">--Select Floor--</option>
+                {clientLocations?.floors.map((item, index) => (
+                  <option key={index} value={item}>
+                    {item}
+                  </option>
+                ))}
+              </select>
+
             </div>
 
             <Button type="submit" label="Search" color="bg-black" height="h-8" />

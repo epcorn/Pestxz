@@ -10,6 +10,13 @@ import {
 import fs from "fs";
 
 let locationId = null;
+const internalRoles = [
+  "Admin",
+  "Operator",
+  "Supervisor",
+  "TeamLeader",
+  "BranchAdmin",
+];
 
 export const addLocation = async (req, res) => {
   const { floor, subLocation, location, clientId, serviceReq } = req.body;
@@ -86,21 +93,17 @@ export const getAllLocations = async (req, res) => {
   try {
     let clientId = id;
     let floors = [];
-    if (clientId === "ClientAdmin") 
-      clientId = req.user.client;
-      const client = await Client.findById(clientId);
-      if (!client) return res.status(404).json({ msg: "Client not found" });
+    if (clientId === "ClientEmployee") clientId = req.user.client;
+    const client = await Client.findById(clientId);
+    const clientName = client.name;
+    if (!client) return res.status(404).json({ msg: "Client not found" });
 
-      const locations = await Location.find({ client: clientId });
-      locations.map(
-        (item) => !floors.includes(item.floor) && floors.push(item.floor),
-      );
-    // } else{
-    //   const locations = await Location.find();
+    const locations = await Location.find({ client: clientId });
+    locations.map(
+      (item) => !floors.includes(item.floor) && floors.push(item.floor),
+    );
 
-    // }
-
-    return res.json({ client, locations, floors });
+    return res.json({ client, clientName, locations, floors });
   } catch (error) {
     console.log(error);
     res.status(500).json({ msg: "Server error, try again later" });
@@ -146,15 +149,18 @@ export const getLocationDetails = async (req, res) => {
   const { id } = req.params;
   try {
     let location = await Location.findById(id);
+    const client = await Client.findById(location.client);
     if (!location)
       return res.status(404).json({ msg: "Location not found, contact admin" });
 
-    if (
-      req.user.role !== "Admin" &&
-      location.client.toString() !== req.user.client.toString()
-    ) {
-      console.log("ok");
-      return res.status(401).json({ msg: "You are not authorized" });
+    const isInternalUser = internalRoles.includes(req.user.role);
+    const isSameClient =
+      location.client.toString() === req.user.client?.toString();
+
+    if (!isInternalUser && !isSameClient) {
+      return res.status(401).json({
+        msg: "You are not authorized",
+      });
     }
 
     location.service = location.service.concat(location.product);
@@ -176,8 +182,11 @@ export const getLocationDetails = async (req, res) => {
             id: service._id,
             type: service.type,
             date: service.updatedAt,
-            pest: service.regularService.map((item) => item.name),
-            status: "NA",
+            pest: service.regularService.map((item) => ({
+              name: item.serviceName,
+              scope: item.scopeName,
+            })),
+            status: service.regularService.map((item) => item.action),
           });
         else if (
           service.type === "Complaint" &&
@@ -201,12 +210,19 @@ export const getLocationDetails = async (req, res) => {
       location: id,
     }).sort("-createdAt");
 
-    return res.json({ location, complaints, lastServices, regularService });
+    return res.json({
+      location,
+      client: client.name,
+      complaints,
+      lastServices,
+      regularService,
+    });
   } catch (error) {
     console.log(error);
     res.status(500).json({ msg: "Server error, try again later" });
   }
 };
+
 // added newly
 export const getSingleLocation = async (req, res) => {
   const { id } = req.params;

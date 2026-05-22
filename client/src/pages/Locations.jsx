@@ -18,7 +18,7 @@ const Locations = () => {
   const { user, isModalOpen } = useSelector((store) => store.helper);
   const [deleteLocation, { isLoading: deleteLoading }] = useDeleteLocationMutation();
   const { data, isLoading, isFetching, error } = useAllLocationsQuery({
-    id: user.role,
+    id: user.type,
   }, { skip: user.role !== "ClientAdmin" }
   );
   const { data: clientusers } = useAllUserQuery();

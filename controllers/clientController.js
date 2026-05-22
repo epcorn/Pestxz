@@ -5,15 +5,15 @@ import User from "../models/userModel.js";
 import { capitalLetter } from "../utils/helperFunction.js";
 
 export const registerClient = async (req, res) => {
-  const { name, address, contractNo, email, password } = req.body;
+  const { name, address, contractNo, email } = req.body;
   try {
-    if (!name || !address || !contractNo || !email || !password)
+    if (!name || !address || !contractNo || !email)
       return res.status(400).json({ msg: "Please provide required values" });
 
     let capitalName = capitalLetter(name);
 
     const clientExists = await Client.findOne({
-      $or: [{ name: capitalName }, { email }],
+      $or: [{ name: capitalName }, { email }, { contractNo }],
     });
 
     if (clientExists)
@@ -26,17 +26,16 @@ export const registerClient = async (req, res) => {
       email,
     });
 
-    const user = await User.create({
-      email,
-      password,
-      name: capitalName,
-      department: "Client Admin",
-      role: "ClientAdmin",
-      type: "ClientEmployee",
-      client: client._id,
-    });
+    // const user = await User.create({
+    //   email,
+    //   name: capitalName,
+    //   department: "Client Admin",
+    //   role: "ClientAdmin",
+    //   type: "ClientEmployee",
+    //   client: client._id,
+    // });
 
-    res.status(201).json({ msg: `${user.name} has been created` });
+    res.status(201).json({ msg: `${client.name} has been created` });
   } catch (error) {
     console.log(error);
     res.status(500).json({ msg: "Server error, try again later" });
@@ -46,7 +45,7 @@ export const registerClient = async (req, res) => {
 export const getAllClient = async (req, res) => {
   try {
     const clients = await Client.find();
-    if (!clients) return res.status(400).json({ msg: "clients not found" })
+    if (!clients) return res.status(400).json({ msg: "clients not found" });
     return res.json(clients);
   } catch (error) {
     console.log(error);
@@ -56,21 +55,19 @@ export const getAllClient = async (req, res) => {
 export const getClient = async (req, res) => {
   const { id } = req.params;
   try {
-    const client = await Client.findById(id)
-    return
-  } catch (error) {
-
-  }
-}
-
-export const getClientAssignedEmployee = async (req, res) => {
-  const { email } = req.params;
-  try {
-    if (!email) return res.status(400).json({ msg: "email not provided" });
-    const assignedEmployee = await User.findOne({ email }).select("-password");
-    res.status(200).json(assignedEmployee);
-  } catch (error) { }
+    const client = await Client.findById(id);
+    return;
+  } catch (error) {}
 };
+
+// export const getClientAssignedEmployee = async (req, res) => {
+//   const { email } = req.params;
+//   try {
+//     if (!email) return res.status(400).json({ msg: "email not provided" });
+//     const assignedEmployee = await User.findOne({ email }).select("-password");
+//     res.status(200).json(assignedEmployee);
+//   } catch (error) { }
+// };
 
 export const deleteClient = async (req, res) => {
   const { id } = req.params;
