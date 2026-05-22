@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Controller, useFieldArray, useForm } from "react-hook-form";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useParams } from "react-router-dom";
@@ -9,7 +9,9 @@ import { toggleModal } from "../redux/helperSlice";
 import { useSingleLocationDetailsQuery } from "../redux/locationSlice";
 import { useRegularServiceMutation } from "../redux/serviceSlice";
 import { serviceActions } from "../utils/constData";
-import { dateFormat, progress } from "../utils/helperFunctions";
+import { dateFormat, decodeBase64Svg, progress } from "../utils/helperFunctions";
+import { useAllServiceQuery } from "../redux/adminSlice";
+import SingleServiceForm from "../components/SingleServiceForm";
 
 const SingleLocation = () => {
   const { id } = useParams();
@@ -20,8 +22,20 @@ const SingleLocation = () => {
   const { data, isLoading, error } = useSingleLocationDetailsQuery(id);
   const [regularService, { isLoading: regularLoading }] =
     useRegularServiceMutation();
+  const { data: allService } = useAllServiceQuery();
 
   console.log(data)
+  // const serviceArr = data?.location?.service.map(ser => ser.serviceId) || []
+
+  // const flatAvailableServices = allService?.services?.flatMap(item => item.service) || [];
+
+  // const matchedServices = flatAvailableServices.filter(service =>
+  //   serviceArr.includes(service._id)
+  // );
+
+  // console.log("Matched Services Found:", matchedServices);
+
+  // console.log(data.location.service)
 
   const {
     formState: { errors },
@@ -39,10 +53,7 @@ const SingleLocation = () => {
     },
   });
 
-  const { fields } = useFieldArray({
-    name: "service",
-    control,
-  });
+  const { fields } = useFieldArray({ name: "service", control, });
 
   const submit = async (value) => {
     if (value.service.filter((item) => item.action).length < 1) {
@@ -54,18 +65,25 @@ const SingleLocation = () => {
     form.append("name", "NA");
     form.append("action", "NA");
     form.append("upload", false);
-
     for (let i = 0; i < value.service.length; i++) {
       const item = value.service[i];
-      if (item.image && !item.action) return toast.error("Action is required");
+      if (item.image && !item.action) 
+        return toast.error("Action is required");
       if (item.action) {
-        form.append("name", data.location?.service[i]?.label);
+        form.append("name", data.location?.service[i]?.serviceName);
         form.append("action", item.action.label);
         form.append("upload", item.image ? true : false);
-        form.append("images", item.image);
+        if (item.image instanceof File || item.image instanceof Blob) {
+          form.append("images", item.image);
+        } else {
+          form.append("images", "");
+        }
       }
     }
-
+    console.log(id)
+    for (let pair of form.entries()) {
+      console.log(pair[0], pair[1])
+    }
     try {
       const res = await regularService({ id, form }).unwrap();
       toast.success(res.msg);
@@ -82,6 +100,8 @@ const SingleLocation = () => {
     reset();
   };
 
+  // const rawSvg = decodeBase64Svg(data?.location.qr);
+
   return (
     <>
       {isLoading ? (
@@ -89,18 +109,98 @@ const SingleLocation = () => {
       ) : (
         error && <AlertMessage>{error?.data?.msg || error.error}</AlertMessage>
       )}
-      {data && (
+      {(user.role !== "ClientAdmin" || user.role !== "ClientEmployee") && data && (
         <div>
-          <div className="grid grid-cols-2">
-            <div>
-              <h4>Floor - {data.location.floor}</h4>
-              <h4>Location - {data.location.location}</h4>
-              <h4 className="mb-2">Sub Location - {data.location.subLocation}</h4>
+          <div className="grid grid-cols-4 gap-4">
+            {/* DETAILS */}
+            <div className="col-span-3">
+              <h4>
+                <strong>Floor</strong> - {data.location.floor}
+              </h4>
+              <h4>
+                <strong>Location</strong> - {data.location.location}
+              </h4>
+              <h4 className="mb-3">
+                <strong>Sub Location</strong> - {data.location.subLocation}
+              </h4>
             </div>
-            <div className="">
-              <img src={data.location.qr} alt="" className="h-40 ml-auto block" />
+            <div className="ml-auto pr-2 md:pr-5">
+              <img
+                src={data.location.qr}
+                alt="QR"
+                className="h-40 ml-auto block"
+              />
             </div>
           </div>
+
+          {/* TABLE */}
+
+          <div className="border border-gray-400 rounded overflow-hidden">
+
+            {/* HEADER */}
+
+            <div className={`grid ${user.role !== "Admin" ? "grid-cols-2" : "grid-cols-5"} bg-gray-100 font-semibold text-sm`}>
+              <div className="border-r border-gray-400 px-2 py-2">
+                Service
+              </div>
+              {user.role === "Admin" &&
+                <>
+                  <div className="border-r border-gray-400 px-2 py-2">
+                    Scope
+                  </div>
+
+                  <div className="border-r border-gray-400 px-2 py-2">
+                    Consumable
+                  </div>
+
+                  <div className="border-r border-gray-400 px-2 py-2">
+                    Calibration
+                  </div>
+                </>
+              }
+
+              <div className="px-2 py-2">
+                Frequency
+              </div>
+            </div>
+
+            {/* BODY */}
+
+            {data.location.service?.map((s, index) => (
+              <div
+                key={index}
+                className={`grid ${user.role !== "Admin" ? "grid-cols-2" : "grid-cols-5"}  text-sm border-t border-gray-300`}
+              >
+                <div className="border-r border-gray-300 px-2 py-2">
+                  {s.serviceName}
+                </div>
+                {user.role === "Admin" &&
+                  <>
+                    <div className="border-r border-gray-300 px-2 py-2">
+                      {s.scopeName}
+                    </div>
+
+                    <div className="border-r border-gray-300 px-2 py-2">
+                      {s.consumableName}
+                    </div>
+
+                    <div className="border-r border-gray-300 px-2 py-2">
+                      {s.calibration || "-"}
+                    </div>
+                  </>}
+
+                <div className="px-2 py-2 capitalize">
+                  {s.frequency}
+                </div>
+              </div>
+            ))}
+          </div>
+
+
+          {/* QR svg*/}
+          {/* <div className="ml-auto pr-2 md:pr-5">
+              <img src={`data:image/svg+xml;base64,${rawSvg}`} alt="" className="h-40 ml-auto block" />
+            </div> */}
 
           {user.type === "ClientEmployee" && (
             <>
@@ -125,7 +225,7 @@ const SingleLocation = () => {
                       Date
                     </th>
                     <th className="font-bold text-center border-neutral-500 border-2 px-3">
-                      Pest
+                      Service
                     </th>
                     <th className="font-bold text-center border-neutral-500 border-2 w-24 px-3">
                       Status
@@ -272,49 +372,41 @@ const SingleLocation = () => {
                   >
                     {data.location.service?.map((service, index) => (
                       <div key={index} className="mt-4">
+
                         <p className="text-center font-medium text-lg">
-                          {service.label}
+                          {service.serviceName}
                         </p>
-                        {fields.map((field) => {
-                          return (
-                            <div key={field.id}>
-                              <Controller
-                                name={`service[${index}].action`}
-                                control={control}
-                                render={({
-                                  field: { onChange, value, ref },
-                                }) => (
-                                  <InputSelect
-                                    options={serviceActions}
-                                    onChange={onChange}
-                                    value={value}
-                                    label="Services Action"
-                                  />
-                                )}
-                              />
-                              <Controller
-                                control={control}
-                                name={`service[${index}].image`}
-                                render={({
-                                  field: { value, onChange, ...field },
-                                }) => {
-                                  return (
-                                    <input
-                                      {...field}
-                                      onChange={(event) => {
-                                        onChange(event.target.files[0]);
-                                      }}
-                                      type="file"
-                                      id={`service[${index}].image`}
-                                      className="mt-2"
-                                      accept="image/*"
-                                    />
-                                  );
-                                }}
-                              />
-                            </div>
-                          );
-                        })}
+
+                        <Controller
+                          name={`service[${index}].action`}
+                          control={control}
+                          render={({ field: { onChange, value } }) => (
+                            <InputSelect
+                              options={serviceActions}
+                              onChange={onChange}
+                              value={value}
+                              label={`Service Action - ${service.serviceName}`}
+                            />
+                          )}
+                        />
+
+                        <Controller
+                          control={control}
+                          name={`service.${index}.image`}
+                          defaultValue={null}
+                          render={({ field: { onChange, ref } }) => (
+                            <input
+                              ref={ref}
+                              type="file"
+                              className="mt-2"
+                              accept="image/*"
+                              onChange={(e) => {
+                                onChange(e.target.files[0]);
+                              }}
+                            />
+                          )}
+                        />
+
                         <hr className="h-px mt-5 mb-4 border-0 bg-gray-700" />
                       </div>
                     ))}
@@ -339,6 +431,7 @@ const SingleLocation = () => {
                   </form>
                 )}
               </div>
+              {/* <SingleServiceForm serviceData={data.location.service} /> */}
             </div>
           )}
         </div>

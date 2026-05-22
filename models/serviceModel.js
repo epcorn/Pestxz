@@ -22,10 +22,24 @@ const serviceSchema = new mongoose.Schema(
     ],
     regularService: [
       {
-        name: { type: String },
+        serviceName: { type: String },
+        scopeName: { type: String },
+        consumableName: { type: String },
+
+        calibration: { type: String },
+        used: { type: String },
+
         action: { type: String },
+        comment: { type: String },
+
         image: { type: String },
+
         userName: { type: String },
+
+        date: {
+          type: Date,
+          default: Date.now,
+        },
       },
     ],
     client: {
@@ -39,7 +53,7 @@ const serviceSchema = new mongoose.Schema(
       required: true,
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 const Service = mongoose.model("Service", serviceSchema);

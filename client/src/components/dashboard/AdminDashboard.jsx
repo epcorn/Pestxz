@@ -12,20 +12,24 @@ function AdminDashboard() {
   const { data: clients = [] } = useAllClientsQuery();
 
   const { data: adminDash, isLoading } = useAdminDashboardQuery(selectedClient?._id, {
-    skip: user?.role !== "Admin"
+    // skip: user?.role !== "Admin"
   });
   const handleChange = (e) => {
     const { value } = e.target;
-
     setSelectedClient(value === "select" ? null : clients.find(d => d._id === value))
   }
   useEffect(() => {
-    setClientReq(toggel === "all" ? adminDash?.all : adminDash?.latestComplaints)
-    console.log(clientReq)
-  }, [toggel])
+    if (!adminDash) return;
+    const dataSource = toggel === "all" ? adminDash.all : adminDash.latestComplaints
+    if (selectedClient && selectedClient !== null)
+      setClientReq(dataSource.filter(data => data?.client === selectedClient?._id) || [])
+    else
+      setClientReq(toggel === "all" ? adminDash?.all : adminDash?.latestComplaints)
+  }, [toggel, selectedClient, adminDash])
+
 
   return (
-    <section className="p-4 md:p-8 bg-gray-50 min-h-screen font-sans">
+    <section className="p-2 md:p-8 bg-gray-50 min-h-screen font-sans">
       {/* Header Section */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
         <div>
@@ -73,8 +77,8 @@ function AdminDashboard() {
       {/* Complaints Grid Section */}
       <div className="bg-gray-200 rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
         <div className="bg-gray-500 text-white font-semibold px-6 py-4 border-b border-gray-100 flex gap-3">
-          <h4 className={`font-bold px-2 py-1 rounded-lg cursor-pointer transition-all ${toggel !== "all" && "bg-blue-300 shadow-2xs text-black"}`} onClick={() => setToggel("latest")}>Latest Complaints</h4>
-          <h4 className={`"font-bold px-2 py-1 rounded-lg cursor-pointer transition-all ${toggel === "all" && "bg-blue-300 shadow-2xs text-black"}`} onClick={() => setToggel("all")}>All Complaints</h4>
+          <button type='button' className={`font-bold px-2 py-1 rounded-lg cursor-pointer transition-all ${toggel !== "all" && "bg-blue-300 shadow-2xs text-black"}`} onClick={() => setToggel("latest")}>Latest Complaints</button>
+          <button type='button' className={`"font-bold px-2 py-1 rounded-lg cursor-pointer transition-all ${toggel === "all" && "bg-blue-300 shadow-2xs text-black"}`} onClick={() => setToggel("all")}>All Complaints</button>
         </div>
 
         {/* Header Row - Fixed to 12 columns */}

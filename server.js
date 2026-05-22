@@ -37,13 +37,13 @@ app.use("/api/user", userRoute);
 app.use(
   "/api/client",
   authenticateUser,
-  authorizeUser("Admin", "PestEmployee"),
+  authorizeUser("Admin", "Operator", "Supervisor", "TeamLeader", "BranchAdmin"),
   clientRoute,
 );
 app.use(
   "/api/admin",
   authenticateUser,
-  authorizeUser("Admin", "ClientAdmin"),
+  authorizeUser("Admin","Operator", "ClientAdmin"),
   adminRoute,
 );
 app.use("/api/location", authenticateUser, locationRoute);
@@ -66,7 +66,10 @@ app.use(notFound);
 const port = process.env.PORT || 5000;
 export const MONGOURL = process.env.MONGO_URI;
 
-createAdmin();
+
+
+// createAdmin();
+// addAdminsjson()   // do not run this if not required  
 const connectDB = async () => {
   try {
     await mongoose.connect(MONGOURL);

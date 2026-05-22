@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-.inProgress {
+.inprogress {
   @apply bg-amber-200 text-amber-700 shadow shadow-amber-200;
 }
 .open{

@@ -2,10 +2,11 @@ import { FaBug } from "react-icons/fa";
 import { IoLockClosed, IoLockOpen } from "react-icons/io5";
 import { TbProgressAlert } from "react-icons/tb";
 import { useSelector } from "react-redux";
-import { useClientAdminDashboardQuery } from "../../redux/adminSlice";
+import { useAdminDashboardQuery, useClientAdminDashboardQuery } from "../../redux/adminSlice";
 import Loading from "../Loading";
 import AlertMessage from "../AlertMessage";
 import ComplaintTable from "../ComplaintTable";
+import { useAllComplaintsQuery } from "../../redux/serviceSlice";
 
 // Safety extraction of stats
 const stats = [
@@ -43,6 +44,14 @@ const ClientDashboard = () => {
     error
   } = useClientAdminDashboardQuery(user?.client, { skip: !user?.client });
 
+  const { data: clientDash, isLoading: clgLoading } = useAdminDashboardQuery(user.client, {
+    skip: !user.client
+  });
+  const { data, isFetching } = useAllComplaintsQuery({
+    location: "All",
+  });
+
+  console.log(data)
 
   return (
     <section className="p-4 md:p-8 bg-gray-50 min-h-screen font-sans">
@@ -87,11 +96,12 @@ const ClientDashboard = () => {
           {/* Table Section */}
           <div className="mt-10">
             <div className="flex items-center justify-between mb-4">
-              <h4 className="text-lg font-bold text-gray-700">All Complaints Update</h4>
+              <h4 className="text-lg font-bold text-gray-700">Latest Complaints Update</h4>
               <span className="text-[10px] font-bold bg-gray-200 text-gray-600 px-2 py-1 rounded-md uppercase">
                 Recent Activity
               </span>
             </div>
+            
 
             <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden p-1">
               <ComplaintTable data={adminDash.latestComplaints} user={user} />

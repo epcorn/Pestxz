@@ -19,17 +19,23 @@ export const nagative = (res, id) => {
   if (res.id === id && res.rating === false)
     style = `text-red-600 active:scale-105`;
   else style = ``;
-  
+
   return style;
 };
 
 export const dateFormat = (date) => {
-  // return new Date(date).toLocaleDateString("en-IN", {
-  //   day: "numeric",
-  //   month: "numeric",
-  //   year: "numeric",
-  // });
-  return `${date.split("T")[0]}, ${date.split("T")[1].slice(0, 5)}`;
+  return new Date(date).toLocaleDateString("en-IN", {
+    day: "numeric",
+    month: "numeric",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+
+  // return `${date.split("T")[0]}, ${date.split("T")[1].slice(0, 5)}`;
+  // const formattedDate = new Date(date).toLocaleString();
+  // return formattedDate;
 };
 
 export function decodeBase64Svg(base64String) {

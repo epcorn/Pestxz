@@ -10,8 +10,10 @@ import {
 import fs from "fs";
 
 let locationId = null;
+
 export const addLocation = async (req, res) => {
-  const { floor, subLocation, location, clientId } = req.body;
+  const { floor, subLocation, location, clientId, serviceReq } = req.body;
+
   try {
     const client = await Client.findById(clientId);
     if (!client) return res.status(404).json({ msg: "Client not found" });
@@ -25,12 +27,15 @@ export const addLocation = async (req, res) => {
     if (locationExist)
       return res.status(400).json({ msg: "Location already exist" });
 
+    const services = serviceReq.filter(
+      (ser) => ser.serviceId && ser.scopeId && ser.consumableId,
+    );
+
     const newLocation = await Location.create({
       floor: capitalLetter(floor),
       subLocation: capitalLetter(subLocation),
       location: capitalLetter(location),
-      service: req.body.service.length > 0 ? req.body.service : [],
-      product: req.body.product.length > 0 ? req.body.product : [],
+      service: services,
       client: client._id,
     });
     locationId = newLocation._id;
@@ -80,15 +85,20 @@ export const getAllLocations = async (req, res) => {
   const { id } = req.params;
   try {
     let clientId = id;
-    if (clientId === "ClientAdmin") clientId = req.user.client;
-    const client = await Client.findById(clientId);
-    if (!client) return res.status(404).json({ msg: "Client not found" });
+    let floors = [];
+    if (clientId === "ClientAdmin") 
+      clientId = req.user.client;
+      const client = await Client.findById(clientId);
+      if (!client) return res.status(404).json({ msg: "Client not found" });
 
-    const locations = await Location.find({ client: clientId });
-    const floors = [];
-    locations.map(
-      (item) => !floors.includes(item.floor) && floors.push(item.floor),
-    );
+      const locations = await Location.find({ client: clientId });
+      locations.map(
+        (item) => !floors.includes(item.floor) && floors.push(item.floor),
+      );
+    // } else{
+    //   const locations = await Location.find();
+
+    // }
 
     return res.json({ client, locations, floors });
   } catch (error) {

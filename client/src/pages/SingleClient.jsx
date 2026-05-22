@@ -18,15 +18,17 @@ const SingleClient = () => {
   const [locationDetails, setLocationDetails] = useState({});
   const dispatch = useDispatch();
   const { id } = useParams();
+
   const { data, isLoading, isFetching, error } = useAllLocationsQuery({ id });
   const [deleteLocation, { isLoading: deleteLoading }] =
     useDeleteLocationMutation();
 
+  // handle edit model
   const handleEditModal = (location) => {
     setLocationDetails(location);
     dispatch(toggleModal({ name: "location", status: true }));
   };
-
+  // add new model
   const handleNewModal = () => {
     setLocationDetails(null);
     dispatch(toggleModal({ name: "location", status: true }));
@@ -45,6 +47,9 @@ const SingleClient = () => {
     }
   };
 
+  const services = data?.locations?.map(loc => loc.service || []) || []
+  console.log(data)
+
   return (
     <>
       {isLoading || isFetching ? (
@@ -57,14 +62,14 @@ const SingleClient = () => {
           <h2 className="text-center text-2xl text-sky-700 font-semibold">
             {data.client.name}
           </h2>
-          <div className="grid md:grid-cols-2 my-5 mx-2">
-            <h6 className="">Address: {data.client.address}</h6>
-            <div className="flex md:justify-center space-x-4">
-              <h6 className="text-center">
+          <div className="grid grid-cols-1 md:grid-cols-2 my-5 mx-2">
+            <div className="mr-auto space-x-4">
+              <h6 className="">
                 Contract No: {data.client.contractNo}
               </h6>
-              <h6 className="text-center">Email: {data.client.email}</h6>
+              <h6 className="">Email: {data.client.email}</h6>
             </div>
+            <h6 className="">Address: {data.client.address}</h6>
           </div>
           <div className="flex justify-between">
             <div>
@@ -99,9 +104,9 @@ const SingleClient = () => {
                   <th className="font-bold text-center border-neutral-500 border-2 w-32 px-3">
                     Services
                   </th>
-                  <th className="font-bold text-center border-neutral-500 border-2 w-32 px-3">
+                  {/* <th className="font-bold text-center border-neutral-500 border-2 w-32 px-3">
                     Products
-                  </th>
+                  </th> */}
                   <th className="font-bold text-center border-neutral-500 border-2 w-28">
                     QR Codes
                   </th>
@@ -125,10 +130,7 @@ const SingleClient = () => {
                       {location.location}, {location.subLocation}
                     </td>
                     <td className="px-3 border-r font-normal text-center border-neutral-500">
-                      {location.service.map((item) => item.label + ", ")}
-                    </td>
-                    <td className="px-3 border-r font-normal text-center border-neutral-500">
-                      {location.product.map((item) => item.label + ", ")}
+                      {location.service?.map((item) => item.serviceName).join(", ")}
                     </td>
                     <td className="border-r font-normal text-center border-neutral-500">
                       <Button

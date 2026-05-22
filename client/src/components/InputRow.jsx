@@ -6,9 +6,11 @@ const InputRow = ({
   required = true,
   type = "text",
   disabled = false,
+  cls="mt-2",
 }) => {
+
   return (
-    <div className="relative mt-2">
+    <div className={`relative ${cls}`}>
       <label
         htmlFor={id}
         className="block text-md font-medium leading-6 text-gray-900"

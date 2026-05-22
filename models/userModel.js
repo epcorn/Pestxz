@@ -7,9 +7,25 @@ const userSchema = new mongoose.Schema(
     email: { type: String, required: true },
     password: { type: String, required: true },
     name: { type: String, required: true },
-    role: { type: String, required: true },
-    type: { type: String, required: true },
-    department: { type: String, required: true },
+    type: {
+      type: String,
+      required: true,
+      enum: ["Admin", "PestEmployee", "ClientEmployee"],
+    },
+    department: { type: String, required: false },
+    role: {
+      type: String,
+      required: true,
+      enum: [
+        "Admin",
+        "Operator",
+        "Supervisor",
+        "TeamLeader",
+        "BranchAdmin",
+        "ClientAdmin",
+        "ClientEmployee",
+      ],
+    },
     client: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Client",
@@ -17,9 +33,20 @@ const userSchema = new mongoose.Schema(
         return this.role !== "Admin";
       },
     },
+    rights: {
+      raise: { type: Boolean, default: false },
+      close: { type: Boolean, default: false },
+      scan_Scheduled: { type: Boolean, default: false },
+      scan_Unscheduled: { type: Boolean, default: false },
+    },
   },
-  { timestamps: true },
+  {
+    timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
+  },
 );
+
 
 userSchema.pre("save", async function () {
   if (!this.isModified("password")) return;
@@ -39,15 +66,19 @@ export const createAdmin = async () => {
     password = "12345",
     name = "Vipul",
     role = "Admin",
-    type = "PestAdmin",
-    department = "Pest control";
+    type = "PestEmployee",
+    department = "Pest control",
+    rights = {
+      raise: true,
+      close: true,
+      scan_Scheduled: true,
+      scan_Unscheduled: true,
+    };
   try {
-    // await mongoose.connect(MONGOURL);
-
     const adminExists = await User.findOne({ email: email });
     if (adminExists) {
       console.log("Admin already exists!");
-      process.exit();
+      return;
     }
     await User.create({
       name: name,
@@ -56,11 +87,10 @@ export const createAdmin = async () => {
       role: role,
       type: type,
       department: department,
+      rights: rights,
     });
     console.log("new admin created! ");
-    process.exit();
   } catch (error) {
     console.error("Error creating admin:", error);
-    process.exit(1);
   }
 };

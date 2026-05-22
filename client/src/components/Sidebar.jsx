@@ -15,8 +15,7 @@ const navList = [
   {
     icon: <BsBarChartFill className="w-6 h-6 " />,
     name: "Dashboard",
-    // to: "/stats",
-    to: "/new",
+    to: "/stats",
     role: ["Admin", "ClientAdmin"],
   },
   {
@@ -35,7 +34,7 @@ const navList = [
     icon: <FaBug className="w-6 h-6" />,
     name: "Complaints",
     to: "/complaints",
-    role: ["Admin", "ClientAdmin", "ClientEmployee", "PestEmployee"],
+    role: ["Admin", "Operator", "Supervisor", "TeamLeader", "BranchAdmin", "PestAdmin", "ClientAdmin", "ClientEmployee"],
   },
   {
     icon: <MdLocationOn className="w-6 h-6" />,
@@ -108,9 +107,8 @@ const Sidebar = () => {
         </div>
       </nav>
       <aside
-        className={`fixed top-0 left-0 w-60 z-50 h-screen transition-transform -translate-x-full border-r-2 bg-slate-700 border-gray-500 ${
-          show ? "translate-x-0" : "lg:translate-x-0"
-        }`}
+        className={`fixed top-0 left-0 w-60 z-50 h-screen transition-transform -translate-x-full border-r-2 bg-slate-700 border-gray-500 ${show ? "translate-x-0" : "lg:translate-x-0"
+          }`}
       >
         {show && (
           <div className="flex justify-end">
@@ -127,9 +125,8 @@ const Sidebar = () => {
                 item.role.includes(user?.role) && (
                   <li
                     key={item.name}
-                    className={`hover:bg-gray-800 px-3 ${
-                      active === item.to && "bg-gray-800"
-                    }`}
+                    className={`hover:bg-gray-800 px-3 ${active === item.to && "bg-gray-800"
+                      }`}
                   >
                     <button
                       onClick={() => handleNavigate(item.to)}

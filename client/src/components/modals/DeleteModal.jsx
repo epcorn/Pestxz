@@ -13,12 +13,12 @@ const DeleteModal = ({ title, handleDelete, isLoading, id, label }) => {
       <button
         className={
           label &&
-          `bg-red-600 flex rounded-lg hover:opacity-80 px-2 items-center h-8`
+          `bg-red-600 cursor-pointer flex rounded-lg hover:opacity-80 px-2 items-center h-8`
         }
         onClick={() => dispatch(toggleModal({ name: "delete", status: id }))}
       >
         <MdDeleteForever
-          className={`w-6 h-6 mr-0.5  ${label ? "text-white" : "text-red-600"}`}
+          className={`w-6 h-6 mr-0.5 cursor-pointer  ${label ? "text-white" : "text-red-600"}`}
         />
         <span className="text-white text-[15px] font-semibold">{label}</span>
       </button>

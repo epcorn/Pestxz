@@ -11,22 +11,24 @@ export const newComplaint = async (req, res) => {
       return res
         .status(400)
         .json({ msg: "Yoe are not allowed to raise a complaint" });
+    // const client = await Client.findById(req.user.client);
+    // const prefix = client.name
+    const lastComplaint = await Service.findOne({
+      type: "Complaint",
+      client: req.user.client,
+    })
+      .sort({ createdAt: -1 })
+      .select("complaintDetails.number");
+    let nextNumber = 1;
 
-    let sr = `SR - ${Math.floor(1 + Math.random() * 9000)}`,
-      unique = true;
-
-    while (unique) {
-      const alreadySR = await Service.findOne({
-        "complaintDetails.number": sr,
-        client: req.user.client,
-      });
-      if (alreadySR) {
-        sr = `SR - ${Math.floor(1 + Math.random() * 9000)}`;
-      } else {
-        unique = false;
-      }
+    if (lastComplaint?.complaintDetails.number) {
+      const lastNumber = parseInt(
+        lastComplaint.complaintDetails.number.replace("SR-", "").trim(),
+      );
+      nextNumber = lastNumber + 1;
     }
 
+    const sr = `SR-${String(nextNumber).padStart(4, "0")}`;
     const imageLinks = [];
     if (req.files) {
       let images = [];
@@ -165,7 +167,8 @@ export const getAllComplaints = async (req, res) => {
   try {
     let pageNumber = Number(page) || 1;
 
-    let complaints = await Service.find(query)
+    // let complaints = await Service.find(query)
+    let complaints = await Service.find()
       .populate({
         path: "location client",
         select: "floor subLocation location name",
@@ -176,7 +179,7 @@ export const getAllComplaints = async (req, res) => {
 
     if (location !== "All") {
       complaints = complaints.filter(
-        (complaint) => complaint.location.floor === location
+        (complaint) => complaint.location.floor === location,
       );
     }
 
@@ -201,16 +204,16 @@ export const newRegularService = async (req, res) => {
     if (!location) return res.status(404).json({ msg: "Location not found" });
 
     let images = [];
-    if (req.files) {
-      if (req.files.images.length > 0) {
-        images = req.files.images;
-      } else {
-        images.push(req.files.images);
-      }
+    if (req.files?.images) {
+      images = Array.isArray(req.files.images)
+        ? req.files.images
+        : [req.files.images];
     }
+
     const regularService = [];
     const service = req.body;
     let imageUpload = 0;
+
     for (let i = 1; i < action.length; i++) {
       let link = "";
       if (service.upload[i] === "true") {
@@ -245,7 +248,7 @@ export const dailyServiceReport = async (req, res) => {
     const yesterday = new Date(
       date.getFullYear(),
       date.getMonth(),
-      date.getDate()
+      date.getDate(),
     ).setUTCHours(0, 0, 0, 0);
 
     const clients = await Client.find().populate({

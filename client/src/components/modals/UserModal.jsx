@@ -10,6 +10,8 @@ import {
 import { useAllClientsQuery } from "../../redux/clientSlice";
 import { toggleModal } from "../../redux/helperSlice";
 import FormModal from "./FormModal";
+import { clientRoles, pestRoles } from "../../utils/constData";
+import InputCheck from "../InputCheck";
 
 const UserModal = ({ userDetails }) => {
   const [clients, setClients] = useState([]);
@@ -17,19 +19,8 @@ const UserModal = ({ userDetails }) => {
   const { isModalOpen, user } = useSelector((store) => store.helper);
 
   const [addUser, { isLoading: addLoading }] = useRegisterUserMutation();
-  const [changePassword, { isLoading: updateLoading }] =
-    useChangePasswordMutation();
-
-  const { data, isLoading, error } = useAllClientsQuery();
-
-  useEffect(() => {
-    setClients([]);
-    if (data) {
-      data.map((item) =>
-        setClients((prev) => [...prev, { label: item.name, value: item._id }])
-      );
-    }
-  }, [data]);
+  const [changePassword, { isLoading: updateLoading }] = useChangePasswordMutation();
+  const { data: rawClients } = useAllClientsQuery();
 
   const {
     register,
@@ -37,41 +28,120 @@ const UserModal = ({ userDetails }) => {
     handleSubmit,
     reset,
     control,
+    watch,
+    setValue,
   } = useForm({
     defaultValues: userDetails || {
       name: "",
-      department: "",
-      client: "",
       email: "",
       password: "",
+      role: "",
+      type: "PestEmployee",
+      department: "",
+      client: null,
+      rights: {
+        raise: false,
+        close: false,
+        scan_Scheduled: false,
+        scan_Unscheduled: false,
+      }
     },
   });
 
-  const submit = async (data) => {
-    let res;
-    if (data.password.length < 5)
-      return toast.error("Password must be of 5 characters or greater");
-    if (user.role === "Admin") data.department = "Pest Control";
+  const selectedType = watch("type");
+
+  // Format client selection records safely
+  useEffect(() => {
+    if (rawClients) {
+      const formattedClients = rawClients.map((item) => ({
+        label: item.name,
+        value: item._id,
+      }));
+      setClients(formattedClients);
+    }
+  }, [rawClients]);
+
+  useEffect(() => {
+    setValue("role", "");
+    setValue("client", null);
+  }, [selectedType, setValue]);
+
+  useEffect(() => {
+    if (userDetails) {
+      reset({
+        name: userDetails.name || "",
+        email: userDetails.email || "",
+        password: "",
+        role: userDetails.role || "",
+        type: userDetails.type || "PestEmployee",
+        department: userDetails.department || "",
+        client: userDetails.client || null,
+        rights: {
+          raise: userDetails.rights.raise || false,
+          close: userDetails.rights.close || false,
+          scan_Scheduled: userDetails.rights.scan_Scheduled || false,
+          scan_Unscheduled: userDetails.rights.scan_Unscheduled || false,
+        }
+      });
+    } else {
+      reset({
+        name: "",
+        email: "",
+        password: "",
+        role: "",
+        type: "PestEmployee",
+        department: "",
+        client: null,
+        rights: {
+          raise: false,
+          close: false,
+          scan_Scheduled: false,
+          scan_Unscheduled: false,
+        }
+      });
+    }
+  }, [userDetails, reset]);
+
+  const activeRoleOptions =
+    selectedType === "PestEmployee"
+      ? userDetails?.role === "Admin"
+        ? [{ label: "Admin", value: "Admin" }, ...pestRoles]
+        : pestRoles
+      : clientRoles;
+
+  const submit = async (formData) => {
+    if (!userDetails && formData.password.length < 5) {
+      return toast.error("Password must be 5 characters or greater");
+    }
+    const payload = {
+      ...formData,
+      client: selectedType === "ClientEmployee"
+        ? formData.client?.value
+        : user?._id
+    };
+    console.log(payload)
     try {
+      let res;
       if (userDetails) {
         res = await changePassword({
           id: userDetails._id,
-          data,
+          data: payload,
         }).unwrap();
       } else {
-        res = await addUser(data).unwrap();
+        res = await addUser(payload).unwrap();
       }
-      toast.success(res.msg);
+      toast.success(res?.msg || "Success");
       reset();
       dispatch(toggleModal({ name: "user", status: false }));
     } catch (error) {
-      console.log(error);
-      toast.error(error?.data?.msg || error.error);
+      console.error(error);
+      toast.error(error?.data?.msg || error.error || "An error occurred");
     }
   };
 
   const formBody = (
-    <div className="grid gap-x-4 mb-4 w-75">
+    <div className="grid gap-y-1 mb-4 w-sm">
+      {/* Full Name Input */}
       <div>
         <InputRow
           label="Full Name"
@@ -80,38 +150,93 @@ const UserModal = ({ userDetails }) => {
           register={register}
           disabled={addLoading || userDetails}
         />
-        <p className="text-xs text-red-500 -bottom-4 pl-1">
+        <p className="text-xs text-red-500 pl-1 mt-1">
           {errors.name && "Name is required"}
         </p>
       </div>
-      {user.role === "Admin" && (
-        <Controller
-          name="client"
-          control={control}
-          render={({ field: { onChange, value, ref } }) => (
-            <InputSelect
-              options={clients}
-              onChange={onChange}
-              value={value}
-              label="Client Name"
-            />
-          )}
-        />
+
+      {/* Type Radio Controls */}
+      <div className="grid grid-cols-2 text-sm mt-1 py-1 border-b border-gray-100 transition-all">
+        <div className="flex items-center gap-2">
+          <input
+            type="radio"
+            id="PestEmployee"
+            value="PestEmployee"
+            disabled={!!userDetails}
+            {...register("type")}
+          />
+          <label htmlFor="PestEmployee" className="font-medium text-gray-700 cursor-pointer">Pest Employee</label>
+        </div>
+        <div className="flex items-center gap-2">
+          <input
+            type="radio"
+            id="ClientEmployee"
+            value="ClientEmployee"
+            disabled={!!userDetails}
+            {...register("type")}
+          />
+          <label htmlFor="ClientEmployee" className="font-medium text-gray-700 cursor-pointer">Client Employee</label>
+        </div>
+      </div>
+      {/* Select Role Dropdown */}
+      <div className="flex flex-col gap-1">
+        <label htmlFor="role" className="text-sm font-semibold text-gray-700">
+          Select Role<span className="text-red-500 ml-0.5">*</span>
+        </label>
+        <select
+          id="role"
+          disabled={!!userDetails}
+          className="w-full p-1.5 border outline-none rounded border-gray-400 text-sm bg-white focus:border-black transition"
+          {...register("role", { required: "Role field is required" })}
+        >
+          <option value="">--Select--</option>
+          {activeRoleOptions?.map((r, i) => (
+            <option key={i} value={r.value}>{r.label}</option>
+          ))}
+        </select>
+        <p className="text-xs text-red-500 pl-1 mt-0.5">
+          {errors.role?.message}
+        </p>
+      </div>
+      {/* Client Selection Custom Dropdown Wrapper */}
+      {selectedType === "ClientEmployee" && (
+        <div>
+          <Controller
+            name="client"
+            control={control}
+            rules={{ required: "Client selection is required" }}
+            render={({ field: { onChange, value } }) => (
+              <InputSelect
+                options={clients}
+                onChange={onChange}
+                value={value}
+                label="Client Name"
+                placeholder="Select Client Account"
+              />
+            )}
+          />
+          <p className="text-xs text-red-500 pl-1 mt-0.5">
+            {errors.client && "Client selection is required"}
+          </p>
+        </div>
       )}
-      {user.role === "ClientAdmin" && (
+      {/* Department Input */}
+      {selectedType === "ClientEmployee" &&
         <div>
           <InputRow
             label="Department"
             id="department"
             errors={errors}
             register={register}
+            required={selectedType === "ClientEmployee"}
             disabled={addLoading || userDetails}
           />
-          <p className="text-xs text-red-500 -bottom-4 pl-1">
+          <p className="text-xs text-red-500 pl-1 mt-1">
             {errors.department && "Department is required"}
           </p>
         </div>
-      )}
+      }
+      {/* Email Address */}
       <div>
         <InputRow
           label="Email"
@@ -120,11 +245,13 @@ const UserModal = ({ userDetails }) => {
           register={register}
           disabled={addLoading || userDetails}
           type="email"
+          cls="mt-0"
         />
-        <p className="text-xs text-red-500 -bottom-4 pl-1">
+        <p className="text-xs text-red-500 pl-1 mt-1">
           {errors.email && "Email is required"}
         </p>
       </div>
+      {/* Password Field */}
       <div>
         <InputRow
           label="Password"
@@ -133,25 +260,36 @@ const UserModal = ({ userDetails }) => {
           register={register}
           disabled={addLoading}
           required={!userDetails}
+          cls="mt-0"
         />
-        <p className="text-xs text-red-500 -bottom-4 pl-1">
-          {errors.password && "Password is required"}
+        <p className="text-xs text-red-500 pl-1 mt-1">
+          {errors.password && "Password field is required"}
         </p>
       </div>
+      <div>
+        <Controller
+          name="rights"
+          control={control}
+          render={({ field: { onChange, value } }) => (
+            <InputCheck value={value} required={true} onChange={onChange} />
+          )}
+        />
+      </div>
+
     </div>
   );
-
   return (
     <FormModal
       onSubmit={handleSubmit(submit)}
       title={`${userDetails ? "Update" : "Add"} Employee`}
       formBody={formBody}
-      submitLabel={userDetails ? "Update Password" : "Add User"}
+      submitLabel={userDetails ? "Update Password" : "Add"}
       handleClose={() => dispatch(toggleModal({ name: "user", status: false }))}
       disabled={addLoading || updateLoading}
       isLoading={addLoading || updateLoading}
-      open={isModalOpen.user}
+      open={isModalOpen?.user}
     />
   );
 };
+
 export default UserModal;

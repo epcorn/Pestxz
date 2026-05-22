@@ -15,13 +15,17 @@ import {
   useUpdateServiceMutation,
 } from "../redux/adminSlice";
 import { FaEdit } from "react-icons/fa";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { DeleteModal } from "../components/modals";
 import { useDispatch, useSelector } from "react-redux";
 import { toggleModal } from "../redux/helperSlice";
-
+import ServiceFormModal from "../components/modals/ServiceFormModal";
+import ServiceList from "../components/modals/ServiceList";
+import Frequency from "../components/Frequency";
 
 const Services = () => {
+  const [selectedService, setSelectedService] = useState(null);
+  const [selectedScope, setSelectedScope] = useState(null);
   const [update, setUpdate] = useState({
     status: false,
     id: "",
@@ -36,173 +40,74 @@ const Services = () => {
   const [deleteService, { isLoading: deleteLoading }] =
     useDeleteServiceMutation();
 
-  const {
-    register,
-    formState: { errors },
-    handleSubmit,
-    reset,
-    control,
-    watch,
-    setValue,
-  } = useForm({
-    defaultValues: {
-      serviceType: {
-        label: "Service",
-        value: "Service"
-      }, serviceName: "",
-    },
-  });
+  const services = data?.services || [];
 
-  const watchType = watch("serviceType");
+  useEffect(() => {
+    if (selectedService && data?.services) {
+      const updatedService = data.services
+        ?.flatMap(item => item.service)
+        ?.find(s => s._id === selectedService._id);
 
-  const submit = async (data) => {
-    let res;
-    try {
-      if (update.status) {
-        res = await updateService({ id: update.id, data }).unwrap();
-      } else {
-        res = await addService(data).unwrap();
+      setSelectedService(updatedService || null);
+
+      if (selectedScope && updatedService) {
+        const updatedScope = updatedService.scopes.find(
+          sc => sc._id === selectedScope._id
+        );
+        setSelectedScope(updatedScope || null);
       }
-      setUpdate({ status: false, id: "" });
-      toast.success(res.msg);
-      reset();
-    } catch (error) {
-      console.log(error);
-      toast.error(error?.data?.msg || error.error);
     }
-  };
-
-  const copyData = (data) => {
-    setValue("serviceName", data.serviceName.label);
-    setValue("serviceType", data.serviceType);
-    setUpdate({ status: true, id: data._id });
-  };
-
-  const handleDelete = async () => {
-    try {
-      await deleteService(isModalOpen.delete.id).unwrap();
-      toast.success("Deleted successfully");
-      dispatch(
-        toggleModal({ name: "delete", status: { id: null, name: null } })
-      );
-    } catch (error) {
-      console.log(error);
-      toast.error(error?.data?.msg || error.error);
-    }
-  };
-
-  const services = data?.allServices.filter(s => s.serviceType.label === "Service") || [];
-  const products = data?.allServices.filter(s => s.serviceType.label !== "Service") || [];
-
-  const maxRows = Math.max(services.length, products.length);
+  }, [data]);
 
   return (
-    <div>
-      {isLoading || isFetching || updateLoading ? (
-        <Loading />
-      ) : (
-        error && <AlertMessage>{error?.data?.msg || error.error}</AlertMessage>
-      )}
-      {!error && (
-        <>
-          <form
-            className="md:flex md:space-x-5 justify-center items-end"
-            onSubmit={handleSubmit(submit)}
-          >
-            <div className="md:w-56">
-
-              <Controller
-                name="serviceType"
-                control={control}
-                rules={{ required: "Select type" }}
-                render={({ field: { onChange, value, ref } }) => (
-                  <InputSelect
-                    options={types}
-                    onChange={onChange}
-                    value={value}
-                    label="Type"
-                    isClearable={false}
-                  />
-                )}
-              />
-              <p className="text-xs text-red-500 -bottom-4 pl-1">
-                {errors.serviceType?.message}
-              </p>
-            </div>
-            <div className="pb-4 md:pb-0">
-              <InputRow
-                label="Name"
-                id="serviceName"
-                errors={errors}
-                register={register}
-              />
-              <p className="text-xs text-red-500 -bottom-4 pl-1">
-                {errors.serviceName && "Name is required"}
-              </p>
-            </div>
-            <div className="text-center">
-              <Button
-                type="submit"
-                color="bg-green-500"
-                label={`${update.status ? "Update" : "Add"} ${watchType.label}`}
-                disabled={addLoading}
-                isLoading={addLoading}
-                height="h-10"
-              />
-            </div>
-          </form>
-          {/* <Test /> */}
-          <hr className="h-px mt-5 mb-7 border-0 bg-gray-700" />
-          <div className="overflow-y-auto my-4">
-            <table className="w-full border whitespace-nowrap border-neutral-500 bg-text">
-              <thead>
-                <tr className="h-8 w-full leading-none">
-                  <th className="font-bold text-center border-neutral-500 border-2 px-3">
-                    Service
-                  </th>
-                  <th className="font-bold text-center border-neutral-500 border-2 px-3">
-                    Product
-                  </th>
-                  <th className="font-bold text-center border-neutral-500 border-2 w-32 px-3">
-                    Action
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {data?.allServices.map((service) => (
-                  <tr
-                    key={service._id}
-                    className="h-8 text-[14px] border-b border-neutral-500 hover:bg-slate-200"
-                  >
-                    <td className="px-3 border-r  border-neutral-500">
-                      {service.serviceType.label}
-                    </td>
-                    <td className="px-3 border-r  border-neutral-500">
-
-                      {service.serviceName.label}
-                    </td>
-                    <td className="px-3 flex justify-center h-8 items-center space-x-3 border-r text-center border-neutral-500">
-                      <button type="button" onClick={() => copyData(service)}>
-                        <FaEdit className="h-5 w-5 text-indigo-600" />
-                      </button>
-                      <DeleteModal
-                        title="Delete Service"
-                        handleDelete={handleDelete}
-                        isLoading={deleteLoading}
-                        id={{
-                          id: service._id,
-                          name: service.serviceName.label,
-                        }}
-                      />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+    <>
+      <section className="w-full space-y-5 p-1">
+        {/* Main layout flexbox/grid fix container */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-2 items-stretch">
+          <div className="col-span-1 md:col-span-2">
+            <ServiceFormModal addService={addService} />
           </div>
-        </>
-      )}
-    </div>
+          <div className="md:col-span-1 flex">
+            <Frequency />
+          </div>
+        </div>
+
+        <div className="outline grid outline-gray-400 p-4 bg-white rounded-lg space-y-4">
+          <h3 className="text-2xl font-semibold text-center">Services</h3>
+          {/* SERVICES */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+            {services?.flatMap((item) =>
+              item.service.map((service) => (
+                <div
+                  key={service._id}
+                  onClick={() => {
+                    setSelectedService(service);
+                    setSelectedScope(null);
+                    dispatch(toggleModal({ name: "service", status: true }))
+                  }}
+                  className={`capitalize border border-gray-500 rounded p-2 cursor-pointer transition ${selectedService?._id === service._id ? "bg-green-100 border-green-500" : "hover:bg-gray-50"
+                    }`}
+                >
+                  {service.serviceName}
+                </div>
+              ))
+            )}
+          </div>
+          {isModalOpen.service && (
+            <ServiceList
+              dispatch={dispatch}
+              toggleModal={toggleModal}
+              services={services}
+              selectedService={selectedService}
+              selectedScope={selectedScope}
+              setSelectedService={setSelectedService}
+              setSelectedScope={setSelectedScope}
+            />
+          )}
+        </div>
+      </section>
+    </>
   );
-};
+}
+
 export default Services;

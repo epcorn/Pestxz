@@ -1,10 +1,13 @@
 import express from "express";
 import {
+  addFrequency,
   addService,
   adminDashboard,
   clientAdminDashboard,
   deleteService,
   editService,
+  getFrequency,
+  removeFrequency,
 } from "../controllers/adminController.js";
 import {
   deleteUser,
@@ -18,6 +21,8 @@ const router = express.Router();
 
 router.route("/user").post(registerUser).get(getAllUser);
 router.route("/service").post(addService);
+router.route("/freq").post(addFrequency).get(getFrequency);
+router.delete("/freq/:id", removeFrequency);
 router.get("/clientAdminDashboard", clientAdminDashboard);
 router.get("/adminDashboard/:id?", adminDashboard);
 router.get("/getClientAssignedEmployee/:email", getClientAssignedEmployee);

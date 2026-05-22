@@ -22,3 +22,15 @@ export const serviceActions = [
   { label: "New Trap Placed", value: "New Trap Placed" },
   { label: "Trap Replaced", value: "Trap Replaced" },
 ];
+
+export const pestRoles = [
+  { label: "BranchAdmin", value: "BranchAdmin" },
+  { label: "TeamLeader", value: "TeamLeader" },
+  { label: "Supervisor", value: "Supervisor" },
+  { label: "Operator", value: "Operator" },
+];
+
+export const clientRoles = [
+  { label: "ClientAdmin", value: "ClientAdmin" },
+  { label: "ClientEmployee", value: "ClientEmployee" },
+];

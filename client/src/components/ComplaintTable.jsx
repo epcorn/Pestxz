@@ -1,14 +1,13 @@
 import { Link } from "react-router-dom";
-import { dateFormat, progress } from "../utils/helperFunctions";
+import { dateFormat } from "../utils/helperFunctions";
 
 const ComplaintTable = ({ data, user }) => {
-
   return (
     <div className="w-full">
       {/* Header Row - Hidden on Mobile */}
-      <div className="hidden md:grid grid-cols-12 gap-4 px-6 py-3 bg-gray-50 border-b border-gray-100">
-        <p className="col-span-1 font-bold text-[11px] text-gray-400 uppercase tracking-wider">Sr no.</p>
+      <div className="hidden md:grid grid-cols-13 gap-2 px-4 md:px-6 *:py-3 bg-gray-50 border-b border-gray-100">
         <p className="col-span-2 font-bold text-[11px] text-gray-400 uppercase tracking-wider">Number</p>
+        <p className="col-span-2 font-bold text-[11px] text-gray-400 uppercase tracking-wider">Type</p>
         <p className="col-span-2 font-bold text-[11px] text-gray-400 uppercase tracking-wider">Date</p>
         <p className="col-span-3 font-bold text-[11px] text-gray-400 uppercase tracking-wider">Location</p>
         <p className="col-span-2 font-bold text-[11px] text-gray-400 uppercase tracking-wider text-center">Service</p>
@@ -20,19 +19,29 @@ const ComplaintTable = ({ data, user }) => {
         {data?.map((complaint, i) => (
           <div
             key={complaint._id}
-            className="grid grid-cols-1 md:grid-cols-12 gap-4 px-6 py-4 items-center hover:bg-gray-50 transition-colors"
+            className="grid grid-cols-1 md:grid-cols-13 gap-2 px-4 md:px-6 py-4 items-center hover:bg-gray-50 transition-colors"
           >
-            {/* serial number  */}
-            <p className="col-span-1">{i + 1}</p>
             {/* Complaint Number */}
             <div className="col-span-2">
               <p className="text-[10px] font-bold text-gray-400 md:hidden uppercase mb-1">Number</p>
-              <Link
-                to={`/complaint/${complaint._id}`}
-                className="text-sm font-bold text-blue-600 hover:text-blue-800 transition-colors"
-              >
-                #{complaint.complaintDetails.number}
-              </Link>
+              {user?.rights?.raise || user?.rights?.close ? (
+                <Link
+                  to={`/complaint/${complaint._id}`}
+                  className="text-sm font-bold text-blue-600 hover:text-blue-800 transition-colors"
+                >
+                  #{complaint.complaintDetails?.number || i + 1}
+                </Link>
+              ) : (
+                <p className="text-sm font-bold text-gray-600">
+                  #{complaint.complaintDetails?.number || i + 1}
+                </p>
+              )}
+            </div>
+
+            {/* Complaint Type */}
+            <div className="col-span-2">
+              <p className="text-[10px] font-bold text-gray-400 md:hidden uppercase mb-1">Type</p>
+              <p className="text-sm text-gray-600 font-semibold">{complaint.type}</p>
             </div>
 
             {/* Date */}
@@ -44,25 +53,26 @@ const ComplaintTable = ({ data, user }) => {
             {/* Location / Client */}
             <div className="col-span-3 text-sm text-gray-700 font-medium">
               <p className="text-[10px] font-bold text-gray-400 md:hidden uppercase mb-1">Location</p>
-              {user.role === "Admin" ? (
+              {user?.role === "Admin" ? (
                 <span className="text-blue-900">{complaint.client?.name}</span>
               ) : (
                 <span className="text-gray-600 truncate block">
-                  {`${complaint.location.floor}, ${complaint.location.location}`}
+                  {`${complaint.location?.floor || ""}, ${complaint.location?.location || ""}`}
                 </span>
               )}
             </div>
 
             {/* Pest Service */}
-            <div className="col-span-2 md:text-center text-xs text-gray-500 italic">
+            <div className="col-span-2 md:text-center text-sm text-gray-800">
               <p className="text-[10px] font-bold text-gray-400 md:hidden uppercase mb-1">Service</p>
-              {complaint.complaintDetails.service?.join(", ")}
+              {complaint.complaintDetails?.service?.join(", ") || "-"}
             </div>
 
             {/* Status */}
             <div className="col-span-2 flex md:justify-center">
-              <span className={`status-pill px-2 py-1 text-sm font-semibold rounded-lg ${complaint.complaintDetails.status.toLowerCase().replace(" ", "")}`}>
-                {complaint.complaintDetails.status}
+              <p className="text-[10px] font-bold text-gray-400 md:hidden uppercase mb-1 mr-2 self-center">Status</p>
+              <span className={`status-pill px-2 py-1 text-sm font-semibold rounded-lg ${complaint?.complaintDetails?.status?.toLowerCase().replace(/\s+/g, "")}`}>
+                {complaint?.complaintDetails?.status || "-"}
               </span>
             </div>
           </div>

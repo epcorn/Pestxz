@@ -21,12 +21,11 @@ const Landing = () => {
 
   useEffect(() => {
     if (user) {
-      if (user.role === "ClientEmployee" || user.role === "PestEmployee") {
-        navigate("/dashboard/complaints");
+      if (user.role === "ClientAdmin" || user.role === "PestAdmin" || user.role === "Admin") {
+        navigate("/dashboard/stats");
         return;
       } else {
-        // navigate("/dashboard/stats");
-        navigate("/dashboard/new");
+        navigate("/dashboard/complaints");
       }
     }
   }, [user]);
@@ -39,11 +38,11 @@ const Landing = () => {
       toast.success(`Welcome ${res.name}`);
       setForm({ email: "", password: "" });
       if (locationId) return navigate(`/location/${locationId}`);
-      else if (res.role === "ClientEmployee" || res.role === "PestEmployee") {
-        navigate("/dashboard/complaints");
+      else if (res.role === "ClientAdmin" || res.role === "PestAdmin" || res.role === "Admin") {
+        navigate("/dashboard/stats");
         return;
       } else {
-        navigate("/dashboard/stats");
+        navigate("/dashboard/complaints");
       }
     } catch (error) {
       console.log(error);

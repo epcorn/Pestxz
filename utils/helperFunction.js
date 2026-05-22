@@ -3,7 +3,6 @@ import QRCode from "qrcode";
 import fs from "fs";
 import sharp from "sharp";
 // import { createCanvas, loadImage } from "canvas";
-
 import { v2 as cloudinary } from "cloudinary";
 import brevo from "@getbrevo/brevo";
 
@@ -123,8 +122,7 @@ export const qrCodeGenerator = async ({ link, floor, location }) => {
   }
 };
 
-
-// for converting qr.jpg to svg 
+// for converting qr.jpg to svg
 export const qrCodeGeneratorSVG = async ({ link, floor, location }) => {
   let loc = location.substring(0, 25);
   let subLoc = location.substring(25);
@@ -177,6 +175,20 @@ export const qrCodeGeneratorSVG = async ({ link, floor, location }) => {
   } catch (error) {
     console.log("QR Error", error);
     return false;
+  }
+};
+
+//consrt svg to jpg at time of downloaing the qr code
+export const convertSvgToPngBuffer = async (svgString) => {
+  try {
+    const pngBuffer = await sharp(Buffer.from(svgString))
+      .png() 
+      .toBuffer();
+
+    return pngBuffer;
+  } catch (error) {
+    console.error("PNG Conversion Error:", error);
+    throw error;
   }
 };
 

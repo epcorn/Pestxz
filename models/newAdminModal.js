@@ -1,17 +1,18 @@
 import mongoose from "mongoose";
 
-const serviceSchema = new mongoose.Schema({
-  name: { type: String, required: true },
-  type: { type: String, required: true },
-});
-
-const NewAdminSchema = new mongoose.Schema(
+const AdminSchema = new mongoose.Schema(
   {
-    service: { type: serviceSchema, required: true },
+    serviceType: { type: Object, required: true },
+    serviceName: { type: Object, required: true },
+    services: { type: Object, required: true },
   },
-  { timeseries: true },
+  { timestamps: true },
 );
 
-const NewAdmin = mongoose.model("NewAdmin", NewAdminSchema);
+// const Admin = mongoose.model("Admin", AdminSchema);
+// export default Admin;
 
-export default NewAdmin;
+export async function addAdminsjson() {
+  // const admins = await Admin.insertMany(jsonArray);
+  console.log("OOPs");
+}

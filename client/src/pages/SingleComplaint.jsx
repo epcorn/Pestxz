@@ -18,10 +18,9 @@ const SingleComplaint = () => {
   const { id } = useParams();
 
   const { data, isLoading, error } = useSingleComplaintQuery(id);
-  const { data: location, isLoading: locaLoading } = useGetSingleLocationQuery(data?.location);
+  const { data: location, isLoading: locaLoading } = useGetSingleLocationQuery(data?.location, { skip: !data?.location });
 
-  console.log(data)
-
+  console.log(location)
   return (
     <div>
       {isLoading ? (
@@ -31,14 +30,14 @@ const SingleComplaint = () => {
       )}
       {data && (
         <div>
-          <div className="mb-6 text-center">
+          {/* <div className="mb-6 text-center">
             <h2 className="text-2xl font-light text-slate-800">
               Hello, <span className="capitalize font-semibold text-sky-700">{user.name}</span>
             </h2>
             <span className="inline-block mt-1 px-2.5 py-0.5 text-xs font-medium tracking-wide bg-slate-100 text-slate-600 rounded-full border border-slate-200">
               {user.role}
             </span>
-          </div>
+          </div> */}
 
           <div className="grid grid-cols-4">
             <div className="col-span-3">
@@ -62,7 +61,10 @@ const SingleComplaint = () => {
                 </h4>
               </div>
               <div className="grid grid-cols-2">
-                <h4 className="flex flex-col"><strong>Requested service: </strong> <span>{data.complaintDetails.service?.join(", ")}</span></h4>
+                <h4 className="flex flex-col"><strong>Requested service: </strong>
+                  {data.complaintDetails.service?.map((service, index) => (
+                    <span key={index}>{service}</span>
+                  ))}</h4>
                 <h4 className="flex flex-col"><strong>Comment: </strong> <span>{data.complaintDetails.comment}</span></h4>
               </div>
               {/* <div>
@@ -77,12 +79,12 @@ const SingleComplaint = () => {
             {/* right side  */}
             <div className="">
               <img src={`${location?.location.qr}`} alt={location?.location.location} className="h-44 text-center" />
-              {/* for svg */}
+              {/* for svg qr*/}
               {/* <div
                 className="h-44 w-auto [&>svg]:h-full [&>svg]:w-auto [&>svg]:max-w-full"
                 dangerouslySetInnerHTML={{ __html: decodeBase64Svg(location?.location?.qr) }}
               /> */}
-              <Button type="button" onClick={() => navigate(`/location/${location?.location._id}`)} small={true} label={'Go to Location'} />
+              {/* <Button type="button" onClick={() => navigate(`/location/${location?.location._id}`)} small={true} label={'Go to Location'} /> */}
             </div>
           </div>
           <div className="overflow-y-auto my-4">
@@ -175,7 +177,7 @@ const SingleComplaint = () => {
               </tbody>
             </table>
           </div>
-          {user.type === "PestEmployee" &&
+          {user.rights.scan_scheduled &&
             data.complaintDetails.status !== "Close" && (
               <>
                 <Button

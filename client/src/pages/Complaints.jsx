@@ -16,29 +16,25 @@ const Complaints = () => {
   const [myClient, setMyClient] = useState(null)
   const [tempSearch, setTempSearch] = useState("");
   const [search, setSearch] = useState("");
-  const [location, setLocation] = useState("All");
+  const [location, setLocation] = useState({ client: "", floor: "" });
   const dispatch = useDispatch();
+
   const { user, isModalOpen } = useSelector((store) => store.helper);
-  
+  const { data: clients = [] } = useAllClientsQuery({ skip: user.role !== "Admin" });
+
+
   const { data: clientLocations, isLoading: locationLoading } =
-    useAllLocationsQuery(
-      {
-        id: user?.client,
-        // id: user?.role, 
-      },
-      // { skip: !user?.client }
-      // { skip: user?.role !== "ClientAdmin" }
+    useAllLocationsQuery({
+      id: user.type === "ClientEmployee" ? user.client : myClient
+    },
+      // { skip: !user?.client || !location?.client  }
     );
-  const { data: clients } = useAllClientsQuery();
+
   const { data, isLoading, isFetching, error } = useAllComplaintsQuery({
     search,
     page,
-    location,
+    location: location?.floor || "All",
   });
-
-  useEffect(() => {
-    setMyClient(clients?.find(c => c._id === user?.client))
-  }, [clients])
 
   const pages = Array.from({ length: data?.pages }, (_, index) => index + 1);
 
@@ -50,8 +46,10 @@ const Complaints = () => {
   const clearSearch = () => {
     setTempSearch("");
     setSearch("");
-    setLocation("All");
+    setLocation({ client: "", floor: "" });
   };
+
+  const complaints = data?.complaints?.filter(d => d.type !== "Regular")
 
   return (
     <>
@@ -71,11 +69,9 @@ const Complaints = () => {
           </span>
         </div>
 
-        <h3 className="text-center font-semibold text-2xl mb-5 ">Complaints from: {myClient?.name}</h3>
-
         {/* search section  */}
         <div className="flex justify-between">
-          <form onSubmit={handleSearch} className="flex items-center">
+          <form onSubmit={handleSearch} className="flex items-center flex-wrap">
             <div className="flex items-center px-1 bg-white border w-full md:w-60 lg:w-80 rounded border-gray-300 mr-3">
               <AiOutlineSearch />
               <input
@@ -91,66 +87,86 @@ const Complaints = () => {
                 </button>
               )}
             </div>
-            <div className="grid">
-              <label htmlFor="">Select Floors</label>
-              <select
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                className="mr-2 mt-0.5 w-40 py-0.5 h-8.5 px-2 border-2 rounded-md outline-none transition border-neutral-300 focus:border-black disabled:bg-slate-100"
-              >
-                <option>All</option>
-                {clientLocations?.floors.map((item, index) => (
-                  <option key={index} value={item}>
-                    {item}
-                  </option>
-                ))}
-              </select>
+            <div className="flex gap-2">
+              {/* <label htmlFor="">Select Floors</label> */}
+              
+                {user.role === "Admin" &&
+                  <select
+                    value={location.client}
+                    onChange={(e) => { setLocation(prev => ({ ...prev, client: e.target.value })); setMyClient(e.target.value) }}
+
+                    className="mr-2 mt-0.5 w-40 py-0.5 h-8.5 px-2 border-2 rounded-md outline-none transition border-neutral-300 focus:border-black disabled:bg-slate-100"
+                  >
+                    <option value="">--Select Clients--</option>
+                    {clients?.map((client, index) => (
+                      <option key={client._id} value={client._id}>
+                        {client.name}
+                      </option>
+                    ))}
+                  </select>
+                }
+                <select
+                  value={location.floor}
+                  onChange={(e) => setLocation(prev => ({ ...prev, floor: e.target.value }))}
+
+                  className="mr-2 mt-0.5 w-40 py-0.5 h-8.5 px-2 border-2 rounded-md outline-none transition border-neutral-300 focus:border-black disabled:bg-slate-100"
+                >
+                  <option value="">--Select Floor--</option>
+                  {clientLocations?.floors.map((item, index) => (
+                    <option key={index} value={item}>
+                      {item}
+                    </option>
+                  ))}
+                </select>
+              
             </div>
 
             <Button type="submit" label="Search" color="bg-black" height="h-8" />
           </form>
           {/* new complaint button  */}
-          {user.role === "ClientAdmin" &&
-            <Button
-              label="New Complaint"
-              height="h-9"
-              onClick={() =>
-                dispatch(toggleModal({ name: "complaint", status: true }))
-              }
-            />
-          }
-        </div>
-      </div>
+        </div >
+        {user.rights.raise &&
+          <button
+            className="px-4 py-2 w-fit ml-auto bg-blue-800 text-white rounded-lg"
+            onClick={() =>
+              dispatch(toggleModal({ name: "complaint", status: true }))
+            }
+          >New Complaint</button>
+        }
+      </div >
       {isModalOpen.complaint && <ComplaintModal locationId="New Complaint" />}
 
-      {data && (
-        <>
-          <ComplaintTable data={data.complaints} user={user} />
-
-          {pages.length > 1 && (
-            <nav className="mb-4">
-              <ul className="list-style-none flex justify-center mt-2">
-                {pages.map((item) => (
-                  <li className="pr-1" key={item}>
-                    <button
-                      className={`relative block rounded px-3 py-1.5 text-sm transition-all duration-30  ${page === item ? "bg-blue-400" : "bg-neutral-700"
-                        } text-white hover:bg-blue-400`}
-                      onClick={() => setPage(item)}
-                    >
-                      {item}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </nav>
-          )}
-        </>
-      )}
-      {data?.complaints?.length < 1 && (
-        <p className="text-center pt-2 text-red-600 font-semibold text-lg">
-          No Complaint Found
-        </p>
-      )}
+      {
+        data && (
+          <>
+            <ComplaintTable data={complaints} user={user} />
+            {pages.length > 1 && (
+              <nav className="mb-4">
+                <ul className="list-style-none flex justify-center mt-2">
+                  {pages.map((item) => (
+                    <li className="pr-1" key={item}>
+                      <button
+                        className={`relative block rounded px-3 py-1.5 text-sm transition-all duration-30  ${page === item ? "bg-blue-400" : "bg-neutral-700"
+                          } text-white hover:bg-blue-400`}
+                        onClick={() => setPage(item)}
+                      >
+                        {item}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </nav>
+            )}
+          </>
+        )
+      }
+      {
+        data?.complaints?.length < 1 && (
+          <p className="text-center pt-2 text-red-600 font-semibold text-lg">
+            No Complaint Found
+          </p>
+        )
+      }
     </>
   );
 };
