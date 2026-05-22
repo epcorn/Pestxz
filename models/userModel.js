@@ -62,9 +62,9 @@ const User = mongoose.model("User", userSchema);
 export default User;
 
 export const createAdmin = async () => {
-  const email = "vipul@epcorn.com",
+  const email = "stq@epcorn.com",
     password = "12345",
-    name = "Vipul",
+    name = "STQ",
     role = "Admin",
     type = "PestEmployee",
     department = "Pest control",
