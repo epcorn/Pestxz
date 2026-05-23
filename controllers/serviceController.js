@@ -47,14 +47,14 @@ export const newComplaint = async (req, res) => {
         imageLinks.push(link);
       }
     }
-
+    // const client = new Client.findById(req.user.client);
     const complaint = await Service.create({
       type: "Complaint",
       complaintDetails: {
         number: sr,
         service: req.body.service,
         userName: req.user.name,
-        clientName: client?.name,
+        // clientName: client?.name,
         status: "Open",
         image: imageLinks,
         comment: req.body.comment,
@@ -64,7 +64,7 @@ export const newComplaint = async (req, res) => {
           image: imageLinks,
           comment: req.body.comment,
           userName: req.user.name,
-          clientName: client?.name,
+          // clientName: client?.name,
           status: "Open",
           date: new Date(),
         },

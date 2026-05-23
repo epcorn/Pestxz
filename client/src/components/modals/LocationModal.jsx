@@ -106,35 +106,36 @@ const LocationModal = ({
 
     data.serviceReq = validServices;
 
-    try {
-      let res;
+    console.log(data)
+    // try {
+    //   let res;
 
-      if (locationDetails) {
-        res = await update({
-          id: locationDetails._id,
-          data,
-        }).unwrap();
-      } else {
-        res = await add(data).unwrap();
-      }
+    //   if (locationDetails) {
+    //     res = await update({
+    //       id: locationDetails._id,
+    //       data,
+    //     }).unwrap();
+    //   } else {
+    //     res = await add(data).unwrap();
+    //   }
 
-      toast.success(res.msg);
+    //   toast.success(res.msg);
 
-      reset();
+    //   reset();
 
-      dispatch(
-        toggleModal({
-          name: "location",
-          status: false,
-        })
-      );
-    } catch (error) {
-      console.log(error);
+    //   dispatch(
+    //     toggleModal({
+    //       name: "location",
+    //       status: false,
+    //     })
+    //   );
+    // } catch (error) {
+    //   console.log(error);
 
-      toast.error(
-        error?.data?.msg || error.error
-      );
-    }
+    //   toast.error(
+    //     error?.data?.msg || error.error
+    //   );
+    // }
   };
 
   const formBody = (
@@ -172,6 +173,7 @@ const LocationModal = ({
 
       <div>
         <InputRow
+          required={false}
           label="Sub Location"
           id="subLocation"
           errors={errors}
@@ -468,13 +470,13 @@ const LocationModal = ({
       <FormModal
         onSubmit={handleSubmit(submit)}
         title={`${locationDetails
-            ? "Update"
-            : "New"
+          ? "Update"
+          : "New"
           } Location`}
         formBody={formBody}
         submitLabel={`${locationDetails
-            ? "Update"
-            : "Add"
+          ? "Update"
+          : "Add"
           } Location`}
         handleClose={() =>
           dispatch(

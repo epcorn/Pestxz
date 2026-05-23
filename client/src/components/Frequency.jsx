@@ -1,8 +1,9 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useAddFrequencyMutation, useGetFrequencyQuery, useRemoveFrequencyMutation } from '../redux/adminSlice'
 import { toast } from 'react-toastify';
 
-function Frequency({removeFreq,frequencies}) {
+function Frequency({ removeFreq, frequencies }) {
+
   // Store the active item's ID instead of a generic boolean
   const [hoveredId, setHoveredId] = useState(null)
   const [addFreq, { isLoading }] = useAddFrequencyMutation();
@@ -33,6 +34,7 @@ function Frequency({removeFreq,frequencies}) {
       toast.error(error.msg)
     }
   }
+  // useEffect(() => { console.log("added") }, [handleAddFreq, handleDelete])
 
   return (
     <div className='outline outline-gray-400 bg-white w-full min-h-[250px] max-h-[260px] flex flex-col rounded-lg overflow-hidden'>
