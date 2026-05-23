@@ -9,6 +9,7 @@ function AdminDashboard() {
   const [clientReq, setClientReq] = useState([])
   const [selectedClient, setSelectedClient] = useState(null);
   const { user } = useSelector(store => store.helper)
+
   const { data: clients = [] } = useAllClientsQuery();
 
   const { data: adminDash, isLoading } = useAdminDashboardQuery(selectedClient?._id, {
@@ -18,6 +19,7 @@ function AdminDashboard() {
     const { value } = e.target;
     setSelectedClient(value === "select" ? null : clients.find(d => d._id === value))
   }
+  console.log(adminDash)
   useEffect(() => {
     if (!adminDash) return;
     const dataSource = toggel === "all" ? adminDash.all : adminDash.latestComplaints
@@ -26,11 +28,14 @@ function AdminDashboard() {
     else
       setClientReq(toggel === "all" ? adminDash?.all : adminDash?.latestComplaints)
   }, [toggel, selectedClient, adminDash])
-
+  
+  
 
   return (
     <section className="p-2 md:p-8 bg-gray-50 min-h-screen font-sans">
       {/* Header Section */}
+      <h2 className='text-center text-2xl font-bold '>Express Pesticides Private Limited</h2>
+      <p className='text-center text-xs font-semibold text-gray-600 '>Pest management division</p>
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
         <div>
           <p className="text-gray-500 text-sm font-medium">System Overview</p>
@@ -130,7 +135,7 @@ function AdminDashboard() {
 
                 {/* Status */}
                 <div className="col-span-1 md:col-span-2 flex md:justify-center">
-                  <span className={`status-pill px-3 py-1 font-semibold rounded-lg text-sm ${latest.complaintDetails.status.toLowerCase().replace(" ", "")}`}>
+                  <span className={`status-pill whitespace-nowrap px-3 py-1 font-semibold rounded-lg text-sm ${latest.complaintDetails.status.toLowerCase().replace(" ", "")}`}>
                     {latest.complaintDetails.status}
                   </span>
                 </div>

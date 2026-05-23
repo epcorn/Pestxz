@@ -9,10 +9,14 @@ import {
   useNewComplaintMutation,
   useUpdateComplaintMutation,
 } from "../../redux/serviceSlice";
-import { jobStatus, operatorComment } from "../../utils/constData";
+import { clientAdminStatus, jobStatus, operatorComment } from "../../utils/constData";
 import FormModal from "./FormModal";
 
-const ComplaintModal = ({ locationId }) => {
+const ComplaintModal = ({ locationId, mode = "create" }) => {
+  const isCreate = mode === "create";
+  const isUpdate = mode === "update";
+  const isReview = mode === "review";
+
   const [images, setImages] = useState([]);
   const [floor, setFloor] = useState("Select");
   const [locations, setLocations] = useState([]);
@@ -86,38 +90,149 @@ const ComplaintModal = ({ locationId }) => {
     }
 
     const form = new FormData();
-    images.forEach((image) => form.append("images", image));
 
-    if (user.type === "ClientEmployee") {
-      form.set("comment", data.comment);
-      form.append("service", data.service); // data.service is now a direct clean string
-    } else {
-      form.set("status", data.status?.value || data.status?.label || "");
-      form.set("comment", data.comment?.value || data.comment?.label || "");
-    }
-    console.log(form, data)
+    images.forEach((image) => {
+      form.append("images", image);
+    });
 
     try {
       let res;
-      if (user.type === "ClientEmployee") {
+
+      // CREATE COMPLAINT
+      if (isCreate) {
+        form.set("comment", data.comment);
+        form.set("service", data.service);
+
         res = await addComplaint({
-          id: user.rights.raise ? data?.location?.value : locationId,
-          form: form,
+          id: user.rights.raise
+            ? data?.location?.value
+            : locationId,
+          form,
         }).unwrap();
-      } else if (user.type === "PestEmployee") {
-        res = await updateComplaint({ id: locationId, form }).unwrap();
+      }
+
+      // OPERATOR UPDATE
+      if (isUpdate) {
+        form.set(
+          "status",
+          data.status?.value || data.status
+        );
+
+        form.set(
+          "comment",
+          data.comment?.value || data.comment
+        );
+
+        res = await updateComplaint({
+          id: locationId,
+          form,
+        }).unwrap();
+      }
+
+      // CLIENT ADMIN REVIEW
+      if (isReview) {
+        form.set(
+          "status",
+          data.status?.value || data.status
+        );
+
+        form.set("comment", data.comment);
+
+        res = await updateComplaint({
+          id: locationId,
+          form,
+        }).unwrap();
       }
 
       toast.success(res?.msg || "Success");
-      dispatch(toggleModal({ name: "complaint", status: false }));
+
+      dispatch(
+        toggleModal({
+          name: "complaint",
+          status: false,
+        })
+      );
+
       setFloor("Select");
       setImages([]);
       reset();
+
     } catch (error) {
-      console.error(error);
-      toast.error(error?.data?.msg || error?.error || "Something went wrong");
+      console.log(error);
+
+      toast.error(
+        error?.data?.msg ||
+        error?.error ||
+        "Something went wrong"
+      );
     }
   };
+
+  const reviewFormBody = (
+    <div className="grid gap-y-3 mb-4">
+
+      <div>
+        <Controller
+          name="status"
+          control={control}
+          rules={{ required: "Status is required" }}
+          render={({ field: { onChange, value } }) => (
+            <InputSelect
+              isMulti={false}
+              options={clientAdminStatus}
+              onChange={onChange}
+              value={value}
+              label="Review Action"
+            />
+          )}
+        />
+
+        <p className="text-xs text-red-500 pl-1 mt-1">
+          {errors.status?.message}
+        </p>
+      </div>
+
+      <div>
+        <InputRow
+          label="Comment"
+          id="comment"
+          errors={errors}
+          register={register}
+          placeholder="Add review comment"
+        />
+
+        <p className="text-xs text-red-500 pl-1 mt-1">
+          {errors.comment && "Comment is required"}
+        </p>
+      </div>
+
+      <div>
+        <label
+          htmlFor="images"
+          className="text-md font-medium leading-6 mr-2 text-gray-900"
+        >
+          Images
+        </label>
+
+        <input
+          type="file"
+          id="images"
+          onChange={(e) =>
+            setImages(Array.from(e.target.files))
+          }
+          multiple
+          className="mt-0.5 block w-full text-sm text-slate-500
+        file:mr-4 file:py-2 file:px-4
+        file:rounded-md file:border-0
+        file:text-sm file:font-semibold
+        file:bg-zinc-100 file:text-zinc-700
+        hover:file:bg-zinc-200"
+          accept="image/*"
+        />
+      </div>
+
+    </div>
+  );
 
   const clientFormBody = (
     <div className="grid md:grid-cols-2 gap-y-3 mb-4">
@@ -132,7 +247,7 @@ const ComplaintModal = ({ locationId }) => {
               onChange={(e) => setFloor(e.target.value)}
               className="mr-2 mt-0.5 w-full py-0.5 px-2 border-2 rounded-md outline-none transition border-neutral-300 focus:border-black"
             >
-              <option value="Select">Select</option>
+              {/* <option value="Select">Select</option> */}
               {clientLocations?.floors?.map((item, index) => (
                 <option key={index} value={item}>
                   {item}
@@ -242,7 +357,11 @@ const ComplaintModal = ({ locationId }) => {
           rules={{ required: "Complaint status is required" }}
           render={({ field: { onChange, value } }) => (
             <InputSelect
-              options={jobStatus}
+              options={
+                user.role === "ClientAdmin"
+                  ? clientAdminStatus
+                  : jobStatus
+              }
               onChange={onChange}
               value={value}
               label="Complaint Status"
@@ -271,12 +390,35 @@ const ComplaintModal = ({ locationId }) => {
     <div>
       <FormModal
         onSubmit={handleSubmit(submit)}
-        title={`${user.type === "PestEmployee" ? "Update" : "New"} Complaint`}
-        formBody={
-          user.type === "ClientEmployee" ? clientFormBody : operatorFormBody
+        title={
+          isCreate
+            ? "New Complaint"
+            : isUpdate
+              ? "Update Complaint"
+              : "Reopen Complaint"
         }
-        submitLabel={user.type === "PestEmployee" ? "Update" : "Add Complaint"}
-        handleClose={() => dispatch(toggleModal({ name: "complaint", status: false }))}
+        formBody={
+          isCreate
+            ? clientFormBody
+            : isUpdate
+              ? operatorFormBody
+              : reviewFormBody
+        }
+        submitLabel={
+          isCreate
+            ? "Add Complaint"
+            : isUpdate
+              ? "Update"
+              : "Reopen"
+        }
+        handleClose={() =>
+          dispatch(
+            toggleModal({
+              name: "complaint",
+              status: false,
+            })
+          )
+        }
         disabled={addLoading || updateLoading}
         isLoading={addLoading || updateLoading}
         open={isModalOpen.complaint}

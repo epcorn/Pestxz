@@ -51,16 +51,21 @@ const ClientDashboard = () => {
     location: "All",
   });
 
-  console.log(data)
+  console.log(adminDash)
 
   return (
-    <section className="p-4 md:p-8 bg-gray-50 min-h-screen font-sans">
+    <section className="p-4 md:px-8  bg-gray-50 min-h-screen font-sans">
       {isLoading ? (
         <Loading />
       ) : error ? (
         <AlertMessage>{error?.data?.msg || error.error}</AlertMessage>
       ) : (
         <div className="max-w-7xl mx-auto">
+          <h2 className='text-center text-2xl font-bold '>
+            Express Pesticides Private Limited
+          </h2>
+          <p className='text-center text-xs font-semibold text-gray-600 '>Pest management division
+          </p>
           {/* Header */}
           <div className="mb-8">
             <p className="text-gray-500 text-sm font-medium">Dashboard Overview</p>
@@ -101,10 +106,10 @@ const ClientDashboard = () => {
                 Recent Activity
               </span>
             </div>
-            
+
 
             <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden p-1">
-              <ComplaintTable data={adminDash.latestComplaints} user={user} />
+              <ComplaintTable data={data.complaints} user={user} />
             </div>
           </div>
         </div>

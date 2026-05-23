@@ -12,7 +12,11 @@ export const operatorComment = [
 
 export const jobStatus = [
   { label: "In Progress", value: "In Progress" },
+  { label: "Close Req", value: "Close Req" },
+];
+export const clientAdminStatus = [
   { label: "Close", value: "Close" },
+  { label: "Reopen", value: "Reopen" },
 ];
 
 export const serviceActions = [

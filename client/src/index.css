@@ -3,6 +3,9 @@
 .inprogress {
   @apply bg-amber-200 text-amber-700 shadow shadow-amber-200;
 }
+.close-req {
+  @apply bg-amber-200 text-amber-700 shadow shadow-amber-200;
+}
 .open{
   @apply bg-blue-200 text-blue-700 shadow shadow-blue-200
 }

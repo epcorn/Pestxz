@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { toast } from "react-toastify";
 import { useRegularServiceMutation } from "../redux/serviceSlice";
 
-function SingleServiceForm({ serviceData = [], id }) {
+function SingleServiceForm({ serviceData = [], id, setRegular }) {
   const [selectedService, setSelectedService] = useState(0);
 
   const [form, setForm] = useState({
@@ -11,7 +11,7 @@ function SingleServiceForm({ serviceData = [], id }) {
     comment: "",
     image: null,
   });
-console.log(id)
+  console.log(id)
   const [regularService, { isLoading }] =
     useRegularServiceMutation();
 
@@ -25,72 +25,72 @@ console.log(id)
   };
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  try {
-    const formData = new FormData();
+    try {
+      const formData = new FormData();
 
-    formData.append(
-      "serviceName",
-      currentService?.serviceName
-    );
+      formData.append(
+        "serviceName",
+        currentService?.serviceName
+      );
 
-    formData.append(
-      "scopeName",
-      currentService?.scopeName
-    );
+      formData.append(
+        "scopeName",
+        currentService?.scopeName
+      );
 
-    formData.append(
-      "consumableName",
-      currentService?.consumableName
-    );
+      formData.append(
+        "consumableName",
+        currentService?.consumableName
+      );
 
-    formData.append(
-      "calibration",
-      currentService?.calibration
-    );
+      formData.append(
+        "calibration",
+        currentService?.calibration
+      );
 
-    formData.append(
-      "usedCalibration",
-      form.usedCalibration
-    );
+      formData.append(
+        "usedCalibration",
+        form.usedCalibration
+      );
 
-    formData.append(
-      "action",
-      form.action
-    );
+      formData.append(
+        "action",
+        form.action
+      );
 
-    formData.append(
-      "comment",
-      form.comment
-    );
+      formData.append(
+        "comment",
+        form.comment
+      );
 
-    if (form.image) {
-      formData.append("image", form.image);
+      if (form.image) {
+        formData.append("image", form.image);
+      }
+
+      const res = await regularService({
+        id,
+        form: formData,
+      }).unwrap();
+
+      toast.success(res.msg);
+
+      setForm({
+        usedCalibration: "",
+        action: "Done",
+        comment: "",
+        image: null,
+      });
+
+    } catch (error) {
+      console.log(error);
+
+      toast.error(
+        error?.data?.msg || error.error
+      );
     }
-
-    const res = await regularService({
-      id,
-      form: formData,
-    }).unwrap();
-
-    toast.success(res.msg);
-
-    setForm({
-      usedCalibration: "",
-      action: "Done",
-      comment: "",
-      image: null,
-    });
-
-  } catch (error) {
-    console.log(error);
-
-    toast.error(
-      error?.data?.msg || error.error
-    );
-  }
-};
+  };
 
   return (
     <div className="bg-white border border-gray-300 rounded-lg p-3 shadow-sm mx-auto">
@@ -150,7 +150,7 @@ console.log(id)
 
           {/* Calibration */}
           <div className="flex items-center justify-between border border-gray-200 bg-gray-50/50 px-3 py-2 rounded-md">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center flex-col md:flex-row gap-2">
               <span className="text-xs font-bold text-gray-500 uppercase tracking-wide">
                 Calibration
               </span>
@@ -163,7 +163,7 @@ console.log(id)
               </span>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center flex-col md:flex-row gap-2">
               <label className="text-xs font-medium text-gray-600">
                 Used:
               </label>
@@ -205,6 +205,9 @@ console.log(id)
                 <option value="not Done">
                   Not Done
                 </option>
+                <option value="Partial Done">
+                  Partial Done
+                </option>
               </select>
             </div>
 
@@ -230,7 +233,6 @@ console.log(id)
           <div className="flex items-center justify-between gap-3 pt-2 border-t border-gray-200 mt-1">
             <label className="text-sm font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 border border-gray-300 rounded-md px-2.5 py-1 cursor-pointer transition select-none flex items-center gap-1">
               Attach File
-
               <input
                 type="file"
                 className="hidden"
@@ -242,16 +244,24 @@ console.log(id)
                 }
               />
             </label>
-
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="px-5 py-1.5 text-sm font-bold text-white bg-green-600 hover:bg-green-700 active:scale-95 rounded-md shadow-sm transition-all uppercase tracking-wider disabled:opacity-50"
-            >
-              {isLoading
-                ? "Submitting..."
-                : "Submit"}
-            </button>
+            <div className="space-x-2">
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="px-5 py-1.5 text-sm font-bold text-white bg-green-600 hover:bg-green-700 active:scale-95 rounded-md shadow-sm transition-all uppercase tracking-wider disabled:opacity-50"
+              >
+                {isLoading
+                  ? "Submitting..."
+                  : "Submit"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setRegular(false)}
+                className="px-5 py-1.5 text-sm font-bold text-white bg-red-600 hover:bg-red-700 active:scale-95 rounded-md shadow-sm transition-all uppercase tracking-wider disabled:opacity-50"
+              >
+                Close
+              </button>
+            </div>
           </div>
         </form>
       )}

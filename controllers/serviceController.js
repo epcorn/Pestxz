@@ -54,6 +54,7 @@ export const newComplaint = async (req, res) => {
         number: sr,
         service: req.body.service,
         userName: req.user.name,
+        clientName: client?.name,
         status: "Open",
         image: imageLinks,
         comment: req.body.comment,
@@ -63,6 +64,7 @@ export const newComplaint = async (req, res) => {
           image: imageLinks,
           comment: req.body.comment,
           userName: req.user.name,
+          clientName: client?.name,
           status: "Open",
           date: new Date(),
         },
@@ -92,55 +94,121 @@ export const getSingleComplaint = async (req, res) => {
     res.status(500).json({ msg: "Server error, try again later" });
   }
 };
-
 export const updateComplaint = async (req, res) => {
   const { id } = req.params;
 
   try {
-    if (req.user.type === "ClientEmployee")
-      return res
-        .status(400)
-        .json({ msg: "Yoe are not allowed to raise a complaint" });
+    const status = req.body.status;
+
+    const canUpdateComplaint =
+      req.user.role === "Admin" ||
+      req.user.role === "Operator" ||
+      req.user.role === "Supervisor" ||
+      req.user.role === "TeamLeader" ||
+      req.user.role === "ClientAdmin";
+
+    if (!canUpdateComplaint) {
+      return res.status(403).json({
+        msg: "You are not authorized",
+      });
+    }
 
     const complaint = await Service.findById(id);
-    if (!complaint) return res.status(404).json({ msg: "Complaint not found" });
 
+    if (!complaint) {
+      return res.status(404).json({
+        msg: "Complaint not found",
+      });
+    }
+
+    // BLOCK IF FINALLY CLOSED
+    if (complaint.complaintDetails.finalClosed) {
+      return res.status(400).json({
+        msg: "Complaint is permanently closed",
+      });
+    }
+
+    // IMAGE UPLOAD
     const imageLinks = [];
-    if (req.files) {
+
+    if (req.files?.images) {
       let images = [];
-      if (req.files.images.length > 0) {
+
+      if (Array.isArray(req.files.images)) {
         images = req.files.images;
       } else {
-        images.push(req.files.images);
+        images = [req.files.images];
       }
 
-      for (let i = 0; i < images.length; i++) {
-        const link = await uploadFile({ filePath: images[i].tempFilePath });
-        if (!link)
-          return res
-            .status(400)
-            .json({ msg: "Image upload error. Try again later" });
+      for (const image of images) {
+        const link = await uploadFile({
+          filePath: image.tempFilePath,
+        });
+
+        if (!link) {
+          return res.status(400).json({
+            msg: "Image upload error. Try again later",
+          });
+        }
+
         imageLinks.push(link);
       }
     }
 
+    // REOPEN LOGIC
+    if (status === "Reopen") {
+      // only client admin can reopen
+      if (req.user.role !== "ClientAdmin") {
+        return res.status(403).json({
+          msg: "Only Client Admin can reopen complaint",
+        });
+      }
+
+      const reopenCount = complaint.complaintDetails.reopenCount || 0;
+
+      if (reopenCount >= 3) {
+        complaint.complaintDetails.finalClosed = true;
+
+        await complaint.save();
+
+        return res.status(400).json({
+          msg: "Maximum reopen limit reached. Complaint permanently closed.",
+        });
+      }
+
+      complaint.complaintDetails.reopenCount = reopenCount + 1;
+    }
+
+    // FINAL CLOSE
+    if (status === "Close" && complaint.complaintDetails.reopenCount >= 3) {
+      complaint.complaintDetails.finalClosed = true;
+    }
+
+    // UPDATE HISTORY
     complaint.complaintUpdate.push({
       image: imageLinks,
       comment: req.body.comment,
       userName: req.user.name,
-      status: req.body.status,
+      status,
       date: new Date(),
     });
-    complaint.complaintDetails.status = req.body.status;
+
+    // MAIN STATUS UPDATE
+    complaint.complaintDetails.status = status;
+
     await complaint.save();
 
-    return res.json({ msg: "Updated successfully" });
+    return res.json({
+      msg: "Updated successfully",
+    });
   } catch (error) {
     console.log(error);
-    res.status(500).json({ msg: "Server error, try again later" });
+
+    return res.status(500).json({
+      msg: "Server error, try again later",
+    });
   }
 };
-
 export const getAllComplaints = async (req, res) => {
   const { search, page, location } = req.query;
 

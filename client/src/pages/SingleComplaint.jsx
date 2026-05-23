@@ -118,74 +118,74 @@ const SingleComplaint = () => {
             {/* </div> */}
           </div>
           {data.complaintUpdate?.length > 0 && (
-  <div className="my-4 overflow-hidden rounded-lg border border-neutral-200 bg-white shadow-sm">
-    
-    {/* DESKTOP HEADER (Hidden on Mobile) */}
-    <div className="hidden md:flex items-center bg-neutral-50 border-b border-neutral-200 text-xs font-bold uppercase tracking-wider text-neutral-500 py-3 px-4 gap-4 text-center">
-      <div className="w-28 text-left shrink-0">Date</div>
-      <div className="w-20 shrink-0">Image</div>
-      <div className="flex-1 text-left">Operator Comment</div>
-      <div className="w-32 shrink-0">Updated By</div>
-      <div className="w-24 shrink-0">Status</div>
-      {(user.role === "ClientAdmin" || user.role === "ClientEmployee") && (
+            <div className="my-4 overflow-hidden rounded-lg border border-neutral-200 bg-white shadow-sm">
+
+              {/* DESKTOP HEADER (Hidden on Mobile) */}
+              <div className="hidden md:flex items-center bg-neutral-50 border-b border-neutral-200 text-xs font-bold uppercase tracking-wider text-neutral-500 py-3 px-4 gap-4 text-center">
+                <div className="w-28 text-left shrink-0">Date</div>
+                <div className="w-20 shrink-0">Image</div>
+                <div className="flex-1 text-left">Operator Comment</div>
+                <div className="w-32 shrink-0">Updated By</div>
+                <div className="w-24 shrink-0">Status</div>
+                {/* {(user.role === "ClientAdmin" || user.role === "ClientEmployee") && (
         <div className="w-28 shrink-0">Feedback</div>
-      )}
-    </div>
+      )} */}
+              </div>
 
-    {/* LIST OF ITEMS / MOBILE CARDS */}
-    <div className="divide-y divide-neutral-200">
-      {data.complaintUpdate?.map((complaint, i) => (
-        <div
-          key={complaint._id}
-          className="flex flex-col md:flex-row md:items-center py-4 px-4 text-sm text-neutral-700 hover:bg-neutral-50 transition-colors gap-3 md:gap-4"
-        >
-          {/* 1. Date */}
-          <div className="w-full md:w-28 flex justify-between md:block items-center shrink-0">
-            <span className="md:hidden text-xs font-semibold text-neutral-400 uppercase">Date</span>
-            <span className="text-neutral-500 md:text-neutral-700">{dateFormat(complaint.date)}</span>
-          </div>
+              {/* LIST OF ITEMS / MOBILE CARDS */}
+              <div className="divide-y divide-neutral-200">
+                {data.complaintUpdate?.map((complaint, i) => (
+                  <div
+                    key={complaint._id}
+                    className="flex flex-col md:flex-row md:items-center py-4 px-4 text-sm text-neutral-700 hover:bg-neutral-50 transition-colors gap-3 md:gap-4"
+                  >
+                    {/* 1. Date */}
+                    <div className="w-full md:w-28 flex justify-between md:block items-center shrink-0">
+                      <span className="md:hidden text-xs font-semibold text-neutral-400 uppercase">Date</span>
+                      <span className="text-neutral-500 md:text-neutral-700">{dateFormat(complaint.date)}</span>
+                    </div>
 
-          {/* 2. Image Trigger */}
-          <div className="w-full md:w-20 flex justify-between md:block md:text-center items-center shrink-0">
-            <span className="md:hidden text-xs font-semibold text-neutral-400 uppercase">Image</span>
-            <div>
-              {complaint.image.length > 0 ? (
-                <Button
-                  label={`Show (${complaint.image.length})`}
-                  small
-                  height="h-7"
-                  color="bg-green-600 text-xs text-white px-2 py-0.5 rounded"
-                  onClick={() => dispatch(toggleModal({ name: `PEImages-${i}`, status: true }))}
-                />
-              ) : (
-                <span className="text-neutral-400 text-xs">—</span>
-              )}
-              {isModalOpen[`PEImages-${i}`] && <ImagesModal image={complaint.image} name={`PEImages-${i}`} />}
-            </div>
-          </div>
+                    {/* 2. Image Trigger */}
+                    <div className="w-full md:w-20 flex justify-between md:block md:text-center items-center shrink-0">
+                      <span className="md:hidden text-xs font-semibold text-neutral-400 uppercase">Image</span>
+                      <div>
+                        {complaint.image.length > 0 ? (
+                          <Button
+                            label={`Show (${complaint.image.length})`}
+                            small
+                            height="h-7"
+                            color="bg-green-600 text-xs text-white px-2 py-0.5 rounded"
+                            onClick={() => dispatch(toggleModal({ name: `PEImages-${i}`, status: true }))}
+                          />
+                        ) : (
+                          <span className="text-neutral-400 text-xs">—</span>
+                        )}
+                        {isModalOpen[`PEImages-${i}`] && <ImagesModal image={complaint.image} name={`PEImages-${i}`} />}
+                      </div>
+                    </div>
 
-          {/* 3. Operator Comment */}
-          <div className="w-full flex-1 flex flex-col md:block items-start justify-between min-w-0">
-            <span className="md:hidden text-xs font-semibold text-neutral-400 uppercase mb-0.5">Comment</span>
-            <p className="break-words text-neutral-800 text-left w-full whitespace-pre-wrap">{complaint.comment}</p>
-          </div>
+                    {/* 3. Operator Comment */}
+                    <div className="w-full flex-1 flex flex-col md:block items-start justify-between min-w-0">
+                      <span className="md:hidden text-xs font-semibold text-neutral-400 uppercase mb-0.5">Comment</span>
+                      <p className="break-words text-neutral-800 text-left w-full whitespace-pre-wrap">{complaint.comment}</p>
+                    </div>
 
-          {/* 4. Updated By */}
-          <div className="w-full md:w-32 flex justify-between md:block md:text-center items-center shrink-0">
-            <span className="md:hidden text-xs font-semibold text-neutral-400 uppercase">Updated By</span>
-            <span className="font-medium md:font-normal truncate max-w-[150px] inline-block md:block">{complaint.userName}</span>
-          </div>
+                    {/* 4. Updated By */}
+                    <div className="w-full md:w-32 flex justify-between md:block md:text-center items-center shrink-0">
+                      <span className="md:hidden text-xs font-semibold text-neutral-400 uppercase">Updated By</span>
+                      <span className="font-medium md:font-normal truncate max-w-[150px] inline-block md:block">{complaint.userName}</span>
+                    </div>
 
-          {/* 5. Status */}
-          <div className="w-full md:w-24 flex justify-between md:block md:text-center items-center shrink-0">
-            <span className="md:hidden text-xs font-semibold text-neutral-400 uppercase">Status</span>
-            <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium border ${progress(complaint.status)}`}>
-              {complaint.status}
-            </span>
-          </div>
+                    {/* 5. Status */}
+                    <div className="w-full md:w-24 flex justify-between md:block md:text-center items-center shrink-0">
+                      <span className="md:hidden text-xs font-semibold text-neutral-400 uppercase">Status</span>
+                      <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium border ${progress(complaint.status)}`}>
+                        {complaint.status}
+                      </span>
+                    </div>
 
-          {/* 6. Feedback Actions */}
-          {(user.role === "ClientAdmin" || user.role === "ClientEmployee") && (
+                    {/* 6. Feedback Actions */}
+                    {/* {(user.role === "ClientAdmin" || user.role === "ClientEmployee") && (
             <div className="w-full md:w-28 flex justify-between md:block md:text-center items-center shrink-0 pt-2.5 md:pt-0 border-t md:border-none border-neutral-100">
               <span className="md:hidden text-xs font-semibold text-neutral-400 uppercase">Feedback</span>
               <div className="flex justify-start md:justify-center items-center gap-1">
@@ -212,29 +212,51 @@ const SingleComplaint = () => {
                 </button>
               </div>
             </div>
+          )} */}
+
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          {user.type === "PestEmployee" && (
+            <>
+              <Button
+                label="Update"
+                onClick={() =>
+                  dispatch(toggleModal({ name: "complaint", status: true, }))}
+              />
+              <ComplaintModal locationId={data._id} mode="update"
+              />
+            </>
           )}
 
-        </div>
-      ))}
-    </div>
-  </div>
-)}
-
-          {(user.rights.scan_Scheduled || user.rights.scan_Unscheduled) &&
-            data.complaintDetails.status !== "Close" && (
+          {user.role === "ClientAdmin" &&
+            data.complaintDetails.status === "Close Req" &&
+            !data.complaintDetails.finalClosed && (
               <>
                 <Button
-                  label="Update"
+                  label={`Review Request (${data.complaintDetails.reopenCount || 0}/3)`}
                   onClick={() =>
-                    dispatch(toggleModal({ name: "complaint", status: true }))
+                    dispatch(
+                      toggleModal({
+                        name: "complaint",
+                        status: true,
+                      })
+                    )
                   }
                 />
-                <ComplaintModal locationId={data._id} />
+
+                <ComplaintModal
+                  locationId={data._id}
+                  mode="review"
+                />
               </>
             )}
         </div>
-      )}
-    </div>
+      )
+      }
+    </div >
   );
 };
 export default SingleComplaint;

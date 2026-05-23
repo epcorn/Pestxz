@@ -12,6 +12,8 @@ import {
   useAddServiceMutation,
   useAllServiceQuery,
   useDeleteServiceMutation,
+  useGetFrequencyQuery,
+  useRemoveFrequencyMutation,
   useUpdateServiceMutation,
 } from "../redux/adminSlice";
 import { FaEdit } from "react-icons/fa";
@@ -40,6 +42,10 @@ const Services = () => {
   const [deleteService, { isLoading: deleteLoading }] =
     useDeleteServiceMutation();
 
+  // frequencies  
+  const { data: frequencies, isLoading: freqLoading } = useGetFrequencyQuery();
+  const [removeFreq] = useRemoveFrequencyMutation()
+
   const services = data?.services || [];
 
   useEffect(() => {
@@ -63,12 +69,12 @@ const Services = () => {
     <>
       <section className="w-full space-y-5 p-1">
         {/* Main layout flexbox/grid fix container */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-2 items-stretch">
-          <div className="col-span-1 md:col-span-2">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-2 items-stretch">
+          <div className="col-span-1 md:col-span-3">
             <ServiceFormModal addService={addService} />
           </div>
-          <div className="md:col-span-1 flex">
-            <Frequency />
+          <div className="md:col-span-2 flex">
+            <Frequency frequencies={frequencies} removeFreq={removeFreq} />
           </div>
         </div>
 

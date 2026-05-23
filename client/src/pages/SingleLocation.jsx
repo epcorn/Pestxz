@@ -135,48 +135,82 @@ const SingleLocation = () => {
 
           {/* TABLE */}
 
-          <div className="border border-gray-400 rounded overflow-hidden">
-            {/* HEADER */}
-            <div className={`grid ${(user.role === "ClientAdmin" || user.role === "ClientEmployee") ? "grid-cols-2" : "grid-cols-5"} bg-gray-100 font-semibold text-sm`}>
-              <div className="border-r border-gray-400 px-1 py-1 md:px-2 md:py-2">Service</div>
+          <div className="border border-gray-300 rounded-lg overflow-hidden bg-white">
+            {/* SCROLL CONTAINER */}
+            <div className="overflow-x-auto">
+              <div className="min-w-[700px]">
 
-              {user.role !== "ClientAdmin" && user.role !== "ClientEmployee" && (
-                <>
-                  <div className="border-r border-gray-400 px-2 py-2">Scope</div>
-                  <div className="border-r border-gray-400 px-2 py-2">Consumable</div>
-                  <div className="border-r border-gray-400 px-2 py-2">Calibration</div>
-                </>
-              )}
+                {/* HEADER */}
+                <div
+                  className={`grid ${user.role === "ClientAdmin" || user.role === "ClientEmployee"
+                      ? "grid-cols-2"
+                      : "grid-cols-5"
+                    } bg-gray-100 text-xs md:text-sm font-semibold text-gray-700 border-b border-gray-300`}
+                >
+                  <div className="px-3 py-3 border-r border-gray-300 whitespace-nowrap">
+                    Service
+                  </div>
 
-              <div className="px-2 md:py-2 py-1">Frequency</div>
-            </div>
+                  {user.role !== "ClientAdmin" &&
+                    user.role !== "ClientEmployee" && (
+                      <>
+                        <div className="px-3 py-3 border-r border-gray-300 whitespace-nowrap">
+                          Scope
+                        </div>
 
-            {/* BODY */}
-            {data.location.service?.map((s, index) => (
-              <div key={index} className={`grid ${(user.role === "ClientAdmin" || user.role === "ClientEmployee") ? "grid-cols-2" : "grid-cols-5"} text-sm border-t border-gray-300`}>
-                <div className="border-r border-gray-300 px-1 py-1 md:px-2 md:py-2">
-                  {s.serviceName}
+                        <div className="px-3 py-3 border-r border-gray-300 whitespace-nowrap">
+                          Consumable
+                        </div>
+
+                        <div className="px-3 py-3 border-r border-gray-300 whitespace-nowrap">
+                          Calibration
+                        </div>
+                      </>
+                    )}
+
+                  <div className="px-3 py-3 whitespace-nowrap">
+                    Frequency
+                  </div>
                 </div>
 
-                {user.role !== "ClientAdmin" && user.role !== "ClientEmployee" && (
-                  <>
-                    <div className="border-r border-gray-300 px-2 py-2">
-                      {s.scopeName}
+                {/* BODY */}
+                {data.location.service?.map((s, index) => (
+                  <div
+                    key={index}
+                    className={`grid ${user.role === "ClientAdmin" ||
+                        user.role === "ClientEmployee"
+                        ? "grid-cols-2"
+                        : "grid-cols-5"
+                      } text-xs md:text-sm border-b border-gray-200 hover:bg-gray-50 transition`}
+                  >
+                    <div className="px-3 py-3 border-r border-gray-200 break-words">
+                      {s.serviceName || "-"}
                     </div>
-                    <div className="border-r border-gray-300 px-2 py-2">
-                      {s.consumableName}
-                    </div>
-                    <div className="border-r border-gray-300 px-2 py-2">
-                      {s.calibration || "-"}
-                    </div>
-                  </>
-                )}
 
-                <div className="px-2 md:py-2 py-1 capitalize">
-                  {s.frequency}
-                </div>
+                    {user.role !== "ClientAdmin" &&
+                      user.role !== "ClientEmployee" && (
+                        <>
+                          <div className="px-3 py-3 border-r border-gray-200 break-words">
+                            {s.scopeName || "-"}
+                          </div>
+
+                          <div className="px-3 py-3 border-r border-gray-200 break-words">
+                            {s.consumableName || "-"}
+                          </div>
+
+                          <div className="px-3 py-3 border-r border-gray-200 break-words">
+                            {s.calibration || "-"}
+                          </div>
+                        </>
+                      )}
+
+                    <div className="px-3 py-3 capitalize whitespace-nowrap">
+                      {s.frequency || "-"}
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
+            </div>
           </div>
 
 
@@ -335,16 +369,17 @@ const SingleLocation = () => {
               {data.regularService?.regularService?.length > 0 && (
                 <>
                   <h6 className="text-base font-semibold text-neutral-900 mb-3">
-                    Last Regular Service Done
+                    Last Regular Service
                   </h6>
 
                   <div className="my-4 overflow-hidden rounded-lg border border-neutral-200 bg-white shadow-sm">
                     {/* DESKTOP HEADER (Hidden on Mobile) */}
-                    <div className="hidden md:grid grid-cols-12 bg-neutral-50 border-b border-neutral-200 text-xs font-bold uppercase tracking-wider text-neutral-500 py-3 px-4 gap-4 text-center items-center">
+                    <div className="hidden md:grid grid-cols-14 bg-neutral-50 border-b border-neutral-200 text-xs font-bold uppercase tracking-wider text-neutral-500 py-3 px-4 gap-4 text-center items-center">
                       <div className="col-span-2 text-left">Date</div>
                       <div className="col-span-2">Image</div>
                       <div className="col-span-6 text-left">Service Details</div>
                       <div className="col-span-2">Attended By</div>
+                      <div className="col-span-2">status</div>
                     </div>
 
                     {/* SINGLE INTEGRATED LOOP GENERATING CONTROLLED DATA ROWS */}
@@ -352,7 +387,7 @@ const SingleLocation = () => {
                       {data.regularService.regularService.map((item, index) => (
                         <div
                           key={item._id || index}
-                          className="grid grid-cols-1 md:grid-cols-12 gap-3 md:gap-4 items-center py-4 px-4 text-sm text-neutral-700 hover:bg-neutral-50 transition-colors"
+                          className="grid grid-cols-1 md:grid-cols-14 gap-3 md:gap-4 items-center py-4 px-4 text-sm text-neutral-700 hover:bg-neutral-50 transition-colors"
                         >
                           {/* 1. Date (Shows only once per entry row) */}
                           <div className="col-span-1 md:col-span-2 flex justify-between md:block items-center">
@@ -408,6 +443,13 @@ const SingleLocation = () => {
                               {item.userName || data.regularService.regularService[0]?.userName}
                             </span>
                           </div>
+                          {/* status */}
+                          <div className="col-span-1 md:col-span-2 flex justify-between md:block md:text-center items-center pt-2 md:pt-0 border-t md:border-none border-neutral-100">
+                            <span className="md:hidden text-xs font-semibold text-neutral-400 uppercase">Status</span>
+                            <span className="inline-flex items-center rounded-full bg-neutral-50 px-2.5 py-0.5 text-xs font-medium text-neutral-600 border border-neutral-200">
+                              {item.action}
+                            </span>
+                          </div>
 
                         </div>
                       ))}
@@ -420,15 +462,16 @@ const SingleLocation = () => {
               <div className="flex justify-center items-center mt-5 pt-2">
                 {!regular ? (
                   <Button
-                    label="Regular Service Update"
+                    label="Schedule Service Update"
                     onClick={() => setRegular(true)}
                   />
                 ) : (
                   <div className="w-full bg-neutral-50 p-4 rounded-xl border border-neutral-200 shadow-inner">
                     <SingleServiceForm
                       serviceData={data.location.service}
-                      id={data?.location?._id}
+                      id={data?.location?._id} setRegular={setRegular}
                     />
+
                   </div>
                 )}
               </div>

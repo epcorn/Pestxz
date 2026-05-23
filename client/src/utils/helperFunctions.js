@@ -1,8 +1,8 @@
 export const progress = (status) => {
   let text = "text-blue-700 bg-blue-100";
-  if (status === "Close") text = "text-green-700 bg-green-100";
-  else if (status === "In Progress") text = "text-red-600 bg-red-100";
-
+  if (status === "Close") text = "text-red-700 bg-red-100";
+  else if (status === "In Progress") text = "text-yellow-600 bg-yellow-100";
+  else if (status === "Close Req") text = "text-amber-700 bg-amber-100";
   return text;
 };
 

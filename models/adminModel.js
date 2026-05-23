@@ -64,7 +64,6 @@ const serviceSchema = new mongoose.Schema(
 
 const adminSchema = new mongoose.Schema(
   {
-    frequency: [String],
     service: [serviceSchema],
   },
   { timestamps: true },

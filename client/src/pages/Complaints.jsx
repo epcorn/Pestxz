@@ -98,7 +98,7 @@ const Complaints = () => {
 
                   className="mr-2 mt-0.5 w-40 py-0.5 h-8.5 px-2 border-2 rounded-md outline-none transition border-neutral-300 focus:border-black disabled:bg-slate-100"
                 >
-                  <option value="">--Select Clients--</option>
+                  <option value="">--All--</option>
                   {clients?.map((client, index) => (
                     <option key={client._id} value={client._id}>
                       {client.name}
@@ -112,7 +112,7 @@ const Complaints = () => {
 
                 className="mr-2 mt-0.5 w-40 py-0.5 h-8.5 px-2 border-2 rounded-md outline-none transition border-neutral-300 focus:border-black disabled:bg-slate-100"
               >
-                <option value="">--Select Floor--</option>
+                <option value="">--All--</option>
                 {clientLocations?.floors.map((item, index) => (
                   <option key={index} value={item}>
                     {item}

@@ -24,18 +24,20 @@ const ComplaintTable = ({ data, user }) => {
             {/* Complaint Number */}
             <div className="col-span-2">
               <p className="text-[10px] font-bold text-gray-400 md:hidden uppercase mb-1">Number</p>
-              {user?.rights?.raise || user?.rights?.close ? (
+              {/* {user?.rights?.raise || user?.rights?.close ? ( */}
+              {complaint.complaintDetails?.number ?
                 <Link
-                  to={`/complaint/${complaint._id}`}
-                  className="text-sm font-bold text-blue-600 hover:text-blue-800 transition-colors"
+                to={`/complaint/${complaint._id}`}
+                className="text-sm font-bold text-blue-600 hover:text-blue-800 transition-colors"
                 >
-                  #{complaint.complaintDetails?.number || i + 1}
+                  #{complaint.complaintDetails?.number}
                 </Link>
-              ) : (
-                <p className="text-sm font-bold text-gray-600">
-                  #{complaint.complaintDetails?.number || i + 1}
-                </p>
-              )}
+                : <p className="text-center">--</p> }
+              {/* ) : ( */}
+                {/* <p className="text-sm font-bold text-gray-600">
+                  #{complaint.complaintDetails?.number || "-"}
+                </p> */}
+              {/* )} */}
             </div>
 
             {/* Complaint Type */}

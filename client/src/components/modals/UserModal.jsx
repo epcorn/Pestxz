@@ -228,7 +228,7 @@ const UserModal = ({ userDetails }) => {
             id="department"
             errors={errors}
             register={register}
-            required={selectedType === "ClientEmployee"}
+            required={false}
             disabled={addLoading || userDetails}
           />
           <p className="text-xs text-red-500 pl-1 mt-1">

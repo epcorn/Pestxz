@@ -5,7 +5,7 @@ import {
   getSingleComplaint,
   newComplaint,
   newRegularService,
-  updateComplaint,
+  updateComplaint, 
 } from "../controllers/serviceController.js";
 
 const router = express.Router();

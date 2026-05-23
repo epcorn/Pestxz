@@ -127,7 +127,6 @@ function RemoveService({ id, type, setToggleInput, toggleInput, serviceId, scope
     try {
       if (confirm) {
         const res = await deleteService({ id, data: { type, serviceId, scopeId } }).unwrap();
-
         toast.success(res.msg);
       }
     } catch (error) {
@@ -137,7 +136,7 @@ function RemoveService({ id, type, setToggleInput, toggleInput, serviceId, scope
   }
   return (
     <div className=' absolute h-full rounded-r right-1 top-1/2 -translate-y-1/2 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200'>
-      <button className='w-6 h-6 bg-red-200 text-red-600 rounded-full cursor-pointer hover:scale-110 transition'
+      <button className='w-6 h-6 pb-1 bg-red-200 text-red-600 rounded-full cursor-pointer hover:scale-110 transition'
         onClick={(e) => { e.stopPropagation(); handleClick() }}
       >
         ×

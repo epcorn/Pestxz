@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { type } from "os";
 
 const serviceSchema = new mongoose.Schema(
   {
@@ -7,9 +8,19 @@ const serviceSchema = new mongoose.Schema(
       number: { type: String },
       service: { type: Array },
       status: { type: String },
+      clientName: { type: String },
       userName: { type: String },
       image: [String],
       comment: { type: String },
+      reopenCount: {
+        type: Number,
+        default: 0,
+      },
+
+      finalClosed: {
+        type: Boolean,
+        default: false,
+      },
     },
     complaintUpdate: [
       {
