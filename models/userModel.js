@@ -38,6 +38,8 @@ const userSchema = new mongoose.Schema(
       close: { type: Boolean, default: false },
       scan_Scheduled: { type: Boolean, default: false },
       scan_Unscheduled: { type: Boolean, default: false },
+      delete: { type: Boolean, default: false },
+      addData: { type: Boolean, default: false },
     },
   },
   {
@@ -46,7 +48,6 @@ const userSchema = new mongoose.Schema(
     toObject: { virtuals: true },
   },
 );
-
 
 userSchema.pre("save", async function () {
   if (!this.isModified("password")) return;
@@ -73,6 +74,7 @@ export const createAdmin = async () => {
       close: true,
       scan_Scheduled: true,
       scan_Unscheduled: true,
+      delete: true,
     };
   try {
     const adminExists = await User.findOne({ email: email });

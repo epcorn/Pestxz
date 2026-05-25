@@ -90,23 +90,45 @@ export const addLocation = async (req, res) => {
 
 export const getAllLocations = async (req, res) => {
   const { id } = req.params;
+
+  console.log(id)
   try {
-    let clientId = id;
-    let floors = [];
-    if (clientId === "ClientEmployee") clientId = req.user.client;
+    let clientId;
+    // CASE 1: ClientEmployee → get client from token
+    if (id === "ClientEmployee") {
+      clientId = req.user.client;
+    }
+    // CASE 2: frontend sends LOCATION ID → derive client from it
+    else if (id.length === 24) {
+      const location = await Location.findById(id).select("client");
+      if (!location) {
+        return res.status(404).json({ msg: "Location not found" });
+      }
+      clientId = location.client;
+    }
+    // CASE 3: already clientId
+    else {
+      clientId = id;
+    }
+    // FIND CLIENT
     const client = await Client.findById(clientId);
-    const clientName = client.name;
-    if (!client) return res.status(404).json({ msg: "Client not found" });
-
+    if (!client) {
+      return res.status(404).json({ msg: "Client not found" });
+    }
+    // FIND ALL LOCATIONS OF THAT CLIENT
     const locations = await Location.find({ client: clientId });
-    locations.map(
-      (item) => !floors.includes(item.floor) && floors.push(item.floor),
-    );
+    // UNIQUE FLOORS
+    const floors = [...new Set(locations.map((l) => l.floor))];
 
-    return res.json({ client, clientName, locations, floors });
+    return res.json({
+      client,
+      clientName: client.name,
+      locations,
+      floors,
+    });
   } catch (error) {
     console.log(error);
-    res.status(500).json({ msg: "Server error, try again later" });
+    return res.status(500).json({ msg: "Server error, try again later" });
   }
 };
 
@@ -119,8 +141,8 @@ export const updateLocation = async (req, res) => {
     location.floor = req.body.floor;
     location.subLocation = req.body.subLocation;
     location.location = req.body.location;
-    location.service = req.body.service;
-    location.product = req.body.product;
+    location.service = req.body.serviceReq;
+    location.product = Array.isArray(req.body.product) ? req.body.product : [];
 
     await location.save();
     return res.json({ msg: "Updated successfully" });
@@ -133,6 +155,8 @@ export const updateLocation = async (req, res) => {
 export const deleteLocation = async (req, res) => {
   const { id } = req.params;
   try {
+    if (!req.user.rights.delete)
+      return res.status(403).json({ msg: "You are not allowed to delete" });
     const location = await Location.findById(id);
     if (!location) return res.status(404).json({ msg: "Location not found" });
 
@@ -147,6 +171,7 @@ export const deleteLocation = async (req, res) => {
 
 export const getLocationDetails = async (req, res) => {
   const { id } = req.params;
+
   try {
     let location = await Location.findById(id);
     const client = await Client.findById(location.client);
@@ -186,6 +211,7 @@ export const getLocationDetails = async (req, res) => {
               name: item.serviceName,
               scope: item.scopeName,
             })),
+            userName: service.userName,
             status: service.regularService.map((item) => item.action),
           });
         else if (
@@ -198,6 +224,7 @@ export const getLocationDetails = async (req, res) => {
             date: service.updatedAt,
             pest: service.complaintDetails.service,
             status: service.complaintDetails.status,
+            userName: service.userName,
           });
         }
 

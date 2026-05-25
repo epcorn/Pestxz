@@ -9,11 +9,9 @@ export const userSlice = apiSlice.injectEndpoints({
         body: data,
       }),
     }),
-    rights: builder.mutation({
-      query: (data) => ({
-        url: "/api/user/rights",
-        method: "POST",
-        body: data,
+    getSingleUser: builder.query({
+      query: (id) => ({
+        url: `/api/user/singleUser/${id}`,
       }),
     }),
     logout: builder.mutation({
@@ -25,4 +23,9 @@ export const userSlice = apiSlice.injectEndpoints({
   }),
 });
 
-export const { useLoginMutation, useLogoutMutation,useRightsMutation } = userSlice;
+export const {
+  useLoginMutation,
+  useGetSingleUserQuery,
+  useLogoutMutation,
+  
+} = userSlice;

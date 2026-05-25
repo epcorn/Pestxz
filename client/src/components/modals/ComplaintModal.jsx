@@ -1,4 +1,6 @@
-import { useEffect, useState } from "react";
+// ComplaintModal.jsx
+
+import { useEffect, useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
@@ -9,7 +11,11 @@ import {
   useNewComplaintMutation,
   useUpdateComplaintMutation,
 } from "../../redux/serviceSlice";
-import { clientAdminStatus, jobStatus, operatorComment } from "../../utils/constData";
+import {
+  clientAdminStatus,
+  jobStatus,
+  operatorComment,
+} from "../../utils/constData";
 import FormModal from "./FormModal";
 
 const ComplaintModal = ({ locationId, mode = "create" }) => {
@@ -18,16 +24,24 @@ const ComplaintModal = ({ locationId, mode = "create" }) => {
   const isReview = mode === "review";
 
   const [images, setImages] = useState([]);
-  const [floor, setFloor] = useState("Select");
-  const [locations, setLocations] = useState([]);
+  const [floor, setFloor] = useState("");
 
   const dispatch = useDispatch();
+
   const { isModalOpen, user } = useSelector((store) => store.helper);
 
-  const [addComplaint, { isLoading: addLoading }] = useNewComplaintMutation();
-  const [updateComplaint, { isLoading: updateLoading }] = useUpdateComplaintMutation();
+  const [addComplaint, { isLoading: addLoading }] =
+    useNewComplaintMutation();
 
-  const { data: clientLocations } = useAllLocationsQuery({ id: user?.type });
+  const [updateComplaint, { isLoading: updateLoading }] =
+    useUpdateComplaintMutation();
+
+  const { data: clientLocations } = useAllLocationsQuery(
+    { id: user?.type === "ClientEmployee" ? user?.type : locationId },
+    { skip: !user?.type || !locationId }
+  );
+
+  console.log(clientLocations)
 
   const {
     register,
@@ -39,79 +53,133 @@ const ComplaintModal = ({ locationId, mode = "create" }) => {
     setValue,
   } = useForm({
     defaultValues: {
-      location: "",
+      location: null,
       service: "",
       comment: "",
-      status: "",
+      status: null,
     },
   });
 
   const selectedLocation = watch("location");
 
-  // Sync Locations dynamically whenever the floor dropdown changes
+  // SET INITIAL FLOOR
   useEffect(() => {
-    if (!clientLocations?.locations) return;
+    if (!clientLocations?.floors?.length) return;
 
-    const filteredLocations = clientLocations.locations
-      .filter((item) => floor === "Select" || item.floor === floor)
+    if (!floor) {
+      setFloor(clientLocations.floors[0]);
+    }
+  }, [clientLocations, floor]);
+
+  // LOCATION OPTIONS
+  const locationOptions = useMemo(() => {
+    if (!clientLocations?.locations) return [];
+
+    return clientLocations.locations
+      .filter((item) => !floor || item.floor === floor)
       .map((item) => ({
-        label: `${item.location}${item.subLocation ? `, ${item.subLocation}` : ""}`,
+        label: `${item.location}${item.subLocation ? `, ${item.subLocation}` : ""
+          }`,
         value: item._id,
       }));
+  }, [clientLocations, floor]);
 
-    setLocations(filteredLocations);
-    setValue("location", "");
-    setValue("service", "");
-  }, [floor, clientLocations, setValue]);
+  // PRESELECT LOCATION
+  useEffect(() => {
+    if (!locationId || !clientLocations?.locations) return;
 
-  const currentSelectedId = user.rights.raise ? selectedLocation?.value : locationId;
-  const targetedLocationRecord = clientLocations?.locations?.find((loc) => loc._id === currentSelectedId);
+    const currentLocation = clientLocations.locations.find(
+      (loc) => loc._id === locationId
+    );
 
-  // Safely extract services list as distinct string options
-  const rawServices = targetedLocationRecord?.service || [];
-  const serviceOptions = rawServices
-    .map((s) => {
-      let nameStr = "";
-      if (typeof s === "string") {
-        nameStr = s.trim();
-      } else if (s && typeof s === "object") {
-        nameStr = s.serviceName || s.service || s.name || "";
-      }
-      if (nameStr.endsWith(",")) {
-        nameStr = nameStr.slice(0, -1).trim();
-      }
-      return nameStr;
-    })
-    .filter((name) => name !== "");
+    if (!currentLocation) return;
+
+    setFloor(currentLocation.floor);
+
+    setValue("location", {
+      label: `${currentLocation.location}${currentLocation.subLocation
+        ? `, ${currentLocation.subLocation}`
+        : ""
+        }`,
+      value: currentLocation._id,
+    });
+  }, [locationId, clientLocations, setValue]);
+
+  // RESET ON FLOOR CHANGE
+  useEffect(() => {
+    if (!locationId) {
+      setValue("location", null);
+      setValue("service", "");
+    }
+  }, [floor, locationId, setValue]);
+
+  const currentSelectedId =
+    locationId || selectedLocation?.value;
+
+  const targetedLocationRecord =
+    clientLocations?.locations?.find(
+      (loc) => loc._id === currentSelectedId
+    );
+
+  // SERVICES
+  const serviceOptions = useMemo(() => {
+    const rawServices = targetedLocationRecord?.service || [];
+
+    return rawServices
+      .map((s) => {
+        if (typeof s === "string") {
+          return s.trim().replace(/,$/, "");
+        }
+
+        if (typeof s === "object") {
+          return (
+            s.serviceName ||
+            s.service ||
+            s.name ||
+            ""
+          )
+            .trim()
+            .replace(/,$/, "");
+        }
+
+        return "";
+      })
+      .filter(Boolean);
+  }, [targetedLocationRecord]);
+  
+  console.log(clientLocations)
 
   const submit = async (data) => {
     if (images.length > 2) {
       return toast.error("Maximum 2 images are allowed");
     }
-
     const form = new FormData();
-
     images.forEach((image) => {
       form.append("images", image);
     });
-
     try {
       let res;
-
-      // CREATE COMPLAINT
+      // CREATE
       if (isCreate) {
         form.set("comment", data.comment);
         form.set("service", data.service);
 
+        const locationToUse =
+          user.type === "ClientEmployee"
+            ? user.client
+            : data?.location?.value;
+
+        if (!locationToUse) {
+          toast.error("Location is required");
+          return;
+        }
+
         res = await addComplaint({
-          id: user.rights.raise
-            ? data?.location?.value
-            : locationId,
+          id: locationToUse,
           form,
         }).unwrap();
       }
-
-      // OPERATOR UPDATE
+      // UPDATE
       if (isUpdate) {
         form.set(
           "status",
@@ -129,7 +197,7 @@ const ComplaintModal = ({ locationId, mode = "create" }) => {
         }).unwrap();
       }
 
-      // CLIENT ADMIN REVIEW
+      // REVIEW
       if (isReview) {
         form.set(
           "status",
@@ -153,10 +221,8 @@ const ComplaintModal = ({ locationId, mode = "create" }) => {
         })
       );
 
-      setFloor("Select");
       setImages([]);
       reset();
-
     } catch (error) {
       console.log(error);
 
@@ -170,18 +236,17 @@ const ComplaintModal = ({ locationId, mode = "create" }) => {
 
   const reviewFormBody = (
     <div className="grid gap-y-3 mb-4">
-
       <div>
         <Controller
           name="status"
           control={control}
           rules={{ required: "Status is required" }}
-          render={({ field: { onChange, value } }) => (
+          render={({ field }) => (
             <InputSelect
               isMulti={false}
               options={clientAdminStatus}
-              onChange={onChange}
-              value={value}
+              onChange={field.onChange}
+              value={field.value}
               label="Review Action"
             />
           )}
@@ -200,37 +265,28 @@ const ComplaintModal = ({ locationId, mode = "create" }) => {
           register={register}
           placeholder="Add review comment"
         />
-
-        <p className="text-xs text-red-500 pl-1 mt-1">
-          {errors.comment && "Comment is required"}
-        </p>
       </div>
 
       <div>
-        <label
-          htmlFor="images"
-          className="text-md font-medium leading-6 mr-2 text-gray-900"
-        >
+        <label className="text-md font-medium leading-6 mr-2 text-gray-900">
           Images
         </label>
 
         <input
           type="file"
-          id="images"
+          multiple
+          accept="image/*"
           onChange={(e) =>
             setImages(Array.from(e.target.files))
           }
-          multiple
           className="mt-0.5 block w-full text-sm text-slate-500
-        file:mr-4 file:py-2 file:px-4
-        file:rounded-md file:border-0
-        file:text-sm file:font-semibold
-        file:bg-zinc-100 file:text-zinc-700
-        hover:file:bg-zinc-200"
-          accept="image/*"
+          file:mr-4 file:py-2 file:px-4
+          file:rounded-md file:border-0
+          file:text-sm file:font-semibold
+          file:bg-zinc-100 file:text-zinc-700
+          hover:file:bg-zinc-200"
         />
       </div>
-
     </div>
   );
 
@@ -240,14 +296,14 @@ const ComplaintModal = ({ locationId, mode = "create" }) => {
         <>
           <div className="mr-2 mt-2">
             <label className="block text-md font-medium leading-6 text-gray-900">
-              Floor <span className="text-red-500 ml-0.5">*</span>
+              Floor
             </label>
+
             <select
               value={floor}
               onChange={(e) => setFloor(e.target.value)}
-              className="mr-2 mt-0.5 w-full py-0.5 px-2 border-2 rounded-md outline-none transition border-neutral-300 focus:border-black"
+              className="mr-2 mt-0.5 w-full py-1 px-2 border-2 rounded-md outline-none transition border-neutral-300 focus:border-black"
             >
-              {/* <option value="Select">Select</option> */}
               {clientLocations?.floors?.map((item, index) => (
                 <option key={index} value={item}>
                   {item}
@@ -255,43 +311,52 @@ const ComplaintModal = ({ locationId, mode = "create" }) => {
               ))}
             </select>
           </div>
+
           <div>
             <Controller
               name="location"
               control={control}
-              rules={{ required: "Location is required" }}
-              render={({ field: { onChange, value } }) => (
+              rules={{
+                required: "Location is required",
+              }}
+              render={({ field }) => (
                 <InputSelect
                   isMulti={false}
-                  options={locations}
-                  onChange={onChange}
-                  value={value}
+                  options={locationOptions}
+                  onChange={field.onChange}
+                  value={field.value}
                   label="Location"
                 />
               )}
             />
-            <p className="text-xs text-red-500 pl-1 mt-1">{errors.location?.message}</p>
+
+            <p className="text-xs text-red-500 pl-1 mt-1">
+              {errors.location?.message}
+            </p>
           </div>
         </>
       )}
 
       <div className="col-span-2">
         <label className="block text-md font-medium leading-6 text-gray-900 mb-1">
-          Services <span className="text-red-500 ml-0.5">*</span>
+          Services
         </label>
 
         <Controller
           name="service"
           control={control}
           rules={{ required: "Select service" }}
-          render={({ field: { onChange, value } }) => (
+          render={({ field }) => (
             <select
-              value={value || ""}
-              onChange={(e) => onChange(e.target.value)}
+              value={field.value || ""}
+              onChange={(e) =>
+                field.onChange(e.target.value)
+              }
               className="w-full py-2 px-2 border-2 rounded-md outline-none transition border-neutral-300 focus:border-black"
             >
               <option value="">Select Service</option>
-              {serviceOptions.map((serviceName, index) => (
+
+              {serviceOptions?.map((serviceName, index) => (
                 <option key={index} value={serviceName}>
                   {serviceName}
                 </option>
@@ -299,20 +364,30 @@ const ComplaintModal = ({ locationId, mode = "create" }) => {
             </select>
           )}
         />
-        <p className="text-xs text-red-500 pl-1 mt-1">{errors.service?.message}</p>
+
+        <p className="text-xs text-red-500 pl-1 mt-1">
+          {errors.service?.message}
+        </p>
       </div>
 
       <div className="col-span-2">
-        <label htmlFor="images" className="text-md font-medium leading-6 mr-2 text-gray-900">
-          Images* <span className="text-sm font-normal">(max 2 images allowed)</span>
+        <label className="text-md font-medium leading-6 mr-2 text-gray-900">
+          Images*
         </label>
+
         <input
           type="file"
-          id="images"
-          onChange={(e) => setImages(Array.from(e.target.files))}
           multiple
-          className="mt-0.5 block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-zinc-100 file:text-zinc-700 hover:file:bg-zinc-200"
           accept="image/*"
+          onChange={(e) =>
+            setImages(Array.from(e.target.files))
+          }
+          className="mt-0.5 block w-full text-sm text-slate-500
+          file:mr-4 file:py-2 file:px-4
+          file:rounded-md file:border-0
+          file:text-sm file:font-semibold
+          file:bg-zinc-100 file:text-zinc-700
+          hover:file:bg-zinc-200"
         />
       </div>
 
@@ -324,9 +399,6 @@ const ComplaintModal = ({ locationId, mode = "create" }) => {
           register={register}
           placeholder="Exact location of pest found"
         />
-        <p className="text-xs text-red-500 pl-1 mt-1">
-          {errors.comment && "Comment is required"}
-        </p>
       </div>
     </div>
   );
@@ -337,93 +409,110 @@ const ComplaintModal = ({ locationId, mode = "create" }) => {
         <Controller
           name="comment"
           control={control}
-          rules={{ required: "Job comment is required" }}
-          render={({ field: { onChange, value } }) => (
+          rules={{
+            required: "Job comment is required",
+          }}
+          render={({ field }) => (
             <InputSelect
               isMulti={false}
               options={operatorComment}
-              onChange={onChange}
-              value={value}
+              onChange={field.onChange}
+              value={field.value}
               label="Job Comment"
             />
           )}
         />
-        <p className="text-xs text-red-500 pl-1 mt-1">{errors.comment?.message}</p>
+
+        <p className="text-xs text-red-500 pl-1 mt-1">
+          {errors.comment?.message}
+        </p>
       </div>
+
       <div>
         <Controller
           name="status"
           control={control}
-          rules={{ required: "Complaint status is required" }}
-          render={({ field: { onChange, value } }) => (
+          rules={{
+            required: "Complaint status is required",
+          }}
+          render={({ field }) => (
             <InputSelect
               options={
                 user.role === "ClientAdmin"
                   ? clientAdminStatus
                   : jobStatus
               }
-              onChange={onChange}
-              value={value}
+              onChange={field.onChange}
+              value={field.value}
               label="Complaint Status"
             />
           )}
         />
-        <p className="text-xs text-red-500 pl-1 mt-1">{errors.status?.message}</p>
+
+        <p className="text-xs text-red-500 pl-1 mt-1">
+          {errors.status?.message}
+        </p>
       </div>
+
       <div>
-        <label htmlFor="images" className="text-md font-medium leading-6 mr-2 text-gray-900">
-          Images* <span className="text-sm font-normal">(max 2 images allowed)</span>
+        <label className="text-md font-medium leading-6 mr-2 text-gray-900">
+          Images*
         </label>
+
         <input
           type="file"
-          id="images"
-          onChange={(e) => setImages(Array.from(e.target.files))}
           multiple
-          className="mt-0.5 block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-zinc-100 file:text-zinc-700 hover:file:bg-zinc-200"
           accept="image/*"
+          onChange={(e) =>
+            setImages(Array.from(e.target.files))
+          }
+          className="mt-0.5 block w-full text-sm text-slate-500
+          file:mr-4 file:py-2 file:px-4
+          file:rounded-md file:border-0
+          file:text-sm file:font-semibold
+          file:bg-zinc-100 file:text-zinc-700
+          hover:file:bg-zinc-200"
         />
       </div>
     </div>
   );
 
   return (
-    <div>
-      <FormModal
-        onSubmit={handleSubmit(submit)}
-        title={
-          isCreate
-            ? "New Complaint"
-            : isUpdate
-              ? "Update Complaint"
-              : "Reopen Complaint"
-        }
-        formBody={
-          isCreate
-            ? clientFormBody
-            : isUpdate
-              ? operatorFormBody
-              : reviewFormBody
-        }
-        submitLabel={
-          isCreate
-            ? "Add Complaint"
-            : isUpdate
-              ? "Update"
-              : "Reopen"
-        }
-        handleClose={() =>
-          dispatch(
-            toggleModal({
-              name: "complaint",
-              status: false,
-            })
-          )
-        }
-        disabled={addLoading || updateLoading}
-        isLoading={addLoading || updateLoading}
-        open={isModalOpen.complaint}
-      />
-    </div>
+    <FormModal
+      onSubmit={handleSubmit(submit)}
+      title={
+        isCreate
+          ? "New Complaint"
+          : isUpdate
+            ? "Update Complaint"
+            : "Reopen Complaint"
+      }
+      formBody={
+        isCreate
+          ? clientFormBody
+          : isUpdate
+            ? operatorFormBody
+            : reviewFormBody
+      }
+      submitLabel={
+        isCreate
+          ? "Add Complaint"
+          : isUpdate
+            ? "Update"
+            : "Reopen/Close"
+      }
+      handleClose={() =>
+        dispatch(
+          toggleModal({
+            name: "complaint",
+            status: false,
+          })
+        )
+      }
+      disabled={addLoading || updateLoading}
+      isLoading={addLoading || updateLoading}
+      open={isModalOpen.complaint}
+    />
   );
 };
 

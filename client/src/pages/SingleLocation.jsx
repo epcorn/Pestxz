@@ -19,6 +19,7 @@ import ImagesModal from "../components/modals/ImagesModal";
 
 const SingleLocation = () => {
   const { id } = useParams();
+
   const { user, isModalOpen } = useSelector((store) => store.helper);
   const [regular, setRegular] = useState(false);
   const dispatch = useDispatch();
@@ -26,9 +27,6 @@ const SingleLocation = () => {
   const { data, isLoading, error } = useSingleLocationDetailsQuery(id);
   const [regularService, { isLoading: regularLoading }] =
     useRegularServiceMutation();
-
-  console.log(data);
-
 
   const {
     formState: { errors },
@@ -143,8 +141,8 @@ const SingleLocation = () => {
                 {/* HEADER */}
                 <div
                   className={`grid ${user.role === "ClientAdmin" || user.role === "ClientEmployee"
-                      ? "grid-cols-2"
-                      : "grid-cols-5"
+                    ? "grid-cols-2"
+                    : "grid-cols-5"
                     } bg-gray-100 text-xs md:text-sm font-semibold text-gray-700 border-b border-gray-300`}
                 >
                   <div className="px-3 py-3 border-r border-gray-300 whitespace-nowrap">
@@ -178,9 +176,9 @@ const SingleLocation = () => {
                   <div
                     key={index}
                     className={`grid ${user.role === "ClientAdmin" ||
-                        user.role === "ClientEmployee"
-                        ? "grid-cols-2"
-                        : "grid-cols-5"
+                      user.role === "ClientEmployee"
+                      ? "grid-cols-2"
+                      : "grid-cols-5"
                       } text-xs md:text-sm border-b border-gray-200 hover:bg-gray-50 transition`}
                   >
                     <div className="px-3 py-3 border-r border-gray-200 break-words">
@@ -219,17 +217,25 @@ const SingleLocation = () => {
               <img src={`data:image/svg+xml;base64,${rawSvg}`} alt="" className="h-40 ml-auto block" />
             </div> */}
 
-          {user.rights.raise && (
-            <>
-              <Button
-                label="Raise Complaint"
-                onClick={() =>
-                  dispatch(toggleModal({ name: "complaint", status: true }))
-                }
-              />
-              {isModalOpen.complaint && <ComplaintModal locationId={id} />}
-            </>
-          )}
+
+          {
+            user.rights.raise && id && (
+              <>
+                <Button
+                  label="Raise Complaint"
+                  onClick={() => dispatch(toggleModal({
+                    name: "complaint",
+                    status: true,
+                  }))} />
+
+                {isModalOpen.complaint && (
+                  <ComplaintModal
+                    locationId={data?.location?._id}
+                    mode="create"
+                  />
+                )}
+              </>
+            )}
           {data.complaints?.length > 0 && (
             <div className="my-4 overflow-hidden rounded-lg border border-neutral-200 bg-white shadow-sm">
 
@@ -278,6 +284,7 @@ const SingleLocation = () => {
                     <div className="col-span-1 md:col-span-2 flex justify-between md:block md:text-center items-center">
                       <span className="md:hidden text-xs font-semibold text-neutral-400 uppercase">By:</span>
                       <span>{complaint.complaintDetails.userName}</span>
+                      <p className="text-[0.65rem] outline text-gray-500 rounded-xl w-fit md:mx-auto px-2 ">{user.role}</p>
                     </div>
 
                     {/* 5. Status */}
@@ -315,7 +322,7 @@ const SingleLocation = () => {
 
                 {/* ROWS / MOBILE CARDS LIST */}
                 <div className="divide-y divide-neutral-200">
-                  {data.lastServices?.map((service) => (
+                  {data.lastServices?.map((service, i) => (
                     <div
                       key={service.id}
                       className="flex flex-col md:flex-row md:items-center py-4 px-4 text-sm text-neutral-700 hover:bg-neutral-50 transition-colors gap-3 md:gap-4"
@@ -336,7 +343,7 @@ const SingleLocation = () => {
                       <div className="w-full flex-1 flex flex-col md:block items-start justify-between min-w-0">
                         <span className="md:hidden text-xs font-semibold text-neutral-400 uppercase mb-0.5">Pest Details</span>
                         <div className="flex flex-wrap items-center gap-1.5 text-neutral-800">
-                          <span className="font-medium text-neutral-900">{service.pest[0]?.name}</span>
+                          <span className="font-medium text-neutral-900">{service.pest[0]?.name || service.pest.map(p => p).join(", ")}</span>
                           {service.pest[0]?.scope && (
                             <>
                               <span className="text-neutral-300">|</span>

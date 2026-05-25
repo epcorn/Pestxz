@@ -50,7 +50,7 @@ const Users = () => {
       toast.error("Error");
     }
   };
-
+console.log(data)
   return (
     <div className="p-6 font-sans text-gray-800">
       {isLoading || isFetching ? (
@@ -96,7 +96,7 @@ const Users = () => {
                     <td className="whitespace-nowrap px-6 py-4 text-gray-600">{user.role}</td>
                     <td className="whitespace-nowrap px-6 py-4 text-gray-500">{user.type || "—"}</td>
                     <td className="whitespace-nowrap px-6 py-4 font-mono text-xs text-gray-400">
-                      <RightsIcon initialRights={user.rights}/>
+                      <RightsIcon initialRights={user?.rights}/>
                     </td>
                     <td className="whitespace-nowrap px-6 py-4">
                       <div className="flex items-center gap-2">
@@ -104,7 +104,7 @@ const Users = () => {
                           className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-blue-600 shadow-sm transition-all hover:bg-blue-50 hover:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                           onClick={() => handleUpdateUserModal(user)}
                         >
-                          Change Password
+                          Change Creds
                         </button>
                         {user.role !== "Admin" && (
                           <DeleteModal

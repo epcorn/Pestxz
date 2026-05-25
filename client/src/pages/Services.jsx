@@ -24,17 +24,21 @@ import { toggleModal } from "../redux/helperSlice";
 import ServiceFormModal from "../components/modals/ServiceFormModal";
 import ServiceList from "../components/modals/ServiceList";
 import Frequency from "../components/Frequency";
+import { useGetSingleUserQuery, userSlice } from "../redux/userSlice";
+
 
 const Services = () => {
   const [selectedService, setSelectedService] = useState(null);
   const [selectedScope, setSelectedScope] = useState(null);
+  const [serviceId, setServiceId] = useState(null)
   const [update, setUpdate] = useState({
     status: false,
     id: "",
   });
-  const { isModalOpen } = useSelector((store) => store.helper);
+  const { isModalOpen, user } = useSelector((store) => store.helper);
   const dispatch = useDispatch();
 
+  const { data: me } = useGetSingleUserQuery(user?._id, { skip: !user?.id })
   const { data, isLoading, isFetching, error } = useAllServiceQuery();
   const [addService, { isLoading: addLoading }] = useAddServiceMutation();
   const [updateService, { isLoading: updateLoading }] =
@@ -65,6 +69,11 @@ const Services = () => {
     }
   }, [data]);
 
+  const handleUpdateService = async (e, service) => {
+    e.stopPropagation()
+    setUpdate({ id: service._id, value: service.serviceName })
+  }
+  
   return (
     <>
       <section className="w-full space-y-5 p-1">
@@ -86,15 +95,64 @@ const Services = () => {
               item.service.map((service) => (
                 <div
                   key={service._id}
+                  onMouseEnter={() => setServiceId(service._id)}
+                  onMouseLeave={() => setServiceId(null)}
                   onClick={() => {
                     setSelectedService(service);
                     setSelectedScope(null);
                     dispatch(toggleModal({ name: "service", status: true }))
                   }}
-                  className={`capitalize border border-gray-500 rounded p-2 cursor-pointer transition ${selectedService?._id === service._id ? "bg-green-100 border-green-500" : "hover:bg-gray-50"
+                  className={`capitalize flex items-center justify-between  border border-gray-500 rounded p-2 cursor-pointer transition ${selectedService?._id === service._id ? "bg-green-100 border-green-500" : "hover:bg-gray-50"
                     }`}
                 >
-                  {service.serviceName}
+                  {update.id === service._id ? (
+                    <input
+                      value={update.value}
+                      autoFocus
+                      onChange={(e) =>
+                        setUpdate((prev) => ({
+                          ...prev,
+                          value: e.target.value,
+                        }))
+                      }
+                      onClick={(e) => e.stopPropagation()}
+                      onKeyDown={async (e) => {
+                        if (e.key === "Enter") {
+                          try {
+                            const res = await updateService({
+                              id: service._id,
+                              data: {
+                                type: "serviceName",
+                                data: update.value,
+                                id: service._id,
+                              },
+                            }).unwrap();
+
+                            toast.success(res.msg);
+
+                            setUpdate({ id: null, value: "" });
+                          } catch (error) {
+                            toast.error(error?.data?.msg || error.error);
+                          }
+                        }
+
+                        if (e.key === "Escape") {
+                          setUpdate({ id: null, value: "" });
+                        }
+                      }}
+                      className="border px-1 py-0.5 rounded w-full text-sm"
+                    />
+                  ) : (
+                    service.serviceName
+                  )}
+                  {serviceId === service._id && (
+                    <div
+                      className="outline h-full px-1 grid place-items-center text-green-700 bg-green-200 rounded-sm"
+                      onClick={(e) => handleUpdateService(e, service)}
+                    >
+                      <FaEdit />
+                    </div>
+                  )}
                 </div>
               ))
             )}
@@ -108,6 +166,7 @@ const Services = () => {
               selectedScope={selectedScope}
               setSelectedService={setSelectedService}
               setSelectedScope={setSelectedScope}
+              rights={me?.rights}
             />
           )}
         </div>

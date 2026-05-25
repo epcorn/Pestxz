@@ -6,6 +6,8 @@ function RightsIcon({ initialRights }) {
     { key: 'close', label: 'Close', color: 'bg-rose-50 text-rose-700 border-rose-200' },
     { key: 'scan_Scheduled', label: 'Sched. Scan', color: 'bg-amber-50 text-amber-700 border-amber-200' },
     { key: 'scan_Unscheduled', label: 'Unsched. Scan', color: 'bg-sky-50 text-sky-700 border-sky-200' },
+    { key: 'delete', label: 'Delete', color: 'bg-red-50 text-red-700 border-red-200' },
+    { key: 'addData', label: 'Add Data', color: 'bg-red-50 text-red-700 border-red-200' },
   ];
 
   const activePermissions = permissionsList.filter(p => initialRights?.[p.key]);

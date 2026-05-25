@@ -24,12 +24,18 @@ export const clientSlice = apiSlice.injectEndpoints({
       }),
       invalidatesTags: ["Client"],
     }),
-    
+    getSingleClient: builder.query({
+      query: (id) => ({
+        url: `/api/client/${id}`,
+      }),
+      invalidatesTags: ["Client"],
+    }),
   }),
 });
 
 export const {
   useRegisterClientMutation,
   useAllClientsQuery,
+  useGetSingleClientQuery,
   useDeleteClientMutation,
 } = clientSlice;

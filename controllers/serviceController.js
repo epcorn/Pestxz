@@ -6,71 +6,121 @@ import exceljs from "exceljs";
 import { sendEmail, uploadFile } from "../utils/helperFunction.js";
 
 export const newComplaint = async (req, res) => {
+  const { id } = req.params;
+
   try {
-    if (req.user.type === "PestEmployee")
-      return res
-        .status(400)
-        .json({ msg: "Yoe are not allowed to raise a complaint" });
-    // const client = await Client.findById(req.user.client);
-    // const prefix = client.name
+    // RIGHTS CHECK
+    if (!req?.user?.rights?.raise) {
+      return res.status(400).json({
+        msg: "You are not allowed to raise a complaint",
+      });
+    }
+
+    // FIND LOCATION
+    const location = await Location.findById(id);
+
+    if (!location) {
+      return res.status(404).json({
+        msg: "Location not found",
+      });
+    }
+
+    // DETERMINE CLIENT
+    let clientId;
+    let client;
+
+    // CLIENT USERS
+    if (req.user.type === "ClientAdmin" || req.user.type === "ClientEmployee") {
+      clientId = req.user.client;
+    }
+
+    // PEST USERS
+    else {
+      clientId = location.client;
+    }
+
+    client = await Client.findById(clientId);
+
+    if (!client) {
+      return res.status(404).json({
+        msg: "Client not found",
+      });
+    }
+
+    // LAST COMPLAINT NUMBER
     const lastComplaint = await Service.findOne({
       type: "Complaint",
-      client: req.user.client,
+      client: clientId,
     })
       .sort({ createdAt: -1 })
       .select("complaintDetails.number");
+
     let nextNumber = 1;
 
-    if (lastComplaint?.complaintDetails.number) {
+    if (lastComplaint?.complaintDetails?.number) {
       const lastNumber = parseInt(
         lastComplaint.complaintDetails.number.replace("SR-", "").trim(),
       );
+
       nextNumber = lastNumber + 1;
     }
 
     const sr = `SR-${String(nextNumber).padStart(4, "0")}`;
-    const imageLinks = [];
-    if (req.files) {
-      let images = [];
-      if (req.files.images.length > 0) {
-        images = req.files.images;
-      } else {
-        images.push(req.files.images);
-      }
 
-      for (let i = 0; i < images.length; i++) {
-        const link = await uploadFile({ filePath: images[i].tempFilePath });
-        if (!link)
-          return res
-            .status(400)
-            .json({ msg: "Image upload error. Try again later" });
+    // IMAGE UPLOAD
+    const imageLinks = [];
+
+    if (req.files?.images) {
+      const images = Array.isArray(req.files.images)
+        ? req.files.images
+        : [req.files.images];
+
+      for (const image of images) {
+        const link = await uploadFile({
+          filePath: image.tempFilePath,
+        });
+
+        if (!link) {
+          return res.status(400).json({
+            msg: "Image upload error. Try again later",
+          });
+        }
+
         imageLinks.push(link);
       }
     }
-    // const client = new Client.findById(req.user.client);
+
+    // CREATE COMPLAINT
     const complaint = await Service.create({
       type: "Complaint",
+
       complaintDetails: {
         number: sr,
         service: req.body.service,
         userName: req.user.name,
-        // clientName: client?.name,
+        raisedBy: req.user.type,
+        raisedByRole: req.user.role,
+        clientName: client.name,
         status: "Open",
         image: imageLinks,
         comment: req.body.comment,
       },
+
       complaintUpdate: [
         {
           image: imageLinks,
           comment: req.body.comment,
           userName: req.user.name,
-          // clientName: client?.name,
+          raisedBy: req.user.type,
+          raisedByRole: req.user.role,
+          clientName: client.name,
           status: "Open",
           date: new Date(),
         },
       ],
-      client: req.user.client,
-      location: req.params.id,
+
+      client: clientId,
+      location: id,
     });
 
     return res.status(201).json({
@@ -78,7 +128,10 @@ export const newComplaint = async (req, res) => {
     });
   } catch (error) {
     console.log(error);
-    res.status(500).json({ msg: "Server error, try again later" });
+
+    return res.status(500).json({
+      msg: "Server error, try again later",
+    });
   }
 };
 
@@ -342,7 +395,6 @@ export const newRegularService = async (req, res) => {
       comment: req.body.comment,
 
       image: imageLink,
-
       userName: req.user.name,
     };
 

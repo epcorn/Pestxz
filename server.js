@@ -37,7 +37,14 @@ app.use("/api/user", userRoute);
 app.use(
   "/api/client",
   authenticateUser,
-  authorizeUser("Admin", "Operator", "Supervisor", "TeamLeader", "BranchAdmin"),
+  authorizeUser(
+    "Admin",
+    "Operator",
+    "Supervisor",
+    "TeamLeader",
+    "BranchAdmin",
+    "ClientAdmin",
+  ),
   clientRoute,
 );
 app.use(
@@ -66,10 +73,8 @@ app.use(notFound);
 const port = process.env.PORT || 5000;
 export const MONGOURL = process.env.MONGO_URI;
 
-
-
 // createAdmin();
-// addAdminsjson()   // do not run this if not required  
+// addAdminsjson()   // do not run this if not required
 const connectDB = async () => {
   try {
     await mongoose.connect(MONGOURL);

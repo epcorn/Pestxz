@@ -31,7 +31,7 @@ const UserModal = ({ userDetails }) => {
     watch,
     setValue,
   } = useForm({
-    defaultValues: userDetails || {
+    defaultValues: {
       name: "",
       email: "",
       password: "",
@@ -44,7 +44,9 @@ const UserModal = ({ userDetails }) => {
         close: false,
         scan_Scheduled: false,
         scan_Unscheduled: false,
-      }
+        delete: false,
+        addData: false,
+      },
     },
   });
 
@@ -77,11 +79,13 @@ const UserModal = ({ userDetails }) => {
         department: userDetails.department || "",
         client: userDetails.client || null,
         rights: {
-          raise: userDetails.rights.raise || false,
-          close: userDetails.rights.close || false,
-          scan_Scheduled: userDetails.rights.scan_Scheduled || false,
-          scan_Unscheduled: userDetails.rights.scan_Unscheduled || false,
-        }
+          raise: userDetails?.rights?.raise ?? false,
+          close: userDetails?.rights?.close ?? false,
+          scan_Scheduled: userDetails?.rights?.scan_Scheduled ?? false,
+          scan_Unscheduled: userDetails?.rights?.scan_Unscheduled ?? false,
+          delete: userDetails?.rights?.delete ?? false,
+          addData: userDetails?.rights?.addData ?? false,
+        },
       });
     } else {
       reset({
@@ -97,7 +101,9 @@ const UserModal = ({ userDetails }) => {
           close: false,
           scan_Scheduled: false,
           scan_Unscheduled: false,
-        }
+          delete: false,
+          addData: false,
+        },
       });
     }
   }, [userDetails, reset]);
@@ -110,16 +116,24 @@ const UserModal = ({ userDetails }) => {
       : clientRoles;
 
   const submit = async (formData) => {
-    if (!userDetails && formData.password.length < 5) {
-      return toast.error("Password must be 5 characters or greater");
-    }
     const payload = {
       ...formData,
-      client: selectedType === "ClientEmployee"
-        ? formData.client?.value
-        : user?._id
+      rights: {
+        raise: !!formData.rights?.raise,
+        close: !!formData.rights?.close,
+        scan_Scheduled: !!formData.rights?.scan_Scheduled,
+        scan_Unscheduled: !!formData.rights?.scan_Unscheduled,
+        delete: !!formData.rights?.delete,
+        addData: !!formData.rights?.addData,
+      },
+      client:
+        selectedType === "ClientEmployee"
+          ? formData.client?.value
+          : user?._id,
     };
-    console.log(payload)
+
+    console.log("FINAL PAYLOAD RIGHTS:", payload.rights); // DEBUG
+
     try {
       let res;
       if (userDetails) {
@@ -130,12 +144,12 @@ const UserModal = ({ userDetails }) => {
       } else {
         res = await addUser(payload).unwrap();
       }
+
       toast.success(res?.msg || "Success");
       reset();
       dispatch(toggleModal({ name: "user", status: false }));
     } catch (error) {
-      console.error(error);
-      toast.error(error?.data?.msg || error.error || "An error occurred");
+      toast.error(error?.data?.msg || "Error");
     }
   };
 
@@ -270,8 +284,20 @@ const UserModal = ({ userDetails }) => {
         <Controller
           name="rights"
           control={control}
-          render={({ field: { onChange, value } }) => (
-            <InputCheck value={value} required={true} onChange={onChange} />
+          defaultValue={{
+            raise: false,
+            close: false,
+            scan_Scheduled: false,
+            scan_Unscheduled: false,
+            delete: false,
+            addData: false,
+          }}
+          render={({ field }) => (
+            <InputCheck
+              value={field.value || {}}
+              onChange={field.onChange}
+              required={true}
+            />
           )}
         />
       </div>
@@ -283,7 +309,7 @@ const UserModal = ({ userDetails }) => {
       onSubmit={handleSubmit(submit)}
       title={`${userDetails ? "Update" : "Add"} Employee`}
       formBody={formBody}
-      submitLabel={userDetails ? "Update Password" : "Add"}
+      submitLabel={userDetails ? "Update User" : "Add"}
       handleClose={() => dispatch(toggleModal({ name: "user", status: false }))}
       disabled={addLoading || updateLoading}
       isLoading={addLoading || updateLoading}

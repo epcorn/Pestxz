@@ -52,12 +52,16 @@ export const getAllClient = async (req, res) => {
     res.status(500).json({ msg: "Server error, try again later" });
   }
 };
+
 export const getClient = async (req, res) => {
   const { id } = req.params;
   try {
     const client = await Client.findById(id);
-    return;
-  } catch (error) {}
+    if (!client) return res.status(400).json({ msg: "client not found" });
+    return res.status(200).json(client);
+  } catch (error) {
+    res.status(500).json({ msg: "Server error, try again later" });
+  }
 };
 
 // export const getClientAssignedEmployee = async (req, res) => {
@@ -72,6 +76,8 @@ export const getClient = async (req, res) => {
 export const deleteClient = async (req, res) => {
   const { id } = req.params;
   try {
+    if (!req.user.rights.delete)
+      return res.status(403).json({ msg: "You are not allowed to delete" });
     const client = await Client.findById(id);
     if (!client) return res.status(404).json({ msg: "Client not found" });
 

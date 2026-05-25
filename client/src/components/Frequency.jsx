@@ -23,7 +23,7 @@ function Frequency({ removeFreq, frequencies }) {
 
   // Placeholder for handle delete
   const handleDelete = async (id) => {
-    const confirmation = window.confirm("Are you sure delet this")
+    const confirmation = window.confirm("Are you sure delete this")
     console.log("Delete item:", id)
     try {
       if (confirmation) {
@@ -31,10 +31,10 @@ function Frequency({ removeFreq, frequencies }) {
         toast.success(res.msg)
       }
     } catch (error) {
-      toast.error(error.msg)
+      const errorMsg = error.data?.msg || "Something went wrong";
+      toast.error(errorMsg);
     }
   }
-  // useEffect(() => { console.log("added") }, [handleAddFreq, handleDelete])
 
   return (
     <div className='outline outline-gray-400 bg-white w-full min-h-[250px] max-h-[260px] flex flex-col rounded-lg overflow-hidden'>

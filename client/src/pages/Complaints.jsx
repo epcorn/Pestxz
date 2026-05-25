@@ -35,7 +35,7 @@ const Complaints = () => {
     page,
     location: location?.floor || "All",
   });
-  console.log(myClient)
+  console.log(clientLocations)
 
   const pages = Array.from({ length: data?.pages }, (_, index) => index + 1);
 
@@ -50,7 +50,7 @@ const Complaints = () => {
     setLocation({ client: "", floor: "" });
   };
 
-  const complaints = data?.complaints?.filter(d => d.type !== "Regular")
+  const complaints = data?.complaints?.filter(d => d?.type !== "Regular")
 
   return (
     <>
@@ -126,7 +126,7 @@ const Complaints = () => {
           </form>
           {/* new complaint button  */}
         </div >
-        {user.rights.raise &&
+        {user.rights.raise && user.role === "ClientAdmin" &&
           <button
             className="px-4 py-2 w-fit ml-auto bg-blue-800 text-white rounded-lg"
             onClick={() =>
@@ -135,7 +135,7 @@ const Complaints = () => {
           >New Complaint</button>
         }
       </div >
-      {isModalOpen.complaint && <ComplaintModal locationId="New Complaint" />}
+      {isModalOpen.complaint && <ComplaintModal locationId={"New complaint"}/>}
 
       {
         data && (

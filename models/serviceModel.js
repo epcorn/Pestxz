@@ -34,11 +34,22 @@ const serviceSchema = new mongoose.Schema(
     regularService: [
       {
         serviceName: { type: String },
-        scopeName: { type: String },
-        consumableName: { type: String },
+        scopes: [
+          {
+            scopeName: {
+              type: String,
+            },
 
-        calibration: { type: String },
-        usedCalibration: { type: String },
+            consumables: [
+              {
+                consumableName: String,
+                calibration: String,
+                usedCalibration: String,
+                comment: String,
+              },
+            ],
+          },
+        ],
 
         action: { type: String },
         comment: { type: String },

@@ -99,7 +99,7 @@ const Locations = () => {
                       key={location._id}
                       className="h-10 text-sm leading-none bg-text border-b border-neutral-500 hover:bg-slate-200"
                     >
-                      <td className="px-3 border-r font-normal border-neutral-500 hover:font-bold hover:text-cyan-700">
+                      <td className="px-3 border-r font-normal border-neutral-500 hover:text-cyan-700">
                         <Link to={`/location/${location._id}`}>
                           {location.floor}
                         </Link>

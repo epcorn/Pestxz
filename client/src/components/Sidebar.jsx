@@ -28,7 +28,7 @@ const navList = [
     icon: <BsDatabaseFillAdd className="w-6 h-6" />,
     name: "Services",
     to: "/services",
-    role: ["Admin", "TeamLeader"],
+    role: ["Admin", "Supervisor", "TeamLeader", "BranchAdmin", "PestAdmin",],
   },
   {
     icon: <FaBug className="w-6 h-6" />,

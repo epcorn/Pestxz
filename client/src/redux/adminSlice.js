@@ -85,17 +85,20 @@ export const adminSlice = apiSlice.injectEndpoints({
         url: `/api/admin/freq`,
         body: freq,
       }),
+      invalidatesTags: ["Frequency"],
     }),
     getFrequency: builder.query({
       query: () => ({
         url: `/api/admin/freq`,
       }),
+      providesTags: ["Frequency"],
     }),
     removeFrequency: builder.mutation({
       query: (id) => ({
         method: "DELETE",
         url: `/api/admin/freq/${id}`,
       }),
+      invalidatesTags: ["Frequency"],
     }),
   }),
 });

@@ -19,7 +19,7 @@ import FormModal from "./FormModal";
 
 import { toggleModal } from "../../redux/helperSlice";
 
-import React from "react";
+import React, { useEffect } from "react";
 
 const defaultService = {
   serviceId: "",
@@ -85,6 +85,39 @@ const LocationModal = ({
 
   const serviceReq = watch("serviceReq");
 
+  useEffect(() => {
+    if (locationDetails) {
+      reset({
+        floor: locationDetails.floor || "",
+        location: locationDetails.location || "",
+        subLocation: locationDetails.subLocation || "",
+        serviceReq:
+          locationDetails.service?.length > 0
+            ? locationDetails.service.map((s) => ({
+              serviceId: s.serviceId || "",
+              serviceName: s.serviceName || "",
+
+              scopeId: s.scopeId || "",
+              scopeName: s.scopeName || "",
+
+              consumableId: s.consumableId || "",
+              consumableName: s.consumableName || "",
+
+              calibration: s.calibration || "",
+              frequency: s.frequency || "",
+            }))
+            : [{ ...defaultService }],
+      });
+    } else {
+      reset({
+        floor: "",
+        location: "",
+        subLocation: "",
+        serviceReq: [{ ...defaultService }],
+      });
+    }
+  }, [locationDetails, reset]);
+
   const submit = async (data) => {
     data.clientId = clientId;
 
@@ -107,35 +140,35 @@ const LocationModal = ({
     data.serviceReq = validServices;
 
     console.log(data)
-    // try {
-    //   let res;
+    try {
+      let res;
 
-    //   if (locationDetails) {
-    //     res = await update({
-    //       id: locationDetails._id,
-    //       data,
-    //     }).unwrap();
-    //   } else {
-    //     res = await add(data).unwrap();
-    //   }
+      if (locationDetails) {
+        res = await update({
+          id: locationDetails._id,
+          data,
+        }).unwrap();
+      } else {
+        res = await add(data).unwrap();
+      }
 
-    //   toast.success(res.msg);
+      toast.success(res.msg);
 
-    //   reset();
+      reset();
 
-    //   dispatch(
-    //     toggleModal({
-    //       name: "location",
-    //       status: false,
-    //     })
-    //   );
-    // } catch (error) {
-    //   console.log(error);
+      dispatch(
+        toggleModal({
+          name: "location",
+          status: false,
+        })
+      );
+    } catch (error) {
+      console.log(error);
 
-    //   toast.error(
-    //     error?.data?.msg || error.error
-    //   );
-    // }
+      toast.error(
+        error?.data?.msg || error.error
+      );
+    }
   };
 
   const formBody = (

@@ -165,6 +165,8 @@ export const passwordChange = async (req, res) => {
           rights.scan_Scheduled ?? user.rights?.scan_Scheduled ?? false,
         scan_Unscheduled:
           rights.scan_Unscheduled ?? user.rights?.scan_Unscheduled ?? false,
+        delete: rights.delete ?? user.rights?.delete ?? false,
+        addData: rights.addData ?? user.rights?.addData ?? false,
       };
     }
 
@@ -187,6 +189,8 @@ export const passwordChange = async (req, res) => {
 export const deleteUser = async (req, res) => {
   const { id } = req.params;
   try {
+    if (!req.user.rights.delete)
+      return res.status(403).json({ msg: "You are not allowed to delete" });
     const user = await User.findById(id);
     if (!user) return res.status(400).json({ msg: "User not found" });
 
@@ -198,18 +202,15 @@ export const deleteUser = async (req, res) => {
   }
 };
 
-export const rightsControl = async (req, res) => {
+export const getSingleUser = async (req, res) => {
+  const { id } = req.params;
   try {
-    const { rights, userId } = req.body;
-    const updatedUser = await User.findByIdAndUpdate(
-      userId,
-      { $set: { customRights: rights } },
-      { new: true },
-    );
-    console.log("permission saved!", rights);
-    return res.status(200).json({ msg: "Permissions saved", updatedUser });
+    const user = await User.findById(id);
+    if (!user) return res.status(400).json({ msg: "User not found" });
+
+    return res.status(200).json(user);
   } catch (error) {
     console.log("error", error);
-    return res.status(500).json({ msg: "Error", error: error.message });
+    res.status(500).json({ msg: "Server error, try again later" });
   }
 };

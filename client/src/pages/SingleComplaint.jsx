@@ -20,7 +20,8 @@ const SingleComplaint = () => {
   const { data, isLoading, error } = useSingleComplaintQuery(id);
   const { data: location, isLoading: locaLoading } = useGetSingleLocationQuery(data?.location, { skip: !data?.location });
 
-  console.log(location)
+
+  console.log(data)
   return (
     <div>
       {isLoading ? (
@@ -219,7 +220,7 @@ const SingleComplaint = () => {
               </div>
             </div>
           )}
-          {user.type === "PestEmployee" && (
+          {data.complaintDetails.status !== "Close Req" && data.complaintDetails.status !== "Close" && user.type === "PestEmployee" && (
             <>
               <Button
                 label="Update"

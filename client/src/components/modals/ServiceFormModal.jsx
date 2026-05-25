@@ -29,7 +29,7 @@ function ServiceFormModal({ addService }) {
       // Find the specific input using a data attribute selector
       const selector = `[data-scope="${scopeIndex}"][data-consumable="${consumableIndex}"]`;
       const inputToFocus = formContainerRef.current.querySelector(selector);
-      
+
       if (inputToFocus) {
         inputToFocus.focus();
       }
@@ -73,12 +73,12 @@ function ServiceFormModal({ addService }) {
   const addConsumable = (scopeIndex) => {
     const updatedScopes = [...serviceData.scopes];
     updatedScopes[scopeIndex].consumables.push({ name: "" });
-    
+
     // Calculate the index of the newly added consumable item
     const newConsumableIndex = updatedScopes[scopeIndex].consumables.length - 1;
-    
+
     setServiceData((prev) => ({ ...prev, scopes: updatedScopes }));
-    
+
     // 4. Set the focus target to trigger the useEffect hook
     setFocusTarget({ scopeIndex, consumableIndex: newConsumableIndex });
   };
@@ -86,12 +86,16 @@ function ServiceFormModal({ addService }) {
   /* ---------------- SUBMIT ---------------- */
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const confirm = window.confirm("Please confirm to submit");
+    if (!confirm) return;
     const filteredScopes = serviceData.scopes.filter(
       (scope) => scope.scopeName.trim() !== ""
     );
     const data = { ...serviceData, scopes: filteredScopes };
     try {
       console.log(data);
+      const res = await addService(data).unwrap();
+      toast.success(res?.msg || "Service added successfully");
       handleReset();
     } catch (error) {
       console.log(error);

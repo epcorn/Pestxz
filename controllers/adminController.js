@@ -55,6 +55,8 @@ import { capitalLetter } from "../utils/helperFunction.js";
 export const addFrequency = async (req, res) => {
   const { freq } = req.body;
   try {
+    if (!req.user.rights.addData)
+      return res.status(403).json({ msg: "You are not allowed to Add data" });
     if (!freq)
       return res.status(400).json({
         msg: "Frequency is required",
@@ -85,6 +87,8 @@ export const getFrequency = async (req, res) => {
 export const removeFrequency = async (req, res) => {
   const { id } = req.params;
   try {
+    if (!req.user.rights.delete)
+      return res.status(403).json({ msg: "You are not allowed to delete" });
     const frequency = await Frequency.findByIdAndDelete(id);
     if (!frequency) return res.status.json({ msg: "frequency not found" });
 
@@ -97,6 +101,8 @@ export const addService = async (req, res) => {
   const { data } = req.body;
   console.log(data);
   try {
+    if (!req.user.rights.addData)
+      return res.status(403).json({ msg: "You are not allowed to Add data" });
     if (!data.serviceName)
       return res.status(400).json({ msg: "Service name required" });
 
@@ -151,7 +157,25 @@ export const editService = async (req, res) => {
   const { type, data } = req.body;
   console.log(id, type, data);
   try {
-    //scopes add
+    if (!req.user.rights.addData)
+      return res.status(403).json({ msg: "You are not allowed to edit" });
+    if (type === "serviceName") {
+      const admin = await Admin.findOne({ "service._id": id });
+
+      if (!admin) {
+        return res.status(404).json({ msg: "Service not found" });
+      }
+      const service = admin.service.id(id);
+      if (!service) {
+        return res.status(404).json({ msg: "Service not found" });
+      }
+
+      service.serviceName = data;
+      await admin.save();
+      return res.status(200).json({
+        msg: "Service updated successfully",
+      });
+    }
     if (type === "scope") {
       const service = await Admin.findOne({ "service._id": id });
       if (!service) return res.status(400).json({ msg: "service not found" });
@@ -196,8 +220,9 @@ export const deleteService = async (req, res) => {
   const { id } = req.params;
 
   const { serviceId, type, scopeId } = req.body;
-  console.log(id, serviceId, type, scopeId);
   try {
+    if (!req.user.rights.delete)
+      return res.status(403).json({ msg: "You are not allowed to delete" });
     // DELETE SCOPE
     if (type === "scope") {
       await Admin.findOneAndUpdate(
@@ -285,28 +310,60 @@ export const clientAdminDashboard = async (req, res) => {
 
 export const adminDashboard = async (req, res) => {
   const { id } = req.params;
+
   try {
-    let client;
     let complaints = [];
-    let allcomplaints = [];
+
     if (id && id !== "select") {
-      client = await Client.findById(id);
       complaints = await Service.find({
-        type: "Complaint",
         client: id,
       })
         .sort("-updatedAt")
-        .populate({ path: "location", select: "floor subLocation location" });
+        .populate({
+          path: "location",
+          select: "floor subLocation location",
+        })
+        .populate({
+          path: "client",
+          select: "name",
+        });
     } else {
-      client = await Client.find();
-      complaints = await Service.find({ type: "Complaint" })
+      complaints = await Service.find()
         .sort("-updatedAt")
-        .populate({ path: "location", select: "floor subLocation location" });
+        .populate({
+          path: "location",
+          select: "floor subLocation location",
+        })
+        .populate({
+          path: "client",
+          select: "name",
+        });
     }
-    allcomplaints = await Service.find({ type: "Complaint" }).populate({
-      path: "location",
-      select: "floor subLocation location",
-    });
+
+    const allcomplaints = await Service.find({
+      type: "Complaint",
+    })
+      .populate({
+        path: "location",
+        select: "floor subLocation location",
+      })
+      .populate({
+        path: "client",
+        select: "name",
+      });
+
+    // ADD CLIENT NAME
+    const formattedComplaints = complaints.map((item) => ({
+      ...item._doc,
+      clientName:
+        item?.client?.name || item?.complaintDetails?.clientName || "-",
+    }));
+
+    const formattedAllComplaints = allcomplaints.map((item) => ({
+      ...item._doc,
+      clientName:
+        item?.client?.name || item?.complaintDetails?.clientName || "-",
+    }));
 
     const complaintData = {
       total: complaints.length,
@@ -325,11 +382,14 @@ export const adminDashboard = async (req, res) => {
 
     return res.json({
       complaintData: [complaintData],
-      all: allcomplaints,
-      latestComplaints: complaints.slice(0, 7),
+      all: formattedAllComplaints,
+      latestComplaints: formattedComplaints.slice(0, 7),
     });
   } catch (error) {
     console.log(error);
-    res.status(500).json({ msg: "Server error, try again later" });
+
+    res.status(500).json({
+      msg: "Server error, try again later",
+    });
   }
 };
