@@ -1,5 +1,5 @@
 import { Link, useParams } from "react-router-dom";
-import { DeleteModal, LocationModal } from "../components/modals";
+import { DeleteModal, LocationModal, NewClientModal } from "../components/modals";
 import {
   useAllLocationsQuery,
   useDeleteLocationMutation,
@@ -12,16 +12,23 @@ import { useState } from "react";
 import { MdAddCircle } from "react-icons/md";
 import { toast } from "react-toastify";
 import { saveAs } from "file-saver";
+import { useUpdateClientMutation } from "../redux/clientSlice";
 
 const SingleClient = () => {
   const { isModalOpen } = useSelector((store) => store.helper);
   const [locationDetails, setLocationDetails] = useState({});
+  const [clientDetails, setClientDetails] = useState(null)
   const dispatch = useDispatch();
   const { id } = useParams();
 
   const { data, isLoading, isFetching, error } = useAllLocationsQuery({ id });
   const [deleteLocation, { isLoading: deleteLoading }] =
     useDeleteLocationMutation();
+  const [updateClient, { isLoading: updateLoading }] =
+    useUpdateClientMutation();
+
+  const handleEditClient = () => {
+  }
 
   // handle edit model
   const handleEditModal = (location) => {
@@ -63,18 +70,55 @@ const SingleClient = () => {
             {/* Header Section */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
               <div>
-                <h2 className="text-2xl font-bold text-neutral-900 tracking-tight">
-                  {data.client.name}
-                </h2>
+                <div className="flex items-center gap-5">
+
+                  <h2 className="text-2xl font-bold text-neutral-900 tracking-tight">
+                    {data.client.name}
+                  </h2>
+
+                  <button
+                    type="button"
+                    className="text-base font-normal cursor-pointer"
+                    onClick={() => {
+                      setClientDetails(data.client);
+
+                      dispatch(
+                        toggleModal({
+                          name: "newClient",
+                          status: true,
+                        })
+                      );
+                    }}
+                  >
+                    <FaEdit className="text-blue-700" />
+                  </button>
+                  {isModalOpen.newClient && (
+                    <NewClientModal
+                      update
+                      id={data.client._id}
+                      clientDetails={clientDetails}
+                    />
+                  )}
+                </div>
+
 
                 {/* Meta Information Row */}
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1.5 text-sm text-neutral-500">
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-3 mt-1.5 text-sm text-neutral-500">
                   <div>
                     <span className="font-medium text-neutral-700">Contract No:</span> {data.client.contractNo}
                   </div>
                   <span className="hidden sm:inline text-neutral-300">&middot;</span>
                   <div>
                     <span className="font-medium text-neutral-700">Email:</span> {data.client.email}
+                  </div>
+                  <div>
+                    <span className="font-medium text-neutral-700">Phone:</span> {data.client.phone}
+                  </div>
+                  <div>
+                    <span className="font-medium text-neutral-700">Contract Start Date:</span> {data.client.startDate}
+                  </div>
+                  <div>
+                    <span className="font-medium text-neutral-700">Contract Period:</span> {data.client.endDate}
                   </div>
                 </div>
               </div>

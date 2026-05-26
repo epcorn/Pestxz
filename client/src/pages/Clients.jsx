@@ -28,9 +28,8 @@ const Clients = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <div className="max-w-7xl mx-auto px-0 md:px-3 lg:px-5 py-6">
 
-      {/* 1. PAGE TITLE & HEADER ACTIONS CONTAINER */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 mb-6 border-b border-neutral-200">
         <div>
           <h1 className="text-2xl font-bold text-neutral-900 tracking-tight">Clients Registry</h1>
@@ -39,9 +38,6 @@ const Clients = () => {
         <NewClientModal />
       </div>
 
-      {/* 2. GLOBAL MODAL CONTAINER MOUNTS */}
-
-      {/* 3. CONDITIONAL STATUS SCREENS LOADING / ERROR OVERLAYS */}
       {(isLoading || isFetching) ? (
         <div className="py-12 flex justify-center items-center">
           <Loading />

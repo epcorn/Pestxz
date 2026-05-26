@@ -1,7 +1,9 @@
 import { Link } from "react-router-dom";
 import { dateFormat } from "../utils/helperFunctions";
 
-const ComplaintTable = ({ data, user }) => {
+const ComplaintTable = ({ data, user, toggle }) => {
+  console.log(data)
+  const isRegular = toggle === "Regular"
   return (
     <div className="w-full">
       {/* Header Row - Hidden on Mobile */}
@@ -27,14 +29,14 @@ const ComplaintTable = ({ data, user }) => {
               {/* {user?.rights?.raise || user?.rights?.close ? ( */}
               {complaint.complaintDetails?.number ?
                 <Link
-                to={`/complaint/${complaint._id}`}
-                className="text-sm font-bold text-blue-600 hover:text-blue-800 transition-colors"
+                  to={`/complaint/${complaint._id}`}
+                  className="text-sm font-bold text-blue-600 hover:text-blue-800 transition-colors"
                 >
                   #{complaint.complaintDetails?.number}
                 </Link>
-                : <p className="text-center">--</p> }
+                : <p className="text-center">--</p>}
               {/* ) : ( */}
-                {/* <p className="text-sm font-bold text-gray-600">
+              {/* <p className="text-sm font-bold text-gray-600">
                   #{complaint.complaintDetails?.number || "-"}
                 </p> */}
               {/* )} */}
@@ -56,9 +58,9 @@ const ComplaintTable = ({ data, user }) => {
             <div className="col-span-3 text-sm text-gray-700 font-medium">
               <p className="text-[10px] font-bold text-gray-400 md:hidden uppercase mb-1">Location</p>
               {user?.role === "Admin" ? (
-                <span className="text-blue-900">{complaint.client?.name}</span>
+                <span className="text-blue-900 whitespace-break-spaces">{complaint.client?.name}</span>
               ) : (
-                <span className="text-gray-600 truncate block">
+                <span className="text-gray-600 truncate block whitespace-break-spaces">
                   {`${complaint.location?.floor || ""}, ${complaint.location?.location || ""}`}
                 </span>
               )}
@@ -67,14 +69,14 @@ const ComplaintTable = ({ data, user }) => {
             {/* Pest Service */}
             <div className="col-span-2 md:text-center text-sm text-gray-800">
               <p className="text-[10px] font-bold text-gray-400 md:hidden uppercase mb-1">Service</p>
-              {complaint.complaintDetails?.service?.join(", ") || "-"}
+              {isRegular ? <span>{complaint.regularService[0].serviceName}</span> :<span> {complaint.complaintDetails?.service?.join(", ")}</span>}
             </div>
 
             {/* Status */}
             <div className="col-span-2 flex md:justify-center">
               <p className="text-[10px] font-bold text-gray-400 md:hidden uppercase mb-1 mr-2 self-center">Status</p>
               <span className={`status-pill px-2 py-1 text-sm font-semibold rounded-lg ${complaint?.complaintDetails?.status?.toLowerCase().replace(/\s+/g, "")}`}>
-                {complaint?.complaintDetails?.status || "-"}
+                {isRegular ? <span className="whitespace-nowrap text-xs outline px-2 py-1 rounded-lg  text-gray-600">{complaint.regularService[0].action}</span> : <span> {complaint?.complaintDetails?.status}</span>}
               </span>
             </div>
           </div>

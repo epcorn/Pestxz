@@ -17,7 +17,7 @@ const FormModal = ({
         }`}
     >
       <div
-        className={`bg-white rounded-xl max-h-[600px]  overflow-y-auto max-w-4xl shadow p-5 m-3 transition-all ${open ? "scale-100 opacity-100" : "scale-125 opacity-0"
+        className={`bg-white rounded-xl w-full max-w-4xl shadow p-2 md:p-5 m-3 transition-all ${open ? "scale-100 opacity-100" : "scale-125 opacity-0"
           }`}
       >
         <div className="">

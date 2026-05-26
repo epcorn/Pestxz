@@ -1,3 +1,4 @@
+import Client from "../models/clientModel.js";
 import User from "../models/userModel.js";
 import { capitalLetter, generateToken } from "../utils/helperFunction.js";
 
@@ -212,5 +213,25 @@ export const getSingleUser = async (req, res) => {
   } catch (error) {
     console.log("error", error);
     res.status(500).json({ msg: "Server error, try again later" });
+  }
+};
+export const clientUsers = async (req, res) => {
+  const { id } = req.params;
+  
+  try {
+    if (req.user.role !== "ClientAdmin") {
+      return res.status(403).json({ msg: "Access denied. Unauthorized role." });
+    }
+
+    const users = await User.find({ client: id }).select("-password");
+
+    if (!users || users.length === 0) {
+      return res.status(404).json({ msg: "No users found for this client." });
+    }
+    return res.status(200).json(users);
+
+  } catch (error) {
+    console.error("Error fetching client users:", error);
+    return res.status(500).json({ msg: "Server error, try again later" });
   }
 };

@@ -12,6 +12,7 @@ function AdminDashboard() {
 
   const { data: clients = [] } = useAllClientsQuery();
 
+
   const {
     data: adminDash,
     isLoading,
@@ -21,6 +22,7 @@ function AdminDashboard() {
       skip: user?.role !== "Admin",
     }
   );
+  console.log(adminDash)
 
   const handleChange = (e) => {
     const { value } = e.target;
@@ -50,7 +52,6 @@ function AdminDashboard() {
     );
   }, [adminDash, toggle]);
 
-  console.log(adminDash)
   const isRegular = toggle === "Regular";
 
   return (
@@ -149,8 +150,8 @@ function AdminDashboard() {
             type="button"
             onClick={() => setToggle("Complaint")}
             className={`px-3 py-1 rounded-lg text-sm font-semibold transition ${toggle === "Complaint"
-                ? "bg-blue-300 text-black"
-                : "bg-gray-600"
+              ? "bg-blue-300 text-black"
+              : "bg-gray-600"
               }`}
           >
             Complaints
@@ -160,8 +161,8 @@ function AdminDashboard() {
             type="button"
             onClick={() => setToggle("Regular")}
             className={`px-3 py-1 rounded-lg text-sm font-semibold transition ${toggle === "Regular"
-                ? "bg-blue-300 text-black"
-                : "bg-gray-600"
+              ? "bg-blue-300 text-black"
+              : "bg-gray-600"
               }`}
           >
             Services
@@ -269,13 +270,13 @@ function AdminDashboard() {
                       ) : (
                         <span
                           className={`px-3 py-1 rounded-lg text-xs font-semibold ${latest?.complaintDetails
-                              ?.status === "Open"
-                              ? "bg-red-100 text-red-600"
-                              : latest?.complaintDetails
-                                ?.status ===
-                                "In Progress"
-                                ? "bg-yellow-100 text-yellow-700"
-                                : "bg-green-100 text-green-700"
+                            ?.status === "Open"
+                            ? "bg-red-100 text-red-600"
+                            : latest?.complaintDetails
+                              ?.status ===
+                              "In Progress"
+                              ? "bg-yellow-100 text-yellow-700"
+                              : "bg-green-100 text-green-700"
                             }`}
                         >
                           {latest?.complaintDetails

@@ -1,70 +1,36 @@
 import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
-
+import React, { useEffect } from "react";
 import {
   useAllServiceQuery,
   useGetFrequencyQuery,
 } from "../../redux/adminSlice";
-
 import {
   useAddLocationMutation,
   useUpdateLocationMutation,
 } from "../../redux/locationSlice";
-
 import { InputRow, Loading } from "..";
-
 import { useDispatch, useSelector } from "react-redux";
-
 import FormModal from "./FormModal";
-
 import { toggleModal } from "../../redux/helperSlice";
-
-import React, { useEffect } from "react";
 
 const defaultService = {
   serviceId: "",
   serviceName: "",
-
-  scopeId: "",
-  scopeName: "",
-
-  consumableId: "",
-  consumableName: "",
-
-  calibration: "",
   frequency: "",
+  scopes: [],
 };
 
-const LocationModal = ({
-  clientId,
-  locationDetails,
-}) => {
+const LocationModal = ({ clientId, locationDetails }) => {
   const dispatch = useDispatch();
+  const { isModalOpen } = useSelector((store) => store.helper);
+  const [add, { isLoading: addLoading }] = useAddLocationMutation();
+  const [update, { isLoading: updateLoading }] = useUpdateLocationMutation();
+  const { data: frequencies = [] } = useGetFrequencyQuery();
 
-  const { isModalOpen } = useSelector(
-    (store) => store.helper
-  );
+  const { data = {}, isLoading, isFetching } = useAllServiceQuery();
 
-  const [add, { isLoading: addLoading }] =
-    useAddLocationMutation();
-
-  const [update, { isLoading: updateLoading }] =
-    useUpdateLocationMutation();
-
-  const {
-    data: frequencies = [],
-  } = useGetFrequencyQuery();
-
-  const {
-    data = {},
-    isLoading,
-    isFetching,
-  } = useAllServiceQuery();
-
-  const allServices =
-    data?.services?.flatMap(
-      (ser) => ser.service
-    ) || [];
+  const allServices = data?.services?.flatMap((ser) => ser.service) || [];
 
   const {
     register,
@@ -74,13 +40,12 @@ const LocationModal = ({
     watch,
     setValue,
   } = useForm({
-    defaultValues:
-      locationDetails || {
-        floor: "",
-        subLocation: "",
-        location: "",
-        serviceReq: [defaultService],
-      },
+    defaultValues: {
+      floor: "",
+      subLocation: "",
+      location: "",
+      serviceReq: [defaultService],
+    },
   });
 
   const serviceReq = watch("serviceReq");
@@ -91,441 +56,347 @@ const LocationModal = ({
         floor: locationDetails.floor || "",
         location: locationDetails.location || "",
         subLocation: locationDetails.subLocation || "",
+
         serviceReq:
           locationDetails.service?.length > 0
-            ? locationDetails.service.map((s) => ({
-              serviceId: s.serviceId || "",
-              serviceName: s.serviceName || "",
+            ? locationDetails.service.map((ser) => ({
+              serviceId: ser.serviceId || "",
+              serviceName: ser.serviceName || "",
+              frequency: ser.frequency || "",
 
-              scopeId: s.scopeId || "",
-              scopeName: s.scopeName || "",
+              scopes:
+                ser.scopes?.map((sc) => ({
+                  scopeId: sc.scopeId || "",
+                  scopeName: sc.scopeName || "",
 
-              consumableId: s.consumableId || "",
-              consumableName: s.consumableName || "",
-
-              calibration: s.calibration || "",
-              frequency: s.frequency || "",
+                  consumables:
+                    sc.consumables?.map((con) => ({
+                      consumableId: con.consumableId || "",
+                      consumableName: con.consumableName || "",
+                      calibration: con.calibration || "",
+                    })) || [],
+                })) || [],
             }))
-            : [{ ...defaultService }],
+            : [defaultService],
       });
     } else {
       reset({
         floor: "",
         location: "",
         subLocation: "",
-        serviceReq: [{ ...defaultService }],
+        serviceReq: [defaultService],
       });
     }
   }, [locationDetails, reset]);
 
   const submit = async (data) => {
     data.clientId = clientId;
-
-    const validServices =
-      data.serviceReq.filter(
-        (s) =>
-          s.serviceId &&
-          s.scopeId &&
-          s.consumableId &&
-          s.frequency
-      );
-
+    const validServices = data.serviceReq.filter(
+      (s) => s.serviceId && s.frequency && s.scopes?.length > 0,
+    );
     if (validServices.length < 1) {
-      toast.warning(
-        "Please add at least one service"
-      );
+      toast.warning("Please add at least one service");
       return;
     }
-
     data.serviceReq = validServices;
-
-    console.log(data)
+    console.log(data);
     try {
       let res;
 
       if (locationDetails) {
-        res = await update({
-          id: locationDetails._id,
-          data,
-        }).unwrap();
+        res = await update({ id: locationDetails._id, data }).unwrap();
       } else {
         res = await add(data).unwrap();
       }
 
       toast.success(res.msg);
-
       reset();
-
-      dispatch(
-        toggleModal({
-          name: "location",
-          status: false,
-        })
-      );
+      dispatch(toggleModal({ name: "location", status: false }));
     } catch (error) {
       console.log(error);
-
-      toast.error(
-        error?.data?.msg || error.error
-      );
+      toast.error(error?.data?.msg || error.error);
     }
   };
 
   const formBody = (
-    <div className="grid md:grid-cols-3 gap-4 mb-4">
-
+    <div className="grid md:grid-cols-3 gap-4">
       {/* FLOOR */}
-
-      <div>
-        <InputRow
-          label="Floor"
-          id="floor"
-          errors={errors}
-          register={register}
-          disabled={
-            addLoading || updateLoading
-          }
-        />
-      </div>
+      <InputRow label="Floor" id="floor" errors={errors} register={register} />
 
       {/* LOCATION */}
-
-      <div>
-        <InputRow
-          label="Location"
-          id="location"
-          errors={errors}
-          register={register}
-          disabled={
-            addLoading || updateLoading
-          }
-        />
-      </div>
+      <InputRow
+        label="Location"
+        id="location"
+        errors={errors}
+        register={register}
+      />
 
       {/* SUB LOCATION */}
-
-      <div>
-        <InputRow
-          required={false}
-          label="Sub Location"
-          id="subLocation"
-          errors={errors}
-          register={register}
-          disabled={
-            addLoading || updateLoading
-          }
-        />
-      </div>
+      <InputRow
+        label="Sub Location"
+        id="subLocation"
+        errors={errors}
+        register={register}
+        required={false}
+      />
 
       {/* SERVICES */}
-
-      <div className="col-span-3 mt-4 grid gap-3">
-
-        <div className="flex justify-between items-center">
-          <h3 className="font-bold text-lg">
-            Service Details
-          </h3>
+      <div className="col-span-3 mt-4">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="font-semibold">Service Details</h3>
 
           <button
             type="button"
-            className="bg-green-600 text-white px-3 py-1 rounded"
+            className="border px-3 py-1 rounded"
             onClick={() =>
-              setValue("serviceReq", [
-                ...serviceReq,
-                { ...defaultService },
-              ])
-            }
-          >
-            + Add
+              setValue("serviceReq", [...serviceReq, { ...defaultService }])
+            }>
+            Add Service
           </button>
         </div>
 
-        {serviceReq?.map((item, index) => {
-
-          const selectedService =
-            allServices.find(
-              (s) =>
-                s._id ===
-                watch(
-                  `serviceReq.${index}.serviceId`
-                )
+        <div className="space-y-4">
+          {serviceReq?.map((item, index) => {
+            const selectedService = allServices.find(
+              (s) => s._id === watch(`serviceReq.${index}.serviceId`),
             );
 
-          const scopes =
-            selectedService?.scopes || [];
+            const scopes = selectedService?.scopes || [];
 
-          const selectedScope =
-            scopes.find(
-              (s) =>
-                s._id ===
-                watch(
-                  `serviceReq.${index}.scopeId`
-                )
+            return (
+              <div key={index} className="border rounded p-3 space-y-4">
+                {/* TOP */}
+                <div className="grid md:grid-cols-3 gap-3">
+                  {/* SERVICE */}
+                  <select
+                    className="border rounded p-2"
+                    value={watch(`serviceReq.${index}.serviceId`) || ""}
+                    onChange={(e) => {
+                      const service = allServices.find(
+                        (s) => s._id === e.target.value,
+                      );
+
+                      setValue(
+                        `serviceReq.${index}.serviceId`,
+                        service?._id || "",
+                      );
+
+                      setValue(
+                        `serviceReq.${index}.serviceName`,
+                        service?.serviceName || "",
+                      );
+
+                      setValue(`serviceReq.${index}.scopes`, []);
+                    }}>
+                    <option value="">Select Service</option>
+
+                    {allServices.map((service) => (
+                      <option key={service._id} value={service._id}>
+                        {service.serviceName}
+                      </option>
+                    ))}
+                  </select>
+
+                  {/* FREQUENCY */}
+                  <select
+                    className="border rounded p-2"
+                    value={watch(`serviceReq.${index}.frequency`) || ""}
+                    onChange={(e) =>
+                      setValue(`serviceReq.${index}.frequency`, e.target.value)
+                    }>
+                    <option value="">Select Frequency</option>
+
+                    {frequencies.map((freq) => (
+                      <option key={freq._id} value={freq.name}>
+                        {freq.name}
+                      </option>
+                    ))}
+                  </select>
+
+                  {/* REMOVE */}
+                  <button
+                    type="button"
+                    className="border rounded p-2 text-red-500"
+                    onClick={() => {
+                      const updated = serviceReq.filter((_, i) => i !== index);
+
+                      setValue(
+                        "serviceReq",
+                        updated.length ? updated : [defaultService],
+                      );
+                    }}>
+                    Remove
+                  </button>
+                </div>
+
+                {/* SCOPES */}
+                {scopes.length > 0 && (
+                  <div className="space-y-3">
+                    {scopes.map((scope) => {
+                      const selectedScopes =
+                        watch(`serviceReq.${index}.scopes`) || [];
+
+                      const existingScope = selectedScopes.find(
+                        (s) => s.scopeId === scope._id,
+                      );
+
+                      return (
+                        <div key={scope._id} className="border rounded p-3">
+                          {/* SCOPE */}
+                          <label className="flex items-center gap-2 mb-3">
+                            <input
+                              type="checkbox"
+                              checked={!!existingScope}
+                              onChange={(e) => {
+                                let updatedScopes = [...selectedScopes];
+
+                                if (e.target.checked) {
+                                  updatedScopes.push({
+                                    scopeId: scope._id,
+                                    scopeName: scope.scopeName,
+                                    consumables: [],
+                                  });
+                                } else {
+                                  updatedScopes = updatedScopes.filter(
+                                    (s) => s.scopeId !== scope._id,
+                                  );
+                                }
+
+                                setValue(
+                                  `serviceReq.${index}.scopes`,
+                                  updatedScopes,
+                                );
+                              }}
+                            />
+
+                            <span>{scope.scopeName}</span>
+                          </label>
+
+                          {/* CONSUMABLES */}
+                          {existingScope && (
+                            <div className="space-y-2">
+                              {scope.consumables?.map((consumable) => {
+                                const selectedConsumable =
+                                  existingScope.consumables?.find(
+                                    (c) => c.consumableId === consumable._id,
+                                  );
+
+                                return (
+                                  <div
+                                    key={consumable._id}
+                                    className="grid md:grid-cols-2 gap-2 items-center">
+                                    {/* CHECKBOX */}
+                                    <label className="flex items-center gap-2">
+                                      <input
+                                        type="checkbox"
+                                        checked={!!selectedConsumable}
+                                        onChange={(e) => {
+                                          const updatedScopes = [
+                                            ...selectedScopes,
+                                          ];
+
+                                          const scopeIndex =
+                                            updatedScopes.findIndex(
+                                              (s) => s.scopeId === scope._id,
+                                            );
+
+                                          if (e.target.checked) {
+                                            updatedScopes[
+                                              scopeIndex
+                                            ].consumables.push({
+                                              consumableId: consumable._id,
+                                              consumableName: consumable.name,
+                                              calibration: "",
+                                            });
+                                          } else {
+                                            updatedScopes[
+                                              scopeIndex
+                                            ].consumables = updatedScopes[
+                                              scopeIndex
+                                            ].consumables.filter(
+                                              (c) =>
+                                                c.consumableId !==
+                                                consumable._id,
+                                            );
+                                          }
+
+                                          setValue(
+                                            `serviceReq.${index}.scopes`,
+                                            updatedScopes,
+                                          );
+                                        }}
+                                      />
+
+                                      <span>{consumable.name}</span>
+                                    </label>
+
+                                    {/* CALIBRATION */}
+                                    <input
+                                      type="text"
+                                      placeholder="Calibration"
+                                      className="border rounded p-2"
+                                      disabled={!selectedConsumable}
+                                      value={
+                                        selectedConsumable?.calibration || ""
+                                      }
+                                      onChange={(e) => {
+                                        const updatedScopes = [
+                                          ...selectedScopes,
+                                        ];
+
+                                        const scopeIndex =
+                                          updatedScopes.findIndex(
+                                            (s) => s.scopeId === scope._id,
+                                          );
+
+                                        const consumableIndex = updatedScopes[
+                                          scopeIndex
+                                        ].consumables.findIndex(
+                                          (c) =>
+                                            c.consumableId === consumable._id,
+                                        );
+
+                                        updatedScopes[scopeIndex].consumables[
+                                          consumableIndex
+                                        ].calibration = e.target.value;
+
+                                        setValue(
+                                          `serviceReq.${index}.scopes`,
+                                          updatedScopes,
+                                        );
+                                      }}
+                                    />
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             );
-
-          const consumables =
-            selectedScope?.consumables || [];
-
-          return (
-            <div
-              key={index}
-              className="grid md:grid-cols-6 gap-2 border border-gray-300 rounded p-3"
-            >
-
-              {/* SERVICE */}
-
-              <select
-                className="border border-gray-400 rounded p-2 w-full"
-                value={
-                  watch(
-                    `serviceReq.${index}.serviceId`
-                  ) || ""
-                }
-                onChange={(e) => {
-
-                  const service =
-                    allServices.find(
-                      (s) =>
-                        s._id === e.target.value
-                    );
-
-                  setValue(
-                    `serviceReq.${index}.serviceId`,
-                    service?._id || ""
-                  );
-
-                  setValue(
-                    `serviceReq.${index}.serviceName`,
-                    service?.serviceName || ""
-                  );
-
-                  setValue(
-                    `serviceReq.${index}.scopeId`,
-                    ""
-                  );
-
-                  setValue(
-                    `serviceReq.${index}.scopeName`,
-                    ""
-                  );
-
-                  setValue(
-                    `serviceReq.${index}.consumableId`,
-                    ""
-                  );
-
-                  setValue(
-                    `serviceReq.${index}.consumableName`,
-                    ""
-                  );
-                }}
-              >
-                <option value="">
-                  Select Service
-                </option>
-
-                {allServices.map((service) => (
-                  <option
-                    key={service._id}
-                    value={service._id}
-                  >
-                    {service.serviceName}
-                  </option>
-                ))}
-              </select>
-
-              {/* SCOPE */}
-
-              <select
-                className="border border-gray-400 rounded p-2 w-full"
-                disabled={!selectedService}
-                value={
-                  watch(
-                    `serviceReq.${index}.scopeId`
-                  ) || ""
-                }
-                onChange={(e) => {
-
-                  const scope =
-                    scopes.find(
-                      (s) =>
-                        s._id === e.target.value
-                    );
-
-                  setValue(
-                    `serviceReq.${index}.scopeId`,
-                    scope?._id || ""
-                  );
-
-                  setValue(
-                    `serviceReq.${index}.scopeName`,
-                    scope?.scopeName || ""
-                  );
-
-                  setValue(
-                    `serviceReq.${index}.consumableId`,
-                    ""
-                  );
-
-                  setValue(
-                    `serviceReq.${index}.consumableName`,
-                    ""
-                  );
-                }}
-              >
-                <option value="">
-                  Select Scope
-                </option>
-
-                {scopes.map((scope) => (
-                  <option
-                    key={scope._id}
-                    value={scope._id}
-                  >
-                    {scope.scopeName}
-                  </option>
-                ))}
-              </select>
-
-              {/* CONSUMABLE */}
-
-              <select
-                className="border border-gray-400 rounded p-2 w-full"
-                disabled={!selectedScope}
-                value={
-                  watch(
-                    `serviceReq.${index}.consumableId`
-                  ) || ""
-                }
-                onChange={(e) => {
-
-                  const consumable =
-                    consumables.find(
-                      (c) =>
-                        c._id === e.target.value
-                    );
-
-                  setValue(
-                    `serviceReq.${index}.consumableId`,
-                    consumable?._id || ""
-                  );
-
-                  setValue(
-                    `serviceReq.${index}.consumableName`,
-                    consumable?.name || ""
-                  );
-                }}
-              >
-                <option value="">
-                  Select Consumable
-                </option>
-
-                {consumables.map(
-                  (consumable) => (
-                    <option
-                      key={consumable._id}
-                      value={consumable._id}
-                    >
-                      {consumable.name}
-                    </option>
-                  )
-                )}
-              </select>
-
-              {/* CALIBRATION */}
-
-              <input
-                type="text"
-                placeholder="Calibration"
-                {...register(
-                  `serviceReq.${index}.calibration`
-                )}
-                className="border border-gray-400 rounded p-2 w-full"
-              />
-
-              {/* FREQUENCY */}
-
-              <select
-                {...register(
-                  `serviceReq.${index}.frequency`
-                )}
-                className="border border-gray-400 rounded p-2 w-full"
-              >
-                <option value="">
-                  Frequency
-                </option>
-
-                {frequencies.map((freq) => (
-                  <option
-                    key={freq._id}
-                    value={freq.name}
-                  >
-                    {freq.name}
-                  </option>
-                ))}
-              </select>
-
-              {/* REMOVE */}
-
-              <button
-                type="button"
-                className="text-red-500 text-sm hover:underline"
-                onClick={() => {
-
-                  const updated =
-                    serviceReq.filter(
-                      (_, i) => i !== index
-                    );
-
-                  setValue(
-                    "serviceReq",
-                    updated.length
-                      ? updated
-                      : [{ ...defaultService }]
-                  );
-                }}
-              >
-                Remove
-              </button>
-            </div>
-          );
-        })}
+          })}
+        </div>
       </div>
     </div>
   );
 
   return (
     <div>
-      {(isLoading || isFetching) && (
-        <Loading />
-      )}
-
+      {(isLoading || isFetching) && <Loading />}
       <FormModal
-        onSubmit={handleSubmit(submit)}
-        title={`${locationDetails
-          ? "Update"
-          : "New"
-          } Location`}
-        formBody={formBody}
-        submitLabel={`${locationDetails
-          ? "Update"
-          : "Add"
-          } Location`}
-        handleClose={() =>
-          dispatch(
-            toggleModal({
-              name: "location",
-              status: false,
-            })
-          )
-        }
-        disabled={
-          addLoading || updateLoading
-        }
-        isLoading={
-          addLoading || updateLoading
-        }
         open={isModalOpen.location}
+        title={locationDetails ? "Update Location" : "New Location"}
+        formBody={formBody}
+        submitLabel={locationDetails ? "Update Location" : "Add Location"}
+        onSubmit={handleSubmit(submit)}
+        handleClose={() =>
+          dispatch(toggleModal({ name: "location", status: false, }),)}
+        disabled={addLoading || updateLoading}
+        isLoading={addLoading || updateLoading}
       />
     </div>
   );

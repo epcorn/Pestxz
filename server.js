@@ -71,7 +71,7 @@ if (process.env.NODE_ENV === "production") {
 app.use(notFound);
 
 const port = process.env.PORT || 5000;
-export const MONGOURL = process.env.MONGO_URI;
+export const MONGOURL = process.env.MONGO_LOCAL;
 
 // createAdmin();
 // addAdminsjson()   // do not run this if not required

@@ -20,12 +20,17 @@ export const userSlice = apiSlice.injectEndpoints({
         method: "POST",
       }),
     }),
+    getClientUsers: builder.query({
+      query: (id) => ({
+        url: `/api/user/clientuser/${id}`,
+      }),
+    }),
   }),
 });
 
 export const {
   useLoginMutation,
   useGetSingleUserQuery,
+  useGetClientUsersQuery,
   useLogoutMutation,
-  
 } = userSlice;

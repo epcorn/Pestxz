@@ -3,23 +3,20 @@ import Select from "react-select";
 const InputSelect = ({
   onChange,
   options = [],
-  value,
+  value, 
   placeholder,
   label,
   isMulti = false,
   isClearable = true
 }) => {
 
-  // Dynamically resolve the value prop so react-select understands multi-select arrays
   const getSelectValue = () => {
     if (!value) return isMulti ? [] : null;
     
     if (isMulti) {
-      // If it's multi-select, value is already an array of selected options
       return Array.isArray(value) ? value : [];
     }
     
-    // Single select matching logic
     return options?.find((c) => c.value === value?.value) || null;
   };
 
@@ -29,14 +26,14 @@ const InputSelect = ({
         {label}
         <span className="text-red-500 ml-0.5">*</span>
       </label>
-      <Select
+      <Select 
         placeholder={placeholder}
         isMulti={isMulti}
         className="basic-multi-select"
         isClearable={isClearable}
         options={options}
         menuPlacement="auto"
-        value={getSelectValue()} // Fixed: Safely computes value arrays vs single values
+        value={getSelectValue()} 
         onChange={(val) => onChange(val)}
         styles={
           !isMulti

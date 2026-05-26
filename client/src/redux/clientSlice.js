@@ -30,6 +30,14 @@ export const clientSlice = apiSlice.injectEndpoints({
       }),
       invalidatesTags: ["Client"],
     }),
+    updateClient: builder.mutation({
+      query: ({ id, data }) => ({
+        url: `/api/client/update/${id}`,
+        method: "PUT",
+        body: data,
+      }),
+      invalidatesTags: ["Client"],
+    }),
   }),
 });
 
@@ -38,4 +46,5 @@ export const {
   useAllClientsQuery,
   useGetSingleClientQuery,
   useDeleteClientMutation,
+  useUpdateClientMutation,
 } = clientSlice;

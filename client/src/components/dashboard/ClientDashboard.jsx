@@ -2,12 +2,12 @@ import { FaBug } from "react-icons/fa";
 import { IoLockClosed, IoLockOpen } from "react-icons/io5";
 import { TbProgressAlert } from "react-icons/tb";
 import { useSelector } from "react-redux";
-import { useClientAdminDashboardQuery } from "../../redux/adminSlice";
+import { useAdminDashboardQuery, useClientAdminDashboardQuery } from "../../redux/adminSlice";
 import Loading from "../Loading";
 import AlertMessage from "../AlertMessage";
 import ComplaintTable from "../ComplaintTable";
 import { useGetSingleClientQuery } from "../../redux/clientSlice";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 const stats = [
   { id: 1, name: "Total Complaints", icon: <FaBug className="w-6 h-6" />, bg: "bg-slate-400" },
@@ -23,9 +23,19 @@ const ClientDashboard = () => {
   const { data: adminDash = { latestComplaints: [], complaintData: [] }, isLoading, error } =
     useClientAdminDashboardQuery(user?.client, { skip: !user?.client });
 
+  const { data: clientDash, isLoading: clgLoading } = useAdminDashboardQuery(user.client, {
+    skip: !user.client
+  });
+  ``
   const { data: client } = useGetSingleClientQuery(user?.client, { skip: !user?.client });
 
+  // Filter data efficiently using useMemo
+  const complaints = useMemo(() => {
+    if (!clientDash?.latestComplaints) return [];
+    return clientDash.latestComplaints.filter(lat => lat.type === toggle);
+  }, [toggle, clientDash]);
 
+console.log(complaints)
   return (
     <section className="p-4 md:px-8 bg-slate-50/50 min-h-screen font-sans">
       {isLoading ? (
@@ -93,7 +103,7 @@ const ClientDashboard = () => {
               </select>
             </div>
             <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
-              <ComplaintTable data={adminDash?.latestComplaints} user={user} />
+              <ComplaintTable data={complaints} user={user} toggle={toggle} />
             </div>
           </div>
 

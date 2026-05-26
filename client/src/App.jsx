@@ -53,7 +53,7 @@ function App() {
             <Route path="/complaint/:id" element={<SingleComplaint />} />
           </Route>
 
-          <Route path="" element={<ProtectedRoute roles={["Admin", "TeamLeader"]} />}>
+          <Route path="" element={<ProtectedRoute roles={["Admin", "Supervisor", "TeamLeader", "BranchAdmin"]} />}>
             <Route path="dashboard/clients" element={<Clients />} />
             <Route path="dashboard/services" element={<Services />} />
             <Route path="dashboard/client/:id" element={<SingleClient />} />

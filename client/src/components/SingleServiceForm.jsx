@@ -1,27 +1,65 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { toast } from "react-toastify";
 import { useRegularServiceMutation } from "../redux/serviceSlice";
 
-function SingleServiceForm({ serviceData = [], id, setRegular }) {
-  const [selectedService, setSelectedService] = useState(0);
+function SingleServiceForm({
+  serviceData = [],
+  id,
+  setRegular,
+}) {
+  const [selectedService, setSelectedService] =
+    useState(0);
+
+  const [selectedScope, setSelectedScope] =
+    useState(0);
+
+  const [selectedConsumable, setSelectedConsumable] =
+    useState(0);
 
   const [form, setForm] = useState({
     usedCalibration: "",
-    action: "Service Done",
+    action: "Done",
     comment: "",
     image: null,
   });
-  console.log(id)
+
   const [regularService, { isLoading }] =
     useRegularServiceMutation();
 
-  const currentService = serviceData[selectedService];
+  // CURRENT SERVICE
+  const currentService =
+    serviceData[selectedService];
+
+  // CURRENT SCOPES
+  const scopes =
+    currentService?.scopes || [];
+
+  // CURRENT SCOPE
+  const currentScope =
+    scopes[selectedScope];
+
+  // CURRENT CONSUMABLES
+  const consumables =
+    currentScope?.consumables || [];
+
+  // CURRENT CONSUMABLE
+  const currentConsumable =
+    consumables[selectedConsumable];
 
   const handleChange = (field, value) => {
     setForm((prev) => ({
       ...prev,
       [field]: value,
     }));
+  };
+
+  const resetForm = () => {
+    setForm({
+      usedCalibration: "",
+      action: "Done",
+      comment: "",
+      image: null,
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -32,22 +70,29 @@ function SingleServiceForm({ serviceData = [], id, setRegular }) {
 
       formData.append(
         "serviceName",
-        currentService?.serviceName
+        currentService?.serviceName || ""
+      );
+
+      formData.append(
+        "frequency",
+        currentService?.frequency || ""
       );
 
       formData.append(
         "scopeName",
-        currentService?.scopeName
+        currentScope?.scopeName || ""
       );
 
       formData.append(
         "consumableName",
-        currentService?.consumableName
+        currentConsumable?.consumableName ||
+        ""
       );
 
       formData.append(
         "calibration",
-        currentService?.calibration
+        currentConsumable?.calibration ||
+        ""
       );
 
       formData.append(
@@ -66,7 +111,10 @@ function SingleServiceForm({ serviceData = [], id, setRegular }) {
       );
 
       if (form.image) {
-        formData.append("image", form.image);
+        formData.append(
+          "image",
+          form.image
+        );
       }
 
       const res = await regularService({
@@ -76,13 +124,7 @@ function SingleServiceForm({ serviceData = [], id, setRegular }) {
 
       toast.success(res.msg);
 
-      setForm({
-        usedCalibration: "",
-        action: "Done",
-        comment: "",
-        image: null,
-      });
-
+      resetForm();
     } catch (error) {
       console.log(error);
 
@@ -93,178 +135,262 @@ function SingleServiceForm({ serviceData = [], id, setRegular }) {
   };
 
   return (
-    <div className="bg-white border border-gray-300 rounded-lg p-3 shadow-sm mx-auto">
-      {/* Service Selector */}
-      <div className="flex items-center gap-3 border-b border-gray-200 pb-2.5 mb-2.5">
-        <label className="text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">
-          Service:
-        </label>
+    <div className="bg-white border rounded p-4">
 
-        <select
-          value={selectedService}
-          onChange={(e) => {
-            setSelectedService(Number(e.target.value));
+      {/* SERVICE */}
+      <div className="grid md:grid-cols-3 gap-3 mb-4">
 
-            // reset form on service change
-            setForm({
-              usedCalibration: "",
-              action: "Service Done",
-              comment: "",
-              image: null,
-            });
-          }}
-          className="w-full border border-gray-300 bg-gray-50 rounded-md px-2 py-1.5 text-base font-medium outline-none focus:border-green-500"
-        >
-          {serviceData.map((service, index) => (
-            <option key={index} value={index}>
-              {service.serviceName ||
-                `Service ${index + 1}`}
-            </option>
-          ))}
-        </select>
+        {/* SERVICE SELECT */}
+        <div>
+          <label className="text-sm block mb-1">
+            Service
+          </label>
+
+          <select
+            value={selectedService}
+            onChange={(e) => {
+              setSelectedService(
+                Number(e.target.value)
+              );
+
+              setSelectedScope(0);
+              setSelectedConsumable(0);
+
+              resetForm();
+            }}
+            className="w-full border rounded p-2"
+          >
+            {serviceData.map(
+              (service, index) => (
+                <option
+                  key={index}
+                  value={index}
+                >
+                  {service.serviceName}
+                </option>
+              )
+            )}
+          </select>
+        </div>
+
+        {/* SCOPE */}
+        <div>
+          <label className="text-sm block mb-1">
+            Scope
+          </label>
+
+          <select
+            value={selectedScope}
+            onChange={(e) => {
+              setSelectedScope(
+                Number(e.target.value)
+              );
+
+              setSelectedConsumable(0);
+
+              resetForm();
+            }}
+            className="w-full border rounded p-2"
+          >
+            {scopes.map((scope, index) => (
+              <option
+                key={index}
+                value={index}
+              >
+                {scope.scopeName}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* CONSUMABLE */}
+        <div>
+          <label className="text-sm block mb-1">
+            Consumable
+          </label>
+
+          <select
+            value={selectedConsumable}
+            onChange={(e) => {
+              setSelectedConsumable(
+                Number(e.target.value)
+              );
+
+              resetForm();
+            }}
+            className="w-full border rounded p-2"
+          >
+            {consumables.map(
+              (consumable, index) => (
+                <option
+                  key={index}
+                  value={index}
+                >
+                  {
+                    consumable.consumableName
+                  }
+                </option>
+              )
+            )}
+          </select>
+        </div>
       </div>
 
-      {/* Form */}
-      {currentService && (
-        <form
-          className="flex flex-col gap-3"
-          onSubmit={handleSubmit}
-        >
-          {/* Service Info */}
-          <div className="flex flex-wrap justify-between gap-x-4 gap-y-1.5 text-sm bg-gray-50 p-2 rounded-md border border-gray-200">
-            <span className="text-gray-600">
-              Scope:
-              <strong className="text-gray-900 text-base font-semibold ml-1">
-                {currentService?.scopeName || "N/A"}
-              </strong>
-            </span>
+      {/* INFO */}
+      <div className="grid md:grid-cols-3 gap-3 mb-4 text-sm">
 
-            <span className="text-gray-600">
-              Consumable:
-              <strong className="text-gray-900 text-base font-semibold ml-1">
-                {currentService?.consumableName ||
-                  "N/A"}
-              </strong>
-            </span>
-          </div>
+        <div className="border rounded p-2">
+          <p className="text-gray-500">
+            Frequency
+          </p>
 
-          {/* Calibration */}
-          <div className="flex items-center justify-between border border-gray-200 bg-gray-50/50 px-3 py-2 rounded-md">
-            <div className="flex items-center flex-col md:flex-row gap-2">
-              <span className="text-xs font-bold text-gray-500 uppercase tracking-wide">
-                Calibration
-              </span>
+          <p className="font-medium">
+            {currentService?.frequency ||
+              "-"}
+          </p>
+        </div>
 
-              <span className="text-sm text-gray-700 font-semibold bg-white px-2 py-0.5 border border-gray-300 rounded-md shadow-inner">
-                Max:
-                {" "}
-                {currentService?.calibration ||
-                  "N/A"}
-              </span>
-            </div>
+        <div className="border rounded p-2">
+          <p className="text-gray-500">
+            Calibration
+          </p>
 
-            <div className="flex items-center flex-col md:flex-row gap-2">
-              <label className="text-xs font-medium text-gray-600">
-                Used:
-              </label>
+          <p className="font-medium">
+            {currentConsumable?.calibration ||
+              "-"}
+          </p>
+        </div>
 
-              <input
-                type="text"
-                value={form.usedCalibration}
-                onChange={(e) =>
-                  handleChange(
-                    "usedCalibration",
-                    e.target.value
-                  )
-                }
-                placeholder="0ml"
-                className="w-20 border border-gray-300 rounded-md px-2 py-1 text-sm text-center outline-none focus:border-green-500 bg-white"
-              />
-            </div>
-          </div>
+        <div className="border rounded p-2">
+          <p className="text-gray-500">
+            Service
+          </p>
 
-          {/* Action + Comment */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 items-start">
-            {/* Action */}
-            <div className="flex flex-col gap-1 sm:col-span-1">
-              <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">
-                Action
-              </label>
+          <p className="font-medium">
+            {currentService?.serviceName ||
+              "-"}
+          </p>
+        </div>
+      </div>
 
-              <select
-                value={form.action}
-                onChange={(e) =>
-                  handleChange("action", e.target.value)
-                }
-                className="w-full border border-gray-300 rounded-md px-2 py-1.5 text-xs outline-none bg-white text-gray-800 font-medium focus:border-green-500"
-              >
-                <option value="Done">
-                  Done
-                </option>
+      {/* FORM */}
+      <form
+        onSubmit={handleSubmit}
+        className="space-y-4"
+      >
 
-                <option value="not Done">
-                  Not Done
-                </option>
-                <option value="Partial Done">
-                  Partial Done
-                </option>
-              </select>
-            </div>
+        {/* USED CALIBRATION */}
+        <div>
+          <label className="text-sm block mb-1">
+            Used Calibration
+          </label>
 
-            {/* Comment */}
-            <div className="flex flex-col gap-1 sm:col-span-2">
-              <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">
-                Comment
-              </label>
+          <input
+            type="text"
+            value={form.usedCalibration}
+            onChange={(e) =>
+              handleChange(
+                "usedCalibration",
+                e.target.value
+              )
+            }
+            placeholder="Enter used calibration"
+            className="w-full border rounded p-2"
+          />
+        </div>
 
-              <textarea
-                rows={2}
-                value={form.comment}
-                onChange={(e) =>
-                  handleChange("comment", e.target.value)
-                }
-                placeholder="Add service notes..."
-                className="w-full border border-gray-300 rounded-md px-2 py-1 text-sm outline-none focus:border-green-500 resize-none"
-              />
-            </div>
-          </div>
+        {/* ACTION */}
+        <div>
+          <label className="text-sm block mb-1">
+            Action
+          </label>
 
-          {/* File Upload */}
-          <div className="flex items-center justify-between gap-3 pt-2 border-t border-gray-200 mt-1">
-            <label className="text-sm font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 border border-gray-300 rounded-md px-2.5 py-1 cursor-pointer transition select-none flex items-center gap-1">
-              Attach File
-              <input
-                type="file"
-                className="hidden"
-                onChange={(e) =>
-                  handleChange(
-                    "image",
-                    e.target.files[0]
-                  )
-                }
-              />
-            </label>
-            <div className="space-x-2">
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="px-5 py-1.5 text-sm font-bold text-white bg-green-600 hover:bg-green-700 active:scale-95 rounded-md shadow-sm transition-all uppercase tracking-wider disabled:opacity-50"
-              >
-                {isLoading
-                  ? "Submitting..."
-                  : "Submit"}
-              </button>
-              <button
-                type="button"
-                onClick={() => setRegular(false)}
-                className="px-5 py-1.5 text-sm font-bold text-white bg-red-600 hover:bg-red-700 active:scale-95 rounded-md shadow-sm transition-all uppercase tracking-wider disabled:opacity-50"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </form>
-      )}
+          <select
+            value={form.action}
+            onChange={(e) =>
+              handleChange(
+                "action",
+                e.target.value
+              )
+            }
+            className="w-full border rounded p-2"
+          >
+            <option value="Done">
+              Done
+            </option>
+
+            <option value="Not Done">
+              Not Done
+            </option>
+
+            <option value="Partial Done">
+              Partial Done
+            </option>
+          </select>
+        </div>
+
+        {/* COMMENT */}
+        <div>
+          <label className="text-sm block mb-1">
+            Comment
+          </label>
+
+          <textarea
+            rows={3}
+            value={form.comment}
+            onChange={(e) =>
+              handleChange(
+                "comment",
+                e.target.value
+              )
+            }
+            placeholder="Enter comment"
+            className="w-full border rounded p-2 resize-none"
+          />
+        </div>
+
+        {/* IMAGE */}
+        <div>
+          <label className="text-sm block mb-1">
+            Upload Image
+          </label>
+
+          <input
+            type="file"
+            onChange={(e) =>
+              handleChange(
+                "image",
+                e.target.files[0]
+              )
+            }
+            className="w-full border rounded p-2"
+          />
+        </div>
+
+        {/* BUTTONS */}
+        <div className="flex gap-3 pt-2">
+
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="bg-green-600 text-white px-5 py-2 rounded"
+          >
+            {isLoading
+              ? "Submitting..."
+              : "Submit"}
+          </button>
+
+          <button
+            type="button"
+            onClick={() =>
+              setRegular(false)
+            }
+            className="bg-red-600 text-white px-5 py-2 rounded"
+          >
+            Close
+          </button>
+        </div>
+      </form>
     </div>
   );
 }

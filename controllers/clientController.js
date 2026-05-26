@@ -5,9 +5,18 @@ import User from "../models/userModel.js";
 import { capitalLetter } from "../utils/helperFunction.js";
 
 export const registerClient = async (req, res) => {
-  const { name, address, contractNo, email } = req.body;
+  const { name, address, contractNo, email, startDate, endDate, phone } =
+    req.body;
   try {
-    if (!name || !address || !contractNo || !email)
+    if (
+      !name ||
+      !address ||
+      !contractNo ||
+      !email ||
+      !startDate ||
+      !endDate ||
+      !phone
+    )
       return res.status(400).json({ msg: "Please provide required values" });
 
     let capitalName = capitalLetter(name);
@@ -24,16 +33,10 @@ export const registerClient = async (req, res) => {
       address,
       contractNo,
       email,
+      startDate,
+      endDate,
+      phone,
     });
-
-    // const user = await User.create({
-    //   email,
-    //   name: capitalName,
-    //   department: "Client Admin",
-    //   role: "ClientAdmin",
-    //   type: "ClientEmployee",
-    //   client: client._id,
-    // });
 
     res.status(201).json({ msg: `${client.name} has been created` });
   } catch (error) {
@@ -64,15 +67,6 @@ export const getClient = async (req, res) => {
   }
 };
 
-// export const getClientAssignedEmployee = async (req, res) => {
-//   const { email } = req.params;
-//   try {
-//     if (!email) return res.status(400).json({ msg: "email not provided" });
-//     const assignedEmployee = await User.findOne({ email }).select("-password");
-//     res.status(200).json(assignedEmployee);
-//   } catch (error) { }
-// };
-
 export const deleteClient = async (req, res) => {
   const { id } = req.params;
   try {
@@ -90,5 +84,27 @@ export const deleteClient = async (req, res) => {
   } catch (error) {
     console.log(error);
     res.status(500).json({ msg: "Server error, try again later" });
+  }
+};
+
+export const updateClient = async (req, res) => {
+  const { id } = req.params;
+  const data = req.body;
+
+  try {
+    if (!req.user.rights.addData)
+      return res.status(403).json({ msg: "You are not allowed to update" });
+
+    const updatedClient = await Client.findByIdAndUpdate(id, data, {
+      new: true,
+      runValidators: true,
+    });
+
+    if (!updatedClient) {
+      return res.status(404).json({ msg: "Client not found" });
+    }
+    return res.status(200).json(updatedClient);
+  } catch (error) {
+    return res.status(500).json({ msg: "Server error", error: error.message });
   }
 };

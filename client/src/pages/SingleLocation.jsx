@@ -16,6 +16,7 @@ import {
 } from "../utils/helperFunctions";
 import SingleServiceForm from "../components/SingleServiceForm";
 import ImagesModal from "../components/modals/ImagesModal";
+import RegularForm from "../components/modals/RegularForm";
 
 const SingleLocation = () => {
   const { id } = useParams();
@@ -28,70 +29,12 @@ const SingleLocation = () => {
   const [regularService, { isLoading: regularLoading }] =
     useRegularServiceMutation();
 
-  const {
-    formState: { errors },
-    handleSubmit,
-    reset,
-    control,
-  } = useForm({
-    defaultValues: {
-      service: [
-        {
-          action: "",
-          image: "",
-        },
-      ],
-    },
-  });
-
-  const { fields } = useFieldArray({ name: "service", control });
-
-  // const submit = async (value) => {
-  //   if (value.service.filter((item) => item.action).length < 1) {
-  //     return toast.error("One service action is required");
-  //   }
-
-  //   const form = new FormData();
-
-  //   form.append("name", "NA");
-  //   form.append("action", "NA");
-  //   form.append("upload", false);
-  //   for (let i = 0; i < value.service.length; i++) {
-  //     const item = value.service[i];
-  //     if (item.image && !item.action)
-  //       return toast.error("Action is required");
-  //     if (item.action) {
-  //       form.append("name", data.location?.service[i]?.serviceName);
-  //       form.append("action", item.action.label);
-  //       form.append("upload", item.image ? true : false);
-  //       if (item.image instanceof File || item.image instanceof Blob) {
-  //         form.append("images", item.image);
-  //       } else {
-  //         form.append("images", "");
-  //       }
-  //     }
-  //   }
-  //   for (let pair of form.entries()) {
-  //     console.log(pair[0], pair[1])
-  //   }
-  //   try {
-  //     const res = await regularService({ id, form }).unwrap();
-  //     toast.success(res.msg);
-  //     reset();
-  //     setRegular(false);
-  //   } catch (error) {
-  //     console.log(error);
-  //     toast.error(error?.data?.msg || error.error);
-  //   }
-  // };
-
   const handleCancel = () => {
     setRegular(false);
     reset();
   };
 
-  // const rawSvg = decodeBase64Svg(data?.location.qr);
-
+  console.log(data)
   return (
     <>
       {isLoading ? (
@@ -140,32 +83,11 @@ const SingleLocation = () => {
 
                 {/* HEADER */}
                 <div
-                  className={`grid ${user.role === "ClientAdmin" || user.role === "ClientEmployee"
-                    ? "grid-cols-2"
-                    : "grid-cols-5"
-                    } bg-gray-100 text-xs md:text-sm font-semibold text-gray-700 border-b border-gray-300`}
+                  className={`grid grid-cols-2 bg-gray-100 text-xs md:text-sm font-semibold text-gray-700 border-b border-gray-300`}
                 >
                   <div className="px-3 py-3 border-r border-gray-300 whitespace-nowrap">
                     Service
                   </div>
-
-                  {user.role !== "ClientAdmin" &&
-                    user.role !== "ClientEmployee" && (
-                      <>
-                        <div className="px-3 py-3 border-r border-gray-300 whitespace-nowrap">
-                          Scope
-                        </div>
-
-                        <div className="px-3 py-3 border-r border-gray-300 whitespace-nowrap">
-                          Consumable
-                        </div>
-
-                        <div className="px-3 py-3 border-r border-gray-300 whitespace-nowrap">
-                          Calibration
-                        </div>
-                      </>
-                    )}
-
                   <div className="px-3 py-3 whitespace-nowrap">
                     Frequency
                   </div>
@@ -175,33 +97,11 @@ const SingleLocation = () => {
                 {data.location.service?.map((s, index) => (
                   <div
                     key={index}
-                    className={`grid ${user.role === "ClientAdmin" ||
-                      user.role === "ClientEmployee"
-                      ? "grid-cols-2"
-                      : "grid-cols-5"
-                      } text-xs md:text-sm border-b border-gray-200 hover:bg-gray-50 transition`}
+                    className={`grid grid-cols-2 text-xs md:text-sm border-b border-gray-200 hover:bg-gray-50 transition`}
                   >
                     <div className="px-3 py-3 border-r border-gray-200 break-words">
                       {s.serviceName || "-"}
                     </div>
-
-                    {user.role !== "ClientAdmin" &&
-                      user.role !== "ClientEmployee" && (
-                        <>
-                          <div className="px-3 py-3 border-r border-gray-200 break-words">
-                            {s.scopeName || "-"}
-                          </div>
-
-                          <div className="px-3 py-3 border-r border-gray-200 break-words">
-                            {s.consumableName || "-"}
-                          </div>
-
-                          <div className="px-3 py-3 border-r border-gray-200 break-words">
-                            {s.calibration || "-"}
-                          </div>
-                        </>
-                      )}
-
                     <div className="px-3 py-3 capitalize whitespace-nowrap">
                       {s.frequency || "-"}
                     </div>
@@ -210,13 +110,6 @@ const SingleLocation = () => {
               </div>
             </div>
           </div>
-
-
-          {/* QR svg*/}
-          {/* <div className="ml-auto pr-2 md:pr-5">
-              <img src={`data:image/svg+xml;base64,${rawSvg}`} alt="" className="h-40 ml-auto block" />
-            </div> */}
-
 
           {
             user.rights.raise && id && (
@@ -473,12 +366,12 @@ const SingleLocation = () => {
                     onClick={() => setRegular(true)}
                   />
                 ) : (
-                  <div className="w-full bg-neutral-50 p-4 rounded-xl border border-neutral-200 shadow-inner">
-                    <SingleServiceForm
+                  <div className="w-full bg-neutral-50 rounded-xl border border-neutral-200 shadow-inner">
+                    {/* <SingleServiceForm
                       serviceData={data.location.service}
                       id={data?.location?._id} setRegular={setRegular}
-                    />
-
+                    /> */}
+                    <RegularForm serviceData={data.location.service} id={data?.location?._id} />
                   </div>
                 )}
               </div>
@@ -493,66 +386,3 @@ const SingleLocation = () => {
 };
 export default SingleLocation;
 
-// <form
-//   onSubmit={handleSubmit(submit)}
-//   className="w-[70%] md:w-[40%]"
-// >
-//   {data.location.service?.map((service, index) => (
-//     <div key={index} className="mt-4">
-
-//       <p className="text-center font-medium text-lg">
-//         {service.serviceName}
-//       </p>
-
-//       <Controller
-//         name={`service[${index}].action`}
-//         control={control}
-//         render={({ field: { onChange, value } }) => (
-//           <InputSelect
-//             options={serviceActions}
-//             onChange={onChange}
-//             value={value}
-//             label={`Service Action - ${service.serviceName}`}
-//           />
-//         )}
-//       />
-
-//       <Controller
-//         control={control}
-//         name={`service.${index}.image`}
-//         defaultValue={null}
-//         render={({ field: { onChange, ref } }) => (
-//           <input
-//             ref={ref}
-//             type="file"
-//             className="mt-2"
-//             accept="image/*"
-//             onChange={(e) => {
-//               onChange(e.target.files[0]);
-//             }}
-//           />
-//         )}
-//       />
-
-//       <hr className="h-px mt-5 mb-4 border-0 bg-gray-700" />
-//     </div>
-//   ))}
-//   <div className="flex justify-center">
-//     <Button
-//       label="Submit"
-//       type="submit"
-//       height="h-9"
-//       width="w-[45%]"
-//       isLoading={regularLoading}
-//       disabled={regularLoading}
-//     />
-//     <Button
-//       label="Cancel"
-//       color="bg-red-600"
-//       height="h-9"
-//       width="w-[45%]"
-//       onClick={handleCancel}
-//       disabled={regularLoading}
-//     />
-//   </div>
-// </form>
