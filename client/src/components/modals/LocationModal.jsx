@@ -155,7 +155,7 @@ const LocationModal = ({ clientId, locationDetails }) => {
           </button>
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-4 h-full">
           {serviceReq?.map((item, index) => {
             const selectedService = allServices.find(
               (s) => s._id === watch(`serviceReq.${index}.serviceId`),

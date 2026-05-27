@@ -9,33 +9,20 @@ export const newComplaint = async (req, res) => {
   const { id } = req.params;
 
   try {
-    // RIGHTS CHECK
     if (!req?.user?.rights?.raise) {
       return res.status(400).json({
         msg: "You are not allowed to raise a complaint",
       });
     }
-
-    // FIND LOCATION
     const location = await Location.findById(id);
-
     if (!location) {
-      return res.status(404).json({
-        msg: "Location not found",
-      });
+      return res.status(404).json({ msg: "Location not found" });
     }
-
-    // DETERMINE CLIENT
     let clientId;
     let client;
-
-    // CLIENT USERS
     if (req.user.type === "ClientAdmin" || req.user.type === "ClientEmployee") {
       clientId = req.user.client;
-    }
-
-    // PEST USERS
-    else {
+    } else {
       clientId = location.client;
     }
 
@@ -47,29 +34,21 @@ export const newComplaint = async (req, res) => {
       });
     }
 
-    // LAST COMPLAINT NUMBER
     const lastComplaint = await Service.findOne({
       type: "Complaint",
       client: clientId,
     })
       .sort({ createdAt: -1 })
       .select("complaintDetails.number");
-
     let nextNumber = 1;
-
     if (lastComplaint?.complaintDetails?.number) {
       const lastNumber = parseInt(
         lastComplaint.complaintDetails.number.replace("SR-", "").trim(),
       );
-
       nextNumber = lastNumber + 1;
     }
-
     const sr = `SR-${String(nextNumber).padStart(4, "0")}`;
-
-    // IMAGE UPLOAD
     const imageLinks = [];
-
     if (req.files?.images) {
       const images = Array.isArray(req.files.images)
         ? req.files.images
@@ -89,11 +68,8 @@ export const newComplaint = async (req, res) => {
         imageLinks.push(link);
       }
     }
-
-    // CREATE COMPLAINT
     const complaint = await Service.create({
       type: "Complaint",
-
       complaintDetails: {
         number: sr,
         service: req.body.service,
@@ -128,7 +104,6 @@ export const newComplaint = async (req, res) => {
     });
   } catch (error) {
     console.log(error);
-
     return res.status(500).json({
       msg: "Server error, try again later",
     });
@@ -140,53 +115,44 @@ export const getSingleComplaint = async (req, res) => {
   try {
     const complaint = await Service.findById(id);
     if (!complaint) return res.status(404).json({ msg: "Complaint not found" });
-
     return res.json(complaint);
   } catch (error) {
     console.log(error);
     res.status(500).json({ msg: "Server error, try again later" });
   }
 };
+
 export const updateComplaint = async (req, res) => {
   const { id } = req.params;
-
   try {
     const status = req.body.status;
-
     const canUpdateComplaint =
       req.user.role === "Admin" ||
       req.user.role === "Operator" ||
       req.user.role === "Supervisor" ||
       req.user.role === "TeamLeader" ||
       req.user.role === "ClientAdmin";
-
     if (!canUpdateComplaint) {
       return res.status(403).json({
         msg: "You are not authorized",
       });
     }
-
     const complaint = await Service.findById(id);
-
     if (!complaint) {
       return res.status(404).json({
         msg: "Complaint not found",
       });
     }
-
     // BLOCK IF FINALLY CLOSED
     if (complaint.complaintDetails.finalClosed) {
       return res.status(400).json({
         msg: "Complaint is permanently closed",
       });
     }
-
     // IMAGE UPLOAD
     const imageLinks = [];
-
     if (req.files?.images) {
       let images = [];
-
       if (Array.isArray(req.files.images)) {
         images = req.files.images;
       } else {
@@ -203,7 +169,6 @@ export const updateComplaint = async (req, res) => {
             msg: "Image upload error. Try again later",
           });
         }
-
         imageLinks.push(link);
       }
     }
@@ -216,7 +181,6 @@ export const updateComplaint = async (req, res) => {
           msg: "Only Client Admin can reopen complaint",
         });
       }
-
       const reopenCount = complaint.complaintDetails.reopenCount || 0;
 
       if (reopenCount >= 3) {
@@ -262,6 +226,7 @@ export const updateComplaint = async (req, res) => {
     });
   }
 };
+
 export const getAllComplaints = async (req, res) => {
   const { search, page, location } = req.query;
 
@@ -367,57 +332,64 @@ export const newRegularService = async (req, res) => {
 
   try {
     const location = await Location.findById(id);
-
-    if (!location) {
-      return res.status(404).json({
-        msg: "Location not found",
-      });
-    }
+    if (!location) return res.status(404).json({ msg: "Location not found" });
 
     let imageLink = "";
-
-    // IMAGE
     if (req.files?.image) {
-      imageLink = await uploadFile({
-        filePath: req.files.image.tempFilePath,
-      });
+      const file = Array.isArray(req.files.image)
+        ? req.files.image[0]
+        : req.files.image;
+      imageLink = await uploadFile({ filePath: file.tempFilePath });
     }
 
-    // PARSE DATA
     const service = JSON.parse(req.body.service);
-
     const usedCalibration = JSON.parse(req.body.usedCalibration || "{}");
-
     const action = JSON.parse(req.body.action || "{}");
-
     const comment = JSON.parse(req.body.comment || "{}");
+    const serviceDate = req.body.serviceDate; // "27-May"
 
-    // FINAL OBJECT
+    const locationService = location.service.find(
+      (s) =>
+        s.serviceId?.toString().trim() === service.serviceId?.toString().trim(),
+    );
+
+    if (locationService && Array.isArray(locationService.schedule)) {
+      const target = locationService.schedule.find(
+        (s) => s.date === serviceDate,
+      );
+      if (target) {
+        target.completed = true;
+        target.status = "Done";
+        target.completedAt = new Date();
+        target.completedBy = req.user.name;
+      }
+    }
+
+    location.markModified("service");
+    await location.save();
+
     const regularService = {
+      serviceId: service.serviceId,
       serviceName: service.serviceName,
       frequency: service.frequency,
-
+      serviceDate,
+      schedule: locationService?.schedule || [],
       scopes: service.scopes.map((scope) => ({
         scopeId: scope.scopeId,
         scopeName: scope.scopeName,
-
         consumables: scope.consumables.map((con) => ({
           consumableId: con.consumableId,
           consumableName: con.consumableName,
-
           calibration: con.calibration,
-
           usedCalibration:
             usedCalibration?.[scope.scopeId]?.[con.consumableId] || "",
-
           action: action?.[scope.scopeId]?.[con.consumableId] || "Done",
-
           comment: comment?.[scope.scopeId]?.[con.consumableId] || "",
         })),
       })),
-
       image: imageLink,
       userName: req.user.name,
+      completedAt: new Date(),
     };
 
     await Service.create({
@@ -427,15 +399,10 @@ export const newRegularService = async (req, res) => {
       location: id,
     });
 
-    return res.status(201).json({
-      msg: "Service updated successfully",
-    });
+    return res.status(201).json({ msg: "Service updated successfully" });
   } catch (error) {
     console.log(error);
-
-    return res.status(500).json({
-      msg: "Server error, try again later",
-    });
+    return res.status(500).json({ msg: "Server error, try again later" });
   }
 };
 

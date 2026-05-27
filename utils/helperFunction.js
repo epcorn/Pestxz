@@ -181,9 +181,7 @@ export const qrCodeGeneratorSVG = async ({ link, floor, location }) => {
 //consrt svg to jpg at time of downloaing the qr code
 export const convertSvgToPngBuffer = async (svgString) => {
   try {
-    const pngBuffer = await sharp(Buffer.from(svgString))
-      .png() 
-      .toBuffer();
+    const pngBuffer = await sharp(Buffer.from(svgString)).png().toBuffer();
 
     return pngBuffer;
   } catch (error) {
@@ -236,4 +234,165 @@ export const sendEmail = async ({
     console.log(error);
     return false;
   }
+};
+// CONTRACT END DATE CONVERTER
+export const parseContractEndDate = (startDate, endDateStr) => {
+  const start = new Date(startDate);
+
+  if (!endDateStr) return start;
+
+  // "6 Months (180 Days)"
+  const monthMatch = endDateStr.match(/(\d+)\s*Month/i);
+  if (monthMatch) {
+    const months = parseInt(monthMatch[1], 10);
+    const end = new Date(start);
+    end.setMonth(end.getMonth() + months);
+    return end;
+  }
+
+  // fallback → "180 Days"
+  const dayMatch = endDateStr.match(/(\d+)\s*Day/i);
+
+  if (dayMatch) {
+    const days = parseInt(dayMatch[1], 10);
+
+    const end = new Date(start);
+    end.setDate(end.getDate() + days);
+
+    return end;
+  }
+
+  return start;
+};
+
+// DATE FORMAT → 01-Jun
+export const formatShortDate = (date) => {
+  const d = new Date(date);
+
+  const day = d.getDate().toString().padStart(2, "0");
+
+  const monthNames = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+  ];
+
+  const month = monthNames[d.getMonth()];
+
+  return `${day}-${month}`;
+};
+
+// GENERATE SCHEDULE
+export const generateSchedule = (start, end, frequency) => {
+  const schedule = [];
+  const freq = (frequency || "").toLowerCase().trim();
+
+  let current = new Date(start);
+  while (current <= end) {
+    schedule.push({
+      date: formatShortDate(current),
+      status: "Pending",
+      completed: false,
+    });
+    const next = new Date(current);
+
+    switch (freq) {
+      case "daily":
+        next.setDate(next.getDate() + 1);
+        break;
+
+      // EVERY 2 DAYS
+      case "alternate days":
+        next.setDate(next.getDate() + 2);
+        break;
+
+      // 2 TIMES IN WEEK
+      case "twice a week":
+        next.setDate(next.getDate() + 3);
+        break;
+
+      // 3 TIMES IN WEEK
+      case "thrice a week":
+        next.setDate(next.getDate() + 2);
+        break;
+
+      // ONCE EVERY 7 DAYS
+      case "weekly":
+        next.setDate(next.getDate() + 7);
+        break;
+
+      // EVERY 15 DAYS
+      case "fortnightly":
+      case "bi-weekly":
+        next.setDate(next.getDate() + 14);
+        break;
+
+      // 2 SERVICES IN MONTH
+      case "twice monthly":
+        next.setDate(next.getDate() + 15);
+        break;
+
+      // 3 SERVICES IN MONTH
+      case "thrice a month":
+        next.setDate(next.getDate() + 10);
+        break;
+
+      // EVERY MONTH
+      case "monthly":
+        next.setMonth(next.getMonth() + 1);
+        break;
+
+      // EVERY 2 MONTHS
+      case "alternate monthly":
+        next.setMonth(next.getMonth() + 2);
+        break;
+
+      // EVERY 3 MONTHS
+      case "quarterly":
+      case "quartly":
+        next.setMonth(next.getMonth() + 3);
+        break;
+
+      // EVERY 6 MONTHS
+      case "half yearly":
+        next.setMonth(next.getMonth() + 6);
+        break;
+
+      case "once":
+      case "one time":
+        current = new Date(end);
+        current.setDate(current.getDate() + 1);
+        break;
+
+      // 3 SERVICES IN 4 MONTHS // approx every 40 days
+      case "3 services once in 4 month":
+        next.setDate(next.getDate() + 40);
+        break;
+
+      // 2 SERVICES IN 6 MONTHS // approx every 90 days
+      case "2 services once in 6 month":
+        next.setDate(next.getDate() + 90);
+        break;
+      case "yearly":
+        next.setFullYear(next.getFullYear() + 1);
+        break;
+
+      default:
+        next.setMonth(next.getMonth() + 1);
+        break;
+    }
+
+    current = next;
+  }
+
+  return schedule;
 };

@@ -33,31 +33,30 @@ const serviceSchema = new mongoose.Schema(
     ],
     regularService: [
       {
+        serviceId: { type: String },
         serviceName: { type: String },
+        frequency: { type: String },
+        serviceDate: { type: String },
+        schedule: [],
         scopes: [
           {
-            scopeName: {
-              type: String,
-            },
-
+            scopeId: { type: String },
+            scopeName: { type: String },
             consumables: [
               {
+                consumableId: String,
                 consumableName: String,
                 calibration: String,
                 usedCalibration: String,
+                action: String,
                 comment: String,
               },
             ],
           },
         ],
-
-        action: { type: String },
-        comment: { type: String },
-
         image: { type: String },
-
         userName: { type: String },
-
+        completedAt: { type: Date },
         date: {
           type: Date,
           default: Date.now,

@@ -6,7 +6,7 @@ const locationSchema = new mongoose.Schema(
     subLocation: { type: String, required: true },
     location: { type: String, required: true },
     qr: { type: String },
-    service: [Object],
+    service: { type: [Object], default: [] },
     product: [Object],
     client: {
       type: mongoose.Schema.Types.ObjectId,

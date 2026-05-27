@@ -17,6 +17,8 @@ import {
 import SingleServiceForm from "../components/SingleServiceForm";
 import ImagesModal from "../components/modals/ImagesModal";
 import RegularForm from "../components/modals/RegularForm";
+import ServiceShow from "../components/single_location/ServiceShow";
+import LastRecentService from "../components/single_location/LastRecentService";
 
 const SingleLocation = () => {
   const { id } = useParams();
@@ -75,42 +77,9 @@ const SingleLocation = () => {
           </div>
 
           {/* TABLE */}
-
-          <div className="border border-gray-300 rounded-lg overflow-hidden bg-white">
-            {/* SCROLL CONTAINER */}
-            <div className="overflow-x-auto">
-              <div className="min-w-[700px]">
-
-                {/* HEADER */}
-                <div
-                  className={`grid grid-cols-2 bg-gray-100 text-xs md:text-sm font-semibold text-gray-700 border-b border-gray-300`}
-                >
-                  <div className="px-3 py-3 border-r border-gray-300 whitespace-nowrap">
-                    Service
-                  </div>
-                  <div className="px-3 py-3 whitespace-nowrap">
-                    Frequency
-                  </div>
-                </div>
-
-                {/* BODY */}
-                {data.location.service?.map((s, index) => (
-                  <div
-                    key={index}
-                    className={`grid grid-cols-2 text-xs md:text-sm border-b border-gray-200 hover:bg-gray-50 transition`}
-                  >
-                    <div className="px-3 py-3 border-r border-gray-200 break-words">
-                      {s.serviceName || "-"}
-                    </div>
-                    <div className="px-3 py-3 capitalize whitespace-nowrap">
-                      {s.frequency || "-"}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+          <div>
+            <ServiceShow services={data?.location?.service} />
           </div>
-
           {
             user.rights.raise && id && (
               <>
@@ -194,74 +163,7 @@ const SingleLocation = () => {
           )}
 
           <hr className="h-px my-4 border-0 bg-gray-700" />
-          {data?.lastServices?.length > 0 && (
-            <div className="my-6">
-              {/* Clean, Classic Header */}
-              <h6 className="text-base font-semibold text-neutral-900 mb-3 text-center md:text-left">
-                Last {data?.lastServices?.length} Recent Services
-              </h6>
-
-              {/* Main Container */}
-              <div className="overflow-hidden rounded-lg border border-neutral-200 bg-white shadow-sm">
-
-                {/* DESKTOP HEADER (Hidden on Mobile) */}
-                <div className="hidden md:flex items-center bg-neutral-50 border-b border-neutral-200 text-xs font-bold uppercase tracking-wider text-neutral-500 py-3 px-4 gap-4 text-center">
-                  <div className="w-36 text-left shrink-0">Type</div>
-                  <div className="w-32 shrink-0">Date</div>
-                  <div className="flex-1 text-left">Pest Details</div>
-                  <div className="flex-1 text-left">Attend by</div>
-                  <div className="w-28 shrink-0">Status</div>
-                </div>
-
-                {/* ROWS / MOBILE CARDS LIST */}
-                <div className="divide-y divide-neutral-200">
-                  {data.lastServices?.map((service, i) => (
-                    <div
-                      key={service.id}
-                      className="flex flex-col md:flex-row md:items-center py-4 px-4 text-sm text-neutral-700 hover:bg-neutral-50 transition-colors gap-3 md:gap-4"
-                    >
-                      {/* 1. Type */}
-                      <div className="w-full md:w-36 flex justify-between md:block items-center shrink-0">
-                        <span className="md:hidden text-xs font-semibold text-neutral-400 uppercase">Type</span>
-                        <span className="font-semibold text-neutral-900 md:font-normal">{service.type}</span>
-                      </div>
-
-                      {/* 2. Date */}
-                      <div className="w-full md:w-32 flex justify-between md:block md:text-center items-center shrink-0">
-                        <span className="md:hidden text-xs font-semibold text-neutral-400 uppercase">Date</span>
-                        <span className="text-neutral-500 md:text-neutral-700">{dateFormat(service.date)}</span>
-                      </div>
-
-                      {/* 3. Pest Details */}
-                      <div className="w-full flex-1 flex flex-col md:block items-start justify-between min-w-0">
-                        <span className="md:hidden text-xs font-semibold text-neutral-400 uppercase mb-0.5">Pest Details</span>
-                        <div className="flex flex-wrap items-center gap-1.5 text-neutral-800">
-                          <span className="font-medium text-neutral-900">{service.pest[0]?.name || service.pest.map(p => p).join(", ")}</span>
-                          {service.pest[0]?.scope && (
-                            <>
-                              <span className="text-neutral-300">|</span>
-                              <span className="text-neutral-500 text-xs bg-neutral-50 border border-neutral-200 px-2 py-0.5 rounded">
-                                {service.pest[0]?.scope}
-                              </span>
-                            </>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* 4. Status */}
-                      <div className="w-full md:w-28 flex justify-between md:block md:text-center items-center shrink-0 pt-2 md:pt-0 border-t md:border-none border-neutral-100">
-                        <span className="md:hidden text-xs font-semibold text-neutral-400 uppercase">Status</span>
-                        <span className="inline-flex items-center rounded-full bg-neutral-50 px-2.5 py-0.5 text-xs font-medium text-neutral-600 border border-neutral-200">
-                          {service.action}
-                        </span>
-                      </div>
-
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
+          <LastRecentService data={data?.lastServices} />
 
           {/* last regular service */}
           {user.type === "PestEmployee" && (
@@ -371,7 +273,7 @@ const SingleLocation = () => {
                       serviceData={data.location.service}
                       id={data?.location?._id} setRegular={setRegular}
                     /> */}
-                    <RegularForm serviceData={data.location.service} id={data?.location?._id} />
+                    <RegularForm serviceData={data.location.service} id={data?.location?._id} locationName={data?.location?.floor} setRegular={setRegular} />
                   </div>
                 )}
               </div>
