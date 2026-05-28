@@ -188,7 +188,7 @@ function AdminDashboard() {
                 Loading...
               </div>
             ) : clientReq?.length > 0 ? (
-              clientReq.map((latest) => {
+              clientReq.map((latest, i) => {
                 const latestUpdate =
                   latest?.complaintUpdate?.at(-1);
 
@@ -198,6 +198,7 @@ function AdminDashboard() {
                 const regularAction =
                   latest?.regularService?.[0]?.action;
 
+
                 return (
                   <div
                     key={latest._id}
@@ -205,14 +206,16 @@ function AdminDashboard() {
                   >
                     {/* NUMBER */}
                     <div>
-                      <Link
-                        to={`/complaint/${latest._id}`}
-                        className="font-semibold text-blue-600 hover:text-blue-800"
-                      >
-                        #
-                        {latest?.complaintDetails?.number ||
-                          "N/A"}
-                      </Link>
+                      {isRegular ?
+                        <Link to={`/location/${latest?.location._id}`} className="font-semibold text-blue-600 hover:text-blue-800">
+                          #{i + 1}
+                        </Link> : <Link
+                          to={`/complaint/${latest._id}`}
+                          className="font-semibold text-blue-600 hover:text-blue-800"
+                        >
+                          #
+                          {latest?.complaintDetails?.number}
+                        </Link>}
                     </div>
 
                     {/* DATE */}

@@ -3,20 +3,22 @@ import Select from "react-select";
 const InputSelect = ({
   onChange,
   options = [],
-  value, 
+  value,
   placeholder,
   label,
   isMulti = false,
-  isClearable = true
+  isClearable = true,
+  menuPortalTarget,
+  menuPosition,
 }) => {
 
   const getSelectValue = () => {
     if (!value) return isMulti ? [] : null;
-    
+
     if (isMulti) {
       return Array.isArray(value) ? value : [];
     }
-    
+
     return options?.find((c) => c.value === value?.value) || null;
   };
 
@@ -26,18 +28,22 @@ const InputSelect = ({
         {label}
         <span className="text-red-500 ml-0.5">*</span>
       </label>
-      <Select 
+      <Select
         placeholder={placeholder}
         isMulti={isMulti}
         className="basic-multi-select"
         isClearable={isClearable}
         options={options}
         menuPlacement="auto"
-        value={getSelectValue()} 
+        menuPortalTarget={menuPortalTarget}
+        menuPosition={menuPosition}
+        value={getSelectValue()}
         onChange={(val) => onChange(val)}
         styles={
           !isMulti
             ? {
+
+    menuPortal: (base) => ({ ...base, zIndex: 9999 }),
               control: (baseStyles, state) => ({
                 ...baseStyles,
                 minHeight: "31px",
@@ -66,6 +72,7 @@ const InputSelect = ({
               }),
             }
             : {
+              menuPortal: (base) => ({ ...base, zIndex: 9999 }),
               control: (baseStyles, state) => ({
                 ...baseStyles,
                 boxShadow: state.isFocused ? null : null,

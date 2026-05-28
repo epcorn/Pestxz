@@ -38,10 +38,8 @@ const ComplaintModal = ({ locationId, mode = "create" }) => {
 
   const { data: clientLocations } = useAllLocationsQuery(
     { id: user?.type === "ClientEmployee" ? user?.type : locationId },
-    { skip: !user?.type || !locationId }
+    { skip: !user?.type }
   );
-
-  console.log(clientLocations)
 
   const {
     register,
@@ -65,7 +63,6 @@ const ComplaintModal = ({ locationId, mode = "create" }) => {
   // SET INITIAL FLOOR
   useEffect(() => {
     if (!clientLocations?.floors?.length) return;
-
     if (!floor) {
       setFloor(clientLocations.floors[0]);
     }
@@ -89,11 +86,9 @@ const ComplaintModal = ({ locationId, mode = "create" }) => {
     if (!locationId || !clientLocations?.locations) return;
 
     const currentLocation = clientLocations.locations.find(
-      (loc) => loc._id === locationId
+      (loc) => loc._id?.toString() === locationId?.toString()
     );
-
     if (!currentLocation) return;
-
     setFloor(currentLocation.floor);
 
     setValue("location", {
@@ -114,13 +109,13 @@ const ComplaintModal = ({ locationId, mode = "create" }) => {
   }, [floor, locationId, setValue]);
 
   const currentSelectedId =
-    locationId || selectedLocation?.value;
+    selectedLocation?.value || locationId;
 
+  console.log(selectedLocation?.value, locationId)
   const targetedLocationRecord =
     clientLocations?.locations?.find(
-      (loc) => loc._id === currentSelectedId
+      (loc) => loc._id?.toString() === currentSelectedId?.toString()
     );
-
   // SERVICES
   const serviceOptions = useMemo(() => {
     const rawServices = targetedLocationRecord?.service || [];
@@ -130,7 +125,6 @@ const ComplaintModal = ({ locationId, mode = "create" }) => {
         if (typeof s === "string") {
           return s.trim().replace(/,$/, "");
         }
-
         if (typeof s === "object") {
           return (
             s.serviceName ||
@@ -141,13 +135,11 @@ const ComplaintModal = ({ locationId, mode = "create" }) => {
             .trim()
             .replace(/,$/, "");
         }
-
         return "";
       })
       .filter(Boolean);
   }, [targetedLocationRecord]);
-  
-  console.log(clientLocations)
+
 
   const submit = async (data) => {
     if (images.length > 2) {
@@ -233,6 +225,7 @@ const ComplaintModal = ({ locationId, mode = "create" }) => {
       );
     }
   };
+
 
   const reviewFormBody = (
     <div className="grid gap-y-3 mb-4">
@@ -440,7 +433,9 @@ const ComplaintModal = ({ locationId, mode = "create" }) => {
               options={
                 user.role === "ClientAdmin"
                   ? clientAdminStatus
-                  : jobStatus
+                  : watch("comment")?.value === "All job done"
+                    ? jobStatus.filter(s => s.value === "Close Req")
+                    : jobStatus.filter(s => s.value === "In Progress")
               }
               onChange={field.onChange}
               value={field.value}

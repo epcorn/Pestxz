@@ -54,7 +54,7 @@ const serviceSchema = new mongoose.Schema(
             ],
           },
         ],
-        image: { type: String },
+        image: { type: [String], default: [] },
         userName: { type: String },
         completedAt: { type: Date },
         date: {

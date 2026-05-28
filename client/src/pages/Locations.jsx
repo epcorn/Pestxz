@@ -10,6 +10,7 @@ import { useState } from "react";
 import { toast } from "react-toastify";
 import { Link } from "react-router-dom";
 import { useAllUserQuery } from "../redux/adminSlice";
+import ImagesModal from "../components/modals/ImagesModal";
 
 const Locations = () => {
   const [selectFloor, setSelectFloor] = useState([])
@@ -119,15 +120,30 @@ const Locations = () => {
                         </select>
                       </td>
                       <td className="border-r font-normal text-center border-neutral-500">
-                        <Button
-                          label="Download"
-                          small
-                          height="h-7"
-                          color="bg-green-600"
-                          onClick={() =>
-                            saveAs(location.qr, `QR-${location.location}`)
-                          }
-                        />
+                        {user.type !== "ClientEmployee" ?
+                          <Button
+                            label="Download"
+                            small
+                            height="h-7"
+                            color="bg-green-600"
+                            onClick={() =>
+                              saveAs(location.qr, `QR-${location.location}`)
+                            }
+                          />
+                          :
+                          <>
+                            <Button
+                              label="Image"
+                              onClick={() => dispatch(toggleModal({
+                                name: "qrimage",
+                                status: true,
+                              }))} />
+
+                            {isModalOpen.qrimage && (
+                              <ImagesModal image={location.qr} name={"qrimage"}/>
+                            )}
+                          </>
+                        }
                       </td>
 
                     </tr>

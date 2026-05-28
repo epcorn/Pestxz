@@ -43,13 +43,10 @@ export const locationSlice = apiSlice.injectEndpoints({
       }),
       providesTags: ["Location"],
     }),
-    assignLocation: builder.mutation({
-      query: (data) => ({
-        url: `/api/location/assign`,
-        method:"POST",
-        body: data, 
+    backFillSchedules: builder.query({
+      query: () => ({
+        url: `/api/location/backfill-schedules`,
       }),
-      invalidatesTags: ["location"],
     }),
   }),
 });
@@ -61,5 +58,6 @@ export const {
   useUpdateLocationMutation,
   useDeleteLocationMutation,
   useSingleLocationDetailsQuery,
-  useAssignLocationMutation,
+  useBackFillSchedulesQuery,
+  useLazyBackFillSchedulesQuery,
 } = locationSlice;

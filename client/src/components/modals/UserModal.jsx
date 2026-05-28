@@ -22,6 +22,7 @@ const UserModal = ({ userDetails }) => {
   const [changePassword, { isLoading: updateLoading }] = useChangePasswordMutation();
   const { data: rawClients } = useAllClientsQuery();
 
+  console.log(userDetails)
   const {
     register,
     formState: { errors },
@@ -55,7 +56,7 @@ const UserModal = ({ userDetails }) => {
   // Format client selection records safely
   useEffect(() => {
     if (rawClients) {
-      const formattedClients = rawClients.map((item) => ({
+      const formattedClients = rawClients?.map((item) => ({
         label: item.name,
         value: item._id,
       }));
@@ -64,9 +65,10 @@ const UserModal = ({ userDetails }) => {
   }, [rawClients]);
 
   useEffect(() => {
+    if (userDetails) return;
     setValue("role", "");
     setValue("client", null);
-  }, [selectedType, setValue]);
+  }, [selectedType]);
 
   useEffect(() => {
     if (userDetails) {
@@ -74,9 +76,9 @@ const UserModal = ({ userDetails }) => {
         name: userDetails.name || "",
         email: userDetails.email || "",
         password: "",
-        role: userDetails.role || "",
-        type: userDetails.type || "PestEmployee",
-        department: userDetails.department || "",
+        role: userDetails?.role || "",
+        type: userDetails?.type || "PestEmployee",
+        department: userDetails?.department || "",
         client: userDetails.client || null,
         rights: {
           raise: userDetails?.rights?.raise ?? false,

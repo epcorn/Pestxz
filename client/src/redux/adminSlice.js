@@ -74,11 +74,6 @@ export const adminSlice = apiSlice.injectEndpoints({
           : `/api/admin/adminDashboard`,
       }),
     }),
-    newClientAdminDashboard: builder.query({
-      query: () => ({
-        url: `/api/admin/newClientAdminDashboard`,
-      }),
-    }),
     addFrequency: builder.mutation({
       query: (freq) => ({
         method: "POST",
@@ -114,7 +109,6 @@ export const {
   useDeleteUserMutation,
   useClientAdminDashboardQuery,
   useAdminDashboardQuery,
-  useNewClientAdminDashboardQuery,
   useGetFrequencyQuery,
   useAddFrequencyMutation,
   useRemoveFrequencyMutation,

@@ -201,6 +201,8 @@ const NewClient = ({
               isClearable
               value={field.value}
               onChange={field.onChange}
+              menuPortalTarget={document.body}
+              menuPosition="fixed"
             />
           )}
         />

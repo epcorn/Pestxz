@@ -135,7 +135,7 @@ const Complaints = () => {
           >New Complaint</button>
         }
       </div >
-      {isModalOpen.complaint && <ComplaintModal locationId={"New complaint"}/>}
+      {isModalOpen.complaint && <ComplaintModal mode={"create"}/>}
 
       {
         data && (

@@ -3,6 +3,7 @@ import { DeleteModal, LocationModal, NewClientModal } from "../components/modals
 import {
   useAllLocationsQuery,
   useDeleteLocationMutation,
+  useLazyBackFillSchedulesQuery,
 } from "../redux/locationSlice";
 import { AlertMessage, Button, Loading } from "../components";
 import { FaEdit } from "react-icons/fa";
@@ -26,9 +27,7 @@ const SingleClient = () => {
     useDeleteLocationMutation();
   const [updateClient, { isLoading: updateLoading }] =
     useUpdateClientMutation();
-
-  const handleEditClient = () => {
-  }
+  const [triggerBackFill, { data: backfill, isLoading: backFillLoading }] = useLazyBackFillSchedulesQuery()
 
   // handle edit model
   const handleEditModal = (location) => {
@@ -41,6 +40,7 @@ const SingleClient = () => {
     dispatch(toggleModal({ name: "location", status: true }));
   };
 
+  console.log(data)
   const handleDelete = async () => {
     try {
       await deleteLocation(isModalOpen.delete.id).unwrap();
@@ -55,7 +55,11 @@ const SingleClient = () => {
   };
 
   const services = data?.locations?.map(loc => loc.service || []) || []
-  console.log(data)
+
+  const handleBackfill = async () => {
+    const res = await triggerBackFill().unwrap()
+    toast.success(res.msg || "Done");
+  }
 
   return (
     <>
@@ -150,6 +154,12 @@ const SingleClient = () => {
               <span className="font-semibold text-neutral-800 mr-1">Address:</span>
               {data.client.address}
             </div>
+          </div>
+
+          <div>
+            <Button label={'Add schedules'} onClick={handleBackfill}
+              isLoading={backFillLoading} disabled={backFillLoading} />
+
           </div>
 
           <div className="overflow-y-auto my-4">

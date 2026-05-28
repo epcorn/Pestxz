@@ -51,7 +51,6 @@ const Clients = () => {
         /* 4. MAIN DATA VIEW LIST MODULE CONTAINER */
         <div className="overflow-hidden rounded-lg border border-neutral-200 bg-white shadow-sm">
 
-          {/* DESKTOP STICKY STYLED HEADER (Hidden on Mobile viewports) */}
           <div className="hidden md:flex items-center bg-neutral-50 border-b border-neutral-200 text-xs font-bold uppercase tracking-wider text-neutral-500 py-3 px-4 gap-4 text-center">
             <div className="w-56 text-left shrink-0">Client Name</div>
             <div className="flex-1 text-left">Address</div>
@@ -88,7 +87,7 @@ const Clients = () => {
                   </span>
                 </div>
 
-                {/* D. Responsive Interactive Action Row Control */}
+
                 <div className="w-full md:w-44 flex justify-between md:block md:text-center items-center shrink-0 pt-2.5 md:pt-0 border-t md:border-none border-neutral-100">
                   <span className="md:hidden text-xs font-semibold text-neutral-400 uppercase">Action</span>
                   <div className="flex justify-start md:justify-center items-center gap-2">
@@ -118,7 +117,7 @@ const Clients = () => {
           </div>
         </div>
       ) : (
-        /* 5. USER FRIENDLY EMPTY PLACEHOLDER SCREEN FALLBACK */
+        
         <div className="text-center py-12 border-2 border-dashed border-neutral-200 rounded-xl bg-white">
           <p className="text-sm text-neutral-500">No client data found records inside registry.</p>
         </div>

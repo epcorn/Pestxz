@@ -2,6 +2,7 @@ import express from "express";
 import {
   addLocation,
   assignLocation,
+  backfillSchedules,
   deleteLocation,
   getAllLocations,
   getLocationDetails,
@@ -12,6 +13,8 @@ import { getAllService } from "../controllers/adminController.js";
 import { convertSvgToPngBuffer } from "../utils/helperFunction.js";
 const router = express.Router();
 
+router.get("/backfill-schedules", backfillSchedules);
+
 router.get("/allServices", getAllService);
 router.get("/client/:id", getAllLocations);
 router.get("/convert", convertSvgToPngBuffer);
@@ -21,6 +24,7 @@ router
   .get(getLocationDetails)
   .put(updateLocation)
   .delete(deleteLocation);
+
 
 router.post("/assign", assignLocation); // added new
 export default router;

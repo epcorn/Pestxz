@@ -46,9 +46,9 @@ const Services = () => {
   const [deleteService, { isLoading: deleteLoading }] =
     useDeleteServiceMutation();
 
-  // frequencies  
-  const { data: frequencies, isLoading: freqLoading } = useGetFrequencyQuery();
-  const [removeFreq] = useRemoveFrequencyMutation()
+  // // frequencies  
+  // const { data: frequencies, isLoading: freqLoading } = useGetFrequencyQuery();
+  // const [removeFreq] = useRemoveFrequencyMutation()
 
   const services = data?.services || [];
 
@@ -73,20 +73,22 @@ const Services = () => {
     e.stopPropagation()
     setUpdate({ id: service._id, value: service.serviceName })
   }
-  
+
   return (
     <>
       <section className="w-full space-y-5 p-1">
         {/* Main layout flexbox/grid fix container */}
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-2 items-stretch">
+        {/* <div className="grid grid-cols-1 md:grid-cols-5 gap-2 items-stretch">
           <div className="col-span-1 md:col-span-3">
             <ServiceFormModal addService={addService} />
-          </div>
-          <div className="md:col-span-2 flex">
+            </div>
+            <div className="md:col-span-2 flex">
             <Frequency frequencies={frequencies} removeFreq={removeFreq} />
-          </div>
+            </div>
+            </div> */}
+        <div >
+          <ServiceFormModal addService={addService} />
         </div>
-
         <div className="outline grid outline-gray-400 p-4 bg-white rounded-lg space-y-4">
           <h3 className="text-2xl font-semibold text-center">Services</h3>
           {/* SERVICES */}
@@ -116,6 +118,7 @@ const Services = () => {
                         }))
                       }
                       onClick={(e) => e.stopPropagation()}
+                      onBlur={() =>setUpdate({ id: null, value: "" })}
                       onKeyDown={async (e) => {
                         if (e.key === "Enter") {
                           try {
@@ -127,15 +130,12 @@ const Services = () => {
                                 id: service._id,
                               },
                             }).unwrap();
-
                             toast.success(res.msg);
-
                             setUpdate({ id: null, value: "" });
                           } catch (error) {
                             toast.error(error?.data?.msg || error.error);
                           }
                         }
-
                         if (e.key === "Escape") {
                           setUpdate({ id: null, value: "" });
                         }

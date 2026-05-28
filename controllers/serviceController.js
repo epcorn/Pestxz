@@ -253,25 +253,28 @@ export const getAllComplaints = async (req, res) => {
   try {
     let pageNumber = Number(page) || 1;
 
-    // let complaints = await Service.find(query)
-    let complaints = await Service.find()
+    // let complaints = await Service.find()
+    let allComplaints = await Service.find(query)
       .populate({
         path: "location client",
-        select: "floor subLocation location name",
+        select: "floor subLocation  location name",
       })
-      .sort("-createdAt")
-      .skip(15 * (pageNumber - 1))
-      .limit(15);
+      .sort("-createdAt");
 
     if (location !== "All") {
-      complaints = complaints.filter(
-        (complaint) => complaint.location.floor === location,
+      allComplaints = allComplaints.filter(
+        (complaint) => complaint.location?.floor === location,
       );
     }
 
+    const total = allComplaints.length;
+    const complaints = allComplaints.slice(
+      15 * (pageNumber - 1),
+      15 * pageNumber,
+    );
     return res.status(200).json({
       complaints,
-      pages: Math.min(10, Math.ceil(complaints.length / 15)),
+      pages: Math.min(10, Math.ceil(total / 15)),
     });
   } catch (error) {
     console.log(error);
@@ -334,12 +337,17 @@ export const newRegularService = async (req, res) => {
     const location = await Location.findById(id);
     if (!location) return res.status(404).json({ msg: "Location not found" });
 
-    let imageLink = "";
+    let imageLink = [];
     if (req.files?.image) {
       const file = Array.isArray(req.files.image)
-        ? req.files.image[0]
-        : req.files.image;
-      imageLink = await uploadFile({ filePath: file.tempFilePath });
+        ? req.files.image
+        : [req.files.image];
+
+      const fileUpload = file.slice(0, 2);
+      for (const file of fileUpload) {
+        const link = await uploadFile({ filePath: file.tempFilePath });
+        imageLink.push(link);
+      }
     }
 
     const service = JSON.parse(req.body.service);
@@ -374,10 +382,10 @@ export const newRegularService = async (req, res) => {
       frequency: service.frequency,
       serviceDate,
       schedule: locationService?.schedule || [],
-      scopes: service.scopes.map((scope) => ({
+      scopes: service.scopes?.map((scope) => ({
         scopeId: scope.scopeId,
         scopeName: scope.scopeName,
-        consumables: scope.consumables.map((con) => ({
+        consumables: scope.consumables?.map((con) => ({
           consumableId: con.consumableId,
           consumableName: con.consumableName,
           calibration: con.calibration,
@@ -389,6 +397,7 @@ export const newRegularService = async (req, res) => {
       })),
       image: imageLink,
       userName: req.user.name,
+      role: req.user.role,
       completedAt: new Date(),
     };
 
@@ -474,12 +483,14 @@ export const dailyServiceReport = async (req, res) => {
                 .local()
                 .format("HH:mm:ss");
               row.getCell(3).value = location;
-              row.getCell(4).value = regular.name;
-              row.getCell(5).value = regular.action;
-              row.getCell(6).value = "NA";
-              row.getCell(7).value = "NA";
-              row.getCell(8).value = regular.username;
-              row.getCell(9).value =
+              row.getCell(4).value = regular.frequency;
+              row.getCell(5).value = regular.serviceName;
+              row.getCell(6).value = regular.scopes.map(sc=> sc.scopeName);
+              row.getCell(7).value = regular.action;
+              row.getCell(8).value = "NA";
+              row.getCell(9).value = "NA";
+              row.getCell(10).value = regular.userName;
+              row.getCell(11).value =
                 (regular.image.length > 1 && {
                   text: "Download",
                   hyperlink: regular.image,
@@ -491,23 +502,23 @@ export const dailyServiceReport = async (req, res) => {
         }
         const filePath = `./tmp/${client.name}_Daily_Service_Report.xlsx`;
         await workbook.xlsx.writeFile(filePath);
-        const link = await uploadFile({ filePath });
-        if (link) {
-          await sendEmail({
-            attachment: [
-              {
-                url: link,
-                name: `${client.name}_Daily_Service_Report.xlsx`,
-              },
-            ],
-            emailList: [{ email: client.email }],
-            templateId: 1,
-            dynamicData: {
-              client: client.name,
-              date: moment(yesterday).format("DD/MM/YY"),
-            },
-          });
-        }
+        // const link = await uploadFile({ filePath });
+        // if (link) {
+        //   await sendEmail({
+        //     attachment: [
+        //       {
+        //         url: link,
+        //         name: `${client.name}_Daily_Service_Report.xlsx`,
+        //       },
+        //     ],
+        //     emailList: [{ email: client.email }],
+        //     templateId: 1,
+        //     dynamicData: {
+        //       client: client.name,
+        //       date: moment(yesterday).format("DD/MM/YY"),
+        //     },
+        //   });
+        // }
       }
     }
 

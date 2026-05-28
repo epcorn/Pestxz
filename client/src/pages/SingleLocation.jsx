@@ -252,7 +252,6 @@ const SingleLocation = () => {
                               {item.action}
                             </span>
                           </div>
-
                         </div>
                       ))}
                     </div>

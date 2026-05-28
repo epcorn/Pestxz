@@ -165,16 +165,15 @@ export const getAllLocations = async (req, res) => {
       clientId = req.user.client;
     }
     // CASE 2: frontend sends LOCATION ID → derive client from it
-    // else if (id.length === 24) {
-    //   const location = await Location.findById(id).select("client");
-    //   if (!location) {
-    //     return res.status(404).json({ msg: "Location not found" });
-    //   }
-    //   clientId = location.client;
-    // }
-    // CASE 3: already clientId
-    else {
-      clientId = id;
+    else if (id.length === 24) {
+      const location = await Location.findById(id).select("client");
+      if (location) {
+        // it's a location ID → derive client from it
+        clientId = location.client;
+      } else {
+        // it's already a client ID
+        clientId = id;
+      }
     }
     // FIND CLIENT
     const client = await Client.findById(clientId);
@@ -213,6 +212,7 @@ export const updateLocation = async (req, res) => {
     const client = await Client.findById(location.client);
     const contractStart = new Date(client.startDate);
     const contractEnd = parseContractEndDate(client.startDate, client.endDate);
+
     const validServices = (req.body.serviceReq || []).filter(
       (service) =>
         service.serviceId &&
@@ -227,8 +227,11 @@ export const updateLocation = async (req, res) => {
       );
 
       let schedule = existingService?.schedule || [];
-      // new service
-      if (!schedule.length) {
+
+      if (
+        !schedule.length ||
+        existingService?.frequency !== service.frequency
+      ) {
         const generatedDates = generateSchedule(
           contractStart,
           contractEnd,
@@ -249,11 +252,9 @@ export const updateLocation = async (req, res) => {
         serviceName: service.serviceName,
         frequency: service.frequency,
         schedule,
-
         scopes: service.scopes.map((scope) => ({
           scopeId: scope.scopeId,
           scopeName: scope.scopeName,
-
           consumables: (scope.consumables || []).map((consumable) => ({
             consumableId: consumable.consumableId,
             consumableName: consumable.consumableName,
@@ -263,20 +264,31 @@ export const updateLocation = async (req, res) => {
       };
     });
 
-    location.floor = req.body.floor;
-    location.subLocation = req.body.subLocation;
-    location.location = req.body.location;
-    location.service = formattedServices;
-    location.product = Array.isArray(req.body.product) ? req.body.product : [];
+    const updatedLocation = await Location.findByIdAndUpdate(
+      id,
+      {
+        $set: {
+          floor: req.body.floor,
+          subLocation: req.body.subLocation,
+          location: req.body.location,
+          service: formattedServices,
+          product: Array.isArray(req.body.product) ? req.body.product : [],
+        },
+      },
+      { new: true, runValidators: true },
+    );
 
-    await location.save();
+    if (!updatedLocation) {
+      return res.status(404).json({
+        msg: "Location not found",
+      });
+    }
 
     return res.json({
       msg: "Updated successfully",
     });
   } catch (error) {
     console.log(error);
-
     return res.status(500).json({
       msg: "Server error, try again later",
     });
@@ -338,13 +350,16 @@ export const getLocationDetails = async (req, res) => {
       if (service.type === "Regular") {
         service.regularService.forEach((reg) => {
           const locationService = location?.service?.find(
-            (ls) => ls.serviceId?.toString().trim() === reg.serviceId?.toString().trim(),
+            (ls) =>
+              ls.serviceId?.toString().trim() ===
+              reg.serviceId?.toString().trim(),
           );
-          
+
           lastServices.push({
             id: service._id,
             type: service.type,
             date: service.createdAt,
+            serviceId: service.serviceId,
             serviceDate: reg.serviceDate,
             serviceName: reg.serviceName,
             frequency: reg.frequency,
@@ -354,16 +369,17 @@ export const getLocationDetails = async (req, res) => {
             scopes:
               reg.scopes?.map((sc) => ({
                 scopeName: sc.scopeName,
-
+                scopeId: sc.scopeId,
                 consumables: sc.consumables?.map((con) => ({
-                  consumableName: con.consumableName,
                   action: con.action,
-                  usedCalibration: con.usedCalibration,
+                  calibration: con.calibration,
                   comment: con.comment,
+                  consumableName: con.consumableName,
+                  usedCalibration: con.usedCalibration,
                 })),
               })) || [],
 
-            image: reg.image || "",
+            image: reg.image || [],
 
             completedAt: reg.completedAt || service.createdAt,
           });
@@ -376,9 +392,10 @@ export const getLocationDetails = async (req, res) => {
           id: service._id,
           type: service.type,
           date: service.updatedAt,
-          pest: service.complaintDetails.service,
+          service: service.complaintDetails.service,
           status: service.complaintDetails.status,
-          userName: service.userName,
+          userName: service.complaintDetails.userName,
+
         });
       }
     }
@@ -434,5 +451,64 @@ export const assignLocation = async (req, res) => {
     res.status(200).json(assignLocation);
   } else {
     res.status(500).json({ msg: "server error" });
+  }
+};
+
+export const backfillSchedules = async (req, res) => {
+  try {
+    const locations = await Location.find().populate("client");
+
+    let updated = 0;
+    let skipped = 0;
+
+    for (const location of locations) {
+      if (!location.client) {
+        skipped++;
+        continue;
+      }
+
+      const contractStart = new Date(location.client.startDate);
+      const contractEnd = parseContractEndDate(
+        location.client.startDate,
+        location.client.endDate,
+      );
+
+      let modified = false;
+
+      for (const service of location.service) {
+        // SKIP if schedule already exists
+        if (service.schedule && service.schedule.length > 0) continue;
+
+        const generatedDates = generateSchedule(
+          contractStart,
+          contractEnd,
+          service.frequency,
+        );
+
+        service.schedule = generatedDates.map((date) => ({
+          date: date.date,
+          completed: date.completed,
+          status: date.status,
+          completedAt: null,
+          completedBy: "",
+        }));
+
+        modified = true;
+      }
+
+      if (modified) {
+        location.markModified("service");
+        await location.save();
+        updated++;
+      } else {
+        skipped++;
+      }
+    }
+    return res.json({
+      msg: `Done. Updated: ${updated}, Skipped: ${skipped}`,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ msg: "Server error" });
   }
 };

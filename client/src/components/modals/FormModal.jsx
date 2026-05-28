@@ -17,7 +17,7 @@ const FormModal = ({
       }`}
     >
       <div
-        className={`bg-white rounded-xl w-full max-w-4xl max-h-[90dvh] flex flex-col shadow p-2 md:p-5 m-3 transition-all ${
+        className={`bg-white rounded-xl max-w-4xl max-h-[90dvh] flex flex-col shadow p-2 md:p-5 m-3 transition-all ${
           open ? "scale-100 opacity-100" : "scale-125 opacity-0"
         }`}
       >
@@ -27,7 +27,6 @@ const FormModal = ({
         
         <form onSubmit={onSubmit} className="flex flex-col flex-1 min-h-0">
           <div className="overflow-y-auto flex-1 pr-1">{formBody}</div>
-          
           <div className="grid grid-cols-2 gap-2 mt-4 shrink-0">
             <Button
               type="submit"

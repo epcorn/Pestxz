@@ -271,11 +271,6 @@ export const deleteService = async (req, res) => {
   }
 };
 
-export const newClientAdminDashboard = async (req, res) => {
-  const client = await Client.find();
-  res.status(200).json(client);
-};
-
 export const clientAdminDashboard = async (req, res) => {
   try {
     const client = await Client.findById(req.user.client);
