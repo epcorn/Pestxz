@@ -126,7 +126,7 @@ const Complaints = () => {
           </form>
           {/* new complaint button  */}
         </div >
-        {user.rights.raise && user.role === "ClientAdmin" &&
+        {user.rights.raise && user.type === "ClientEmployee" &&
           <button
             className="px-4 py-2 w-fit ml-auto bg-blue-800 text-white rounded-lg"
             onClick={() =>
@@ -135,7 +135,8 @@ const Complaints = () => {
           >New Complaint</button>
         }
       </div >
-      {isModalOpen.complaint && <ComplaintModal mode={"create"}/>}
+
+      {isModalOpen.complaint && <ComplaintModal mode={"create"} />}
 
       {
         data && (

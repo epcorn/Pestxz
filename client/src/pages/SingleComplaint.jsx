@@ -203,7 +203,7 @@ const SingleComplaint = () => {
             </>
           )}
 
-          {user.role === "ClientAdmin" &&
+          {user.rights.close &&
             (data.complaintDetails.status === "Close Req" || data.complaintDetails.status === "In Progress") &&
             !data.complaintDetails.finalClosed && (
               <>

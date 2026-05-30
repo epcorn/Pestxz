@@ -19,15 +19,14 @@ import {
 import FormModal from "./FormModal";
 
 const ComplaintModal = ({ locationId, mode = "create" }) => {
+  
   const isCreate = mode === "create";
   const isUpdate = mode === "update";
   const isReview = mode === "review";
 
   const [images, setImages] = useState([]);
   const [floor, setFloor] = useState("");
-
   const dispatch = useDispatch();
-
   const { isModalOpen, user } = useSelector((store) => store.helper);
 
   const [addComplaint, { isLoading: addLoading }] =
@@ -111,7 +110,7 @@ const ComplaintModal = ({ locationId, mode = "create" }) => {
   const currentSelectedId =
     selectedLocation?.value || locationId;
 
-  console.log(selectedLocation?.value, locationId)
+  console.log(selectedLocation?.value, currentSelectedId, locationId)
   const targetedLocationRecord =
     clientLocations?.locations?.find(
       (loc) => loc._id?.toString() === currentSelectedId?.toString()
@@ -156,48 +155,25 @@ const ComplaintModal = ({ locationId, mode = "create" }) => {
         form.set("comment", data.comment);
         form.set("service", data.service);
 
-        const locationToUse =
-          user.type === "ClientEmployee"
-            ? user.client
-            : data?.location?.value;
-
+        const locationToUse = data?.location?.value;
         if (!locationToUse) {
           toast.error("Location is required");
           return;
         }
-
-        res = await addComplaint({
-          id: locationToUse,
-          form,
-        }).unwrap();
+        console.log(locationToUse, [...form])
+        res = await addComplaint({ id: locationToUse, form }).unwrap();
       }
       // UPDATE
       if (isUpdate) {
-        form.set(
-          "status",
-          data.status?.value || data.status
-        );
-
-        form.set(
-          "comment",
-          data.comment?.value || data.comment
-        );
-
-        res = await updateComplaint({
-          id: locationId,
-          form,
-        }).unwrap();
+        form.set("status", data.status?.value || data.status);
+        form.set("comment", data.comment?.value || data.comment);
+        res = await updateComplaint({ id: locationId, form }).unwrap();
       }
 
       // REVIEW
       if (isReview) {
-        form.set(
-          "status",
-          data.status?.value || data.status
-        );
-
+        form.set("status", data.status?.value || data.status);
         form.set("comment", data.comment);
-
         res = await updateComplaint({
           id: locationId,
           form,
@@ -206,12 +182,7 @@ const ComplaintModal = ({ locationId, mode = "create" }) => {
 
       toast.success(res?.msg || "Success");
 
-      dispatch(
-        toggleModal({
-          name: "complaint",
-          status: false,
-        })
-      );
+      dispatch(toggleModal({ name: "complaint", status: false }));
 
       setImages([]);
       reset();
