@@ -66,7 +66,7 @@ const SingleClient = () => {
   const handleQrDownload = async (id) => {
     try {
       await qrCountInc(id).unwrap();
-      // saveAs(location.qr, `QR-${location.location}`);
+      saveAs(location.qr, `QR-${location.location}`);
     } catch (error) {
       throw new Error("download error");
     }
