@@ -63,10 +63,10 @@ const SingleClient = () => {
     const res = await triggerBackFill().unwrap()
     toast.success(res.msg || "Done");
   }
-  const handleQrDownload = async (id) => {
+  const handleQrDownload = async (id, location) => {
     try {
       await qrCountInc(id).unwrap();
-      // saveAs(location.qr, `QR-${location.location}`);
+      saveAs(location?.qr, `QR-${location.location}`);
     } catch (error) {
       throw new Error("download error");
     }
@@ -227,7 +227,7 @@ const SingleClient = () => {
                         label={<span className="flex items-center gap-1"><PiDownloadSimpleBold /> {location?.qrCount}</span>}
                         small
                         height="h-7"
-                        onClick={() => handleQrDownload(location?._id)}
+                        onClick={() => handleQrDownload(location?._id, location)}
                       />
                     </td>
                     <td className="flex items-center justify-center h-9 space-x-3 font-normal text-center border-neutral-500">
