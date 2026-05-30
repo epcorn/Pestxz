@@ -7,6 +7,7 @@ import {
   getAllLocations,
   getLocationDetails,
   getSingleLocation,
+  qrCounter,
   updateLocation,
 } from "../controllers/locationController.js";
 import { getAllService } from "../controllers/adminController.js";
@@ -19,12 +20,12 @@ router.get("/allServices", getAllService);
 router.get("/client/:id", getAllLocations);
 router.get("/convert", convertSvgToPngBuffer);
 router.post("/add", addLocation);
+router.patch("/qr-count/:id", qrCounter);
 router
   .route("/:id")
   .get(getLocationDetails)
   .put(updateLocation)
   .delete(deleteLocation);
-
 
 router.post("/assign", assignLocation); // added new
 export default router;

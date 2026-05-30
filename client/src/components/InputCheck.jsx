@@ -1,6 +1,6 @@
 import React from "react";
 
-function InputCheck({ value, onChange, required }) {
+function InputCheck({ value, onChange, required, selectedType }) {
   // Always normalize rights safely
   const rights = {
     raise: false,
@@ -48,44 +48,48 @@ function InputCheck({ value, onChange, required }) {
         <label htmlFor="close">Close Complaint</label>
       </div>
 
-      <div className="flex items-center gap-2">
-        <input
-          type="checkbox"
-          id="scan_Scheduled"
-          checked={rights.scan_Scheduled}
-          onChange={() => handleCheckboxChange("scan_Scheduled")}
-        />
-        <label htmlFor="scan_Scheduled">Scan Scheduled</label>
-      </div>
+      {selectedType === "PestEmployee" &&
+        <>
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="scan_Scheduled"
+              checked={rights.scan_Scheduled}
+              onChange={() => handleCheckboxChange("scan_Scheduled")}
+            />
+            <label htmlFor="scan_Scheduled">Scan Scheduled</label>
+          </div>
 
-      <div className="flex items-center gap-2">
-        <input
-          type="checkbox"
-          id="scan_Unscheduled"
-          checked={rights.scan_Unscheduled}
-          onChange={() => handleCheckboxChange("scan_Unscheduled")}
-        />
-        <label htmlFor="scan_Unscheduled">Scan Unscheduled</label>
-      </div>
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="scan_Unscheduled"
+              checked={rights.scan_Unscheduled}
+              onChange={() => handleCheckboxChange("scan_Unscheduled")}
+            />
+            <label htmlFor="scan_Unscheduled">Scan Unscheduled</label>
+          </div>
 
-      <div className="flex items-center gap-2">
-        <input
-          type="checkbox"
-          id="delete"
-          checked={rights.delete}
-          onChange={() => handleCheckboxChange("delete")}
-        />
-        <label htmlFor="delete">Delete</label>
-      </div>
-      <div className="flex items-center gap-2">
-        <input
-          type="checkbox"
-          id="addData"
-          checked={rights.addData}
-          onChange={() => handleCheckboxChange("addData")}
-        />
-        <label htmlFor="addData">Add Data</label>
-      </div>
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="delete"
+              checked={rights.delete}
+              onChange={() => handleCheckboxChange("delete")}
+            />
+            <label htmlFor="delete">Delete</label>
+          </div>
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="addData"
+              checked={rights.addData}
+              onChange={() => handleCheckboxChange("addData")}
+            />
+            <label htmlFor="addData">Add Data</label>
+          </div>
+        </>
+      }
     </div>
   );
 }

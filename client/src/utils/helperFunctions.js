@@ -2,7 +2,16 @@ export const progress = (status) => {
   let text = "text-blue-700 bg-blue-100";
   if (status === "Close") text = "text-red-700 bg-red-100";
   else if (status === "In Progress") text = "text-yellow-600 bg-yellow-100";
+  else if (status === "Reopen") text = "text-green-600 bg-green-100";
   else if (status === "Close Req") text = "text-amber-700 bg-amber-100";
+  return text;
+};
+export const progressBlink = (status) => {
+  let text = "bg-blue-700";
+  if (status === "Close") text = "bg-red-700";
+  else if (status === "In Progress") text = "bg-yellow-700";
+  else if (status === "Reopen") text = "bg-green-600";
+  else if (status === "Close Req") text = "bg-amber-700";
   return text;
 };
 
@@ -32,7 +41,6 @@ export const dateFormat = (date) => {
     minute: "2-digit",
     hour12: false,
   });
-
   // return `${date.split("T")[0]}, ${date.split("T")[1].slice(0, 5)}`;
   // const formattedDate = new Date(date).toLocaleString();
   // return formattedDate;
@@ -42,21 +50,69 @@ export function decodeBase64Svg(base64String) {
   if (!base64String) return "";
 
   try {
-    // 1. Strip all whitespaces, tabs, and newlines (\r, \n)
     let cleanedString = base64String.replace(/\s/g, "");
-
-    // 2. Fix URL-safe base64 variations if they exist
     cleanedString = cleanedString.replace(/-/g, "+").replace(/_/g, "/");
-
-    // 3. Add trailing padding if missing
     while (cleanedString.length % 4 !== 0) {
       cleanedString += "=";
     }
-
-    // 4. Safely decode
     return atob(cleanedString);
   } catch (error) {
     console.error("Failed to decode SVG string:", error);
     return "";
   }
 }
+
+// DATE FORMAT → 01-Jun
+export const formatShortDate = (date) => {
+  const d = new Date(date);
+  const day = d.getDate().toString().padStart(2, "0");
+  const monthNames = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+  ];
+  const month = monthNames[d.getMonth()];
+  return `${day}-${month}`;
+};
+
+export function getWorkStatus(schedules) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const missed = schedules.filter((sc) => {
+    if (sc.completed) return false;
+    const scheduleDate = new Date(sc.date);
+    scheduleDate.setHours(0, 0, 0, 0);
+    return scheduleDate < today;
+  });
+
+  return missed;
+}
+
+export const frequencies = [
+  "daily",
+  "alternate days",
+  "twice a week",
+  "twice a week",
+  "weekly",
+  "fortnightly",
+  "twice monthly",
+  "thrice a month",
+  "monthly",
+  "alternate monthly",
+  "quarterly",
+  "half yearly",
+  "once",
+  "3 services once in 4 month",
+  "2 services once in 6 month",
+  "yearly",
+];

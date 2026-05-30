@@ -50,8 +50,7 @@ const Clients = () => {
 
         /* 4. MAIN DATA VIEW LIST MODULE CONTAINER */
         <div className="overflow-hidden rounded-lg border border-neutral-200 bg-white shadow-sm">
-
-          <div className="hidden md:flex items-center bg-neutral-50 border-b border-neutral-200 text-xs font-bold uppercase tracking-wider text-neutral-500 py-3 px-4 gap-4 text-center">
+          <div className="hidden md:flex items-center bg-neutral-300 border-b border-neutral-200 text-xs font-bold uppercase tracking-wider text-neutral-500 py-3 px-4 gap-4 text-center">
             <div className="w-56 text-left shrink-0">Client Name</div>
             <div className="flex-1 text-left">Address</div>
             <div className="w-30 shrink-0">Contract No.</div>

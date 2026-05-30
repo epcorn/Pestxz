@@ -6,83 +6,76 @@ const InputSelect = ({
   value,
   placeholder,
   label,
+  disable = false,
   isMulti = false,
   isClearable = true,
-  menuPortalTarget,
-  menuPosition,
+  required = true
 }) => {
 
   const getSelectValue = () => {
     if (!value) return isMulti ? [] : null;
-
-    if (isMulti) {
-      return Array.isArray(value) ? value : [];
-    }
-
+    if (isMulti) return Array.isArray(value) ? value : [];
     return options?.find((c) => c.value === value?.value) || null;
+  };
+
+  const sharedStyles = {
+    menuPortal: (base) => ({ ...base, zIndex: 99999 }),
+    menu: (base) => ({ ...base, zIndex: 99999 }),
+  };
+
+  const singleStyles = {
+    ...sharedStyles,
+    control: (baseStyles, state) => ({
+      ...baseStyles,
+      minHeight: "31px",
+      height: "32px",
+      boxShadow: "none",
+      marginTop: "2px",
+      borderColor: state.isFocused ? "#6366f1" : "#CCCCCC",
+      borderWidth: "2px",
+      "&:hover": { borderColor: "#6366f1" },
+    }),
+    valueContainer: (provided) => ({ ...provided, height: "30px", padding: "0 5px" }),
+    input: (provided) => ({ ...provided, margin: "0px" }),
+    indicatorsContainer: (provided) => ({ ...provided, height: "31px" }),
+  };
+
+  const multiStyles = {
+    ...sharedStyles,
+    control: (baseStyles, state) => ({
+      ...baseStyles,
+      boxShadow: "none",
+      marginTop: "2px",
+      borderColor: state.isFocused ? "#6366f1" : "#CCCCCC",
+      borderWidth: "2px",
+      "&:hover": { borderColor: "#6366f1" },
+    }),
   };
 
   return (
     <div className="mt-2">
-      <label className="block text-md font-medium leading-6 text-gray-900">
-        {label}
-        <span className="text-red-500 ml-0.5">*</span>
-      </label>
+      {label && (
+        <label className="block text-md font-medium leading-6 text-gray-900">
+          {label}
+          {required &&
+            <span className="text-red-500 ml-0.5">*</span>
+          }
+        </label>
+      )}
       <Select
+        required={required}
         placeholder={placeholder}
         isMulti={isMulti}
+        isDisabled={disable}
         className="basic-multi-select"
         isClearable={isClearable}
         options={options}
         menuPlacement="auto"
-        menuPortalTarget={menuPortalTarget}
-        menuPosition={menuPosition}
+        menuPortalTarget={document.body}
+        menuPosition="fixed"
         value={getSelectValue()}
         onChange={(val) => onChange(val)}
-        styles={
-          !isMulti
-            ? {
-
-    menuPortal: (base) => ({ ...base, zIndex: 9999 }),
-              control: (baseStyles, state) => ({
-                ...baseStyles,
-                minHeight: "31px",
-                height: "32px",
-                boxShadow: state.isFocused ? null : null,
-                marginTop: "2px",
-                borderColor: "#CCCCCC",
-                borderWidth: "2px",
-                paddingTop: "0px",
-              }),
-
-              valueContainer: (provided, state) => ({
-                ...provided,
-                height: "30px",
-                padding: "0 5px",
-              }),
-
-              input: (provided, state) => ({
-                ...provided,
-                margin: "0px",
-              }),
-
-              indicatorsContainer: (provided, state) => ({
-                ...provided,
-                height: "31px",
-              }),
-            }
-            : {
-              menuPortal: (base) => ({ ...base, zIndex: 9999 }),
-              control: (baseStyles, state) => ({
-                ...baseStyles,
-                boxShadow: state.isFocused ? null : null,
-                marginTop: "2px",
-                borderColor: "#CCCCCC",
-                borderWidth: "2px",
-                paddingTop: "0px",
-              }),
-            }
-        }
+        styles={isMulti ? multiStyles : singleStyles}
       />
     </div>
   );

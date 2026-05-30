@@ -2,11 +2,13 @@ const InputRow = ({
   label,
   register,
   id,
+  onchange,
   placeholder,
   required = true,
   type = "text",
   disabled = false,
-  cls="mt-2",
+  cls = "mt-2",
+  min
 }) => {
 
   return (
@@ -23,9 +25,10 @@ const InputRow = ({
       <input
         type={type}
         disabled={disabled}
+        min={min}
         className="mt-0.5 w-full py-0.5 px-2 border-2 rounded-md outline-none transition border-neutral-300 focus:border-black disabled:bg-slate-100"
         placeholder={placeholder}
-        {...register(id, { required: required })}
+        {...register(id, { required: required, onChange: onchange })}
       />
     </div>
   );

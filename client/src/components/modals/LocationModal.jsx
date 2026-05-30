@@ -3,16 +3,17 @@ import { toast } from "react-toastify";
 import React, { useEffect } from "react";
 import {
   useAllServiceQuery,
-  useGetFrequencyQuery,
 } from "../../redux/adminSlice";
 import {
   useAddLocationMutation,
   useUpdateLocationMutation,
 } from "../../redux/locationSlice";
-import { InputRow, Loading } from "..";
+import { InputRow, InputSelect, Loading } from "..";
 import { useDispatch, useSelector } from "react-redux";
 import FormModal from "./FormModal";
 import { toggleModal } from "../../redux/helperSlice";
+import { timeList } from "../../utils/constData";
+import { frequencies } from "../../utils/helperFunctions";
 
 const defaultService = {
   serviceId: "",
@@ -26,10 +27,7 @@ const LocationModal = ({ clientId, locationDetails }) => {
   const { isModalOpen } = useSelector((store) => store.helper);
   const [add, { isLoading: addLoading }] = useAddLocationMutation();
   const [update, { isLoading: updateLoading }] = useUpdateLocationMutation();
-  const { data: frequencies = [] } = useGetFrequencyQuery();
-
   const { data = {}, isLoading, isFetching } = useAllServiceQuery();
-
   const allServices = data?.services?.flatMap((ser) => ser.service) || [];
 
   const {
@@ -73,7 +71,7 @@ const LocationModal = ({ clientId, locationDetails }) => {
                     sc.consumables?.map((con) => ({
                       consumableId: con.consumableId || "",
                       consumableName: con.consumableName || "",
-                      calibration: con.calibration || "",
+                      calibration: con.calibration || 0,
                     })) || [],
                 })) || [],
             }))
@@ -119,17 +117,17 @@ const LocationModal = ({ clientId, locationDetails }) => {
   };
 
   const formBody = (
-    <div className="grid md:grid-cols-3 gap-4">
+    <div className="grid md:grid-cols-3 gap-x-4">
       {/* FLOOR */}
       <InputRow label="Floor" id="floor" errors={errors} register={register} />
 
       {/* LOCATION */}
-      <InputRow
-        label="Location"
-        id="location"
-        errors={errors}
-        register={register}
-      />
+        <InputRow
+          label="Location"
+          id="location"
+          errors={errors}
+          register={register}
+        />
 
       {/* SUB LOCATION */}
       <InputRow
@@ -141,8 +139,8 @@ const LocationModal = ({ clientId, locationDetails }) => {
       />
 
       {/* SERVICES */}
-      <div className="col-span-3 mt-4">
-        <div className="flex items-center justify-between mb-3">
+      <div className="col-span-3 mt-2">
+        <div className="flex items-center justify-between mb-1">
           <h3 className="font-semibold">Service Details</h3>
 
           <button
@@ -155,141 +153,191 @@ const LocationModal = ({ clientId, locationDetails }) => {
           </button>
         </div>
 
-        <div className="space-y-4 h-full">
-          {serviceReq?.map((item, index) => {
-            const selectedService = allServices.find(
-              (s) => s._id === watch(`serviceReq.${index}.serviceId`),
-            );
+        <div className="overflow-y-auto max-h-72">
+          <div className="space-y-1">
+            {serviceReq?.map((item, index) => {
+              const selectedService = allServices.find(
+                (s) => s._id === watch(`serviceReq.${index}.serviceId`),
+              );
 
-            const scopes = selectedService?.scopes || [];
+              const scopes = selectedService?.scopes || [];
 
-            return (
-              <div key={index} className="border rounded p-3 space-y-4">
-                {/* TOP */}
-                <div className="grid md:grid-cols-3 gap-3">
-                  {/* SERVICE */}
-                  <select
-                    className="border rounded p-2"
-                    value={watch(`serviceReq.${index}.serviceId`) || ""}
-                    onChange={(e) => {
-                      const service = allServices.find(
-                        (s) => s._id === e.target.value,
-                      );
+              return (
+                <div key={index} className="border border-gray-400 rounded p-3 space-y-4">
+                  {/* TOP */}
+                  <div className="grid md:grid-cols-3 gap-3">
+                    {/* SERVICE */}
+                    <select
+                      className="border border-gray-400 rounded px-1"
+                      value={watch(`serviceReq.${index}.serviceId`) || ""}
+                      onChange={(e) => {
+                        const service = allServices.find(
+                          (s) => s._id === e.target.value,
+                        );
 
-                      setValue(
-                        `serviceReq.${index}.serviceId`,
-                        service?._id || "",
-                      );
+                        setValue(
+                          `serviceReq.${index}.serviceId`,
+                          service?._id || "",
+                        );
 
-                      setValue(
-                        `serviceReq.${index}.serviceName`,
-                        service?.serviceName || "",
-                      );
+                        setValue(
+                          `serviceReq.${index}.serviceName`,
+                          service?.serviceName || "",
+                        );
 
-                      setValue(`serviceReq.${index}.scopes`, []);
-                    }}>
-                    <option value="">Select Service</option>
+                        setValue(`serviceReq.${index}.scopes`, []);
+                      }}>
+                      <option value="">Select Service</option>
 
-                    {allServices.map((service) => (
-                      <option key={service._id} value={service._id}>
-                        {service.serviceName}
-                      </option>
-                    ))}
-                  </select>
+                      {allServices.map((service) => (
+                        <option key={service._id} value={service._id}>
+                          {service.serviceName}
+                        </option>
+                      ))}
+                    </select>
 
-                  {/* FREQUENCY */}
-                  <select
-                    className="border rounded p-2"
-                    value={watch(`serviceReq.${index}.frequency`) || ""}
-                    onChange={(e) =>
-                      setValue(`serviceReq.${index}.frequency`, e.target.value)
-                    }>
-                    <option value="">Select Frequency</option>
+                    {/* FREQUENCY */}
+                    <select
+                      className="border border-gray-400 text-black rounded p-2 capitalize"
+                      value={watch(`serviceReq.${index}.frequency`) || ""}
+                      onChange={(e) =>
+                        setValue(`serviceReq.${index}.frequency`, e.target.value)
+                      }>
+                      <option value="">Select Frequency</option>
 
-                    {frequencies.map((freq) => (
-                      <option key={freq._id} value={freq.name}>
-                        {freq.name}
-                      </option>
-                    ))}
-                  </select>
+                      {frequencies.map((freq) => (
+                        <option key={freq} value={freq}>
+                          {freq}
+                        </option>
+                      ))}
+                    </select>
 
-                  {/* REMOVE */}
-                  <button
-                    type="button"
-                    className="border rounded p-2 text-red-500"
-                    onClick={() => {
-                      const updated = serviceReq.filter((_, i) => i !== index);
+                    {/* REMOVE */}
+                    <button
+                      type="button"
+                      className="border  rounded p-2 text-red-500"
+                      onClick={() => {
+                        const updated = serviceReq.filter((_, i) => i !== index);
 
-                      setValue(
-                        "serviceReq",
-                        updated.length ? updated : [defaultService],
-                      );
-                    }}>
-                    Remove
-                  </button>
-                </div>
+                        setValue(
+                          "serviceReq",
+                          updated.length ? updated : [defaultService],
+                        );
+                      }}>
+                      Remove
+                    </button>
+                  </div>
 
-                {/* SCOPES */}
-                {scopes.length > 0 && (
-                  <div className="space-y-3">
-                    {scopes.map((scope) => {
-                      const selectedScopes =
-                        watch(`serviceReq.${index}.scopes`) || [];
+                  {/* SCOPES */}
+                  {scopes.length > 0 && (
+                    <div className="space-y-3">
+                      {scopes.map((scope) => {
+                        const selectedScopes =
+                          watch(`serviceReq.${index}.scopes`) || [];
 
-                      const existingScope = selectedScopes.find(
-                        (s) => s.scopeId === scope._id,
-                      );
+                        const existingScope = selectedScopes.find(
+                          (s) => s.scopeId === scope._id,
+                        );
 
-                      return (
-                        <div key={scope._id} className="border rounded p-3">
-                          {/* SCOPE */}
-                          <label className="flex items-center gap-2 mb-3">
-                            <input
-                              type="checkbox"
-                              checked={!!existingScope}
-                              onChange={(e) => {
-                                let updatedScopes = [...selectedScopes];
+                        return (
+                          <div key={scope._id} className="border border-gray-400 rounded p-3">
+                            {/* SCOPE */}
+                            <label className="flex items-center gap-2 mb-3">
+                              <input
+                                type="checkbox"
+                                checked={!!existingScope}
+                                onChange={(e) => {
+                                  let updatedScopes = [...selectedScopes];
 
-                                if (e.target.checked) {
-                                  updatedScopes.push({
-                                    scopeId: scope._id,
-                                    scopeName: scope.scopeName,
-                                    consumables: [],
-                                  });
-                                } else {
-                                  updatedScopes = updatedScopes.filter(
-                                    (s) => s.scopeId !== scope._id,
+                                  if (e.target.checked) {
+                                    updatedScopes.push({
+                                      scopeId: scope._id,
+                                      scopeName: scope.scopeName,
+                                      consumables: [],
+                                    });
+                                  } else {
+                                    updatedScopes = updatedScopes.filter(
+                                      (s) => s.scopeId !== scope._id,
+                                    );
+                                  }
+
+                                  setValue(
+                                    `serviceReq.${index}.scopes`,
+                                    updatedScopes,
                                   );
-                                }
+                                }}
+                              />
 
-                                setValue(
-                                  `serviceReq.${index}.scopes`,
-                                  updatedScopes,
-                                );
-                              }}
-                            />
+                              <span>{scope.scopeName}</span>
+                            </label>
 
-                            <span>{scope.scopeName}</span>
-                          </label>
+                            {/* CONSUMABLES */}
+                            {existingScope && (
+                              <div className="space-y-2">
+                                {scope.consumables?.map((consumable) => {
+                                  const selectedConsumable =
+                                    existingScope.consumables?.find(
+                                      (c) => c.consumableId === consumable._id,
+                                    );
 
-                          {/* CONSUMABLES */}
-                          {existingScope && (
-                            <div className="space-y-2">
-                              {scope.consumables?.map((consumable) => {
-                                const selectedConsumable =
-                                  existingScope.consumables?.find(
-                                    (c) => c.consumableId === consumable._id,
-                                  );
+                                  return (
+                                    <div
+                                      key={consumable._id}
+                                      className="grid md:grid-cols-2 gap-2 items-center">
+                                      {/* CHECKBOX */}
+                                      <label className="flex items-center gap-2">
+                                        <input
+                                          type="checkbox"
+                                          checked={!!selectedConsumable}
+                                          onChange={(e) => {
+                                            const updatedScopes = [
+                                              ...selectedScopes,
+                                            ];
 
-                                return (
-                                  <div
-                                    key={consumable._id}
-                                    className="grid md:grid-cols-2 gap-2 items-center">
-                                    {/* CHECKBOX */}
-                                    <label className="flex items-center gap-2">
+                                            const scopeIndex =
+                                              updatedScopes.findIndex(
+                                                (s) => s.scopeId === scope._id,
+                                              );
+
+                                            if (e.target.checked) {
+                                              updatedScopes[
+                                                scopeIndex
+                                              ].consumables.push({
+                                                consumableId: consumable._id,
+                                                consumableName: consumable.name,
+                                                calibration: "",
+                                              });
+                                            } else {
+                                              updatedScopes[
+                                                scopeIndex
+                                              ].consumables = updatedScopes[
+                                                scopeIndex
+                                              ].consumables.filter(
+                                                (c) =>
+                                                  c.consumableId !==
+                                                  consumable._id,
+                                              );
+                                            }
+
+                                            setValue(
+                                              `serviceReq.${index}.scopes`,
+                                              updatedScopes,
+                                            );
+                                          }}
+                                        />
+
+                                        <span>{consumable.name}</span>
+                                      </label>
+
+                                      {/* CALIBRATION */}
                                       <input
-                                        type="checkbox"
-                                        checked={!!selectedConsumable}
+                                        type="text"
+                                        placeholder="Calibration"
+                                        className="border rounded p-2 disabled:opacity-35"
+                                        disabled={!selectedConsumable}
+                                        value={
+                                          selectedConsumable?.calibration || 0
+                                        }
                                         onChange={(e) => {
                                           const updatedScopes = [
                                             ...selectedScopes,
@@ -300,25 +348,16 @@ const LocationModal = ({ clientId, locationDetails }) => {
                                               (s) => s.scopeId === scope._id,
                                             );
 
-                                          if (e.target.checked) {
-                                            updatedScopes[
-                                              scopeIndex
-                                            ].consumables.push({
-                                              consumableId: consumable._id,
-                                              consumableName: consumable.name,
-                                              calibration: "",
-                                            });
-                                          } else {
-                                            updatedScopes[
-                                              scopeIndex
-                                            ].consumables = updatedScopes[
-                                              scopeIndex
-                                            ].consumables.filter(
-                                              (c) =>
-                                                c.consumableId !==
-                                                consumable._id,
-                                            );
-                                          }
+                                          const consumableIndex = updatedScopes[
+                                            scopeIndex
+                                          ].consumables.findIndex(
+                                            (c) =>
+                                              c.consumableId === consumable._id,
+                                          );
+
+                                          updatedScopes[scopeIndex].consumables[
+                                            consumableIndex
+                                          ].calibration = e.target.value;
 
                                           setValue(
                                             `serviceReq.${index}.scopes`,
@@ -326,61 +365,36 @@ const LocationModal = ({ clientId, locationDetails }) => {
                                           );
                                         }}
                                       />
-
-                                      <span>{consumable.name}</span>
-                                    </label>
-
-                                    {/* CALIBRATION */}
-                                    <input
-                                      type="text"
-                                      placeholder="Calibration"
-                                      className="border rounded p-2"
-                                      disabled={!selectedConsumable}
-                                      value={
-                                        selectedConsumable?.calibration || ""
-                                      }
-                                      onChange={(e) => {
-                                        const updatedScopes = [
-                                          ...selectedScopes,
-                                        ];
-
-                                        const scopeIndex =
-                                          updatedScopes.findIndex(
-                                            (s) => s.scopeId === scope._id,
-                                          );
-
-                                        const consumableIndex = updatedScopes[
-                                          scopeIndex
-                                        ].consumables.findIndex(
-                                          (c) =>
-                                            c.consumableId === consumable._id,
-                                        );
-
-                                        updatedScopes[scopeIndex].consumables[
-                                          consumableIndex
-                                        ].calibration = e.target.value;
-
-                                        setValue(
-                                          `serviceReq.${index}.scopes`,
-                                          updatedScopes,
-                                        );
-                                      }}
-                                    />
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            );
-          })}
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
+
+      {locationDetails &&
+        <div>
+          <InputRow
+            label={'Please specify Reason'}
+            type="textarea"
+            cls="border-gray-800"
+            placeholder={'what changed & Why?'}
+            error={errors} id={'changes'}
+            required={true}
+            register={register}
+          />
+        </div>
+      }
     </div>
   );
 

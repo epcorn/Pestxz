@@ -1,7 +1,8 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
 import { useRegularServiceMutation } from "../../redux/serviceSlice";
+import { formatShortDate } from "../../utils/helperFunctions";
 
 const getStorageKey = (id, name) => `pestxz_saved_services_${id}_${name}`;
 
@@ -13,8 +14,9 @@ const todayShort = () => {
 };
 
 function RegularForm({ serviceData, id, locationName, setRegular }) {
+  const [rerender, setRerender] = useState([])
   const [regularService, { isLoading }] = useRegularServiceMutation();
-  const { register, reset, setValue, getValues } = useForm();
+  const { register, reset, setValue, getValues, watch } = useForm();
   const STORAGE_KEY = getStorageKey(id, locationName);
   const today = todayShort();
 
@@ -28,6 +30,10 @@ function RegularForm({ serviceData, id, locationName, setRegular }) {
       console.log(err);
     }
   }, [setValue, STORAGE_KEY]);
+
+  const watchAction = watch();
+
+  useEffect(() => { }, [rerender])
 
   const saveLocally = (serviceName) => {
     const values = getValues();
@@ -56,10 +62,23 @@ function RegularForm({ serviceData, id, locationName, setRegular }) {
 
   const submitSingleService = async (ser, todaySchedule) => {
     try {
-
       saveLocally(ser.serviceName);
       console.log(ser.serviceName)
       const values = getValues();
+      const partialWithoutComment = [];
+      ser.scopes?.forEach((sc) => {
+        sc.consumables?.forEach((con) => {
+          const action = values?.action?.[ser.serviceName]?.[sc.scopeName]?.[con.consumableName];
+          const comment = values?.comment?.[ser.serviceName]?.[sc.scopeName]?.[con.consumableName];
+          if (action === "Partial Done" && !comment?.trim()) {
+            partialWithoutComment.push(`${sc.scopeName} → ${con.consumableName}`);
+          }
+        });
+      });
+      if (partialWithoutComment.length > 0) {
+        toast.error(`Comment required for Partial Done:\n${partialWithoutComment.join(", ")}`);
+        return;
+      }
       const form = new FormData();
 
       form.append("service", JSON.stringify({ ...ser, locationId: id }));
@@ -69,10 +88,7 @@ function RegularForm({ serviceData, id, locationName, setRegular }) {
       form.append("serviceDate", todaySchedule.date);
 
       const files = values?.image?.[ser.serviceName];
-      if (!files || files.length === 0) {
-        toast.error("Please upload at least one image to submit! 📸");
-        return;
-      }
+
       if (files) {
         Array.from(files).slice(0, 2).forEach((file) => form.append("image", file));
       }
@@ -87,6 +103,7 @@ function RegularForm({ serviceData, id, locationName, setRegular }) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
 
       setRegular(false);
+      setRerender(prev => [...prev, res])
       reset();
     } catch (err) {
       console.log(err);
@@ -96,19 +113,13 @@ function RegularForm({ serviceData, id, locationName, setRegular }) {
 
   // only services that have today as a pending schedule date
   const servicesForToday = serviceData?.filter((ser) =>
-    ser.schedule?.some((s) => s.date === today && !s.completed)
+    ser.schedule?.some((s) => formatShortDate(s.date) === today && !s.completed)
   );
 
   if (!servicesForToday?.length) {
     return (
       <div className="w-full p-6 outline outline-gray-400 rounded-2xl text-center text-gray-500">
         <p>No services scheduled for today ({today}).</p>
-        <button
-          className="mt-4 px-4 py-2 bg-red-500 text-white rounded"
-          onClick={() => setRegular(false)}
-        >
-          Close
-        </button>
       </div>
     );
   }
@@ -117,20 +128,13 @@ function RegularForm({ serviceData, id, locationName, setRegular }) {
     <div className="w-full overflow-auto outline outline-gray-400 rounded-2xl">
       <div className="min-w-[1200px] p-4">
         <div className="flex justify-between items-center mb-5">
-          <h2 className="text-lg md:text-xl font-bold">Regular Service Form — {today}</h2>
-          <button
-            type="button"
-            className="px-4 py-2 bg-red-500 text-white rounded"
-            onClick={() => setRegular(false)}
-          >
-            Close
-          </button>
+          <h2 className="text-lg md:text-xl font-bold">Regular Service Form</h2>
         </div>
 
         <form className="space-y-6">
-          {servicesForToday.map((ser) => {
+          {servicesForToday?.map((ser) => {
             const todaySchedule = ser.schedule.find(
-              (s) => s.date === today && !s.completed
+              (s) => formatShortDate(s.date) === today && !s.completed
             );
             console.log(todaySchedule)
             return (
@@ -151,7 +155,7 @@ function RegularForm({ serviceData, id, locationName, setRegular }) {
                     </p>
                     <p className="text-sm md:text-lg font-semibold outline px-2 py-1 rounded outline-gray-400">
                       Date:{" "}
-                      <span className="text-base text-blue-600">{todaySchedule.date}</span>
+                      <span className="text-base text-blue-600">{todaySchedule?.date}</span>
                     </p>
                   </div>
 
@@ -170,51 +174,52 @@ function RegularForm({ serviceData, id, locationName, setRegular }) {
                 {ser.scopes?.map((sc) => (
                   <div
                     key={sc.scopeName}
-                    className="mt-4 outline outline-gray-400 p-3 rounded"
+                    className="mt-2 outline outline-gray-400 p-3 rounded"
                   >
                     <h4 className="font-medium mb-3">{sc.scopeName}</h4>
-                    {sc.consumables?.map((con) => (
-                      <div
-                        key={con.consumableName}
-                        className="grid grid-cols-5 gap-3 mb-0"
-                      >
-                        <input
-                          defaultValue={con.consumableName}
-                          disabled
-                          className="outline outline-gray-400 p-2 bg-gray-100"
-                        />
-                        <input
-                          defaultValue={con.calibration}
-                          disabled
-                          className="outline outline-gray-400 p-2 bg-gray-100"
-                        />
-                        <input
-                          placeholder="Used"
-                          {...register(
-                            `usedCalibration.${ser.serviceName}.${sc.scopeName}.${con.consumableName}`
-                          )}
-                          className="outline outline-gray-400 p-2 focus:outline-2 focus:outline-gray-800"
-                        />
-                        <select
-                          {...register(
-                            `action.${ser.serviceName}.${sc.scopeName}.${con.consumableName}`
-                          )}
-                          className="outline outline-gray-400 p-2 focus:outline-2 focus:outline-gray-800"
+                    {sc.consumables?.map((con) => {
+                      const actionVal = watchAction?.action?.[ser.serviceName]?.[sc.scopeName]?.[con.consumableName];
+
+                      return (
+                        <div
+                          key={con.consumableName}
+                          className="grid grid-cols-5 gap-3 mb-0"
                         >
-                          <option>Done</option>
-                          <option>Not Done</option>
-                          <option>Partial Done</option>
-                        </select>
-                        <textarea
-                          rows={1}
-                          placeholder="comment..."
-                          {...register(
-                            `comment.${ser.serviceName}.${sc.scopeName}.${con.consumableName}`
-                          )}
-                          className="outline outline-gray-400 p-2 focus:outline-2 focus:outline-gray-800"
-                        />
-                      </div>
-                    ))}
+                          <input
+                            defaultValue={con.consumableName}
+                            disabled
+                            className="outline outline-gray-400 p-2 bg-gray-100"
+                          />
+                          <input
+                            defaultValue={con.calibration || 0}
+                            disabled
+                            className="outline outline-gray-400 p-2 bg-gray-100"
+                          />
+                          <input
+                            placeholder="Used"
+                            {...register(`usedCalibration.${ser.serviceName}.${sc.scopeName}.${con.consumableName}`)}
+                            className="outline outline-gray-400 p-2 focus:outline-2 focus:outline-gray-800"
+                          />
+                          <select
+                            {...register(`action.${ser.serviceName}.${sc.scopeName}.${con.consumableName}`)}
+                            className="outline outline-gray-400 p-2 focus:outline-2 focus:outline-gray-800"
+                          >
+                            <option>Done</option>
+                            <option>Not Done</option>
+                            <option>Partial Done</option>
+                          </select>
+                          <textarea
+                            rows={1}
+                            placeholder={actionVal === "Partial Done" ? "Comment Required..." : "comment..."}
+                            {...register(`comment.${ser.serviceName}.${sc.scopeName}.${con.consumableName}`)}
+                            className={`outline p-2 focus:outline-2 focus:outline-gray-800 ${actionVal === "Partial Done"
+                              ? "outline-orange-400 bg-orange-50"
+                              : "outline-gray-400"
+                              }`}
+                          />
+                        </div>
+                      );
+                    })}
                   </div>
                 ))}
 
@@ -222,7 +227,7 @@ function RegularForm({ serviceData, id, locationName, setRegular }) {
                   <button
                     type="button"
                     onClick={() => saveLocally(ser.serviceName)}
-                    className="px-3 py-2 border rounded"
+                    className="px-3 py-2 hidden border rounded"
                   >
                     Save Progress
                   </button>

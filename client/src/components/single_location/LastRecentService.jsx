@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { toggleModal } from "../../redux/helperSlice";
 import { useDispatch, useSelector } from "react-redux";
 import Button from "../Button";
@@ -6,12 +6,12 @@ import { dateFormat } from "../../utils/helperFunctions";
 import ImagesModal from "../modals/ImagesModal";
 
 function LastRecentService({ data }) {
+  const { user } = useSelector(store => store.helper)
   const [showDetail, setShowDetail] = useState(null);
-
   const dispatch = useDispatch();
-
   const { isModalOpen } = useSelector((store) => store.helper);
 
+  console.log(data)
   return (
     <div>
       {data?.length > 0 && (
@@ -22,7 +22,7 @@ function LastRecentService({ data }) {
 
           <div className="overflow-hidden rounded-lg border border-neutral-200 bg-white shadow-sm">
             {/* DESKTOP HEADER */}
-            <div className="hidden md:grid grid-cols-[120px_120px_150px_1fr_150px] bg-neutral-50 border-b border-neutral-200 text-xs font-bold uppercase tracking-wider text-neutral-500">
+            <div className="hidden md:grid grid-cols-[120px_120px_150px_1fr_150px] bg-neutral-400 border-b border-neutral-200 text-xs font-bold uppercase tracking-wider text-neutral-700">
               <div className="p-3 border-r border-neutral-200">Type</div>
               <div className="p-3 border-r border-neutral-200">Images</div>
               <div className="p-3 border-r border-neutral-200">Date</div>
@@ -39,7 +39,7 @@ function LastRecentService({ data }) {
                     onClick={() =>
                       setShowDetail(showDetail === service.id ? null : service.id)
                     }
-                    className="grid grid-cols-1 md:grid-cols-[120px_120px_150px_1fr_150px] gap-3 md:gap-0 p-4 cursor-pointer hover:bg-neutral-50 transition items-center"
+                    className="grid grid-cols-1 md:grid-cols-[120px_120px_150px_1fr_150px] gap-3 md:gap-0 p-4 cursor-pointer bg-neutral-300 hover:bg-neutral-300/70 transition items-center"
                   >
                     {/* TYPE */}
                     <div className="md:border-r md:border-neutral-200 md:px-3 flex items-center">
@@ -59,7 +59,7 @@ function LastRecentService({ data }) {
                             label="Show"
                             small
                             height="h-7"
-                            color="bg-green-600 text-xs text-white px-3 rounded hover:bg-green-700 transition"
+                            color={service.image.length > 0 ?  "bg-green-600 text-xs text-white px-3 rounded hover:bg-green-700 transition": "bg-green-600/40 hover:bg-green-600/40 cursor-not-allowed"}
                             onClick={() =>
                               dispatch(
                                 toggleModal({
@@ -123,8 +123,8 @@ function LastRecentService({ data }) {
                   </div>
 
                   {/* DETAILS SECTION */}
-                  {showDetail === service.id &&  (
-                    <div className="border-t border-neutral-200 bg-neutral-50 p-4 space-y-4">
+                  {user.type === "PestEmployee" && showDetail === service.id && (
+                    <div className="border-t border-neutral-200 bg-neutral-100 p-4 space-y-4">
                       {service.scopes?.map((sc, i) => (
                         <div
                           key={i}
@@ -186,7 +186,7 @@ function LastRecentService({ data }) {
                       {service.schedule?.length > 0 && (
                         <div className="border border-neutral-200 rounded-lg bg-white p-4 shadow-sm">
                           <h2 className="font-semibold text-sm text-neutral-900 mb-3">
-                            Schedule Status
+                            Schedule Dates
                           </h2>
                           <div className="flex flex-wrap gap-2 max-h-24 overflow-y-auto pr-1">
                             {service.schedule.map((sch, idx) => (

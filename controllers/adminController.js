@@ -98,26 +98,26 @@ export const removeFrequency = async (req, res) => {
   }
 };
 export const addService = async (req, res) => {
-  const { data } = req.body;
-  console.log(data);
+  const { serviceName,scopes } = req.body;
+  console.log(serviceName,scopes);
   try {
     if (!req.user.rights.addData)
       return res.status(403).json({ msg: "You are not allowed to Add data" });
-    if (!data.serviceName)
+    if (!serviceName)
       return res.status(400).json({ msg: "Service name required" });
 
     const service = await Admin.findOne({
       "service.serviceName": {
-        $regex: new RegExp(`^${data.serviceName.trim()}$`, "i"),
+        $regex: new RegExp(`^${serviceName.trim()}$`, "i"),
       },
     });
     if (service)
       return res
         .status(400)
-        .json({ msg: `${data.serviceName} already exists` });
+        .json({ msg: `${serviceName} already exists` });
 
     const filteredScopes =
-      data.scopes?.filter((scope) => scope.scopeName?.trim() !== "") || [];
+      scopes?.filter((scope) => scope.scopeName?.trim() !== "") || [];
 
     const cleanedScopes = filteredScopes.map((scope) => ({
       ...scope,
@@ -126,7 +126,7 @@ export const addService = async (req, res) => {
     }));
 
     const payload = {
-      serviceName: data.serviceName.trim(),
+      serviceName: serviceName.trim(),
       scopes: cleanedScopes,
     };
 
@@ -134,7 +134,7 @@ export const addService = async (req, res) => {
       service: [payload],
     });
 
-    res.status(200).json({ msg: `${data.serviceName} successfully added` });
+    res.status(200).json({ msg: `${serviceName} successfully added` });
   } catch (error) {
     console.log(error);
     res.status(500).json({ msg: "Server error, try again later" });
@@ -273,7 +273,7 @@ export const deleteService = async (req, res) => {
 
 export const clientAdminDashboard = async (req, res) => {
   try {
-    const client = await Client.findById(req.user.client);
+    const client = await Client.findById(req.user.client).select("-adminPass -adminName");
     if (!client) return res.status(404).json({ msg: "Client not found" });
 
     const complaints = await Service.find({

@@ -4,7 +4,6 @@ import Service from "../models/serviceModel.js";
 import {
   capitalLetter,
   generateSchedule,
-  parseContractEndDate,
   qrCodeGenerator,
   qrCodeGeneratorSVG,
   uploadFile,
@@ -20,18 +19,35 @@ const internalRoles = [
   "BranchAdmin",
 ];
 
+export const qrCounter = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const location = await Location.findByIdAndUpdate(
+      id,
+      { $inc: { qrCount: 1 } },
+      { new: true },
+    );
+    if (!location) return res.status(400).json({ msg: "location not found" });
+
+    res.status(200).json({ qrCount: location.qrCount });
+  } catch (error) {
+    return res.status(500).json({
+      msg: "Server error, try again later",
+    });
+  }
+};
+
 export const addLocation = async (req, res) => {
   const { floor, subLocation, location, clientId, serviceReq } = req.body;
 
   try {
-    const client = await Client.findById(clientId);
+    const client = await Client.findByIdSafe(clientId);
 
     if (!client) {
       return res.status(404).json({
         msg: "Client not found",
       });
     }
-
     const locationExist = await Location.findOne({
       client: clientId,
       floor: { $regex: `^${floor}$`, $options: "i" },
@@ -41,13 +57,11 @@ export const addLocation = async (req, res) => {
       },
       location: { $regex: `^${location}$`, $options: "i" },
     });
-
     if (locationExist) {
       return res.status(400).json({
         msg: "Location already exist",
       });
     }
-
     const validServices = (serviceReq || []).filter(
       (service) =>
         service.serviceId &&
@@ -55,16 +69,13 @@ export const addLocation = async (req, res) => {
         Array.isArray(service.scopes) &&
         service.scopes.length > 0,
     );
-
     if (validServices.length < 1) {
       return res.status(400).json({
         msg: "Please add at least one valid service",
       });
     }
-
     const contractStart = new Date(client.startDate);
-
-    const contractEnd = parseContractEndDate(client.startDate, client.endDate);
+    const contractEnd = new Date(client.endDate);
 
     const formattedServices = validServices.map((service) => {
       const generatedDates = generateSchedule(
@@ -72,7 +83,6 @@ export const addLocation = async (req, res) => {
         contractEnd,
         service.frequency,
       );
-
       const schedule = generatedDates.map((date) => ({
         date: date.date,
         completed: date.completed,
@@ -80,17 +90,14 @@ export const addLocation = async (req, res) => {
         completedAt: null,
         completedBy: "",
       }));
-
       return {
         serviceId: service.serviceId,
         serviceName: service.serviceName,
         frequency: service.frequency,
         schedule,
-
         scopes: service.scopes.map((scope) => ({
           scopeId: scope.scopeId,
           scopeName: scope.scopeName,
-
           consumables: (scope.consumables || []).map((consumable) => ({
             consumableId: consumable.consumableId,
             consumableName: consumable.consumableName,
@@ -107,47 +114,36 @@ export const addLocation = async (req, res) => {
       service: formattedServices,
       client: client._id,
     });
-
     const locationId = newLocation._id;
-
     const qrData = await qrCodeGenerator({
       link: `https://pestxz.onrender.com/location/${locationId}`,
       floor: newLocation.floor,
       location: `${newLocation.location}, ${newLocation.subLocation}`,
     });
-
     if (!qrData) {
       await Location.findByIdAndDelete(locationId);
-
       return res.status(400).json({
         msg: "QR generation error. Try again later",
       });
     }
-
     fs.writeFileSync("./tmp/qr.jpeg", qrData);
-
     const qrLink = await uploadFile({
       filePath: "./tmp/qr.jpeg",
     });
-
     if (!qrLink) {
       await Location.findByIdAndDelete(locationId);
-
       return res.status(400).json({
         msg: "QR upload error. Try again later",
       });
     }
 
     newLocation.qr = qrLink;
-
     await newLocation.save();
-
     return res.status(201).json({
       msg: "Location added successfully",
     });
   } catch (error) {
     console.log(error);
-
     return res.status(500).json({
       msg: "Server error, try again later",
     });
@@ -163,26 +159,21 @@ export const getAllLocations = async (req, res) => {
     // CASE 1: ClientEmployee → get client from token
     if (id === "ClientEmployee") {
       clientId = req.user.client;
-    }
-    // CASE 2: frontend sends LOCATION ID → derive client from it
-    else if (id.length === 24) {
+    } else if (id.length === 24) {
       const location = await Location.findById(id).select("client");
       if (location) {
-        // it's a location ID → derive client from it
         clientId = location.client;
       } else {
-        // it's already a client ID
         clientId = id;
       }
     }
     // FIND CLIENT
-    const client = await Client.findById(clientId);
+    const client = await Client.findByIdSafe(clientId);
     if (!client) {
       return res.status(404).json({ msg: "Client not found" });
     }
-    // FIND ALL LOCATIONS OF THAT CLIENT
+
     const locations = await Location.find({ client: clientId });
-    // UNIQUE FLOORS
     const floors = [...new Set(locations.map((l) => l.floor))];
 
     return res.json({
@@ -204,15 +195,14 @@ export const updateLocation = async (req, res) => {
     const location = await Location.findById(id);
 
     if (!location) {
-      return res.status(404).json({
-        msg: "Location not found",
-      });
+      return res.status(404).json({ msg: "Location not found" });
     }
 
-    const client = await Client.findById(location.client);
+    const client = await Client.findByIdSafe(location.client);
     const contractStart = new Date(client.startDate);
-    const contractEnd = parseContractEndDate(client.startDate, client.endDate);
+    const contractEnd = client.endDate;
 
+    console.log(contractEnd);
     const validServices = (req.body.serviceReq || []).filter(
       (service) =>
         service.serviceId &&
@@ -237,7 +227,6 @@ export const updateLocation = async (req, res) => {
           contractEnd,
           service.frequency,
         );
-
         schedule = generatedDates.map((date) => ({
           date: date.date,
           completed: date.completed,
@@ -264,6 +253,144 @@ export const updateLocation = async (req, res) => {
       };
     });
 
+    // --- Build diff of what changed ---
+    const diff = {};
+
+    if (req.body.floor !== location.floor) {
+      diff.floor = { from: location.floor, to: req.body.floor };
+    }
+    if (req.body.location !== location.location) {
+      diff.location = { from: location.location, to: req.body.location };
+    }
+    if (req.body.subLocation !== location.subLocation) {
+      diff.subLocation = {
+        from: location.subLocation,
+        to: req.body.subLocation,
+      };
+    }
+
+    // Services diff
+    const oldServiceNames = location.service.map((s) => s.serviceName);
+    const newServiceNames = formattedServices.map((s) => s.serviceName);
+
+    const addedServices = newServiceNames.filter(
+      (s) => !oldServiceNames.includes(s),
+    );
+    const removedServices = oldServiceNames.filter(
+      (s) => !newServiceNames.includes(s),
+    );
+
+    const frequencyChanges = formattedServices
+      .filter((newSvc) => {
+        const old = location.service.find(
+          (s) => s.serviceId?.toString() === newSvc.serviceId?.toString(),
+        );
+        return old && old.frequency !== newSvc.frequency;
+      })
+      .map((newSvc) => {
+        const old = location.service.find(
+          (s) => s.serviceId?.toString() === newSvc.serviceId?.toString(),
+        );
+        return {
+          service: newSvc.serviceName,
+          from: old.frequency,
+          to: newSvc.frequency,
+        };
+      });
+
+    // Scopes diff
+    const oldScopesName = location?.service?.flatMap((s) =>
+      s?.scopes?.map((sc) => sc?.scopeName),
+    );
+    const newScopesName = formattedServices?.flatMap((s) =>
+      s?.scopes.map((sc) => sc?.scopeName),
+    );
+
+    const addedScopes = newScopesName.filter((s) => !oldScopesName.includes(s));
+    const removedScopes = oldScopesName.filter(
+      (s) => !newScopesName.includes(s),
+    );
+
+    // Consumables diff
+    const oldConsumables = location?.service?.flatMap((s) =>
+      s?.scopes?.flatMap((sc) =>
+        sc?.consumables?.map((con) => ({
+          consumableName: con.consumableName,
+          calibration: con.calibration,
+        })),
+      ),
+    );
+    const newConsumables = formattedServices?.flatMap((s) =>
+      s?.scopes?.flatMap((sc) =>
+        sc?.consumables?.map((con) => ({
+          consumableName: con.consumableName,
+          calibration: con.calibration,
+        })),
+      ),
+    );
+
+    const addedConsumables = newConsumables
+      .filter(
+        (n) =>
+          !oldConsumables?.find((o) => o?.consumableName === n?.consumableName),
+      )
+      ?.map((c) => c?.consumableName);
+
+    const removedConsumables = oldConsumables
+      .filter(
+        (o) =>
+          !newConsumables?.find((n) => n?.consumableName === o?.consumableName),
+      )
+      ?.map((c) => c?.consumableName);
+
+    // Calibration changes on existing consumables
+    const calibrationChanges = newConsumables
+      .filter((n) => {
+        const old = oldConsumables?.find(
+          (o) => o?.consumableName === n.consumableName,
+        );
+        return old && old.calibration !== n.calibration;
+      })
+      .map((n) => {
+        const old = oldConsumables.find(
+          (o) => o?.consumableName === n.consumableName,
+        );
+        return {
+          consumable: n.consumableName,
+          from: old.calibration,
+          to: n.calibration,
+        };
+      });
+
+    if (req.body.floor !== location.floor)
+      diff.floor = { from: location.floor, to: req.body.floor };
+    if (req.body.location !== location.location)
+      diff.location = { from: location.location, to: req.body.location };
+    if (req.body.subLocation !== location.subLocation)
+      diff.subLocation = {
+        from: location.subLocation,
+        to: req.body.subLocation,
+      };
+
+    if (addedServices.length) diff.servicesAdded = addedServices;
+    if (removedServices.length) diff.servicesRemoved = removedServices;
+    if (frequencyChanges.length) diff.frequencyChanges = frequencyChanges;
+    if (addedScopes.length) diff.scopesAdded = addedScopes;
+    if (removedScopes.length) diff.scopesRemoved = removedScopes;
+    if (addedConsumables.length) diff.consumablesAdded = addedConsumables;
+    if (removedConsumables.length) diff.consumablesRemoved = removedConsumables;
+    if (calibrationChanges.length) diff.calibrationChanges = calibrationChanges;
+
+    const changeEntry =
+      Object.keys(diff).length > 0
+        ? {
+            changedAt: new Date(),
+            changedBy: req.user?.id || null,
+            reason: req.body.changes || "",
+            diff,
+          }
+        : null;
+
     const updatedLocation = await Location.findByIdAndUpdate(
       id,
       {
@@ -274,24 +401,19 @@ export const updateLocation = async (req, res) => {
           service: formattedServices,
           product: Array.isArray(req.body.product) ? req.body.product : [],
         },
+        ...(changeEntry && { $push: { changes: changeEntry } }),
       },
       { new: true, runValidators: true },
     );
 
     if (!updatedLocation) {
-      return res.status(404).json({
-        msg: "Location not found",
-      });
+      return res.status(404).json({ msg: "Location not found" });
     }
 
-    return res.json({
-      msg: "Updated successfully",
-    });
+    return res.json({ msg: "Updated successfully" });
   } catch (error) {
     console.log(error);
-    return res.status(500).json({
-      msg: "Server error, try again later",
-    });
+    return res.status(500).json({ msg: "Server error, try again later" });
   }
 };
 
@@ -320,7 +442,7 @@ export const getLocationDetails = async (req, res) => {
     if (!location)
       return res.status(404).json({ msg: "Location not found, contact admin" });
 
-    const client = await Client.findById(location.client);
+    const client = await Client.findByIdSafe(location.client);
     const isInternalUser = internalRoles.includes(req.user.role);
     const isSameClient =
       location.client.toString() === req.user.client?.toString();
@@ -395,7 +517,6 @@ export const getLocationDetails = async (req, res) => {
           service: service.complaintDetails.service,
           status: service.complaintDetails.status,
           userName: service.complaintDetails.userName,
-
         });
       }
     }
@@ -420,7 +541,6 @@ export const getLocationDetails = async (req, res) => {
     return res.status(500).json({ msg: "Server error, try again later" });
   }
 };
-
 // added newly
 export const getSingleLocation = async (req, res) => {
   const { id } = req.params;
@@ -438,7 +558,6 @@ export const getSingleLocation = async (req, res) => {
     res.status(500).json({ msg: "Server error, try again later" });
   }
 };
-
 export const assignLocation = async (req, res) => {
   const { id, userId } = req.body.data;
   const clientAdmin = req.user.role === "ClientAdmin" && req.user.role;
@@ -453,7 +572,6 @@ export const assignLocation = async (req, res) => {
     res.status(500).json({ msg: "server error" });
   }
 };
-
 export const backfillSchedules = async (req, res) => {
   try {
     const locations = await Location.find().populate("client");
@@ -468,10 +586,7 @@ export const backfillSchedules = async (req, res) => {
       }
 
       const contractStart = new Date(location.client.startDate);
-      const contractEnd = parseContractEndDate(
-        location.client.startDate,
-        location.client.endDate,
-      );
+      const contractEnd = new Date(location.client.endDate);
 
       let modified = false;
 

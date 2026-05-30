@@ -38,6 +38,7 @@ export const serviceSlice = apiSlice.injectEndpoints({
         method: "POST",
         body: form,
       }),
+      invalidatesTags:["Location"]
     }),
     dailyServiceReport: builder.query({
       //new added 08-05-2026

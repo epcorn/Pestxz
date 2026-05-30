@@ -17,7 +17,7 @@ const stats = [
 ];
 
 const ClientDashboard = () => {
-  const [toggle, setToggle] = useState("Complaint")
+  const [toggle, setToggle] = useState(sessionStorage.getItem("ClientDashboardToggle") || "Complaint")
   const { user } = useSelector((store) => store.helper);
 
   const { data: adminDash = { latestComplaints: [], complaintData: [] }, isLoading, error } =
@@ -26,7 +26,7 @@ const ClientDashboard = () => {
   const { data: clientDash, isLoading: clgLoading } = useAdminDashboardQuery(user.client, {
     skip: !user.client
   });
-  ``
+
   const { data: client } = useGetSingleClientQuery(user?.client, { skip: !user?.client });
 
   // Filter data efficiently using useMemo
@@ -35,7 +35,13 @@ const ClientDashboard = () => {
     return clientDash.latestComplaints.filter(lat => lat.type === toggle);
   }, [toggle, clientDash]);
 
-console.log(complaints)
+  const handleChange = (e) => {
+    if (e.target.value) {
+      setToggle(e.target.value)
+      sessionStorage.setItem("ClientDashboardToggle", e.target.value)
+    }
+  }
+  console.log(clientDash)
   return (
     <section className="p-4 md:px-8 bg-slate-50/50 min-h-screen font-sans">
       {isLoading ? (
@@ -60,7 +66,7 @@ console.log(complaints)
             {client?.name && (
               <div className="md:text-right border-l-4 md:border-l-0 md:border-r-4 border-cyan-600 pl-4 md:pl-0 md:pr-4 py-1">
                 <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">
-                  Account Enterprise
+                  Enterprise Account
                 </p>
                 <h2 className="text-xl font-extrabold text-cyan-900 tracking-wide">
                   {client.name}
@@ -97,10 +103,24 @@ console.log(complaints)
                 <h4 className="text-lg font-bold text-slate-800">Latest {toggle === "Regular" ? "Regular service" : toggle} Update</h4>
                 <p className="text-xs text-slate-400 mt-0.5">Real-time ticket logging status</p>
               </div>
-              <select className="text-xs outline-none ring-0 font-bold bg-slate-200 text-slate-700 px-2.5 py-1 rounded tracking-wider uppercase" onChange={(e) => setToggle(e.target.value)}>
-                <option value="Complaint">Complaint</option>
-                <option value="Regular">Regular</option>
-              </select>
+              <div className="flex items-center gap-2">
+                {["Complaint", "Regular"].map((type) => (
+                  <button
+                    key={type}
+                    onClick={() => {
+                      setToggle(type);
+                      sessionStorage.setItem("ClientDashboardToggle", type);
+                    }}
+                    className={`text-xs font-bold px-3 py-1.5 rounded tracking-wider uppercase transition-colors duration-150
+        ${toggle === type
+                        ? "bg-cyan-600 text-white"
+                        : "bg-slate-200 text-slate-600 hover:bg-slate-300"
+                      }`}
+                  >
+                    {type === "Regular" ? "Regular Service" : type}
+                  </button>
+                ))}
+              </div>
             </div>
             <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
               <ComplaintTable data={complaints} user={user} toggle={toggle} />

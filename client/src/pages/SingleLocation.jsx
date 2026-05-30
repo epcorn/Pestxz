@@ -261,24 +261,11 @@ const SingleLocation = () => {
 
               {/* Form / Button Action Container */}
               <div className="flex justify-center items-center mt-5 pt-2">
-                {!regular ? (
-                  <Button
-                    label="Schedule Service Update"
-                    onClick={() => setRegular(true)}
-                  />
-                ) : (
-                  <div className="w-full bg-neutral-50 rounded-xl border border-neutral-200 shadow-inner">
-                    {/* <SingleServiceForm
-                      serviceData={data.location.service}
-                      id={data?.location?._id} setRegular={setRegular}
-                    /> */}
-                    <RegularForm serviceData={data.location.service} id={data?.location?._id} locationName={data?.location?.floor} setRegular={setRegular} />
-                  </div>
-                )}
+                <div className="w-full bg-neutral-50 rounded-xl border border-neutral-200 shadow-inner">
+                  <RegularForm serviceData={data.location.service} id={data?.location?._id} locationName={data?.location?.floor} setRegular={setRegular} />
+                </div>
               </div>
             </div>
-
-
           )}
         </div>
       )}

@@ -29,6 +29,7 @@ cloudinary.config({
 
 const app = express();
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(fileUpload({ useTempFiles: true }));
 if (process.env.NODE_ENV !== "production") app.use(morgan("dev"));
@@ -71,7 +72,7 @@ if (process.env.NODE_ENV === "production") {
 app.use(notFound);
 
 const port = process.env.PORT || 5000;
-export const MONGOURL = process.env.MONGO_LOCAL;
+export const MONGOURL = process.env.MONGO_URI;
 
 // createAdmin();
 // addAdminsjson()   // do not run this if not required

@@ -14,53 +14,33 @@ import { useGetClientUsersQuery } from "../redux/userSlice";
 const Users = () => {
   const dispatch = useDispatch();
   const user = useSelector(selectCurrentUser);
-
   const [userDetails, setUserDetails] = useState(null);
-
   const { isModalOpen, user: loginUser } = useSelector(
     (store) => store.helper
   );
 
   const { data, isLoading, isFetching, error } =
     useAllUserQuery();
-
   const [deleteUser, { isLoading: deleteLoading }] =
     useDeleteUserMutation();
-
   const { data: clientUsers } = useGetClientUsersQuery(user?.client, { skip: user.role !== "ClientAdmin" })
-  
   const handleUpdateUserModal = (user) => {
     if (user.client) {
       setUserDetails({
         ...user,
-        client: {
-          label: user?.client?.name,
-          value: user?.client?._id,
-        },
+        client: { label: user?.client?.name, value: user?.client?._id, },
       });
     } else {
-      setUserDetails({
-        ...user,
-      });
+      setUserDetails({ ...user, });
     }
 
-    dispatch(
-      toggleModal({
-        name: "user",
-        status: true,
-      })
+    dispatch(toggleModal({ name: "user", status: true, })
     );
   };
 
   const handleNewUserModal = () => {
     setUserDetails(null);
-
-    dispatch(
-      toggleModal({
-        name: "user",
-        status: true,
-      })
-    );
+    dispatch(toggleModal({ name: "user", status: true, }));
   };
 
   const handleDelete = async () => {
@@ -71,15 +51,7 @@ const Users = () => {
         `${isModalOpen.delete.name} deleted successfully`
       );
 
-      dispatch(
-        toggleModal({
-          name: "delete",
-          status: {
-            id: null,
-            name: null,
-          },
-        })
-      );
+      dispatch(toggleModal({ name: "delete", status: { id: null, name: null, }, }));
     } catch (error) {
       console.log(error);
       toast.error("Error deleting user");
@@ -91,11 +63,8 @@ const Users = () => {
       {(isLoading || isFetching) ? (
         <Loading />
       ) : (
-        error && (
-          <AlertMessage>
-            {error?.data?.msg || error.error}
-          </AlertMessage>
-        )
+        error && (<AlertMessage> {error?.data?.msg || error.error}
+        </AlertMessage>)
       )}
 
       {!error && data && (
@@ -137,11 +106,11 @@ const Users = () => {
                     Role
                   </th>
 
-                  <th className="px-4 py-3 text-left font-semibold text-gray-600">
+                  {/* <th className="px-4 py-3 text-left font-semibold text-gray-600">
                     {loginUser?.role === "ClientAdmin"
                       ? "Department"
                       : "Client"}
-                  </th>
+                  </th> */}
 
                   <th className="px-4 py-3 text-left font-semibold text-gray-600">
                     Rights
@@ -170,13 +139,14 @@ const Users = () => {
                     </td>
 
                     <td className="px-4 py-3">
-                      {item?.role}
-                    </td>
-
-                    <td className="px-4 py-3">
-                      {item?.client?.name ||
-                        item?.type ||
-                        "-"}
+                      <p className="grid ">
+                        <>
+                          {item?.role}
+                        </>
+                        <span className=" text-xs outline px-2 py-px text-gray-400 rounded-lg whitespace-nowrap w-fit">
+                          {item?.client?.name || item?.type || "-"}
+                        </span>
+                      </p>
                     </td>
 
                     <td className="px-4 py-3">

@@ -17,7 +17,6 @@ const UserModal = ({ userDetails }) => {
   const [clients, setClients] = useState([]);
   const dispatch = useDispatch();
   const { isModalOpen, user } = useSelector((store) => store.helper);
-
   const [addUser, { isLoading: addLoading }] = useRegisterUserMutation();
   const [changePassword, { isLoading: updateLoading }] = useChangePasswordMutation();
   const { data: rawClients } = useAllClientsQuery();
@@ -53,7 +52,6 @@ const UserModal = ({ userDetails }) => {
 
   const selectedType = watch("type");
 
-  // Format client selection records safely
   useEffect(() => {
     if (rawClients) {
       const formattedClients = rawClients?.map((item) => ({
@@ -134,8 +132,6 @@ const UserModal = ({ userDetails }) => {
           : user?._id,
     };
 
-    console.log("FINAL PAYLOAD RIGHTS:", payload.rights); // DEBUG
-
     try {
       let res;
       if (userDetails) {
@@ -157,20 +153,6 @@ const UserModal = ({ userDetails }) => {
 
   const formBody = (
     <div className="grid gap-y-1 mb-4 w-sm">
-      {/* Full Name Input */}
-      <div>
-        <InputRow
-          label="Full Name"
-          id="name"
-          errors={errors}
-          register={register}
-          disabled={addLoading || userDetails}
-        />
-        <p className="text-xs text-red-500 pl-1 mt-1">
-          {errors.name && "Name is required"}
-        </p>
-      </div>
-
       {/* Type Radio Controls */}
       <div className="grid grid-cols-2 text-sm mt-1 py-1 border-b border-gray-100 transition-all">
         <div className="flex items-center gap-2">
@@ -194,26 +176,6 @@ const UserModal = ({ userDetails }) => {
           <label htmlFor="ClientEmployee" className="font-medium text-gray-700 cursor-pointer">Client Employee</label>
         </div>
       </div>
-      {/* Select Role Dropdown */}
-      <div className="flex flex-col gap-1">
-        <label htmlFor="role" className="text-sm font-semibold text-gray-700">
-          Select Role<span className="text-red-500 ml-0.5">*</span>
-        </label>
-        <select
-          id="role"
-          disabled={!!userDetails}
-          className="w-full p-1.5 border outline-none rounded border-gray-400 text-sm bg-white focus:border-black transition"
-          {...register("role", { required: "Role field is required" })}
-        >
-          <option value="">--Select--</option>
-          {activeRoleOptions?.map((r, i) => (
-            <option key={i} value={r.value}>{r.label}</option>
-          ))}
-        </select>
-        <p className="text-xs text-red-500 pl-1 mt-0.5">
-          {errors.role?.message}
-        </p>
-      </div>
       {/* Client Selection Custom Dropdown Wrapper */}
       {selectedType === "ClientEmployee" && (
         <div>
@@ -225,6 +187,7 @@ const UserModal = ({ userDetails }) => {
               <InputSelect
                 options={clients}
                 onChange={onChange}
+                disable={!!userDetails}
                 value={value}
                 label="Client Name"
                 placeholder="Select Client Account"
@@ -236,22 +199,55 @@ const UserModal = ({ userDetails }) => {
           </p>
         </div>
       )}
-      {/* Department Input */}
-      {selectedType === "ClientEmployee" &&
-        <div>
-          <InputRow
-            label="Department"
-            id="department"
-            errors={errors}
-            register={register}
-            required={false}
-            disabled={addLoading || userDetails}
-          />
-          <p className="text-xs text-red-500 pl-1 mt-1">
-            {errors.department && "Department is required"}
+      {/* Full Name Input */}
+      <div>
+        <InputRow
+          label="Full Name"
+          id="name"
+          errors={errors}
+          register={register}
+          disabled={addLoading || userDetails}
+        />
+        <p className="text-xs text-red-500 pl-1 mt-1">
+          {errors.name && "Name is required"}
+        </p>
+      </div>
+      {/* Select Role Dropdown */}
+      <div className="flex items-end gap-2">
+
+        <div className="flex-1 flex flex-col">
+          <label htmlFor="role" className="font-semibold text-gray-700">
+            Select Role<span className="text-red-500 ml-0.5">*</span>
+          </label>
+          <select
+            id="role"
+            disabled={!!userDetails}
+            className="w-full px-1.5 py-1 border outline-none rounded border-gray-400 text-sm bg-white focus:border-black transition"
+            {...register("role", { required: "Role field is required" })}
+          >
+            <option value="">--Select--</option>
+            {activeRoleOptions?.map((r, i) => (
+              <option key={i} value={r.value}>{r.label}</option>
+            ))}
+          </select>
+          <p className="text-xs text-red-500 pl-1 mt-0.5">
+            {errors.role?.message}
           </p>
         </div>
-      }
+
+        {/* Department Input */}
+        {selectedType === "ClientEmployee" &&
+          <div>
+            <InputRow
+              label="Department"
+              id="department"
+              register={register}
+              required={false}
+              disabled={addLoading || userDetails}
+            />
+          </div>
+        }
+      </div>
       {/* Email Address */}
       <div>
         <InputRow
@@ -296,6 +292,7 @@ const UserModal = ({ userDetails }) => {
           }}
           render={({ field }) => (
             <InputCheck
+              selectedType={selectedType}
               value={field.value || {}}
               onChange={field.onChange}
               required={true}

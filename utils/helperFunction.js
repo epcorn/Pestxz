@@ -235,71 +235,18 @@ export const sendEmail = async ({
     return false;
   }
 };
-// CONTRACT END DATE CONVERTER
-export const parseContractEndDate = (startDate, endDateStr) => {
-  const start = new Date(startDate);
-
-  if (!endDateStr) return start;
-
-  // "6 Months (180 Days)"
-  const monthMatch = endDateStr.match(/(\d+)\s*Month/i);
-  if (monthMatch) {
-    const months = parseInt(monthMatch[1], 10);
-    const end = new Date(start);
-    end.setMonth(end.getMonth() + months);
-    return end;
-  }
-
-  // fallback → "180 Days"
-  const dayMatch = endDateStr.match(/(\d+)\s*Day/i);
-
-  if (dayMatch) {
-    const days = parseInt(dayMatch[1], 10);
-
-    const end = new Date(start);
-    end.setDate(end.getDate() + days);
-
-    return end;
-  }
-
-  return start;
-};
-
-// DATE FORMAT → 01-Jun
-export const formatShortDate = (date) => {
-  const d = new Date(date);
-
-  const day = d.getDate().toString().padStart(2, "0");
-
-  const monthNames = [
-    "Jan",
-    "Feb",
-    "Mar",
-    "Apr",
-    "May",
-    "Jun",
-    "Jul",
-    "Aug",
-    "Sep",
-    "Oct",
-    "Nov",
-    "Dec",
-  ];
-
-  const month = monthNames[d.getMonth()];
-
-  return `${day}-${month}`;
-};
 
 // GENERATE SCHEDULE
 export const generateSchedule = (start, end, frequency) => {
+  const today = new Date();
   const schedule = [];
   const freq = (frequency || "").toLowerCase().trim();
 
   let current = new Date(start);
+  current = today > current ? today : current;
   while (current <= end) {
     schedule.push({
-      date: formatShortDate(current),
+      date: current.toISOString().split("T")[0],
       status: "Pending",
       completed: false,
     });
@@ -358,7 +305,6 @@ export const generateSchedule = (start, end, frequency) => {
 
       // EVERY 3 MONTHS
       case "quarterly":
-      case "quartly":
         next.setMonth(next.getMonth() + 3);
         break;
 

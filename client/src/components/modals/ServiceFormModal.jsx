@@ -17,16 +17,12 @@ function ServiceFormModal({ addService }) {
     ],
   });
 
-  // 1. Ref to track the container holding all scopes
   const formContainerRef = useRef(null);
-  // 2. State to track which scope and consumable index needs focus
   const [focusTarget, setFocusTarget] = useState(null);
 
-  // 3. Effect to handle focusing when a new consumable is added
   useEffect(() => {
     if (focusTarget && formContainerRef.current) {
       const { scopeIndex, consumableIndex } = focusTarget;
-      // Find the specific input using a data attribute selector
       const selector = `[data-scope="${scopeIndex}"][data-consumable="${consumableIndex}"]`;
       const inputToFocus = formContainerRef.current.querySelector(selector);
 
@@ -79,7 +75,6 @@ function ServiceFormModal({ addService }) {
 
     setServiceData((prev) => ({ ...prev, scopes: updatedScopes }));
 
-    // 4. Set the focus target to trigger the useEffect hook
     setFocusTarget({ scopeIndex, consumableIndex: newConsumableIndex });
   };
 

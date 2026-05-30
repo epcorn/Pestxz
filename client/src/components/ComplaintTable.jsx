@@ -7,21 +7,21 @@ const ComplaintTable = ({ data, user, toggle }) => {
   return (
     <div className="w-full">
       {/* Header Row - Hidden on Mobile */}
-      <div className="hidden md:grid grid-cols-13 gap-2 px-4 md:px-6 *:py-3 bg-gray-50 border-b border-gray-100">
-        <p className="col-span-2 font-bold text-[11px] text-gray-400 uppercase tracking-wider">Number</p>
-        <p className="col-span-2 font-bold text-[11px] text-gray-400 uppercase tracking-wider">Type</p>
-        <p className="col-span-2 font-bold text-[11px] text-gray-400 uppercase tracking-wider">Date</p>
-        <p className="col-span-3 font-bold text-[11px] text-gray-400 uppercase tracking-wider">Location</p>
-        <p className="col-span-2 font-bold text-[11px] text-gray-400 uppercase tracking-wider text-center">Service</p>
-        {isRegular ? <p className="col-span-2 font-bold text-[11px] text-gray-400 uppercase tracking-wider text-center">Serviced By</p> : <p className="col-span-2 font-bold text-[11px] text-gray-400 uppercase tracking-wider text-center">Status</p>}
+      <div className="hidden md:grid grid-cols-13 gap-2 px-4 md:px-6 *:py-3 bg-neutral-600 border-b border-gray-100 text-white">
+        <p className="col-span-2 font-bold text-[11px] uppercase tracking-wider">Number</p>
+        <p className="col-span-2 font-bold text-[11px] uppercase tracking-wider">Type</p>
+        <p className="col-span-2 font-bold text-[11px] uppercase tracking-wider">Date</p>
+        <p className="col-span-3 font-bold text-[11px] uppercase tracking-wider">Location</p>
+        <p className="col-span-2 font-bold text-[11px] uppercase tracking-wider text-center">Service</p>
+        {isRegular ? <p className="col-span-2 font-bold text-[11px]  uppercase tracking-wider text-center">Serviced By</p> : <p className="col-span-2 font-bold text-[11px] uppercase tracking-wider text-center">Status</p>}
       </div>
 
       {/* Data Rows */}
-      <div className="divide-y divide-gray-100">
+      <div className="divide-y divide-black">
         {data?.map((complaint, i) => (
           <div
             key={complaint._id}
-            className="grid grid-cols-1 md:grid-cols-13 gap-2 px-4 md:px-6 py-4 items-center hover:bg-gray-50 transition-colors"
+            className="grid grid-cols-1 md:grid-cols-13 gap-2 px-4 md:px-6 py-4 items-center bg-neutral-200 hover:bg-neutral-200/70 transition-colors"
           >
             {/* Complaint Number */}
             <div className="col-span-2">
@@ -32,10 +32,9 @@ const ComplaintTable = ({ data, user, toggle }) => {
                   to={`/complaint/${complaint._id}`}
                   className="text-sm font-bold text-blue-600 hover:text-blue-800 transition-colors"
                 >
-                  #{complaint.complaintDetails?.number}
+                  {complaint.complaintDetails?.number}
                 </Link>
-                : <Link to={`/location/${complaint.location?._id}`} className="text-center">{i + 1}</Link>}
-
+                : <Link to={`/location/${complaint.location?._id}`} className="text-sm font-bold text-blue-600 hover:text-blue-800 transition-colors pl-3">{i + 2}</Link>}
             </div>
 
             {/* Complaint Type */}

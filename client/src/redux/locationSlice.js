@@ -43,6 +43,13 @@ export const locationSlice = apiSlice.injectEndpoints({
       }),
       providesTags: ["Location"],
     }),
+    qrCounter: builder.mutation({
+      query: (id) => ({
+        url: `/api/location/qr-count/${id}`,
+        method: "PATCH",
+      }),
+      invalidatesTags: ["Location"],
+    }),
     backFillSchedules: builder.query({
       query: () => ({
         url: `/api/location/backfill-schedules`,
@@ -59,5 +66,6 @@ export const {
   useDeleteLocationMutation,
   useSingleLocationDetailsQuery,
   useBackFillSchedulesQuery,
+  useQrCounterMutation,
   useLazyBackFillSchedulesQuery,
 } = locationSlice;

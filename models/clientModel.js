@@ -6,9 +6,16 @@ const clientSchema = new mongoose.Schema(
     email: { type: String, required: true },
     address: { type: String, required: true },
     contractNo: { type: String, required: true },
-    startDate: { type: String, required:true },
-    endDate: { type: String, required:true },
-    phone: { type: String, required:true },
+    phone: { type: String, required: true },
+
+    startDate: { type: String, required: true },
+    servicePeriod: { type: String, required: true },
+    endDate: { type: String, required: true },
+    prefDay: { type: String, default: "" },
+    prefTime: { type: String, default: "" },
+
+    adminName: { type: String },
+    adminPass: { type: String },
   },
   {
     timestamps: true,
@@ -16,6 +23,18 @@ const clientSchema = new mongoose.Schema(
     toJSON: { virtuals: true },
   },
 );
+
+clientSchema.statics.findSafe = function (query) {
+  return this.findOne(query).select("-adminPass -adminName");
+};
+
+clientSchema.statics.findByIdSafe = function (id) {
+  return this.findById(id).select("-adminPass -adminName");
+};
+
+clientSchema.statics.findSafeAll = function (query = {}) {
+  return this.find(query).select("-adminPass -adminName");
+};
 
 clientSchema.virtual("services", {
   ref: "Service",

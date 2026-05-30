@@ -5,7 +5,7 @@ import { useAdminDashboardQuery } from "../../redux/adminSlice";
 import { Link } from "react-router-dom";
 
 function AdminDashboard() {
-  const [toggle, setToggle] = useState("Complaint");
+  const [toggle, setToggle] = useState(() => sessionStorage.getItem("adminDashboardToggle") || "Complaint");
   const [selectedClient, setSelectedClient] = useState(null);
 
   const { user } = useSelector((store) => store.helper);
@@ -13,16 +13,12 @@ function AdminDashboard() {
   const { data: clients = [] } = useAllClientsQuery();
 
 
-  const {
-    data: adminDash,
-    isLoading,
-  } = useAdminDashboardQuery(
+  const { data: adminDash, isLoading, } = useAdminDashboardQuery(
     selectedClient?._id || "select",
     {
       skip: user?.role !== "Admin",
     }
   );
-  console.log(adminDash)
 
   const handleChange = (e) => {
     const { value } = e.target;
@@ -31,12 +27,16 @@ function AdminDashboard() {
       setSelectedClient(null);
       return;
     }
-
     const client = clients.find((d) => d._id === value);
-
     setSelectedClient(client || null);
   };
 
+  const handleToggle = (val) => {
+    setToggle(val)
+    sessionStorage.setItem("adminDashboardToggle", val)
+  }
+
+  console.log(adminDash)
   // FILTER DATA
   const clientReq = useMemo(() => {
     if (!adminDash?.latestComplaints) return [];
@@ -148,7 +148,7 @@ function AdminDashboard() {
         <div className="bg-gray-700 text-white px-4 py-3 flex flex-wrap gap-3">
           <button
             type="button"
-            onClick={() => setToggle("Complaint")}
+            onClick={() => handleToggle("Complaint")}
             className={`px-3 py-1 rounded-lg text-sm font-semibold transition ${toggle === "Complaint"
               ? "bg-blue-300 text-black"
               : "bg-gray-600"
@@ -159,7 +159,7 @@ function AdminDashboard() {
 
           <button
             type="button"
-            onClick={() => setToggle("Regular")}
+            onClick={() => handleToggle("Regular")}
             className={`px-3 py-1 rounded-lg text-sm font-semibold transition ${toggle === "Regular"
               ? "bg-blue-300 text-black"
               : "bg-gray-600"
@@ -268,7 +268,7 @@ function AdminDashboard() {
                     <div className="text-center">
                       {isRegular ? (
                         <span className="px-3 py-1 rounded-lg bg-blue-100 text-blue-700 text-xs font-semibold">
-                          {regularAction || "-"}
+                          {regularAction || "Done"}
                         </span>
                       ) : (
                         <span

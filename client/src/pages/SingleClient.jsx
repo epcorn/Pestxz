@@ -4,9 +4,11 @@ import {
   useAllLocationsQuery,
   useDeleteLocationMutation,
   useLazyBackFillSchedulesQuery,
+  useQrCounterMutation,
 } from "../redux/locationSlice";
 import { AlertMessage, Button, Loading } from "../components";
 import { FaEdit } from "react-icons/fa";
+import { PiDownloadSimpleBold } from "react-icons/pi";
 import { useDispatch, useSelector } from "react-redux";
 import { toggleModal } from "../redux/helperSlice";
 import { useState } from "react";
@@ -27,6 +29,7 @@ const SingleClient = () => {
     useDeleteLocationMutation();
   const [updateClient, { isLoading: updateLoading }] =
     useUpdateClientMutation();
+  const [qrCountInc] = useQrCounterMutation();
   const [triggerBackFill, { data: backfill, isLoading: backFillLoading }] = useLazyBackFillSchedulesQuery()
 
   // handle edit model
@@ -40,7 +43,6 @@ const SingleClient = () => {
     dispatch(toggleModal({ name: "location", status: true }));
   };
 
-  console.log(data)
   const handleDelete = async () => {
     try {
       await deleteLocation(isModalOpen.delete.id).unwrap();
@@ -54,11 +56,20 @@ const SingleClient = () => {
     }
   };
 
-  const services = data?.locations?.map(loc => loc.service || []) || []
+  console.log(data);
 
+  const services = data?.locations?.map(loc => loc.service || []) || []
   const handleBackfill = async () => {
     const res = await triggerBackFill().unwrap()
     toast.success(res.msg || "Done");
+  }
+  const handleQrDownload = async (id) => {
+    try {
+      await qrCountInc(id).unwrap();
+      // saveAs(location.qr, `QR-${location.location}`);
+    } catch (error) {
+      throw new Error("download error");
+    }
   }
 
   return (
@@ -122,7 +133,16 @@ const SingleClient = () => {
                     <span className="font-medium text-neutral-700">Contract Start Date:</span> {data.client.startDate}
                   </div>
                   <div>
-                    <span className="font-medium text-neutral-700">Contract Period:</span> {data.client.endDate}
+                    <span className="font-medium text-neutral-700">Contract Period:</span> {data.client?.servicePeriod} Months
+                  </div>
+                  <div>
+                    <span className="font-medium text-neutral-700">Contract End Date:</span> {data.client.endDate}
+                  </div>
+                  <div>
+                    <span className="font-medium text-neutral-700">Preferred Day:</span> {data.client.prefDay}
+                  </div>
+                  <div>
+                    <span className="font-medium text-neutral-700">Preferred Time:</span> {data.client.prefTime}
                   </div>
                 </div>
               </div>
@@ -159,7 +179,6 @@ const SingleClient = () => {
           <div>
             <Button label={'Add schedules'} onClick={handleBackfill}
               isLoading={backFillLoading} disabled={backFillLoading} />
-
           </div>
 
           <div className="overflow-y-auto my-4">
@@ -205,12 +224,10 @@ const SingleClient = () => {
                     </td>
                     <td className="border-r font-normal text-center border-neutral-500">
                       <Button
-                        label="Download"
+                        label={<span className="flex items-center gap-1"><PiDownloadSimpleBold /> {location?.qrCount}</span>}
                         small
                         height="h-7"
-                        onClick={() =>
-                          saveAs(location.qr, `QR-${location.location}`)
-                        }
+                        onClick={() => handleQrDownload(location?._id)}
                       />
                     </td>
                     <td className="flex items-center justify-center h-9 space-x-3 font-normal text-center border-neutral-500">
