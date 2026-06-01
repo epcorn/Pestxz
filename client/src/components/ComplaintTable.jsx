@@ -20,7 +20,7 @@ const ComplaintTable = ({ data, user, toggle }) => {
       <div className="divide-y divide-black">
         {data?.map((complaint, i) => (
           <Link
-            to={isRegular ? `/complaint/${complaint._id}` : `/location/${complaint.location?._id}`}
+            to={isRegular ? `/location/${complaint.location?._id}` : `/complaint/${complaint._id}`}
             key={complaint._id}
             className="grid grid-cols-1 md:grid-cols-13 gap-2 px-4 md:px-6 py-4 items-center bg-neutral-200 hover:bg-neutral-200/70 transition-colors"
           >
