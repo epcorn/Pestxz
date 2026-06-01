@@ -102,7 +102,7 @@ const NewClient = ({ update = false, id, clientDetails }) => {
       </div>
 
       <div>
-        <InputRow label="Contract No" id="contractNo" errors={errors} register={register} />
+        <InputRow label="Contract No" disabled={clientDetails} id="contractNo" errors={errors} register={register} />
       </div>
 
       {/* Row 2 — Address, Email */}
@@ -116,11 +116,11 @@ const NewClient = ({ update = false, id, clientDetails }) => {
 
       {/* Row 3 — Admin */}
       <div>
-        <InputRow label="Admin Name" id="adminName" errors={errors} register={register} required={false} />
+        <InputRow label="Admin Name" id="adminName" disabled={clientDetails} errors={errors} register={register} required={false} />
       </div>
 
       <div>
-        <InputRow label="Admin Password" id="adminPass" errors={errors} register={register} type="password" required={false} />
+        <InputRow label="Admin Password" id="adminPass" disabled={clientDetails} errors={errors} register={register} type="password" required={false} />
       </div>
 
       {/* Row 4 — Dates */}
@@ -134,7 +134,8 @@ const NewClient = ({ update = false, id, clientDetails }) => {
         </label>
         <select required
           id="servicePeriod"
-          className="border-2 border-gray-300 rounded px-1.5 py-1 text-sm outline-none focus:border-indigo-500"
+          disabled={clientDetails}
+          className="border-2 border-gray-300 rounded px-1.5 py-1 text-sm outline-none focus:border-indigo-500 disabled:bg-blue-50"
           {...register("servicePeriod", { required: true })}
         >
           <option value=""> -- Select -- </option>
@@ -165,6 +166,7 @@ const NewClient = ({ update = false, id, clientDetails }) => {
         errors={errors}
         register={register}
         required={false}
+        disabled={clientDetails}
       />
 
       <InputSelect

@@ -40,31 +40,30 @@ export const newComplaint = async (req, res) => {
     })
       .sort({ createdAt: -1 })
       .select("complaintDetails.number");
-    let nextNumber = 1;
+    let nextNumber = 2;
     if (lastComplaint?.complaintDetails?.number) {
       const lastNumber = parseInt(
-        lastComplaint.complaintDetails.number.replace("SR-", "").trim(),
+        lastComplaint.complaintDetails?.number
+          ?.replace(`${client?.contractNo?.replace(/\//g, "")}-COM`, "")
+          .trim(),
       );
       nextNumber = lastNumber + 1;
     }
-    const sr = `SR-${String(nextNumber).padStart(4, "0")}`;
+    const sr = `${client?.contractNo?.replace(/\//g, "")}-COM${nextNumber}`;
     const imageLinks = [];
     if (req.files?.images) {
       const images = Array.isArray(req.files.images)
         ? req.files.images
         : [req.files.images];
-
       for (const image of images) {
         const link = await uploadFile({
           filePath: image.tempFilePath,
         });
-
         if (!link) {
           return res.status(400).json({
             msg: "Image upload error. Try again later",
           });
         }
-
         imageLinks.push(link);
       }
     }
@@ -81,7 +80,6 @@ export const newComplaint = async (req, res) => {
         image: imageLinks,
         comment: req.body.comment,
       },
-
       complaintUpdate: [
         {
           image: imageLinks,
@@ -94,11 +92,9 @@ export const newComplaint = async (req, res) => {
           date: new Date(),
         },
       ],
-
       client: clientId,
       location: id,
     });
-
     return res.status(201).json({
       msg: `Your complaint number is ${complaint.complaintDetails.number}`,
     });
@@ -158,12 +154,10 @@ export const updateComplaint = async (req, res) => {
       } else {
         images = [req.files.images];
       }
-
       for (const image of images) {
         const link = await uploadFile({
           filePath: image.tempFilePath,
         });
-
         if (!link) {
           return res.status(400).json({
             msg: "Image upload error. Try again later",
@@ -172,7 +166,6 @@ export const updateComplaint = async (req, res) => {
         imageLinks.push(link);
       }
     }
-
     // REOPEN LOGIC
     if (status === "Reopen") {
       // only client admin can reopen
@@ -182,20 +175,15 @@ export const updateComplaint = async (req, res) => {
         });
       }
       const reopenCount = complaint.complaintDetails.reopenCount || 0;
-
       if (reopenCount >= 3) {
         complaint.complaintDetails.finalClosed = true;
-
         await complaint.save();
-
         return res.status(400).json({
           msg: "Maximum reopen limit reached. Complaint permanently closed.",
         });
       }
-
       complaint.complaintDetails.reopenCount = reopenCount + 1;
     }
-
     // FINAL CLOSE
     if (status === "Close" && complaint.complaintDetails.reopenCount >= 3) {
       complaint.complaintDetails.finalClosed = true;
@@ -276,54 +264,6 @@ export const getAllComplaints = async (req, res) => {
       complaints,
       pages: Math.min(10, Math.ceil(total / 15)),
     });
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({ msg: "Server error, try again later" });
-  }
-};
-
-export const oldnewRegularService = async (req, res) => {
-  const { action } = req.body;
-  const { id } = req.params;
-  try {
-    if (action.length < 1)
-      return res.status(400).json({ msg: "One service action is required" });
-
-    const location = await Location.findById(id);
-    if (!location) return res.status(404).json({ msg: "Location not found" });
-
-    let images = [];
-    if (req.files?.images) {
-      images = Array.isArray(req.files.images)
-        ? req.files.images
-        : [req.files.images];
-    }
-
-    const regularService = [];
-    const service = req.body;
-    let imageUpload = 0;
-
-    for (let i = 1; i < action.length; i++) {
-      let link = "";
-      if (service.upload[i] === "true") {
-        link = await uploadFile({ filePath: images[imageUpload].tempFilePath });
-        imageUpload += 1;
-      }
-      regularService.push({
-        name: service.name[i],
-        action: service.action[i],
-        image: link,
-        userName: req.user.name,
-      });
-    }
-
-    await Service.create({
-      regularService,
-      client: location.client,
-      location: id,
-    });
-
-    return res.status(201).json({ msg: "Service updated" });
   } catch (error) {
     console.log(error);
     res.status(500).json({ msg: "Server error, try again later" });
@@ -415,6 +355,7 @@ export const newRegularService = async (req, res) => {
   }
 };
 
+
 export const dailyServiceReport = async (req, res) => {
   try {
     const date = new Date();
@@ -485,7 +426,7 @@ export const dailyServiceReport = async (req, res) => {
               row.getCell(3).value = location;
               row.getCell(4).value = regular.frequency;
               row.getCell(5).value = regular.serviceName;
-              row.getCell(6).value = regular.scopes.map(sc=> sc.scopeName);
+              row.getCell(6).value = regular.scopes.map((sc) => sc.scopeName);
               row.getCell(7).value = regular.action;
               row.getCell(8).value = "NA";
               row.getCell(9).value = "NA";

@@ -23,6 +23,7 @@ import {
 } from "./pages";
 import { ProtectedRoute } from "./components";
 import NewDashboard from "./pages/NewDashboard";
+import Welcome from "./pages/Welcome";
 
 function App() {
   const Layout = () => {
@@ -43,6 +44,7 @@ function App() {
         <Route path="" element={<MainLayout />}>
           <Route path="" element={<ProtectedRoute />}>
             <Route path="dashboard/stats" element={<NewDashboard />} />
+            <Route path="dashboard/scan" element={<Welcome />} />
             {/* <Route
               index={true}
               path="dashboard/stats"

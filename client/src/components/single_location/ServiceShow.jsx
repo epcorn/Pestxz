@@ -6,17 +6,17 @@ function ServiceShow({ services }) {
   const [expandedServiceId, setExpandedServiceId] = useState(null);
 
   return (
-    <div className="w-full overflow-x-auto border border-gray-800 rounded-lg bg-white">
+    <div className="w-full overflow-auto border border-gray-800 rounded-lg bg-white">
       <div className="min-w-[768px]">
         <div>
           {/* HEADER */}
           <div className="grid grid-cols-7 bg-gray-300 text-xs md:text-sm font-semibold text-gray-700 border-b *:not-last:border-r *:not-last:border-gray-600 border-gray-300">
             <div className="px-3 py-3 whitespace-nowrap">Service</div>
+            <div className="px-3 py-3 whitespace-nowrap  col-span-3">Upcoming Dates</div>
             <div className="px-3 py-3 whitespace-nowrap">Frequency</div>
             <div className="px-3 py-3 whitespace-nowrap">Last Serviced</div>
             <div className="px-3 py-3 whitespace-nowrap">Missed</div>
             {/* FIX 1: Explicitly span 3 columns to match body layout */}
-            <div className="px-3 py-3 whitespace-nowrap col-span-3">Upcoming Dates</div>
           </div>
 
           {/* BODY */}
@@ -25,9 +25,9 @@ function ServiceShow({ services }) {
             const completedService = schedules
               .filter((sc) => sc.completed === true)
               .at(-1);
-            
+
             const missedServices = getWorkStatus(schedules);
-            
+
             const nextServices = schedules.filter((sc) => {
               if (sc.completed) return false;
               const d = new Date(sc.date);
@@ -48,6 +48,41 @@ function ServiceShow({ services }) {
                 {/* SERVICE NAME */}
                 <div className="px-3 py-3 wrap-break-word">
                   {s.serviceName || "-"}
+                </div>
+
+                {/* UPCOMING DATES */}
+                <div className="col-span-3 max-h-20 overflow-y-auto px-3 py-3 flex flex-wrap gap-1 items-center">
+                  {nextServices.length > 0 ? (
+                    <>
+                      {nextVisibleServices.map((n, i) => {
+                        const today = new Date().toISOString().split("T")[0];
+                        return (
+                          <span
+                            key={i}
+                            className={`outline ${n.date === today
+                                ? "text-green-700 outline-green-700 bg-green-200 animate-pulse"
+                                : "outline-gray-300"
+                              } px-2 py-1 rounded text-[11px]`}
+                          >
+                            {formatShortDate(n.date)}
+                          </span>
+                        );
+                      })}
+
+                      {/* FIX 3: Fixed button context loop variable and conditional text */}
+                      {nextServices.length > 5 && (
+                        <button
+                          type="button"
+                          onClick={() => setExpandedServiceId(isExpanded ? null : index)}
+                          className="ml-1 text-[11px] text-blue-600 hover:text-blue-800 font-semibold underline cursor-pointer"
+                        >
+                          {isExpanded ? "Show Less" : `+${nextServices.length - 5} More`}
+                        </button>
+                      )}
+                    </>
+                  ) : (
+                    <span className="text-gray-400">-</span>
+                  )}
                 </div>
 
                 {/* FREQUENCY */}
@@ -71,41 +106,7 @@ function ServiceShow({ services }) {
                   )}
                 </div>
 
-                {/* UPCOMING DATES */}
-                <div className="col-span-3 max-h-20 overflow-y-auto px-3 py-3 flex flex-wrap gap-1 items-center">
-                  {nextServices.length > 0 ? (
-                    <>
-                      {nextVisibleServices.map((n, i) => {
-                        const today = new Date().toISOString().split("T")[0];
-                        return (
-                          <span
-                            key={i}
-                            className={`outline ${
-                              n.date === today
-                                ? "text-green-700 outline-green-700 bg-green-200 animate-pulse"
-                                : "outline-gray-300"
-                            } px-2 py-1 rounded text-[11px]`}
-                          >
-                            {formatShortDate(n.date)}
-                          </span>
-                        );
-                      })}
 
-                      {/* FIX 3: Fixed button context loop variable and conditional text */}
-                      {nextServices.length > 5 && (
-                        <button
-                          type="button"
-                          onClick={() => setExpandedServiceId(isExpanded ? null : index)}
-                          className="ml-1 text-[11px] text-blue-600 hover:text-blue-800 font-semibold underline cursor-pointer"
-                        >
-                          {isExpanded ? "Show Less" : `+${nextServices.length - 5} More`}
-                        </button>
-                      )}
-                    </>
-                  ) : (
-                    <span className="text-gray-400">-</span>
-                  )}
-                </div>
               </div>
             );
           })}

@@ -19,7 +19,8 @@ const ComplaintTable = ({ data, user, toggle }) => {
       {/* Data Rows */}
       <div className="divide-y divide-black">
         {data?.map((complaint, i) => (
-          <div
+          <Link
+            to={isRegular ? `/complaint/${complaint._id}` : `/location/${complaint.location?._id}`}
             key={complaint._id}
             className="grid grid-cols-1 md:grid-cols-13 gap-2 px-4 md:px-6 py-4 items-center bg-neutral-200 hover:bg-neutral-200/70 transition-colors"
           >
@@ -28,13 +29,12 @@ const ComplaintTable = ({ data, user, toggle }) => {
               <p className="text-[10px] font-bold text-gray-400 md:hidden uppercase mb-1">Number</p>
               {/* {user?.rights?.raise || user?.rights?.close ? ( */}
               {complaint.complaintDetails?.number ?
-                <Link
-                  to={`/complaint/${complaint._id}`}
+                <h2
                   className="text-sm font-bold text-blue-600 hover:text-blue-800 transition-colors"
                 >
                   {complaint.complaintDetails?.number}
-                </Link>
-                : <Link to={`/location/${complaint.location?._id}`} className="text-sm font-bold text-blue-600 hover:text-blue-800 transition-colors pl-3">{i + 2}</Link>}
+                </h2>
+                : <h2 className="text-sm font-bold text-blue-600 hover:text-blue-800 transition-colors pl-3">{i + 2}</h2>}
             </div>
 
             {/* Complaint Type */}
@@ -75,7 +75,7 @@ const ComplaintTable = ({ data, user, toggle }) => {
                 {isRegular ? <span className="whitespace-nowrap text-xs outline px-2 py-1 rounded-lg  text-gray-600">{complaint.regularService[0].userName}</span> : <span> {complaint?.complaintDetails?.status}</span>}
               </span>
             </div>
-          </div>
+          </Link>
         ))}
 
         {data?.length === 0 && (

@@ -15,6 +15,8 @@ const roleRoutes = {
   TeamLeader: "/dashboard/services",
   BranchAdmin: "/dashboard/services",
   Supervisor: "/dashboard/services",
+  Operator: "/dashboard/scan",
+  ClientEmployee: "/dashboard/scan"
 };
 
 const Landing = () => {
@@ -26,9 +28,7 @@ const Landing = () => {
     email: "",
     password: "",
   });
-
   const [login, { isLoading }] = useLoginMutation();
-
   // 🔥 single navigation handler
   const handleNavigation = (userData) => {
     if (locationId) {
@@ -37,7 +37,7 @@ const Landing = () => {
     }
 
     const route =
-      roleRoutes[userData?.role] || "/dashboard/complaints";
+      roleRoutes[userData?.role] || "/dashboard/scan";
 
     navigate(route);
   };
@@ -53,13 +53,9 @@ const Landing = () => {
 
     try {
       const res = await login(form).unwrap();
-
       dispatch(setCredentials(res));
-
       toast.success(`Welcome ${res.name}`);
-
       setForm({ email: "", password: "" });
-
       // IMPORTANT: navigate here OR via useEffect, not both
       handleNavigation(res);
     } catch (error) {
@@ -73,18 +69,14 @@ const Landing = () => {
 
         <div className="w-[350px] rounded-lg shadow bg-gray-700 sm:max-w-md xl:p-0">
           <div className="space-y-4 p-6 sm:p-8">
-
             {/* Logo */}
             <div className="flex justify-center">
               <img className="w-40" src={logo} alt="logo" />
             </div>
-
             <h1 className="text-center text-xl font-bold text-white md:text-2xl">
               Sign in to your account
             </h1>
-
             <form className="space-y-4" onSubmit={submitLogin}>
-
               {/* Email */}
               <div>
                 <label className="mb-1 block text-white font-medium">
@@ -104,7 +96,6 @@ const Landing = () => {
                   }
                 />
               </div>
-
               {/* Password */}
               <div>
                 <label className="mb-1 block text-white font-medium">
