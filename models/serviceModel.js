@@ -21,6 +21,25 @@ const serviceSchema = new mongoose.Schema(
         type: Boolean,
         default: false,
       },
+
+      assignedTo: {
+        userId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+          default: null,
+        },
+        userName: { type: String, default: null },
+        status: { type: Boolean, default: false },
+        date: { type: Date },
+      },
+      assignedBy: {
+        userId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+          default: null,
+        },
+        userName: { type: String, default: null },
+      },
     },
     complaintUpdate: [
       {

@@ -59,107 +59,104 @@ const SingleComplaint = () => {
   }
 
   if (!data) return null;
+  const details = data.complaintDetails
 
   return (
     <div className="max-w-7xl mx-auto px-2 sm:px-3 lg:px-8 py-4 space-y-6">
       {/* COMPLAINT TOP CARD METADATA */}
-      <div className="bg-neutral-50 rounded-xl border border-neutral-200 shadow-sm overflow-hidden">
-        <div className="flex flex-wrap gap-x-6 gap-y-4 p-5 sm:p-6">
+      <div className="bg-neutral-50 rounded-lg border border-neutral-200 shadow-xs overflow-hidden">
+        <div className="p-3 sm:p-4 text-xs">
 
-          {/* Client Name (Takes full width if present on mobile, 100% or balanced on desktop) */}
-          {user.type === "PestEmployee" && (
-            <div className="w-full lg:w-full border-b border-neutral-200/60 pb-3 mb-1 lg:mb-2">
-              <span className="text-xs font-bold uppercase tracking-wider text-neutral-400 block mb-0.5">Client Name</span>
-              <span className="text-lg font-bold text-neutral-900 break-all">
-                {data?.complaintDetails?.clientName || "—"}
-              </span>
+          {/* Top Header Row: Client & Number */}
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-neutral-200/60 pb-2 mb-2">
+            {user.type === "PestEmployee" && (
+              <div className="flex items-center gap-1.5">
+                <span className="font-bold text-neutral-400 uppercase tracking-wider text-[10px]">Client:</span>
+                <span className="font-bold text-neutral-900">{details?.clientName || "—"}</span>
+              </div>
+            )}
+            <div className="flex items-center gap-1.5 ml-auto">
+              <span className="font-bold text-neutral-400 uppercase tracking-wider text-[10px]">No:</span>
+              <span className="font-bold text-neutral-900">{details?.number || "—"}</span>
             </div>
-          )}
-
-          {/* Complaint Number */}
-          <div className="flex-1 min-w-[140px] sm:min-w-[180px]">
-            <span className="text-xs font-bold uppercase tracking-wider text-neutral-400 block mb-0.5">
-              Complaint Number
-            </span>
-            <span className="text-base font-semibold text-neutral-900 break-all">
-              {data?.complaintDetails?.number || "—"}
-            </span>
           </div>
 
-          {/* Status */}
-          <div className="flex-1 min-w-[140px] sm:min-w-[180px]">
-            <span className="text-xs font-bold uppercase tracking-wider text-neutral-400 block mb-1">
-              Status
-            </span>
+          {/* Metadata Grid */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-x-4 gap-y-2.5 items-start">
+
+            {/* Assigned To & By merged or stacked cleanly */}
+            {details?.assignedTo.status && (
+              <>
+                <div>
+                  <span className="font-bold text-neutral-400 uppercase tracking-wider text-[10px] block mb-0.5">Assigned To</span>
+                  <span className="font-semibold text-neutral-800 break-all">{details?.assignedTo.userName || "—"}</span>
+                </div>
+                <div>
+                  <span className="font-bold text-neutral-400 uppercase tracking-wider text-[10px] block mb-0.5">Assigned By</span>
+                  <span className="font-semibold text-neutral-800 break-all">{details?.assignedBy.userName || "—"}</span>
+                </div>
+              </>
+            )}
+
+            {/* Status */}
             <div>
-              <span className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs font-bold ring-1 ring-inset uppercase tracking-wide ${progress(data?.complaintDetails?.status)}`}>
-                {data?.complaintDetails?.status || "Unknown"}
+              <span className="font-bold text-neutral-400 uppercase tracking-wider text-[10px] block mb-0.5">Status</span>
+              <span className={`inline-block rounded px-1.5 py-0.5 text-[10px] font-bold ring-1 ring-inset uppercase tracking-wide ${progress(data?.complaintDetails?.status)}`}>
+                {details?.status || "Unknown"}
               </span>
             </div>
-          </div>
 
-          {/* Raised By */}
-          <div className="flex-1 min-w-[140px] sm:min-w-[180px]">
-            <span className="text-xs font-bold uppercase tracking-wider text-neutral-400 block mb-0.5">
-              Raised By
-            </span>
-            <span className="text-base font-medium text-neutral-800">
-              {data?.complaintDetails?.userName || "—"}
-            </span>
-          </div>
+            {/* Raised By */}
+            <div>
+              <span className="font-bold text-neutral-400 uppercase tracking-wider text-[10px] block mb-0.5">Raised By</span>
+              <span className="font-medium text-neutral-800">{details?.userName || "—"}</span>
+            </div>
 
-          {/* Reopen Count */}
-          {user.type === "PestEmployee" && (
-            <div className="flex-1 min-w-[140px] sm:min-w-[180px]">
-              <span className="text-xs font-bold uppercase tracking-wider text-neutral-400 block mb-1">
-                Reopen Count
-              </span>
+            {/* Reopen Count */}
+            {user.type === "PestEmployee" && (
               <div>
-                <span className="inline-flex items-center rounded-md bg-neutral-100 px-2.5 py-1 text-xs font-bold text-neutral-800 ring-1 ring-inset ring-neutral-300 uppercase tracking-wide">
-                  {data?.complaintDetails?.reopenCount || "0"}
+                <span className="font-bold text-neutral-400 uppercase tracking-wider text-[10px] block mb-0.5">Reopen</span>
+                <span className="inline-block rounded bg-neutral-100 px-1.5 py-0.5 text-[10px] font-bold text-neutral-800 ring-1 ring-inset ring-neutral-300">
+                  {details?.reopenCount || "0"}
                 </span>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Location */}
-          <div className="flex-1 min-w-[140px] sm:min-w-[180px]">
-            <span className="text-xs font-bold uppercase tracking-wider text-neutral-400 block mb-0.5">
-              Location
-            </span>
-            <span className="text-sm text-neutral-700 block leading-relaxed font-medium">
-              {[location?.location?.floor, location?.location?.location, location?.location?.subLocation]
-                .filter(Boolean)
-                .join(", ") || "N/A"}
-            </span>
+            {/* Location */}
+            <div className="col-span-1 sm:col-span-2 md:col-span-1">
+              <span className="font-bold text-neutral-400 uppercase tracking-wider text-[10px] block mb-0.5">Location</span>
+              <span className="text-neutral-700 font-medium line-clamp-1">
+                {[location?.location?.floor, location?.location?.location, location?.location?.subLocation]
+                  .filter(Boolean)
+                  .join(", ") || "N/A"}
+              </span>
+            </div>
+
+            {/* Requested Service */}
+            <div className="col-span-2 sm:col-span-1">
+              <span className="font-bold text-neutral-400 uppercase tracking-wider text-[10px] block mb-0.5">Services</span>
+              <div className="flex flex-wrap gap-1">
+                {data?.complaintDetails?.service?.map((service, index) => (
+                  <span key={index} className="bg-white text-neutral-800 border border-neutral-200 text-[10px] font-semibold px-1.5 py-0.5 rounded shadow-2xs">
+                    {service}
+                  </span>
+                ))}
+              </div>
+            </div>
+
           </div>
 
-          {/* Requested Service */}
-          <div className="flex-1 min-w-[140px] sm:min-w-[180px]">
-            <span className="text-xs font-bold uppercase tracking-wider text-neutral-400 block mb-1">
-              Requested Service
-            </span>
-            <div className="flex flex-wrap gap-1.5">
-              {data?.complaintDetails?.service?.map((service, index) => (
-                <span key={index} className="bg-white text-neutral-800 border border-neutral-200 text-xs font-semibold px-2.5 py-0.5 rounded-md shadow-xs">
-                  {service}
-                </span>
-              ))}
-            </div>
-          </div>
-
-          {/* Comment (Forces itself onto a clean, unified bottom line with minimal gap) */}
-          <div className="w-full mt-2">
-            <span className="text-xs font-bold uppercase tracking-wider text-neutral-400 block mb-1">
-              Comment
-            </span>
-            <span className="text-sm text-neutral-600 block italic leading-relaxed bg-white border border-neutral-200 p-3 rounded-lg shadow-xs">
+          {/* Compact Comment Section */}
+          <div className="mt-2 pt-2 border-t border-neutral-100 flex items-baseline gap-2">
+            <span className="font-bold text-neutral-400 uppercase tracking-wider text-[10px] shrink-0">Comment:</span>
+            <span className="text-neutral-600 italic bg-white border border-neutral-150 px-2 py-1 rounded w-full text-[11px] block">
               {data?.complaintDetails?.comment || "No comments shared."}
             </span>
           </div>
 
         </div>
       </div>
+
 
       {/* COMPLAINT TIMELINE / LOGS UPDATE */}
       {data?.complaintUpdate?.length > 0 && (

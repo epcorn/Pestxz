@@ -14,7 +14,7 @@ import { useGetSingleClientQuery } from "../redux/clientSlice";
 import { MdOutlineQrCodeScanner } from "react-icons/md";
 
 
-const roles=["Admin", "Operator", "Supervisor", "TeamLeader", "BranchAdmin", "PestAdmin", "ClientAdmin", "ClientEmployee"]
+const roles = ["Admin", "Operator", "Supervisor", "TeamLeader", "BranchAdmin", "PestAdmin", "ClientAdmin", "ClientEmployee"]
 const navList = [
   {
     icon: <MdOutlineQrCodeScanner className="w-6 h-6 " />,
@@ -113,7 +113,7 @@ const Sidebar = () => {
               className="lg:hidden p-1.5 rounded-lg hover:bg-slate-100 text-slate-600 transition-colors"
               aria-label="Toggle menu"
             >
-              {!show && <AiOutlineMenuUnfold className="w-9 h-9" />}
+              <AiOutlineMenuUnfold className="w-9 h-9" />
             </button>
 
             {/* Client Name (Context-aware display) */}
@@ -142,19 +142,11 @@ const Sidebar = () => {
       </nav>
 
       <aside
-        className={`fixed top-0 left-0 w-60 z-50 h-dvh transition-transform -translate-x-full border-r-2 bg-slate-700 border-gray-500 ${show ? "translate-x-0" : "lg:translate-x-0"
+        className={`fixed top-[4.5rem] md:top-[4.9rem] lg:top-0 left-0 w-60 z-50 h-[90dvh] md:h-dvh transition-transform cursor-pointer -translate-x-full border-r-2 bg-slate-700 border-gray-500 ${show ? "translate-x-0" : "lg:translate-x-0"
           }`}
       >
-        {show && (
-          <div className="flex justify-end">
-            <AiOutlineMenuFold
-              onClick={() => setShow(!show)}
-              className="lg:hidden w-9 h-9 mt-3 mr-5 text-red-500"
-            />
-          </div>
-        )}
-        <div className="overflow-y-auto h-full">
-          <ul className="space-y-4 mt-5 lg:mt-20">
+        <div className="overflow-y-auto h-full ">
+          <ul className="space-y-4 mt-5 lg:mt-20 ">
             {navList.map((item) => {
               return (
                 item.role.includes(user?.role) && (

@@ -217,7 +217,6 @@ export const updateComplaint = async (req, res) => {
 
 export const getAllComplaints = async (req, res) => {
   const { search, page, location } = req.query;
-
   let query = {
     type: "Complaint",
   };
@@ -240,7 +239,6 @@ export const getAllComplaints = async (req, res) => {
   }
   try {
     let pageNumber = Number(page) || 1;
-
     // let complaints = await Service.find()
     let allComplaints = await Service.find(query)
       .populate({
@@ -248,13 +246,11 @@ export const getAllComplaints = async (req, res) => {
         select: "floor subLocation  location name",
       })
       .sort("-createdAt");
-
     if (location !== "All") {
       allComplaints = allComplaints.filter(
         (complaint) => complaint.location?.floor === location,
       );
     }
-
     const total = allComplaints.length;
     const complaints = allComplaints.slice(
       15 * (pageNumber - 1),
@@ -355,6 +351,41 @@ export const newRegularService = async (req, res) => {
   }
 };
 
+export const assignWork = async (req, res) => {
+  const { value, label, complaintId } = req.body;
+  try {
+    if (!value) return res.status(400).json({ msg: "userId not provided" });
+    const service = await Service.findById(complaintId);
+    if (!service) return res.status(400).json({ msg: "complaint not found" });
+    if (service.complaintDetails.assignedTo.status === true)
+      return res
+        .status(403)
+        .json({
+          msg: `Already assigned to ${service.complaintDetails.assignedTo.userName}`,
+        });
+    service.complaintDetails.assignedTo = {
+      userId: value,
+      userName: label,
+      assignedAt: new Date(),
+      status: true,
+    };
+    service.complaintDetails.assignedBy = {
+      userId: req.user._id,
+      userName: req.user.name,
+      role: req.user.role,
+    };
+
+    await service.save();
+    return res.status(200).json({ msg: "Operator assigned successfully" });
+  } catch (error) {
+    console.error("Error in assignWork controller:", error);
+    return res.status(500).json({
+      success: false,
+      msg: "Internal server error",
+      error: error.message,
+    });
+  }
+};
 
 export const dailyServiceReport = async (req, res) => {
   try {

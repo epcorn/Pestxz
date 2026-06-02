@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
-import { AlertMessage, Button, ComplaintTable, Loading } from "../components";
-import { useAllComplaintsQuery } from "../redux/serviceSlice";
+import { AlertMessage, Button, ComplaintTable, InputSelect, Loading } from "../components";
+import { useAllComplaintsQuery, useAssignWorkMutation } from "../redux/serviceSlice";
 import { dateFormat, progress } from "../utils/helperFunctions";
 import { useSelector } from "react-redux";
 import { useDispatch } from "react-redux";
@@ -10,6 +10,8 @@ import { AiOutlineClose, AiOutlineSearch } from "react-icons/ai";
 import { useEffect, useState } from "react";
 import { useAllLocationsQuery } from "../redux/locationSlice";
 import { useAllClientsQuery } from "../redux/clientSlice";
+import { useAllUserQuery } from "../redux/adminSlice";
+import { toast } from "react-toastify";
 
 const Complaints = () => {
   const [page, setPage] = useState(1);
@@ -35,7 +37,7 @@ const Complaints = () => {
     page,
     location: location?.floor || "All",
   });
-  console.log(clientLocations)
+
 
   const pages = Array.from({ length: data?.pages }, (_, index) => index + 1);
 
@@ -119,7 +121,6 @@ const Complaints = () => {
                   </option>
                 ))}
               </select>
-
             </div>
 
             <Button type="submit" label="Search" color="bg-black" height="h-8" />
@@ -173,3 +174,44 @@ const Complaints = () => {
   );
 };
 export default Complaints;
+
+
+export function AssignWork({ complaintId, currentAssgndVal = null, show }) {
+  const { user, isModalOpen } = useSelector((store) => store.helper);
+  const { data: users } = useAllUserQuery({ skip: user.role !== "Admin" });
+  const [assignWork] = useAssignWorkMutation()
+  const operators = users?.filter(u => u.role === "Operator")?.map(op => ({
+    label: op.name, value: op._id,
+  })) || [];
+
+  const handleOperatorChange = async (selectedOption) => {
+    if (!selectedOption) return;
+    try {
+      const data = {
+        value: selectedOption.value,
+        label: selectedOption.label,
+        complaintId: complaintId
+      }
+      const res = await assignWork(data).unwrap();
+      show({ id: "", status: false })
+      toast.success("Successfully assigned operator!");
+    } catch (error) {
+      console.log(error)
+      show({ id: "", status: false })
+
+      if (error.status === 403)
+        return toast.warn(error.data.msg);
+      toast.error("Failed to assign operator");
+    }
+  };
+  return (
+    <>
+      <div className="absolute left-full top-0 bg-white ">
+        <div className="px-2 pb-2 whitespace-nowrap">
+          <InputSelect label='select operator' options={operators} onChange={handleOperatorChange} value={currentAssgndVal} required={false} />
+
+        </div>
+      </div>
+    </>
+  )
+}

@@ -38,7 +38,14 @@ export const serviceSlice = apiSlice.injectEndpoints({
         method: "POST",
         body: form,
       }),
-      invalidatesTags:["Location"]
+      invalidatesTags: ["Location"],
+    }),
+    assignWork: builder.mutation({
+      query: (data) => ({
+        method: "PUT",
+        url: `/api/service/assign-work`,
+        body: data,
+      }),
     }),
     dailyServiceReport: builder.query({
       //new added 08-05-2026
@@ -55,5 +62,7 @@ export const {
   useUpdateComplaintMutation,
   useAllComplaintsQuery,
   useRegularServiceMutation,
+  useAssignWorkMutation,
+
   useDailyServiceReportQuery, //new added 08-05-2026
 } = serviceSlice;
