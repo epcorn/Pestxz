@@ -2,10 +2,10 @@ import React, { useState } from "react";
 import { formatShortDate, getWorkStatus } from "../../utils/helperFunctions";
 
 function ServiceShow({ services }) {
-  
+
   const [expandedServiceId, setExpandedServiceId] = useState(null);
 
-console.log(services)
+  console.log(services)
   return (
     <div className="w-full overflow-auto border border-gray-800 rounded-lg bg-white">
       <div className="min-w-[768px]">
@@ -28,7 +28,7 @@ console.log(services)
               .at(-1);
 
             const missedServices = getWorkStatus(schedules);
-      
+
             const nextServices = schedules.filter((sc) => {
               if (sc.completed) return false;
               const d = new Date(sc.date);
@@ -36,7 +36,7 @@ console.log(services)
               today.setHours(0, 0, 0, 0);
               return d >= today;
             });
-            const allSchedules = s.schedule || [];
+            const allSchedules = s?.schedule || [];
 
             const isExpanded = expandedServiceId === index;
             const nextVisibleServices = isExpanded ? allSchedules : nextServices.slice(0, 5);
@@ -53,7 +53,7 @@ console.log(services)
 
                 {/* UPCOMING DATES */}
                 <div className="col-span-3 max-h-20 overflow-y-auto px-3 py-3 flex flex-wrap gap-1 items-center">
-                  {nextServices.length > 0 ? (
+                  {nextServices?.length > 0 ? (
                     <>
                       {nextVisibleServices.map((n, i) => {
                         const today = new Date().toISOString().split("T")[0];
@@ -61,25 +61,26 @@ console.log(services)
                           <span
                             key={i}
                             className={`outline font-bold 
-                              ${n.date === today
-                              ? "text-green-700 outline-green-700 bg-green-200 animate-pulse " : "outline-gray-300"} 
-                              ${n.date === missedServices[0].date ?"text-red-700 outline-red-700 bg-red-200" :""}
+                              ${n?.date === today
+                                ? "text-cyan-700 outline-cyan-700 bg-cyan-200 animate-pulse " : "outline-gray-300"} 
+                              ${n?.date === missedServices[0]?.date ? "text-red-700 outline-red-700 bg-red-200" : ""}
+                              ${n.completed ? "text-green-700 outline-green-700 bg-green-200" : ""}
                               px-2 py-1 rounded text-[11px]`}
-                              
+
                           >
-                            {formatShortDate(n.date)}
+                            {formatShortDate(n?.date)}
                           </span>
                         );
                       })}
 
                       {/* FIX 3: Fixed button context loop variable and conditional text */}
-                      {nextServices.length > 5 && (
+                      {nextServices?.length > 5 && (
                         <button
                           type="button"
                           onClick={() => setExpandedServiceId(isExpanded ? null : index)}
                           className="ml-1 text-[11px] text-blue-600 hover:text-blue-800 font-semibold underline cursor-pointer"
                         >
-                          {isExpanded ? "Show Less" : `+${nextServices.length - 5} More`}
+                          {isExpanded ? "Show Less" : `+${nextServices?.length - 5} More`}
                         </button>
                       )}
                     </>
@@ -95,12 +96,12 @@ console.log(services)
 
                 {/* LAST COMPLETED */}
                 <div className="px-3 py-3 whitespace-nowrap">
-                  {completedService?.date ? formatShortDate(completedService.date) : "Not yet"}
+                  {completedService?.date ? <span className="text-sm text-green-700 font-semibold "> {formatShortDate(completedService.date)} ✓ </span> : "Not yet"}
                 </div>
 
                 {/* MISSED */}
                 <div className="px-3 py-3">
-                  {missedServices.length > 0 ? (
+                  {missedServices?.length > 0 ? (
                     <span className="bg-red-100 text-red-600 px-2 py-0.5 rounded text-[11px] font-semibold flex flex-col items-center">
                       <span>{missedServices.length} missed</span>
                       <span>
