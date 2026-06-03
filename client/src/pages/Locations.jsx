@@ -25,7 +25,7 @@ const Locations = () => {
   const { data: clientusers } = useAllUserQuery();
   console.log(data)
 
-
+  const client = data.client;
   return (
     <>
       {isLoading || isFetching ? (
@@ -37,21 +37,32 @@ const Locations = () => {
       {!error && data && (
         <div>
           <h2 className="text-center text-2xl text-sky-700 font-semibold">
-            {data.client.name}
+            {client.name}
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 my-5 mx-2">
             <div>
               <h6 className="">
                 <strong>Contract No: </strong>{" "}
-                <span>{data.client.contractNo}</span>
+                <span className="text-sm">{client.contractNo}</span>
               </h6>
               <h6 className="">
-                <strong>Email: </strong> <span>{data.client.email}</span>
+                <strong>Service Period: </strong> <span className="text-sm">{client.servicePeriod} Months</span>
+              </h6>
+              <h6 className="">
+                <strong>Email: </strong> <span className="text-sm">{client.email}</span>
               </h6>
             </div>
             <div>
+              <div className="flex justify-between flex-wrap">
+                <h6 className="">
+                  <strong>Start Date: </strong> <span className="text-sm">{client.startDate}</span>
+                </h6>
+                <h6 className="">
+                  <strong>End Date: </strong> <span className="text-sm">{client.endDate}</span>
+                </h6>
+              </div>
               <h6 className="">
-                <strong>Address: </strong> {data.client.address}
+                <strong>Address: </strong> <span className="text-sm">{client.address}</span>
               </h6>
             </div>
           </div>
@@ -102,7 +113,7 @@ const Locations = () => {
                     >
                       <td className="px-3 border-r font-normal border-neutral-500 hover:text-cyan-700">
                         <Link to={`/location/${location._id}`}>
-                          {location.floor}
+                          <Button label={location.floor}/>
                         </Link>
                       </td>
                       <td className="px-3 border-r font-normal border-neutral-500">
@@ -140,7 +151,7 @@ const Locations = () => {
                               }))} />
 
                             {isModalOpen.qrimage && (
-                              <ImagesModal image={location.qr} name={"qrimage"}/>
+                              <ImagesModal image={location.qr} name={"qrimage"} />
                             )}
                           </>
                         }

@@ -176,10 +176,10 @@ const SingleClient = () => {
             </div>
           </div>
 
-          <div>
+          {/* <div>
             <Button label={'Add schedules'} onClick={handleBackfill}
               isLoading={backFillLoading} disabled={backFillLoading} />
-          </div>
+          </div> */}
 
           <div className="overflow-y-auto my-4">
             <table className="w-full border whitespace-nowrap border-neutral-500 bg-text">
@@ -213,7 +213,7 @@ const SingleClient = () => {
                   >
                     <td className="px-3 border-r font-normal border-neutral-500">
                       <Link to={`/location/${location?._id}`}>
-                        {location.floor}
+                        <Button label={location.floor} small={true}/>
                       </Link>
                     </td>
                     <td className="px-3 border-r font-normal border-neutral-500">

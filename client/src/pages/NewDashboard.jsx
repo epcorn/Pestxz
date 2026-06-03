@@ -8,8 +8,7 @@ function NewDashboard() {
 
   return (
     <>
-    
-      {user.role === "ClientAdmin" && < ClientDashboard />}
+      {user.role === "ClientAdmin" && <ClientDashboard />}
       {user.role === "Admin" && <AdminDashboard />}
     </>
   )

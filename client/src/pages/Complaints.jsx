@@ -12,6 +12,7 @@ import { useAllLocationsQuery } from "../redux/locationSlice";
 import { useAllClientsQuery } from "../redux/clientSlice";
 import { useAllUserQuery } from "../redux/adminSlice";
 import { toast } from "react-toastify";
+import Select from "react-select";
 
 const Complaints = () => {
   const [page, setPage] = useState(1);
@@ -176,13 +177,17 @@ const Complaints = () => {
 export default Complaints;
 
 
+
 export function AssignWork({ complaintId, currentAssgndVal = null, show }) {
-  const { user, isModalOpen } = useSelector((store) => store.helper);
+  const { user } = useSelector((store) => store.helper);
   const { data: users } = useAllUserQuery({ skip: user.role !== "Admin" });
-  const [assignWork] = useAssignWorkMutation()
+  const [assignWork] = useAssignWorkMutation();
+
   const operators = users?.filter(u => u.role === "Operator")?.map(op => ({
     label: op.name, value: op._id,
   })) || [];
+
+  const defaultValue = operators.find(op => op.label === currentAssgndVal) || null;
 
   const handleOperatorChange = async (selectedOption) => {
     if (!selectedOption) return;
@@ -191,27 +196,67 @@ export function AssignWork({ complaintId, currentAssgndVal = null, show }) {
         value: selectedOption.value,
         label: selectedOption.label,
         complaintId: complaintId
-      }
-      const res = await assignWork(data).unwrap();
-      show({ id: "", status: false })
+      };
+      await assignWork(data).unwrap();
+      show({ id: "", status: false });
       toast.success("Successfully assigned operator!");
     } catch (error) {
-      console.log(error)
-      show({ id: "", status: false })
-
-      if (error.status === 403)
-        return toast.warn(error.data.msg);
+      console.log(error);
+      show({ id: "", status: false });
+      if (error.status === 403) return toast.warn(error.data.msg);
       toast.error("Failed to assign operator");
     }
   };
-  return (
-    <>
-      <div className="absolute left-full top-0 bg-white ">
-        <div className="px-2 pb-2 whitespace-nowrap">
-          <InputSelect label='select operator' options={operators} onChange={handleOperatorChange} value={currentAssgndVal} required={false} />
 
-        </div>
+  const customStyles = {
+    control: (base, state) => ({
+      ...base,
+      minHeight: '32px',
+      height: '32px',
+      fontSize: '13px',
+      borderColor: state.isFocused ? '#3b82f6' : '#e5e7eb', 
+      boxShadow: state.isFocused ? '0 0 0 1px #3b82f6' : 'none',
+      '&:hover': { borderColor: '#3b82f6' },
+      borderRadius: '0.375rem', 
+    }),
+    valueContainer: (base) => ({ ...base, padding: '0 8px' }),
+    indicatorsContainer: (base) => ({ ...base, height: '30px' }),
+    menuPortal: (base) => ({ ...base, zIndex: 9999 }), 
+    menu: (base) => ({
+      ...base,
+      fontSize: '13px',
+      borderRadius: '0.375rem',
+      boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)', // shadow-md
+    }),
+    option: (base, state) => ({
+      ...base,
+      backgroundColor: state.isSelected ? '#3b82f6' : state.isFocused ? '#f3f4f6' : 'transparent',
+      color: state.isSelected ? '#fff' : '#374151',
+      cursor: 'pointer',
+      padding: '6px 12px',
+      '&:active': { backgroundColor: '#3b82f6' },
+    }),
+  };
+
+  return (
+    <div 
+      className="absolute left-0 top-full mt-1 bg-white rounded-md shadow-lg border border-gray-100 min-w-[180px] z-50 p-1"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <div className="text-[10px] uppercase font-bold tracking-wider text-gray-400 px-2 py-1 select-none">
+        Assign Operator
       </div>
-    </>
-  )
+      <Select
+        options={operators}
+        defaultValue={defaultValue}
+        onChange={handleOperatorChange}
+        placeholder="Select..."
+        styles={customStyles}
+        menuPortalTarget={document.body}
+        menuPosition="fixed"
+        isSearchable={true} 
+        autoFocus={true} 
+      />
+    </div>
+  );
 }

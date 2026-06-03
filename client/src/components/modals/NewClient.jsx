@@ -15,8 +15,11 @@ import { endDateList, timeList } from "../../utils/constData";
 const calculateEndDate = (startDate, months) => {
   if (!startDate || !months) return "";
   const date = new Date(startDate);
-  date.setMonth(date.getMonth() + parseInt(months));
-  return date.toLocaleDateString("en-CA"); // yyyy-mm-dd
+  const totalMonths = parseInt(months, 10);
+
+  const computeEndDate = new Date(date.getFullYear(), date.getMonth() + totalMonths , 0);
+
+  return computeEndDate.toLocaleDateString("en-CA"); // yyyy-mm-dd
 };
 
 const NewClient = ({ update = false, id, clientDetails }) => {

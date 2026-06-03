@@ -26,7 +26,7 @@ const navList = [
     icon: <BsBarChartFill className="w-6 h-6 " />,
     name: "Dashboard",
     to: "/stats",
-    role: ["Admin", "ClientAdmin"],
+    role: ["Admin", "ClientAdmin", "Operator"],
   },
   {
     icon: <FaBuilding className="w-6 h-6" />,
@@ -44,7 +44,7 @@ const navList = [
     icon: <FaBug className="w-6 h-6" />,
     name: "Complaints",
     to: "/complaints",
-    role: ["Admin", "Operator", "Supervisor", "TeamLeader", "BranchAdmin", "PestAdmin", "ClientAdmin", "ClientEmployee"],
+    role: ["Admin", "ClientAdmin", "ClientEmployee"],
   },
   {
     icon: <MdLocationOn className="w-6 h-6" />,
@@ -77,13 +77,13 @@ const Sidebar = () => {
   const navigate = useNavigate();
 
   const [logout, { isLoading }] = useLogoutMutation();
-  const { data: client } = useGetSingleClientQuery(user.client, { skip: !user.client });
+  const { data: client = {} } = useGetSingleClientQuery(user?.client, { skip: !user?.client });
 
   const handleLogout = async () => {
     try {
       const res = await logout().unwrap();
       dispatch(removeCredentials());
-      toast.success(res.msg);
+      toast.success(res?.msg);
       navigate("/");
     } catch (error) {
       console.log(error);
@@ -142,41 +142,67 @@ const Sidebar = () => {
       </nav>
 
       <aside
-        className={`fixed top-[4.5rem] md:top-[4.9rem] lg:top-0 left-0 w-60 z-50 h-[90dvh] md:h-dvh transition-transform cursor-pointer -translate-x-full border-r-2 bg-slate-700 border-gray-500 ${show ? "translate-x-0" : "lg:translate-x-0"
+        className={`fixed top-[4.5rem] md:top-[4.9rem] lg:top-0 left-0 w-60 z-50 h-[90dvh] md:h-[90dvh] lg:h-dvh transition-transform duration-300 border-r-2 bg-slate-800 border-gray-500 ${show
+          ? "translate-x-0"
+          : "-translate-x-full lg:translate-x-0"
           }`}
       >
-        <div className="overflow-y-auto h-full ">
-          <ul className="space-y-4 mt-5 lg:mt-20 ">
-            {navList.map((item) => {
-              return (
-                item.role.includes(user?.role) && (
-                  <li
-                    key={item.name}
-                    className={`hover:bg-gray-800 px-3 ${active === item.to && "bg-gray-800"
-                      }`}
-                  >
-                    <button
-                      onClick={() => handleNavigate(item.to)}
-                      className="flex items-center p-2 text-base font-medium text-white rounded-lg "
+        {/* Added h-full and removed absolute bottom from inside the list */}
+        <div className="h-full flex flex-col j p-4 overflow-y-auto">
+
+          {/* Navigation Links Group */}
+          <div className="flex-1">
+            <ul className="space-y-2 mt-5 lg:mt-20">
+              {navList.map((item) => {
+                return (
+                  item.role.includes(user?.role) && (
+                    <li
+                      key={item.name}
+                      className={`hover:bg-slate-700/50 rounded-lg px-2 transition-colors ${active === item.to ? "bg-gray-800" : ""
+                        }`}
                     >
-                      {item.icon}
-                      <span className="ml-3 text-xl">{item.name}</span>
-                    </button>
-                  </li>
-                )
-              );
-            })}
-            <li className="bottom-0 left-0 flex justify-center py-5 w-full">
-              <button onClick={handleLogout}>
-                <div className="flex justify-center items-center font-medium text-xl tracking-wider text-sky-400 hover:text-red-500">
-                  <FaPowerOff className="mr-2" />
-                  Logout
-                </div>
-              </button>
-            </li>
-          </ul>
+                      <button
+                        onClick={() => handleNavigate(item.to)}
+                        className="flex items-center w-full p-2 text-base font-medium text-white"
+                      >
+                        {item.icon}
+                        <span className="ml-3 text-xl">{item.name}</span>
+                      </button>
+                    </li>
+                  )
+                );
+              })}
+            </ul>
+          </div>
+
+          {/* Footer Group (Logout + Branding) stays pinned at the bottom */}
+          <div className="space-y-6 pt-4 border-t border-slate-700/50">
+            {/* Moved logout outside the main list */}
+            <button
+              onClick={handleLogout}
+              className="w-full flex justify-center items-center py-2 font-medium text-xl tracking-wider text-sky-400 hover:text-red-500 transition-colors"
+            >
+              <FaPowerOff className="mr-2" />
+              Logout
+            </button>
+
+            {/* Brand Logo Card */}
+            <div className="w-full max-w-[180px] mx-auto flex items-center justify-center gap-3 px-4 py-2 rounded-xl border bg-slate-50 border-slate-100 shadow-sm">
+              <div className="flex flex-col items-start justify-center order-2">
+                <span className="text-sm font-extrabold tracking-tight text-slate-900 leading-none">
+                  PestXZ
+                </span>
+                <span className="text-[0.5rem] md:text-[0.6rem] font-medium uppercase tracking-wider text-slate-400 mt-1 leading-none">
+                  Powered by
+                </span>
+              </div>
+              <img src={logo} className="h-5 w-auto object-contain order-1" alt="PestXZ Logo" />
+            </div>
+          </div>
+
         </div>
       </aside>
+
     </aside>
   );
 };

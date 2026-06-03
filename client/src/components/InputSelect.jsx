@@ -18,6 +18,7 @@ const InputSelect = ({
     return options?.find((c) => c.value === value?.value) || null;
   };
 
+  console.log(value)
   const sharedStyles = {
     menuPortal: (base) => ({ ...base, zIndex: 99999 }),
     menu: (base) => ({ ...base, zIndex: 99999 }),

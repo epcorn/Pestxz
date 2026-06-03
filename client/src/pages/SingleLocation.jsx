@@ -49,6 +49,12 @@ const SingleLocation = () => {
       )}
       {data && (
         <div>
+          <div>
+            <h2 className="text-center text-2xl mt-2 mb-5">
+              <span>Hello, </span>
+              <strong>{DBUser?.name}</strong>
+            </h2>
+          </div>
           <div className="py-1 border-b border-neutral-200">
             {/* Location Details */}
             <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm text-neutral-700">
@@ -166,7 +172,7 @@ const SingleLocation = () => {
           <div className="bg-blue-200 p-px rounded-t-2xl">
             <h2 className="text-xl font-bold px-5 my-2 flex justify-between items-center"
               onClick={() => dispatch(toggleModal({ name: "allReg", status: !isModalOpen?.allReg }))}>
-              <span>All Scheduled Services ({data?.regularService.length})</span>
+              <span>All Scheduled Services Done({data?.regularService.length})</span>
               <IoIosArrowDown className={`${isModalOpen?.allReg ? "rotate-180" : ""} transition-all`} />
             </h2>
             {isModalOpen?.allReg &&
@@ -268,12 +274,20 @@ const SingleLocation = () => {
                 </>
               )}
 
+
+
               {/* Form / Button Action Container */}
               <div className="flex justify-center items-center mt-5 pt-2">
                 <div className="w-full bg-neutral-50 rounded-xl border border-neutral-200 shadow-inner">
                   <RegularForm serviceData={data.location.service} id={data?.location?._id} locationName={data?.location?.floor} setRegular={setRegular} />
                 </div>
               </div>
+              {/* all premise service */}
+              {/* <div className="my-5 p-3 bg-slate-500 rounded-t-2xl">
+                <h2 className="font-bold text-lg px-2">
+                  All Premise Services
+                </h2>
+              </div> */}
             </div>
           )}
         </div>

@@ -126,8 +126,8 @@ function RegularForm({ serviceData, id, locationName, setRegular }) {
 
   return (
     <div className="w-full overflow-auto outline outline-gray-400 rounded-2xl">
-      <div className="min-w-[1200px] p-4">
-        <div className="flex justify-between items-center mb-5">
+      <div className="">
+        <div className="flex justify-between items-center p-3">
           <h2 className="text-lg md:text-xl font-bold">Regular Service Form</h2>
         </div>
 
@@ -136,15 +136,14 @@ function RegularForm({ serviceData, id, locationName, setRegular }) {
             const todaySchedule = ser.schedule.find(
               (s) => formatShortDate(s.date) === today && !s.completed
             );
-            console.log(todaySchedule)
             return (
               <div
                 key={ser.serviceName}
-                className="outline outline-gray-400 rounded p-4 bg-white shadow text-xs md:textbase"
+                className="outline outline-gray-400 rounded p-2 bg-white shadow text-xs md:textbase"
 
               >
                 <div className="flex justify-between mb-4">
-                  <div className="flex gap-4 items-center flex-wrap">
+                  <div className="flex gap-x-4 gap-y-2 items-center flex-wrap">
                     <p className="text-sm md:text-lg font-semibold outline px-2 py-1 rounded outline-gray-400">
                       Service:{" "}
                       <span className="text-base text-gray-500">{ser.serviceName}</span>
@@ -158,9 +157,8 @@ function RegularForm({ serviceData, id, locationName, setRegular }) {
                       <span className="text-base text-blue-600">{todaySchedule?.date}</span>
                     </p>
                   </div>
-
                 </div>
-
+                <label htmlFor="" className="text-sm font-semibold mr-2">Images:</label>
                 <input
                   type="file"
                   multiple
@@ -169,59 +167,61 @@ function RegularForm({ serviceData, id, locationName, setRegular }) {
                     validate: (files) =>
                       !files || files.length <= 2 || "Max 2 images allowed",
                   })}
+                  className="outline file:bg-gray-700 file:p-2 file:text-white flex-1"
                 />
+                <div className="grid grid-cols-[repeat(auto-fit,minmax(250px,1fr))] gap-2">
+                  {ser.scopes?.map((sc) => (
+                    <div
+                      key={sc.scopeName}
+                      className="mt-2 outline outline-gray-400 p-3 rounded"
+                    >
+                      <h4 className="font-semibold mb-3">{sc.scopeName}</h4>
+                      {sc.consumables?.map((con) => {
+                        const actionVal = watchAction?.action?.[ser.serviceName]?.[sc.scopeName]?.[con.consumableName];
 
-                {ser.scopes?.map((sc) => (
-                  <div
-                    key={sc.scopeName}
-                    className="mt-2 outline outline-gray-400 p-3 rounded"
-                  >
-                    <h4 className="font-medium mb-3">{sc.scopeName}</h4>
-                    {sc.consumables?.map((con) => {
-                      const actionVal = watchAction?.action?.[ser.serviceName]?.[sc.scopeName]?.[con.consumableName];
-
-                      return (
-                        <div
-                          key={con.consumableName}
-                          className="grid grid-cols-5 gap-3 mb-0"
-                        >
-                          <input
-                            defaultValue={con.consumableName}
-                            disabled
-                            className="outline outline-gray-400 p-2 bg-gray-100"
-                          />
-                          <input
-                            defaultValue={con.calibration || 0}
-                            disabled
-                            className="outline outline-gray-400 p-2 bg-gray-100"
-                          />
-                          <input
-                            placeholder="Used"
-                            {...register(`usedCalibration.${ser.serviceName}.${sc.scopeName}.${con.consumableName}`)}
-                            className="outline outline-gray-400 p-2 focus:outline-2 focus:outline-gray-800"
-                          />
-                          <select
-                            {...register(`action.${ser.serviceName}.${sc.scopeName}.${con.consumableName}`)}
-                            className="outline outline-gray-400 p-2 focus:outline-2 focus:outline-gray-800"
+                        return (
+                          <div
+                            key={con.consumableName}
+                            className="flex flex-wrap gap-3 mb-0"
                           >
-                            <option>Done</option>
-                            <option>Not Done</option>
-                            <option>Partial Done</option>
-                          </select>
-                          <textarea
-                            rows={1}
-                            placeholder={actionVal === "Partial Done" ? "Comment Required..." : "comment..."}
-                            {...register(`comment.${ser.serviceName}.${sc.scopeName}.${con.consumableName}`)}
-                            className={`outline p-2 focus:outline-2 focus:outline-gray-800 ${actionVal === "Partial Done"
-                              ? "outline-orange-400 bg-orange-50"
-                              : "outline-gray-400"
-                              }`}
-                          />
-                        </div>
-                      );
-                    })}
-                  </div>
-                ))}
+                            <input
+                              defaultValue={con.consumableName}
+                              disabled
+                              className="flex-1 outline outline-gray-400 p-2 bg-gray-100 col-span-2"
+                            />
+                            <input
+                              defaultValue={con.calibration || 0}
+                              disabled
+                              className="max-w-20 outline outline-gray-400 p-2 bg-gray-100"
+                            />
+                            <input
+                              placeholder="Used"
+                              {...register(`usedCalibration.${ser.serviceName}.${sc.scopeName}.${con.consumableName}`)}
+                              className="max-w-20 outline outline-gray-400 p-2 focus:outline-2 focus:outline-gray-800"
+                            />
+                            <select
+                              {...register(`action.${ser.serviceName}.${sc.scopeName}.${con.consumableName}`)}
+                              className="outline outline-gray-400 p-2 focus:outline-2 focus:outline-gray-800"
+                            >
+                              <option>Done</option>
+                              <option>Not Done</option>
+                              <option>Partial Done</option>
+                            </select>
+                            <textarea
+                              rows={1}
+                              placeholder={actionVal === "Partial Done" ? "Comment Required..." : "comment..."}
+                              {...register(`comment.${ser.serviceName}.${sc.scopeName}.${con.consumableName}`)}
+                              className={`flex-1 outline p-2 focus:outline-2 focus:outline-gray-800 ${actionVal === "Partial Done"
+                                ? "outline-orange-400 bg-orange-50"
+                                : "outline-gray-400"
+                                }`}
+                            />
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ))}
+                </div>
 
                 <div className="text-right mt-5 space-x-3">
                   <button

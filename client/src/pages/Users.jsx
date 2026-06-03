@@ -139,14 +139,19 @@ const Users = () => {
                     </td>
 
                     <td className="px-4 py-3">
-                      <p className="grid ">
+                      {user.role === "Admin" && <p className="grid ">
                         <>
                           {item?.role}
                         </>
                         <span className=" text-xs outline px-2 py-px text-gray-400 rounded-lg whitespace-nowrap w-fit">
                           {item?.client?.name || item?.type || "-"}
                         </span>
-                      </p>
+                      </p>}
+                      {user.role === "ClientAdmin" && <p className="grid ">
+
+                        {item?.role === "ClientAdmin" ? "Admin" : "Employee"}
+
+                      </p>}
                     </td>
 
                     <td className="px-4 py-3">

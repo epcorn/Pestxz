@@ -2,20 +2,21 @@ import React, { useState } from "react";
 import { formatShortDate, getWorkStatus } from "../../utils/helperFunctions";
 
 function ServiceShow({ services }) {
-  // Store the expanded service ID/index in state
+  
   const [expandedServiceId, setExpandedServiceId] = useState(null);
 
+console.log(services)
   return (
     <div className="w-full overflow-auto border border-gray-800 rounded-lg bg-white">
       <div className="min-w-[768px]">
         <div>
           {/* HEADER */}
-          <div className="grid grid-cols-7 bg-gray-300 text-xs md:text-sm font-semibold text-gray-700 border-b *:not-last:border-r *:not-last:border-gray-600 border-gray-300">
-            <div className="px-3 py-3 whitespace-nowrap">Service</div>
+          <div className="grid grid-cols-7 bg-gray-300 text-xs md:text-sm font-bold text-gray-700 border-b *:not-last:border-r *:not-last:border-gray-600 border-gray-300">
+            <div className="px-3 py-3 whitespace-nowrap">Services</div>
             <div className="px-3 py-3 whitespace-nowrap  col-span-3">Upcoming Dates</div>
             <div className="px-3 py-3 whitespace-nowrap">Frequency</div>
             <div className="px-3 py-3 whitespace-nowrap">Last Serviced</div>
-            <div className="px-3 py-3 whitespace-nowrap">Missed</div>
+            <div className="px-3 py-3 whitespace-nowrap">Last Missed</div>
             {/* FIX 1: Explicitly span 3 columns to match body layout */}
           </div>
 
@@ -27,7 +28,7 @@ function ServiceShow({ services }) {
               .at(-1);
 
             const missedServices = getWorkStatus(schedules);
-
+      
             const nextServices = schedules.filter((sc) => {
               if (sc.completed) return false;
               const d = new Date(sc.date);
@@ -35,10 +36,10 @@ function ServiceShow({ services }) {
               today.setHours(0, 0, 0, 0);
               return d >= today;
             });
+            const allSchedules = s.schedule || [];
 
-            // FIX 2: Check if this specific row index is expanded
             const isExpanded = expandedServiceId === index;
-            const nextVisibleServices = isExpanded ? nextServices : nextServices.slice(0, 5);
+            const nextVisibleServices = isExpanded ? allSchedules : nextServices.slice(0, 5);
 
             return (
               <div
@@ -59,10 +60,12 @@ function ServiceShow({ services }) {
                         return (
                           <span
                             key={i}
-                            className={`outline ${n.date === today
-                                ? "text-green-700 outline-green-700 bg-green-200 animate-pulse"
-                                : "outline-gray-300"
-                              } px-2 py-1 rounded text-[11px]`}
+                            className={`outline font-bold 
+                              ${n.date === today
+                              ? "text-green-700 outline-green-700 bg-green-200 animate-pulse " : "outline-gray-300"} 
+                              ${n.date === missedServices[0].date ?"text-red-700 outline-red-700 bg-red-200" :""}
+                              px-2 py-1 rounded text-[11px]`}
+                              
                           >
                             {formatShortDate(n.date)}
                           </span>
@@ -98,8 +101,11 @@ function ServiceShow({ services }) {
                 {/* MISSED */}
                 <div className="px-3 py-3">
                   {missedServices.length > 0 ? (
-                    <span className="bg-red-100 text-red-600 px-2 py-0.5 rounded text-[11px] font-semibold">
-                      {missedServices.length} missed
+                    <span className="bg-red-100 text-red-600 px-2 py-0.5 rounded text-[11px] font-semibold flex flex-col items-center">
+                      <span>{missedServices.length} missed</span>
+                      <span>
+                        {formatShortDate(missedServices?.[0].date)}
+                      </span>
                     </span>
                   ) : (
                     <span className="text-green-600 text-[11px] font-medium">✓ None</span>

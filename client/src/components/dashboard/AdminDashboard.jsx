@@ -2,10 +2,13 @@ import React, { useMemo, useState } from "react";
 import { useSelector } from "react-redux";
 import { useAllClientsQuery } from "../../redux/clientSlice";
 import { useAdminDashboardQuery } from "../../redux/adminSlice";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import QuickPanel from "./QuickPanel";
+import { AssignWork } from "../../pages/Complaints";
 
 function AdminDashboard() {
+  const [assign, setAssign] = useState({ id: "", status: false })
+  const navigate = useNavigate();
   const [toggle, setToggle] = useState(() => sessionStorage.getItem("adminDashboardToggle") || "Complaint");
   const [selectedClient, setSelectedClient] = useState(null);
 
@@ -43,7 +46,7 @@ function AdminDashboard() {
 
   return (
     <section className="p-4 md:p-6 bg-gray-50 min-h-screen space-y-6">
-      
+
       {/* HEADER SECTION AREA */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-200 pb-5">
         <div>
@@ -104,18 +107,16 @@ function AdminDashboard() {
           <button
             type="button"
             onClick={() => handleToggle("Complaint")}
-            className={`px-4 py-1.5 rounded-lg text-xs sm:text-sm font-bold transition-all ${
-              toggle === "Complaint" ? "bg-blue-500 text-white shadow-xs" : "text-gray-400 hover:text-white hover:bg-gray-700"
-            }`}
+            className={`px-4 py-1.5 rounded-lg text-xs sm:text-sm font-bold transition-all ${toggle === "Complaint" ? "bg-blue-500 text-white shadow-xs" : "text-gray-400 hover:text-white hover:bg-gray-700"
+              }`}
           >
             Complaints
           </button>
           <button
             type="button"
             onClick={() => handleToggle("Regular")}
-            className={`px-4 py-1.5 rounded-lg text-xs sm:text-sm font-bold transition-all ${
-              toggle === "Regular" ? "bg-blue-500 text-white shadow-xs" : "text-gray-400 hover:text-white hover:bg-gray-700"
-            }`}
+            className={`px-4 py-1.5 rounded-lg text-xs sm:text-sm font-bold transition-all ${toggle === "Regular" ? "bg-blue-500 text-white shadow-xs" : "text-gray-400 hover:text-white hover:bg-gray-700"
+              }`}
           >
             Services
           </button>
@@ -123,12 +124,13 @@ function AdminDashboard() {
 
         {/* SCROLLABLE RESPONSIVE DATA GRID */}
         <div className="overflow-x-auto">
-          <div className="min-w-[900px] grid grid-cols-6 gap-4 px-4 py-3 bg-gray-50 border-b text-xs font-bold uppercase text-gray-400 tracking-wider">
+          <div className="min-w-[900px] grid grid-cols-8 gap-4 px-4 py-3 bg-gray-50 border-b text-xs font-bold uppercase text-gray-400 tracking-wider">
             <p>Number</p>
+            <p>Assigned to</p>
             <p>Date</p>
             <p>Type</p>
             <p>{isRegular ? "Serviced By" : "Raised By"}</p>
-            <p>Client</p>
+            <p className="col-span-2">Client</p>
             <p className="text-center">Status</p>
           </div>
 
@@ -140,15 +142,34 @@ function AdminDashboard() {
                 const latestUpdate = latest?.complaintUpdate?.at(-1);
                 const regularUser = latest?.regularService?.[0]?.userName;
                 const regularAction = latest?.regularService?.[0]?.action;
-
+                console.log(latest)
                 return (
-                  <Link
+                  <div
                     key={latest._id}
-                    to={isRegular ? `/location/${latest?.location?._id}` : `/complaint/${latest?._id}`}
-                    className="grid grid-cols-6 gap-4 px-4 py-4 text-sm items-center hover:bg-gray-50/80 transition-colors"
+                    onClick={() => navigate(isRegular ? `/location/${latest?.location?._id}` : `/complaint/${latest?._id}`)}
+                    className="grid grid-cols-8 gap-4 px-4 py-4 text-sm items-center hover:bg-gray-50/80 transition-colors"
                   >
-                    <div className="font-bold text-blue-600">
+                    <div className="font-bold text-blue-600" >
                       {isRegular ? i + 1 : latest?.complaintDetails?.number || "—"}
+                    </div>
+
+                    <div>
+                      <div className=" whitespace-nowrap relative"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setAssign((prev) =>
+                            prev.id === latest?._id && prev.status
+                              ? { id: "", status: false }
+                              : { id: latest?._id, status: true }
+                          );
+                        }}>
+                        <span className="block text-sm font-semibold">{latest?.complaintDetails?.assignedTo?.userName || "Assign"}</span>
+                        <span className="px-2 py-0.5 rounded bg-gray-100 text-gray-600 text-xs font-bold capitalize tracking-wide border border-gray-200">{latest?.complaintDetails?.assignedBy?.userName} </span>
+                        {assign.id === latest?._id && assign.status && <AssignWork
+                          complaintId={latest?._id}
+                          currentAssgndVal={{ label: latest?.complaintDetails?.assignedTo?.userName, value: latest?.complaintDetails?.assignedTo?.userName }}
+                          show={setAssign} />}
+                      </div>
                     </div>
 
                     <div className="text-gray-600 text-xs">
@@ -166,8 +187,8 @@ function AdminDashboard() {
                       {isRegular ? regularUser || "—" : latest?.complaintDetails?.status === "Open" ? latest?.complaintDetails?.userName : latestUpdate?.userName || "—"}
                     </div>
 
-                    <div>
-                      <span className="px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 text-xs font-semibold border border-slate-200">
+                    <div className="col-span-2">
+                      <span className="px-2.5 py-0.5 rounded-full text-sm">
                         {latest?.clientName || latest?.complaintDetails?.clientName || "—"}
                       </span>
                     </div>
@@ -178,15 +199,14 @@ function AdminDashboard() {
                           {regularAction || "Done"}
                         </span>
                       ) : (
-                        <span className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs font-bold ring-1 ring-inset uppercase tracking-wide ${
-                          latest?.complaintDetails?.status === "Open" ? "bg-red-50 text-red-700 ring-red-600/10" :
+                        <span className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs font-bold ring-1 ring-inset uppercase tracking-wide ${latest?.complaintDetails?.status === "Open" ? "bg-red-50 text-red-700 ring-red-600/10" :
                           latest?.complaintDetails?.status === "In Progress" ? "bg-amber-50 text-amber-800 ring-amber-600/10" : "bg-green-50 text-green-700 ring-green-600/10"
-                        }`}>
+                          }`}>
                           {latest?.complaintDetails?.status || "—"}
                         </span>
                       )}
                     </div>
-                  </Link>
+                  </div>
                 );
               })
             ) : (
