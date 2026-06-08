@@ -142,7 +142,7 @@ const Sidebar = () => {
       </nav>
 
       <aside
-        className={`fixed top-[4.5rem] md:top-[4.9rem] lg:top-0 left-0 w-60 z-50 h-[90dvh] md:h-[90dvh] lg:h-dvh transition-transform duration-300 border-r-2 bg-slate-800 border-gray-500 ${show
+        className={`fixed top-[4.5rem] md:top-[4.9rem] lg:top-0 left-0 w-60 z-50 h-[calc(100dvh-4.5rem)] md:h-[calc(100dvh-4.5rem)] lg:h-dvh transition-transform duration-300 border-r-2 bg-slate-800 border-gray-500 ${show
           ? "translate-x-0"
           : "-translate-x-full lg:translate-x-0"
           }`}

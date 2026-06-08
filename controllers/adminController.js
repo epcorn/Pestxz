@@ -98,8 +98,8 @@ export const removeFrequency = async (req, res) => {
   }
 };
 export const addService = async (req, res) => {
-  const { serviceName,scopes } = req.body;
-  console.log(serviceName,scopes);
+  const { serviceName, scopes } = req.body;
+  console.log(serviceName, scopes);
   try {
     if (!req.user.rights.addData)
       return res.status(403).json({ msg: "You are not allowed to Add data" });
@@ -112,9 +112,7 @@ export const addService = async (req, res) => {
       },
     });
     if (service)
-      return res
-        .status(400)
-        .json({ msg: `${serviceName} already exists` });
+      return res.status(400).json({ msg: `${serviceName} already exists` });
 
     const filteredScopes =
       scopes?.filter((scope) => scope.scopeName?.trim() !== "") || [];
@@ -273,7 +271,9 @@ export const deleteService = async (req, res) => {
 
 export const clientAdminDashboard = async (req, res) => {
   try {
-    const client = await Client.findById(req.user.client).select("-adminPass -adminName");
+    const client = await Client.findById(req.user.client).select(
+      "-adminPass -adminName",
+    );
     if (!client) return res.status(404).json({ msg: "Client not found" });
 
     const complaints = await Service.find({
@@ -283,14 +283,24 @@ export const clientAdminDashboard = async (req, res) => {
       .sort("-updatedAt")
       .populate({ path: "location", select: "floor subLocation location" });
 
-    const complaintData = [complaints.length, 0, 0, 0];
+    const complaintData = [
+      {
+        allcomplaints: complaints.length,
+        Open: 0,
+        "In Progress": 0,
+        Close: 0,
+        reopenCount: 0,
+      },
+    ];
 
     for (let complaint of complaints) {
-      if (complaint.complaintDetails.status === "Open") complaintData[1] += 1;
+      if (complaint.complaintDetails.status === "Open") complaintData.open += 1;
       else if (complaint.complaintDetails.status === "In Progress")
-        complaintData[2] += 1;
+        complaintData["In Progress"] += 1;
       else if (complaint.complaintDetails.status === "Close")
-        complaintData[3] += 1;
+        complaintData.Close += 1;
+      else if (complaint.complaintDetails.reopenCount > 0)
+        complaintData.reopenCount += 1;
     }
 
     return res.json({

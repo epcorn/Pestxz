@@ -124,11 +124,10 @@ function AdminDashboard() {
 
         {/* SCROLLABLE RESPONSIVE DATA GRID */}
         <div className="overflow-x-auto">
-          <div className="min-w-[900px] grid grid-cols-8 gap-4 px-4 py-3 bg-gray-50 border-b text-xs font-bold uppercase text-gray-400 tracking-wider">
+          <div className={`min-w-[900px] grid ${isRegular ? "grid-cols-6" : "grid-cols-7"} gap-4 px-4 py-3 bg-gray-50 border-b text-xs font-bold uppercase text-gray-400 tracking-wider`}>
             <p>Number</p>
-            <p>Assigned to</p>
+            {!isRegular && <p>Assigned to</p>}
             <p>Date</p>
-            <p>Type</p>
             <p>{isRegular ? "Serviced By" : "Raised By"}</p>
             <p className="col-span-2">Client</p>
             <p className="text-center">Status</p>
@@ -142,18 +141,17 @@ function AdminDashboard() {
                 const latestUpdate = latest?.complaintUpdate?.at(-1);
                 const regularUser = latest?.regularService?.[0]?.userName;
                 const regularAction = latest?.regularService?.[0]?.action;
-                console.log(latest)
                 return (
                   <div
                     key={latest._id}
                     onClick={() => navigate(isRegular ? `/location/${latest?.location?._id}` : `/complaint/${latest?._id}`)}
-                    className="grid grid-cols-8 gap-4 px-4 py-4 text-sm items-center hover:bg-gray-50/80 transition-colors"
+                    className={`grid ${isRegular?"grid-cols-6": "grid-cols-7"} gap-4 px-4 py-4 text-sm items-center hover:bg-gray-50/80 transition-colors `}
                   >
                     <div className="font-bold text-blue-600" >
                       {isRegular ? i + 1 : latest?.complaintDetails?.number || "—"}
                     </div>
 
-                    <div>
+                    {latest.type === "Complaint" && <div>
                       <div className=" whitespace-nowrap relative"
                         onClick={(e) => {
                           e.stopPropagation();
@@ -163,24 +161,22 @@ function AdminDashboard() {
                               : { id: latest?._id, status: true }
                           );
                         }}>
-                        <span className="block text-sm font-semibold">{latest?.complaintDetails?.assignedTo?.userName || "Assign"}</span>
-                        <span className="px-2 py-0.5 rounded bg-gray-100 text-gray-600 text-xs font-bold capitalize tracking-wide border border-gray-200">{latest?.complaintDetails?.assignedBy?.userName} </span>
+                        <span className="block text-sm font-semibold">{latest?.complaintDetails?.assignedTo?.userName || <span className="text-gray-600">Assign</span>}</span>
+                        {latest?.complaintDetails?.assignedBy?.userName && <span
+                          className="px-2 py-0.5 rounded bg-gray-100 text-gray-600 text-xs font-bold capitalize tracking-wide border border-gray-200">
+                          {latest?.complaintDetails?.assignedBy?.userName}
+                        </span>}
+
                         {assign.id === latest?._id && assign.status && <AssignWork
                           complaintId={latest?._id}
                           currentAssgndVal={{ label: latest?.complaintDetails?.assignedTo?.userName, value: latest?.complaintDetails?.assignedTo?.userName }}
                           show={setAssign} />}
                       </div>
-                    </div>
+                    </div>}
 
                     <div className="text-gray-600 text-xs">
                       <p className="font-semibold">{new Date(latest.createdAt).toLocaleDateString()}</p>
                       <p className="text-gray-400 mt-0.5">{new Date(latest.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</p>
-                    </div>
-
-                    <div>
-                      <span className="px-2 py-0.5 rounded bg-gray-100 text-gray-600 text-xs font-bold uppercase tracking-wide border border-gray-200">
-                        {latest?.type}
-                      </span>
                     </div>
 
                     <div className="font-medium text-gray-700 truncate">

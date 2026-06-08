@@ -41,7 +41,6 @@ const ClientDashboard = () => {
       sessionStorage.setItem("ClientDashboardToggle", e.target.value)
     }
   }
-  console.log(clientDash)
   return (
     <section className="p-4 md:px-8 bg-slate-50/50 min-h-screen font-sans">
       {isLoading ? (
@@ -76,7 +75,7 @@ const ClientDashboard = () => {
           </div>
 
           {/* Stat Cards */}
-          <div className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-5 grid grid-cols-2 gap-5 lg:grid-cols-4">
             {stats.map((item, index) => (
               <div key={item.id} className="bg-white rounded-xl p-5 border border-slate-100 shadow-sm hover:shadow-md transition-shadow duration-200">
                 <div className="flex items-center justify-between">
@@ -98,12 +97,12 @@ const ClientDashboard = () => {
 
           {/* Table Section */}
           <div className="mt-12">
-            <div className="flex items-center justify-between mb-5">
-              <div>
+            <div className="flex flex-col md:flex-row md:items-center  md:justify-between mb-5">
+              <div className="order-2 md:order-1">
                 <h4 className="text-lg font-bold text-slate-800">Latest {toggle === "Regular" ? "Regular service" : toggle} Update</h4>
                 <p className="text-xs text-slate-400 mt-0.5">Real-time ticket logging status</p>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="ml-auto order-1 md:order-2 flex items-center gap-2">
                 {["Complaint", "Regular"].map((type) => (
                   <button
                     key={type}
@@ -111,10 +110,9 @@ const ClientDashboard = () => {
                       setToggle(type);
                       sessionStorage.setItem("ClientDashboardToggle", type);
                     }}
-                    className={`text-xs font-bold px-3 py-1.5 rounded tracking-wider uppercase transition-colors duration-150
-        ${toggle === type
-                        ? "bg-cyan-600 text-white"
-                        : "bg-slate-200 text-slate-600 hover:bg-slate-300"
+                    className={`text-xs font-bold px-3 py-1.5 rounded tracking-wider uppercase transition-colors duration-150 ${toggle === type
+                      ? "bg-cyan-600 text-white"
+                      : "bg-slate-200 text-slate-600 hover:bg-slate-300"
                       }`}
                   >
                     {type === "Regular" ? "Regular Service" : type}

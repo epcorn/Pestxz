@@ -4,8 +4,6 @@ import { formatShortDate, getWorkStatus } from "../../utils/helperFunctions";
 function ServiceShow({ services }) {
 
   const [expandedServiceId, setExpandedServiceId] = useState(null);
-
-  console.log(services)
   return (
     <div className="w-full overflow-auto border border-gray-800 rounded-lg bg-white">
       <div className="min-w-[768px]">
@@ -80,7 +78,7 @@ function ServiceShow({ services }) {
                           onClick={() => setExpandedServiceId(isExpanded ? null : index)}
                           className="ml-1 text-[11px] text-blue-600 hover:text-blue-800 font-semibold underline cursor-pointer"
                         >
-                          {isExpanded ? "Show Less" : `+${nextServices?.length - 5} More`}
+                          {isExpanded ? "Show Less" : ` Show All`}
                         </button>
                       )}
                     </>

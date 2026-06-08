@@ -236,6 +236,24 @@ export const sendEmail = async ({
   }
 };
 
+export const removeOldQr = async (url) => {
+  const parts = url.split("/upload/");
+  if (parts.length < 2) return null;
+
+  const pathWithVersion = parts[1].replace(/^v\d+\//, "");
+  const publicId = pathWithVersion.split(".").slice(0, -1).join(".");
+
+  try {
+    const result = await cloudinary.uploader.destroy(publicId, {
+      invalidate: true,
+    });
+    
+    return result;
+  } catch (error) {
+    console.error("Error deleting assset: ", error);
+  }
+};
+
 // GENERATE SCHEDULE
 export const generateSchedule = (start, end, frequency) => {
   const today = new Date();

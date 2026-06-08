@@ -21,6 +21,7 @@ import ServiceShow from "../components/single_location/ServiceShow";
 import LastRecentService from "../components/single_location/LastRecentService";
 import { IoIosArrowDown } from "react-icons/io";
 import { useGetSingleUserQuery } from "../redux/userSlice";
+import AllPremise from "../components/single_location/AllPremise";
 
 
 const SingleLocation = () => {
@@ -49,15 +50,21 @@ const SingleLocation = () => {
       )}
       {data && (
         <div>
-          <div>
-            <h2 className="text-center text-2xl mt-2 mb-5">
-              <span>Hello, </span>
-              <strong>{DBUser?.name}</strong>
+          <div className="mb-6 text-center">
+            <h2 className="text-2xl font-light text-slate-800">
+              Hello, <span className="capitalize font-semibold text-sky-700">{user.name}</span>
             </h2>
+            <span className="inline-block mt-1 px-2.5 py-0.5 text-xs font-medium tracking-wide bg-slate-100 text-slate-600 rounded-full border border-slate-200">
+              {user.role}
+            </span>
           </div>
           <div className="py-1 border-b border-neutral-200">
             {/* Location Details */}
             <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm text-neutral-700">
+              <div>
+                <span className="font-bold text-neutral-900">Client Name:</span>{" "}
+                {data.client}
+              </div>
               <div>
                 <span className="font-bold text-neutral-900">Floor:</span>{" "}
                 {data.location.floor}
@@ -66,7 +73,7 @@ const SingleLocation = () => {
                 <span className="font-bold text-neutral-900">Location:</span>{" "}
                 {data.location.location}
               </div>
-              <div className="col-span-2">
+              <div className="">
                 <span className="font-bold text-neutral-900">
                   Sub Location:
                 </span>{" "}
@@ -183,99 +190,6 @@ const SingleLocation = () => {
           {/* last regular service */}
           {user.type === "PestEmployee" && (
             <div>
-              {data.regularService?.regularService?.length > 0 && (
-                <>
-                  <h6 className="text-base font-semibold text-neutral-900 mb-3">
-                    Last Regular Service
-                  </h6>
-
-                  <div className="my-1 overflow-hidden rounded-lg border border-neutral-200 bg-white shadow-sm">
-                    {/* DESKTOP HEADER (Hidden on Mobile) */}
-                    <div className="hidden md:grid grid-cols-14 bg-neutral-50 border-b border-neutral-200 text-xs font-bold uppercase tracking-wider text-neutral-500 py-3 px-4 gap-4 text-center items-center">
-                      <div className="col-span-2 text-left">Date</div>
-                      <div className="col-span-2">Image</div>
-                      <div className="col-span-6 text-left">Service Details</div>
-                      <div className="col-span-2">Attended By</div>
-                      <div className="col-span-2">status</div>
-                    </div>
-
-                    {/* SINGLE INTEGRATED LOOP GENERATING CONTROLLED DATA ROWS */}
-                    <div className="divide-y divide-neutral-200">
-                      {data.regularService.regularService.map((item, index) => (
-                        <div
-                          key={item._id || index}
-                          className="grid grid-cols-1 md:grid-cols-14 gap-3 md:gap-4 items-center py-4 px-4 text-sm text-neutral-700 hover:bg-neutral-50 transition-colors"
-                        >
-                          {/* 1. Date (Shows only once per entry row) */}
-                          <div className="col-span-1 md:col-span-2 flex justify-between md:block items-center">
-                            <span className="md:hidden text-xs font-semibold text-neutral-400 uppercase">Date</span>
-                            <span className="text-neutral-500 md:text-neutral-700">
-                              {dateFormat(data.regularService?.createdAt)}
-                            </span>
-                          </div>
-
-                          {/* 2. Image Button Trigger */}
-                          <div className="col-span-1 md:col-span-2 flex justify-between md:block md:text-center items-center">
-                            <span className="md:hidden text-xs font-semibold text-neutral-400 uppercase">Image</span>
-                            <div>
-                              {item.image ? (
-                                <>
-                                  <Button
-                                    label="Show"
-                                    small
-                                    height="h-7"
-                                    color="bg-green-600 text-xs text-white px-3 py-0.5 rounded transition-colors hover:bg-green-700"
-                                    onClick={() => dispatch(toggleModal({ name: `PEImage-${index}`, status: true }))}
-                                  />
-                                  {isModalOpen[`PEImage-${index}`] && (
-                                    <ImagesModal image={item.image} name={`PEImage-${index}`} />
-                                  )}
-                                </>
-                              ) : (
-                                <span className="text-neutral-400 text-xs">—</span>
-                              )}
-                            </div>
-                          </div>
-
-                          {/* 3. Pest / Service Details Inline Track */}
-                          <div className="col-span-1 md:col-span-6 flex flex-col md:block items-start justify-between min-w-0">
-                            <span className="md:hidden text-xs font-semibold text-neutral-400 uppercase mb-1">Service Details</span>
-                            <div className="flex flex-wrap items-center gap-1.5 text-neutral-700 w-full">
-                              <span className="font-semibold text-neutral-900">{item.serviceName}</span>
-                              <span className="text-neutral-300">|</span>
-                              <span>{item.scopeName}</span>
-                              <span className="text-neutral-300">•</span>
-                              <span className="text-neutral-500">{item.consumableName}</span>
-                              <span className="text-neutral-300">•</span>
-                              <span className="text-xs bg-neutral-100 text-neutral-600 px-1.5 py-0.5 rounded border border-neutral-200">
-                                Cal: {item.calibration} ({item.usedCalibration})
-                              </span>
-                            </div>
-                          </div>
-
-                          {/* 4. Attended By Column */}
-                          <div className="col-span-1 md:col-span-2 flex justify-between md:block md:text-center items-center pt-2 md:pt-0 border-t md:border-none border-neutral-100">
-                            <span className="md:hidden text-xs font-semibold text-neutral-400 uppercase">Attended By</span>
-                            <span className="inline-flex items-center rounded-full bg-neutral-50 px-2.5 py-0.5 text-xs font-medium text-neutral-600 border border-neutral-200">
-                              {item.userName || data.regularService.regularService[0]?.userName}
-                            </span>
-                          </div>
-                          {/* status */}
-                          <div className="col-span-1 md:col-span-2 flex justify-between md:block md:text-center items-center pt-2 md:pt-0 border-t md:border-none border-neutral-100">
-                            <span className="md:hidden text-xs font-semibold text-neutral-400 uppercase">Status</span>
-                            <span className="inline-flex items-center rounded-full bg-neutral-50 px-2.5 py-0.5 text-xs font-medium text-neutral-600 border border-neutral-200">
-                              {item.action}
-                            </span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </>
-              )}
-
-
-
               {/* Form / Button Action Container */}
               <div className="flex justify-center items-center mt-5 pt-2">
                 <div className="w-full bg-neutral-50 rounded-xl border border-neutral-200 shadow-inner">
@@ -287,6 +201,7 @@ const SingleLocation = () => {
                 <h2 className="font-bold text-lg px-2">
                   All Premise Services
                 </h2>
+                <AllPremise data={data}/>
               </div> */}
             </div>
           )}

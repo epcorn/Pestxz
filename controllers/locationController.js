@@ -6,6 +6,7 @@ import {
   generateSchedule,
   qrCodeGenerator,
   qrCodeGeneratorSVG,
+  removeOldQr,
   uploadFile,
 } from "../utils/helperFunction.js";
 import fs from "fs";
@@ -153,7 +154,6 @@ export const addLocation = async (req, res) => {
 export const getAllLocations = async (req, res) => {
   const { id } = req.params;
 
-  console.log(id);
   try {
     let clientId;
     // CASE 1: ClientEmployee → get client from token
@@ -163,6 +163,7 @@ export const getAllLocations = async (req, res) => {
       const location = await Location.findById(id).select("client");
       if (location) {
         clientId = location.client;
+        console.log("getAllLocations Id ln-156:", clientId);
       } else {
         clientId = id;
       }
@@ -197,6 +198,8 @@ export const updateLocation = async (req, res) => {
     if (!location) {
       return res.status(404).json({ msg: "Location not found" });
     }
+
+    await removeOldQr(location.qr);
 
     const client = await Client.findByIdSafe(location.client);
     const contractStart = new Date(client.startDate);
@@ -391,6 +394,12 @@ export const updateLocation = async (req, res) => {
           }
         : null;
 
+    const qrData = await qrCodeGenerator({
+      link: `https://pestxz.onrender.com/location/${locationId}`,
+      floor: req.body.floor,
+      location: `${req.body.location}, ${req.body.subLocation}`,
+    });
+
     const updatedLocation = await Location.findByIdAndUpdate(
       id,
       {
@@ -399,6 +408,7 @@ export const updateLocation = async (req, res) => {
           subLocation: req.body.subLocation,
           location: req.body.location,
           service: formattedServices,
+          qr: qrData,
           product: Array.isArray(req.body.product) ? req.body.product : [],
         },
         ...(changeEntry && { $push: { changes: changeEntry } }),
