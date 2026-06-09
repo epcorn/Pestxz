@@ -1,6 +1,12 @@
-import { FaBug } from "react-icons/fa";
+import { RiErrorWarningLine } from "react-icons/ri";
+import { IoMdTime } from "react-icons/io";
+import { GrInProgress } from "react-icons/gr";
+import { GoIssueReopened } from "react-icons/go";
+import { AiOutlineFileDone } from "react-icons/ai";
+
 import { IoLockClosed, IoLockOpen } from "react-icons/io5";
 import { TbProgressAlert } from "react-icons/tb";
+
 import { useSelector } from "react-redux";
 import { useAdminDashboardQuery, useClientAdminDashboardQuery } from "../../redux/adminSlice";
 import Loading from "../Loading";
@@ -8,16 +14,26 @@ import AlertMessage from "../AlertMessage";
 import ComplaintTable from "../ComplaintTable";
 import { useGetSingleClientQuery } from "../../redux/clientSlice";
 import { useEffect, useMemo, useState } from "react";
+import { BsGear } from "react-icons/bs";
+import PieChart from "./PieChart";
+import MultiLineChart from "./MultiLineChart";
+import { clientAdminStatus } from "../../utils/constData";
 
 const stats = [
-  { id: 1, name: "Total Complaints", icon: <FaBug className="w-6 h-6" />, bg: "bg-slate-400" },
-  { id: 2, name: "Open", icon: <IoLockOpen className="w-6 h-6" />, bg: "bg-blue-600" },
-  { id: 3, name: "In Progress", icon: <TbProgressAlert className="h-6 w-6" />, bg: "bg-amber-500" },
-  { id: 4, name: "Closed", icon: <IoLockClosed className="w-6 h-6" />, bg: "bg-emerald-600" },
+  { id: 1, name: "Total Complaints", value: "allcomplaints", icon: <RiErrorWarningLine className="w-4 h-4" />, bg: "bg-slate-400", bd: "border-l-slate-600", type: "com" },
+  { id: 2, name: "Open Complaints", value: "Open", icon: <IoMdTime className="w-4 h-4" />, bg: "bg-blue-600", bd: "border-l-blue-600", type: "com", text: "text-blue-700" },
+  { id: 3, name: "In Progress", value: "In Progress", icon: <GrInProgress className="h-4 w-4" />, bg: "bg-amber-500", bd: "border-l-amber-600", type: "com", text: "text-amber-700" },
+  { id: 4, name: "Closed Complaints", value: "Close", icon: <IoLockClosed className="w-4 h-4" />, bg: "bg-emerald-600", bd: "border-l-emerald-600", type: "com", text: "text-emerald-700" },
+  { id: 5, name: "Reopened Complaints", value: "reopenCount", icon: <GoIssueReopened className="w-4 h-4" />, bg: "bg-red-600", bd: "border-l-red-600", type: "com", text: "text-red-700" },
+  { id: 6, name: "Services Completed", value: "completedServices", icon: <AiOutlineFileDone className="w-5 h-5" />, bg: "bg-blue-600", bd: "border-l-blue-600", type: "reg", text: "text-green-700" },
 ];
 
+
+
 const ClientDashboard = () => {
-  const [toggle, setToggle] = useState(sessionStorage.getItem("ClientDashboardToggle") || "Complaint")
+  const [toggle, setToggle] = useState(sessionStorage.getItem("ClientDashboardToggle") || "Complaint");
+  const [statusFilter, setStatusFilter] = useState("")
+
   const { user } = useSelector((store) => store.helper);
 
   const { data: adminDash = { latestComplaints: [], complaintData: [] }, isLoading, error } =
@@ -29,11 +45,27 @@ const ClientDashboard = () => {
 
   const { data: client } = useGetSingleClientQuery(user?.client, { skip: !user?.client });
 
+  console.log(adminDash)
   // Filter data efficiently using useMemo
   const complaints = useMemo(() => {
+    if (statusFilter.length > 0) {
+      return clientDash?.all.filter(cl => cl.complaintDetails.status === statusFilter)
+    }
     if (!clientDash?.latestComplaints) return [];
+
     return clientDash.latestComplaints.filter(lat => lat.type === toggle);
-  }, [toggle, clientDash]);
+
+  }, [toggle, clientDash, statusFilter]);
+
+  console.log(complaints, statusFilter.length)
+  const handleCards = (value) => {
+    if (["Close", "In Progress", "Open"].includes(value)) {
+      // const shows = clientDash.all.filter(cl => cl.complaintDetails.status === value)
+      setStatusFilter(value)
+      setToggle("Complaint")
+      console.log(value)
+    }
+  }
 
   const handleChange = (e) => {
     if (e.target.value) {
@@ -41,6 +73,7 @@ const ClientDashboard = () => {
       sessionStorage.setItem("ClientDashboardToggle", e.target.value)
     }
   }
+
   return (
     <section className="p-4 md:px-8 bg-slate-50/50 min-h-screen font-sans">
       {isLoading ? (
@@ -51,7 +84,7 @@ const ClientDashboard = () => {
         <div className="max-w-7xl mx-auto">
 
           {/* Design 2: Symmetrical Split Header */}
-          <div className="mb-8 flex flex-col md:flex-row md:items-end md:justify-between gap-4 border-b border-slate-200 pb-6">
+          <div className="mb-3 flex flex-col md:flex-row md:items-end md:justify-between gap-4 border-b border-slate-200 pb-3">
             <div>
               <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">
                 Welcome back, {user?.name}
@@ -60,47 +93,54 @@ const ClientDashboard = () => {
                 Here is your dashboard overview for today.
               </p>
             </div>
-
-            {/* Clean Right-Aligned Client Name (No Box) */}
-            {client?.name && (
-              <div className="md:text-right border-l-4 md:border-l-0 md:border-r-4 border-cyan-600 pl-4 md:pl-0 md:pr-4 py-1">
-                <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">
-                  Enterprise Account
-                </p>
-                <h2 className="text-xl font-extrabold text-cyan-900 tracking-wide">
-                  {client.name}
-                </h2>
-              </div>
-            )}
           </div>
 
           {/* Stat Cards */}
-          <div className="mt-5 grid grid-cols-2 gap-5 lg:grid-cols-4">
+          <div className="gap-3 flex flex-wrap">
             {stats.map((item, index) => (
-              <div key={item.id} className="bg-white rounded-xl p-5 border border-slate-100 shadow-sm hover:shadow-md transition-shadow duration-200">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm font-semibold text-slate-500 truncate">
-                    {item.name}
-                  </p>
-                  <div className={`${item.bg} p-2.5 rounded-lg text-white`}>
-                    {item.icon}
+              <div key={item.id} className={`${item.type === "com" ? "bg-red-100" : "bg-blue-100"} ${statusFilter === item.value ? "outline-2 shadow-2xl -translate-y-1" : ""} flex-1 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 border-l-4 ${item?.bd}`} onClick={() => handleCards(item.value)}>
+                <div className="w-full py-3 px-3">
+                  <div className="text-sm font-semibold text-slate-500 truncate text-center mb-3 flex items-center gap-2">
+                    <div className={`${item.bg} p-1 rounded-lg text-white`}> {item.icon} </div>
+                    <span>{item.name} </span>
+                  </div>
+                  <div className="text-center">
+                    <h3 className={`text-3xl font-bold tracking-tight ${item.text}`}>
+                      {adminDash?.dashBoardData?.[item.value]}
+                    </h3>
                   </div>
                 </div>
-                <div className="mt-4">
-                  <h3 className="text-3xl font-bold text-slate-900 tracking-tight">
-                    {adminDash?.complaintData?.[index] ?? 0}
-                  </h3>
-                </div>
+
               </div>
             ))}
           </div>
+
+          <div className="flex my-2 gap-5 items-stretch w-full p-4 overflow-x-auto">
+
+            {/* Line Chart Container (Takes up remaining space) */}
+            <div className="relative flex-1 min-w-[600px] bg-neutral-200 border border-gray-200 p-4 h-full rounded-2xl shadow">
+              <MultiLineChart values={adminDash?.monthlyData} />
+            </div>
+
+            {/* Pie Chart Container (Fixed, tight fit) */}
+            <div className="relative w-full md:w-[350px] flex items-center justify-center border border-gray-300 p-4 rounded-2xl bg-neutral-200 shadow">
+              <PieChart values={adminDash?.dashBoardData} />
+            </div>
+
+          </div>
+
 
           {/* Table Section */}
           <div className="mt-12">
             <div className="flex flex-col md:flex-row md:items-center  md:justify-between mb-5">
               <div className="order-2 md:order-1">
-                <h4 className="text-lg font-bold text-slate-800">Latest {toggle === "Regular" ? "Regular service" : toggle} Update</h4>
-                <p className="text-xs text-slate-400 mt-0.5">Real-time ticket logging status</p>
+                <h4 className="text-lg font-bold text-slate-800">Latest {toggle === "Regular" ? "Regular service" : "Complaints"} Update</h4>
+                <div>
+                  <p className="text-xs text-slate-400 mt-0.5">Real-time ticket logging status</p>
+                  {statusFilter && <div className="text-sm text-gray-700">
+                    Filtered By: <span className="font-semibold">{statusFilter}</span> <span className="underline text-cyan-600 text-sm" onClick={() => setStatusFilter("")}>Clear</span>
+                  </div>}
+                </div>
               </div>
               <div className="ml-auto order-1 md:order-2 flex items-center gap-2">
                 {["Complaint", "Regular"].map((type) => (
@@ -108,6 +148,7 @@ const ClientDashboard = () => {
                     key={type}
                     onClick={() => {
                       setToggle(type);
+                      setStatusFilter('')
                       sessionStorage.setItem("ClientDashboardToggle", type);
                     }}
                     className={`text-xs font-bold px-3 py-1.5 rounded tracking-wider uppercase transition-colors duration-150 ${toggle === type

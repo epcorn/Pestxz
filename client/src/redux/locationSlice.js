@@ -55,6 +55,13 @@ export const locationSlice = apiSlice.injectEndpoints({
         url: `/api/location/backfill-schedules`,
       }),
     }),
+    makeQrDocx: builder.mutation({
+      query: (data) => ({
+        url: `/api/location/makeQrDoc`,
+        method: "POST",
+        body: data,
+      }),
+    }),
   }),
 });
 
@@ -64,6 +71,7 @@ export const {
   useGetSingleLocationQuery,
   useUpdateLocationMutation,
   useDeleteLocationMutation,
+  useMakeQrDocxMutation,
   useSingleLocationDetailsQuery,
   useBackFillSchedulesQuery,
   useQrCounterMutation,

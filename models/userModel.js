@@ -13,6 +13,7 @@ const userSchema = new mongoose.Schema(
       enum: ["Admin", "PestEmployee", "ClientEmployee"],
     },
     department: { type: String, required: false },
+    qr: { type: String, default: "" },
     role: {
       type: String,
       required: true,

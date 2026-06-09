@@ -270,42 +270,108 @@ export const deleteService = async (req, res) => {
 };
 
 export const clientAdminDashboard = async (req, res) => {
+  const { id } = req.body;
   try {
     const client = await Client.findById(req.user.client).select(
       "-adminPass -adminName",
     );
     if (!client) return res.status(404).json({ msg: "Client not found" });
 
-    const complaints = await Service.find({
-      type: "Complaint",
-      client: req.user.client,
-    })
-      .sort("-updatedAt")
+    // ── Single query, split in JS ─────────────────────────────────
+    const services = await Service.find({ client: id || req.user.client })
+      .sort("updatedAt")
       .populate({ path: "location", select: "floor subLocation location" });
 
-    const complaintData = [
-      {
-        allcomplaints: complaints.length,
+    const complaints = services.filter((s) => s.type === "Complaint");
+    const regulars = services.filter((s) => s.type === "Regular");
+
+    const today = new Date().toISOString().split("T")[0];
+
+    // ── Overall dashboard counts ──────────────────────────────────
+    const dashBoardData = {
+      allcomplaints: complaints.length,
+      Open: 0,
+      "In Progress": 0,
+      Close: 0,
+      reopenCount: 0,
+      completedServices: 0,
+    };
+
+    complaints.forEach((complaint) => {
+      const { status, reopenCount } = complaint.complaintDetails;
+      if (status === "Open") dashBoardData.Open += 1;
+      else if (status === "In Progress") dashBoardData["In Progress"] += 1;
+      else if (status === "Close") dashBoardData.Close += 1;
+      if (reopenCount >= 1) dashBoardData.reopenCount += 1;
+    });
+
+    regulars.forEach((regular) => {
+      regular.regularService.forEach((reg) => {
+        reg.schedule.forEach((sch) => {
+          if (sch.status === "Done") dashBoardData.completedServices++;
+        });
+      });
+    });
+
+    // ── Build month keys from client creation date to today ───────
+    const startDate = new Date(client.createdAt);
+    const endDate = new Date();
+
+    const monthMap = {}; // key: "YYYY-MM"
+
+    // Generate all months between client start and now
+    const cursor = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
+    while (cursor <= endDate) {
+      const key = `${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, "0")}`;
+      monthMap[key] = {
+        month: key,
+        complaints: 0,
         Open: 0,
         "In Progress": 0,
         Close: 0,
-        reopenCount: 0,
-      },
-    ];
-
-    for (let complaint of complaints) {
-      if (complaint.complaintDetails.status === "Open") complaintData.open += 1;
-      else if (complaint.complaintDetails.status === "In Progress")
-        complaintData["In Progress"] += 1;
-      else if (complaint.complaintDetails.status === "Close")
-        complaintData.Close += 1;
-      else if (complaint.complaintDetails.reopenCount > 0)
-        complaintData.reopenCount += 1;
+        completedServices: 0,
+        missedServices: 0,
+      };
+      cursor.setMonth(cursor.getMonth() + 1);
     }
 
+    // ── Fill complaints month-wise (by createdAt) ─────────────────
+    complaints.forEach((complaint) => {
+      const d = new Date(complaint.createdAt);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      if (!monthMap[key]) return;
+
+      monthMap[key].complaints += 1;
+      const { status } = complaint.complaintDetails;
+      if (status === "Open") monthMap[key].Open += 1;
+      else if (status === "In Progress") monthMap[key]["In Progress"] += 1;
+      else if (status === "Close") monthMap[key].Close += 1;
+    });
+
+    // ── Fill regular services month-wise (by schedule date) ───────
+    regulars.forEach((regular) => {
+      regular.regularService.forEach((reg) => {
+        reg.schedule.forEach((sch) => {
+          if (!sch.date) return;
+          const key = sch.date.substring(0, 7); // "YYYY-MM" from "YYYY-MM-DD"
+          if (!monthMap[key]) return;
+
+          if (sch.completed) monthMap[key].completedServices++;
+          if (sch.status === "Missed") monthMap[key].missedServices++;
+        });
+      });
+    });
+
+    // ── Convert to sorted array ───────────────────────────────────
+    const monthlyData = Object.values(monthMap).sort((a, b) =>
+      a.month.localeCompare(b.month),
+    );
+
     return res.json({
-      complaintData,
+      all: services,
+      dashBoardData,
       latestComplaints: complaints.slice(0, 5),
+      monthlyData,
     });
   } catch (error) {
     console.log(error);

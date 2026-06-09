@@ -19,6 +19,8 @@ import {
 } from "./middleware/authMiddleware.js";
 import { createAdmin } from "./models/userModel.js";
 
+// import './cron/updateSchedule.cron.js' //cron job for service- schedules
+
 dotenv.config();
 
 cloudinary.config({

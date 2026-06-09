@@ -102,7 +102,7 @@ export const frequencies = [
   "daily",
   "alternate days",
   "twice a week",
-  "twice a week",
+  "thrice a week",
   "weekly",
   "fortnightly",
   "twice monthly",

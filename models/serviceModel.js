@@ -3,7 +3,7 @@ import { type } from "os";
 
 const serviceSchema = new mongoose.Schema(
   {
-    type: { type: String, default: "Regular" },
+    type: { type: String, enum: ["Regular", "Complaint"], default: "Regular" },
     complaintDetails: {
       number: { type: String },
       service: { type: Array },
@@ -95,6 +95,27 @@ const serviceSchema = new mongoose.Schema(
   },
   { timestamps: true },
 );
+
+serviceSchema.pre("save", function (next) {
+  if (this.type === "Regular") {
+    this.complaintDetails = undefined;
+    this.complaintUpdate = undefined;
+  } else {
+    this.regularService = undefined;
+  }
+  next();
+});
+
+serviceSchema.pre(["updateOne", "findOneAndUpdate"], function (next) {
+  const update = this.getUpdate();
+  if (update?.type === "Regular") {
+    delete update.complaintDetails;
+    delete update.complaintUpdate;
+  } else if (update?.type === "Complaint") {
+    delete update.regularService;
+  }
+  next();
+});
 
 const Service = mongoose.model("Service", serviceSchema);
 export default Service;

@@ -5,6 +5,8 @@ import sharp from "sharp";
 // import { createCanvas, loadImage } from "canvas";
 import { v2 as cloudinary } from "cloudinary";
 import brevo from "@getbrevo/brevo";
+import Location from "../models/locationModel.js";
+import Client from "../models/clientModel.js";
 
 export const capitalLetter = (name) => {
   return name
@@ -237,6 +239,8 @@ export const sendEmail = async ({
 };
 
 export const removeOldQr = async (url) => {
+  if (!url) return null; // ✅ guard for new locations or missing QR
+
   const parts = url.split("/upload/");
   if (parts.length < 2) return null;
 
@@ -247,10 +251,9 @@ export const removeOldQr = async (url) => {
     const result = await cloudinary.uploader.destroy(publicId, {
       invalidate: true,
     });
-    
     return result;
   } catch (error) {
-    console.error("Error deleting assset: ", error);
+    console.error("Error deleting asset: ", error);
   }
 };
 
@@ -261,7 +264,7 @@ export const generateSchedule = (start, end, frequency) => {
   const freq = (frequency || "").toLowerCase().trim();
 
   let current = new Date(start);
-  current = today > current ? today : current;
+  current = today > current ? current : today;
   while (current <= end) {
     schedule.push({
       date: current.toISOString().split("T")[0],
@@ -360,3 +363,77 @@ export const generateSchedule = (start, end, frequency) => {
 
   return schedule;
 };
+
+export const autoMarkMissed = async () => {
+  try {
+    const today = new Date().toISOString().split("T")[0];
+
+    // Fetch only the locations that actually need updates
+    const locations = await Location.find({
+      "service.schedule": {
+        $elemMatch: {
+          date: { $lt: today },
+          status: "Pending",
+          completed: false,
+        },
+      },
+    });
+
+    let updatedCount = 0;
+
+    for (const loc of locations) {
+      let isModified = false;
+
+      loc.service.forEach((ser) => {
+        ser.schedule.forEach((sch) => {
+          // Fix logic bug: JavaScript evaluated "loc.createdAt > sch.date < today" incorrectly.
+          // Separated into explicit conditions:
+          let locCreatedAt = loc.createdAt.toISOString().split("T")[0];
+          const isBeforeCreation = sch.date < locCreatedAt;
+          const isBetweenCreationAndToday =
+          sch.date >= locCreatedAt && sch.date < today;
+          
+          if (isBeforeCreation && sch.status !== "Invalid") {
+            sch.status = "Invalid";
+            isModified = true;
+          } else if (
+            isBetweenCreationAndToday &&
+            sch.status === "Pending" &&
+            !sch.completed
+          ) {
+            sch.status = "Missed";
+            isModified = true;
+          }
+        });
+      });
+      
+      if (isModified) {
+        loc.markModified("service");
+        await loc.save();
+        updatedCount++;
+      }
+    }
+    console.log(
+      `[Cron Success] Checked ${locations.length} locations. Updated ${updatedCount}.`,
+    );
+  } catch (error) {
+    console.error(
+      "[Cron Error] Error updating missed schedules:",
+      error.message,
+    );
+  }
+};
+
+function runAtSpecificTime(callback) {
+  const now = new Date();
+  const midnight = new Date();
+
+  midnight.setHours(0, 0, 0, 0);
+  midnight.setDate(midnight.getDate() + 1);
+
+  const delay = midnight.getTime() - now.getTime();
+
+  setTimeout(callback, delay);
+}
+// runAtSpecificTime(autoMarkMissed);
+autoMarkMissed();

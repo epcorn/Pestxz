@@ -23,17 +23,26 @@ const internalRoles = [
 export const qrCounter = async (req, res) => {
   const { id } = req.params;
   try {
-    const location = await Location.findByIdAndUpdate(
-      id,
+    const idArray = id.includes(",") ? id.split(",") : [id];
+
+    const location = await Location.updateMany(
+      { _id: { $in: idArray } },
       { $inc: { qrCount: 1 } },
       { new: true },
     );
-    if (!location) return res.status(400).json({ msg: "location not found" });
+    console.log("array: ", idArray);
+    if (location.matchedCount === 0)
+      return res.status(400).json({ msg: "location not found" });
 
+    const updatedLocations = await Location.find(
+      { _id: { $in: idArray } },
+      "qrCount",
+    );
     res.status(200).json({ qrCount: location.qrCount });
   } catch (error) {
     return res.status(500).json({
       msg: "Server error, try again later",
+      error,
     });
   }
 };
@@ -395,9 +404,14 @@ export const updateLocation = async (req, res) => {
         : null;
 
     const qrData = await qrCodeGenerator({
-      link: `https://pestxz.onrender.com/location/${locationId}`,
+      link: `https://pestxz.onrender.com/location/${id}`,
       floor: req.body.floor,
       location: `${req.body.location}, ${req.body.subLocation}`,
+    });
+
+    fs.writeFileSync("./tmp/qr.jpeg", qrData);
+    const qrLink = await uploadFile({
+      filePath: "./tmp/qr.jpeg",
     });
 
     const updatedLocation = await Location.findByIdAndUpdate(
@@ -408,7 +422,7 @@ export const updateLocation = async (req, res) => {
           subLocation: req.body.subLocation,
           location: req.body.location,
           service: formattedServices,
-          qr: qrData,
+          qr: qrLink,
           product: Array.isArray(req.body.product) ? req.body.product : [],
         },
         ...(changeEntry && { $push: { changes: changeEntry } }),

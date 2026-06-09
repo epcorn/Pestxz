@@ -334,6 +334,7 @@ export const newRegularService = async (req, res) => {
       image: imageLink,
       userName: req.user.name,
       role: req.user.role,
+      status: "Done",
       completedAt: new Date(),
     };
 
@@ -358,22 +359,22 @@ export const assignWork = async (req, res) => {
     const service = await Service.findById(complaintId);
     if (!service) return res.status(400).json({ msg: "complaint not found" });
     if (service.complaintDetails.assignedTo.status === true)
-      return res
-        .status(403)
-        .json({
-          msg: `Already assigned to ${service.complaintDetails.assignedTo.userName}`,
-        });
-    service.complaintDetails.assignedTo = {
-      userId: value,
-      userName: label,
-      assignedAt: new Date(),
-      status: true,
-    };
-    service.complaintDetails.assignedBy = {
-      userId: req.user._id,
-      userName: req.user.name,
-      role: req.user.role,
-    };
+      return res.status(403).json({
+        msg: `Already assigned to ${service.complaintDetails.assignedTo.userName}`,
+      });
+    if (service.status !== "Open") {
+      service.complaintDetails.assignedTo = {
+        userId: value,
+        userName: label,
+        assignedAt: new Date(),
+        status: true,
+      };
+      service.complaintDetails.assignedBy = {
+        userId: req.user._id,
+        userName: req.user.name,
+        role: req.user.role,
+      };
+    }
 
     await service.save();
     return res.status(200).json({ msg: "Operator assigned successfully" });

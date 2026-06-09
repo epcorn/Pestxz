@@ -12,9 +12,11 @@ import {
 } from "../controllers/locationController.js";
 import { getAllService } from "../controllers/adminController.js";
 import { convertSvgToPngBuffer } from "../utils/helperFunction.js";
+import { makeQrFile } from "../utils/makeQrDocx.js";
 const router = express.Router();
 
 router.get("/backfill-schedules", backfillSchedules);
+router.post("/makeQrDoc", makeQrFile);
 
 router.get("/allServices", getAllService);
 router.get("/client/:id", getAllLocations);

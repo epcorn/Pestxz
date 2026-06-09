@@ -137,32 +137,30 @@ const Complaints = () => {
           >New Complaint</button>
         }
       </div >
-
       {isModalOpen.complaint && <ComplaintModal mode={"create"} />}
+      {data && (
+        <>
+          <ComplaintTable data={complaints} user={user} />
 
-      {
-        data && (
-          <>
-            <ComplaintTable data={complaints} user={user} />
-            {pages.length > 1 && (
-              <nav className="mb-4">
-                <ul className="list-style-none flex justify-center mt-2">
-                  {pages.map((item) => (
-                    <li className="pr-1" key={item}>
-                      <button
-                        className={`relative block rounded px-3 py-1.5 text-sm transition-all duration-30  ${page === item ? "bg-blue-400" : "bg-neutral-700"
-                          } text-white hover:bg-blue-400`}
-                        onClick={() => setPage(item)}
-                      >
-                        {item}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </nav>
-            )}
-          </>
-        )
+          {pages.length > 1 && (
+            <nav className="mb-4">
+              <ul className="list-style-none flex justify-center mt-2">
+                {pages.map((item) => (
+                  <li className="pr-1" key={item}>
+                    <button
+                      className={`relative block rounded px-3 py-1.5 text-sm transition-all duration-30  ${page === item ? "bg-blue-400" : "bg-neutral-700"
+                        } text-white hover:bg-blue-400`}
+                      onClick={() => setPage(item)}
+                    >
+                      {item}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+          )}
+        </>
+      )
       }
       {
         data?.complaints?.length < 1 && (
@@ -214,14 +212,14 @@ export function AssignWork({ complaintId, currentAssgndVal = null, show }) {
       minHeight: '32px',
       height: '32px',
       fontSize: '13px',
-      borderColor: state.isFocused ? '#3b82f6' : '#e5e7eb', 
+      borderColor: state.isFocused ? '#3b82f6' : '#e5e7eb',
       boxShadow: state.isFocused ? '0 0 0 1px #3b82f6' : 'none',
       '&:hover': { borderColor: '#3b82f6' },
-      borderRadius: '0.375rem', 
+      borderRadius: '0.375rem',
     }),
     valueContainer: (base) => ({ ...base, padding: '0 8px' }),
     indicatorsContainer: (base) => ({ ...base, height: '30px' }),
-    menuPortal: (base) => ({ ...base, zIndex: 9999 }), 
+    menuPortal: (base) => ({ ...base, zIndex: 9999 }),
     menu: (base) => ({
       ...base,
       fontSize: '13px',
@@ -239,11 +237,11 @@ export function AssignWork({ complaintId, currentAssgndVal = null, show }) {
   };
 
   return (
-    <div 
-      className="absolute left-0 top-full mt-1 bg-white rounded-md shadow-lg border border-gray-100 min-w-[180px] z-50 p-1"
+    <div
+      className="absolute left-0 -top-2 mt-1 bg-white rounded-md shadow-lg border border-gray-100 min-w-[180px] z-50 p-1"
       onClick={(e) => e.stopPropagation()}
     >
-      <div className="text-[10px] uppercase font-bold tracking-wider text-gray-400 px-2 py-1 select-none">
+      <div className="hidden text-[10px] uppercase font-bold tracking-wider text-gray-400 px-2 py-1 select-none">
         Assign Operator
       </div>
       <Select
@@ -254,8 +252,8 @@ export function AssignWork({ complaintId, currentAssgndVal = null, show }) {
         styles={customStyles}
         menuPortalTarget={document.body}
         menuPosition="fixed"
-        isSearchable={true} 
-        autoFocus={true} 
+        isSearchable={true}
+        autoFocus={true}
       />
     </div>
   );

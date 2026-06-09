@@ -169,25 +169,25 @@ function RegularForm({ serviceData, id, locationName, setRegular }) {
                   })}
                   className="outline file:bg-gray-700 file:p-2 file:text-white flex-1"
                 />
-                <div className="grid grid-cols-[repeat(auto-fit,minmax(250px,1fr))] gap-2">
+                <div className="grid gap-2 text-lg">
                   {ser.scopes?.map((sc) => (
                     <div
                       key={sc.scopeName}
-                      className="mt-2 outline outline-gray-400 p-3 rounded"
+                      className="mt-2 outline outline-gray-400 p-3 rounded "
                     >
-                      <h4 className="font-semibold mb-3">{sc.scopeName}</h4>
+                      <h4 className="font-bold mb-3 ">Scope: {sc.scopeName}</h4>
                       {sc.consumables?.map((con) => {
                         const actionVal = watchAction?.action?.[ser.serviceName]?.[sc.scopeName]?.[con.consumableName];
 
                         return (
                           <div
                             key={con.consumableName}
-                            className="flex flex-wrap gap-3 mb-0"
+                            className=" mb-2 flex flex-wrap gap-3"
                           >
                             <input
                               defaultValue={con.consumableName}
                               disabled
-                              className="flex-1 outline outline-gray-400 p-2 bg-gray-100 col-span-2"
+                              className="flex-1 outline outline-gray-400 p-2 bg-gray-100 col-span-2 font-bold"
                             />
                             <input
                               defaultValue={con.calibration || 0}

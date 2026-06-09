@@ -4,6 +4,8 @@ import { formatShortDate, getWorkStatus } from "../../utils/helperFunctions";
 function ServiceShow({ services }) {
 
   const [expandedServiceId, setExpandedServiceId] = useState(null);
+  const missed = services?.[0]?.schedule.filter(sc => sc.status === "Missed")
+  console.log(missed)
   return (
     <div className="w-full overflow-auto border border-gray-800 rounded-lg bg-white">
       <div className="min-w-[768px]">
@@ -24,8 +26,6 @@ function ServiceShow({ services }) {
             const completedService = schedules
               .filter((sc) => sc.completed === true)
               .at(-1);
-
-            const missedServices = getWorkStatus(schedules);
 
             const nextServices = schedules.filter((sc) => {
               if (sc.completed) return false;
@@ -61,10 +61,10 @@ function ServiceShow({ services }) {
                             className={`outline font-bold 
                               ${n?.date === today
                                 ? "text-cyan-700 outline-cyan-700 bg-cyan-200 animate-pulse " : "outline-gray-300"} 
-                              ${n?.date === missedServices[0]?.date ? "text-red-700 outline-red-700 bg-red-200" : ""}
+                              ${n?.status === "Invalid" ? "text-gray-700 outline-gray-700 bg-gray-200 opacity-55 cursor-not-allowed" : ""}
+                              ${n?.status === "Missed" ? "text-red-700 outline-red-700 bg-red-200" : ""}
                               ${n.completed ? "text-green-700 outline-green-700 bg-green-200" : ""}
                               px-2 py-1 rounded text-[11px]`}
-
                           >
                             {formatShortDate(n?.date)}
                           </span>
@@ -99,11 +99,11 @@ function ServiceShow({ services }) {
 
                 {/* MISSED */}
                 <div className="px-3 py-3">
-                  {missedServices?.length > 0 ? (
+                  {missed?.length > 0 ? (
                     <span className="bg-red-100 text-red-600 px-2 py-0.5 rounded text-[11px] font-semibold flex flex-col items-center">
-                      <span>{missedServices.length} missed</span>
+                      <span>{missed.length} missed</span>
                       <span>
-                        {formatShortDate(missedServices?.[0].date)}
+                        {formatShortDate(missed?.at(-1).date)}
                       </span>
                     </span>
                   ) : (

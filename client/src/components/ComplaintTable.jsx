@@ -24,7 +24,7 @@ const ComplaintTable = ({ data, user, toggle }) => {
   }, [toggler.status]);
 
   return (
-    <div className="w-full h-full overflow-x-auto border border-gray-200 rounded-lg shadow-sm bg-white">
+    <div className="w-full min-h-96 overflow-x-auto border border-gray-200 rounded-lg shadow-sm bg-white">
       <div className="min-w-[1024px]">
 
         {/* Table Header */}
@@ -115,7 +115,7 @@ const ComplaintTable = ({ data, user, toggle }) => {
                       ) : (
                         <span className="text-blue-900 whitespace-break-spaces">{complaint.complaintDetails?.userName}</span>
                       )
-                    ) : (
+                    ) : ( 
                       <span className="text-gray-600 block whitespace-break-spaces truncate">
                         {`${complaint.location?.floor || ""}, ${complaint.location?.location || ""}`}
                       </span>
@@ -144,7 +144,6 @@ const ComplaintTable = ({ data, user, toggle }) => {
                     </span>
                   )}
                 </div>
-
               </div>
             );
           })}

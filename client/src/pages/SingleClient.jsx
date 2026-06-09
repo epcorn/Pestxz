@@ -4,6 +4,7 @@ import {
   useAllLocationsQuery,
   useDeleteLocationMutation,
   useLazyBackFillSchedulesQuery,
+  useMakeQrDocxMutation,
   useQrCounterMutation,
 } from "../redux/locationSlice";
 import { AlertMessage, Button, Loading } from "../components";
@@ -16,20 +17,24 @@ import { MdAddCircle } from "react-icons/md";
 import { toast } from "react-toastify";
 import { saveAs } from "file-saver";
 import { useUpdateClientMutation } from "../redux/clientSlice";
+import { useGetSingleUserQuery } from "../redux/userSlice";
 
 const SingleClient = () => {
-  const { isModalOpen } = useSelector((store) => store.helper);
+  const { isModalOpen, user } = useSelector((store) => store.helper);
   const [locationDetails, setLocationDetails] = useState({});
   const [clientDetails, setClientDetails] = useState(null)
+  const [selectedQr, setSelectedQr] = useState([])
   const dispatch = useDispatch();
   const { id } = useParams();
 
+  const { data: me } = useGetSingleUserQuery(user._id, { skip: !user._id })
   const { data, isLoading, isFetching, error } = useAllLocationsQuery({ id });
   const [deleteLocation, { isLoading: deleteLoading }] =
     useDeleteLocationMutation();
   const [updateClient, { isLoading: updateLoading }] =
     useUpdateClientMutation();
   const [qrCountInc] = useQrCounterMutation();
+  const [makeQrDOCX] = useMakeQrDocxMutation();
   const [triggerBackFill, { data: backfill, isLoading: backFillLoading }] = useLazyBackFillSchedulesQuery()
 
   // handle edit model
@@ -56,7 +61,6 @@ const SingleClient = () => {
     }
   };
 
-  console.log(data);
 
   const services = data?.locations?.map(loc => loc.service || []) || []
   const handleBackfill = async () => {
@@ -66,10 +70,32 @@ const SingleClient = () => {
   const handleQrDownload = async (id, location) => {
     try {
       await qrCountInc(id).unwrap();
+
       saveAs(location?.qr, `QR-${location.location}`);
     } catch (error) {
       throw new Error("download error");
     }
+  }
+  console.log(data);
+
+  const handleDownloadAll = async () => {
+    let qrs;
+    let ids;
+    if (selectedQr.length > 0) {
+      qrs = selectedQr.map(s => s.qr)
+      ids = selectedQr.map(s => s.id)
+    }
+    else {
+      qrs = data.locations.map(l => l.qr)
+      ids = data.locations.map(l => l._id)
+    }
+
+    const payload = { qrs: qrs, client: data.clientName }
+    await qrCountInc(ids).unwrap();
+    const res = await makeQrDOCX(payload).unwrap();
+    saveAs(me.qr, `${data.clientName}-Location.docx`)
+
+    console.log(qrs, ids)
   }
 
   return (
@@ -176,15 +202,24 @@ const SingleClient = () => {
             </div>
           </div>
 
-          {/* <div>
+          <div className="hidden">
             <Button label={'Add schedules'} onClick={handleBackfill}
               isLoading={backFillLoading} disabled={backFillLoading} />
-          </div> */}
+          </div>
+
+          <div className="">
+            <Button label={'Download All Qr'}
+              onClick={handleDownloadAll}
+            />
+          </div>
 
           <div className="overflow-y-auto my-4">
             <table className="w-full border whitespace-nowrap border-neutral-500 bg-text">
               <thead>
                 <tr className="h-10 w-full text-md md:text-lg leading-none">
+                  <th className="font-bold text-center border-neutral-500 border-2 px-3 min-w-26" onClick={() => setSelectedQr([])}>
+                    {selectedQr.length > 0 ? "Deselect" : "Select"}
+                  </th>
                   <th className="font-bold text-center border-neutral-500 border-2 px-3">
                     Floor
                   </th>
@@ -211,9 +246,22 @@ const SingleClient = () => {
                     key={location._id}
                     className="h-9 text-sm leading-none bg-text border-b border-neutral-500 hover:bg-slate-200"
                   >
+                    <td className="px-3 border-r font-normal border-neutral-500 text-center">
+                      <input
+                        type="checkbox"
+                        name={location.floor}
+                        id={location.floor}
+                        checked={selectedQr.some(item => item.id === location._id)}
+                        onChange={() => setSelectedQr(prev =>
+                          prev.some(item => item.id === location._id)
+                            ? prev.filter(item => item.id !== location._id)
+                            : [...prev, { qr: location.qr, id: location._id }]
+                        )}
+                      />
+                    </td>
                     <td className="px-3 border-r font-normal border-neutral-500">
                       <Link to={`/location/${location?._id}`}>
-                        <Button label={location.floor} small={true}/>
+                        <Button label={location.floor} small={true} />
                       </Link>
                     </td>
                     <td className="px-3 border-r font-normal border-neutral-500">
