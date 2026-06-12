@@ -10,9 +10,11 @@ function PieChart({ values }) {
   const filteredKeys = Object.keys(values).filter(key => key !== "allcomplaints")
   const chartDataValues = filteredKeys.map(key => values[key])
 
+  console.log(filteredKeys)
+
 
   const data = {
-    labels: filteredKeys,
+    labels: ["Open complaint", "In progress", "Closed complaint", "Reopened", " regular services"],
     datasets: [{
       label: "Count", data: chartDataValues, backgroundColor: [
         '#3B82F6', // Open - Trust Blue
@@ -32,7 +34,7 @@ function PieChart({ values }) {
     }]
   }
   const options = {
-    responsive: true, plugins: { legend: { position: "top", labels: { font: { size: 10 }, color: "black" } }, tootip: { position: "nearest" }, title: { display: true, text: "Status of Services" } }
+    responsive: true, plugins: { legend: { position: "top", labels: { font: { size: 10 }, color: "black" } }, tootip: { position: "nearest" }, title: { display: false, text: "Status of Services" } }
   }
   return (
     <>

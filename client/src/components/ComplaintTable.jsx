@@ -10,7 +10,6 @@ const ComplaintTable = ({ data, user, toggle }) => {
   const isRegular = toggle === "Regular";
   const portalRef = useRef(null);
 
-  // Close assignment dropdown when clicking outside
   useEffect(() => {
     const handleOutsideClick = (event) => {
       if (portalRef.current && !portalRef.current.contains(event.target)) {
@@ -23,117 +22,119 @@ const ComplaintTable = ({ data, user, toggle }) => {
     return () => document.removeEventListener("mousedown", handleOutsideClick);
   }, [toggler.status]);
 
+  console.log(data)
   return (
     <div className="w-full min-h-96 overflow-x-auto border border-gray-200 rounded-lg shadow-sm bg-white">
-      <div className="min-w-[1024px]">
+      <table className="min-w-[1024px] w-full border-collapse">
 
-        {/* Table Header */}
-        <div className={`grid ${isRegular ? "grid-cols-10" : "grid-cols-12"} gap-2 px-4 md:px-6 py-3 bg-neutral-600 border-b border-gray-100 text-white text-[11px] font-bold uppercase tracking-wider items-center"`}>
-          <p className="col-span-2">Number</p>
-          {!isRegular && <p className="col-span-2">Assigned to</p>}
-          <p className="col-span-2">Date</p>
-          <p className="col-span-2">{isRegular ? "Location" : user?.role === "Admin" ? "Client" : "Raised by"}</p>
-          <p className="col-span-2 text-center">Service</p>
-          <p className="col-span-2 text-center">{isRegular ? "Serviced By" : "Status"}</p>
-        </div>
+        <thead>
+          <tr className="bg-neutral-600 text-white text-[11px] font-bold uppercase tracking-wider">
+            <th className="pl-2 py-3 text-left">Number</th>
+            {!isRegular && <th className="pl-2 py-3 text-left">Assigned To</th>}
+            <th className="pl-2 py-3 text-left">Date</th>
+            <th className="pl-2 py-3 text-left">
+              {isRegular ? "Location" : user?.type === "PestEmployee" ? "Client" : "Raised By"}
+            </th>
+            <th className="pl-2 py-3 text-center">Service</th>
+            <th className="pl-2 py-3 text-center">
+              {isRegular ? "Serviced By" : "Status"}
+            </th>
+          </tr>
+        </thead>
 
-        {/* Data Rows */}
-        <div className="divide-y divide-gray-200">
+        <tbody className="divide-y divide-gray-200">
           {data?.map((complaint, i) => {
             const assignedto = complaint?.complaintDetails?.assignedTo;
             const assignedby = complaint?.complaintDetails?.assignedBy;
             const rowLink = isRegular ? `/location/${complaint.location?._id}` : `/complaint/${complaint._id}`;
 
             return (
-              <div
-                key={complaint._id}
-                className={`grid ${isRegular ? "grid-cols-10" : "grid-cols-12"} gap-2 px-4 md:px-6 py-4 items-center bg-white hover:bg-neutral-50 transition-colors`}
-              >
+              <tr key={complaint._id} className="bg-white hover:bg-neutral-50 transition-colors ">
+
                 {/* Complaint Number */}
-                <div className="col-span-2">
-                  <Link to={rowLink} className="text-sm font-bold text-blue-600 hover:text-blue-800 transition-colors block w-fit">
+                <td className="pl-2 py-4">
+                  <Link to={rowLink} className="text-sm font-bold text-blue-600 hover:text-blue-800 transition-colors">
                     {complaint.complaintDetails?.number || (i + 2)}
                   </Link>
-                </div>
+                </td>
 
-                {/* Assigned To (Portal Control) */}
-                {!isRegular && <div
-                  className="col-span-2 relative cursor-pointer group select-none"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setToggler({ id: complaint._id, status: !toggler.status });
-                  }}
-                >
-                  {assignedto?.status ? (
-                    <div className="flex flex-col gap-1 items-start">
-                      <span className="text-sm text-gray-700 font-semibold tracking-wide">
-                        {assignedto?.userName}
-                      </span>
-                      {user?.type !== "ClientEmployee" && assignedby?.userName && (
-                        <span className="text-[10px] text-gray-500 font-medium bg-gray-50 ring-1 ring-gray-200 px-2 py-0.5 rounded-md">
-                          by {assignedby?.userName}
+                {/* Assigned To */}
+                {!isRegular && (
+                  <td
+                    className="pl-2 py-4 relative cursor-pointer select-none"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setToggler({ id: complaint._id, status: !toggler.status });
+                    }}
+                  >
+                    {assignedto?.status ? (
+                      <div className="flex flex-col gap-1 items-start">
+                        <span className="text-sm text-gray-700 font-semibold tracking-wide">
+                          {assignedto?.userName}
                         </span>
-                      )}
-                    </div>
-                  ) : (
-                    <span className="text-sm text-gray-400 italic font-medium block pt-0.5">
-                      Not assigned
-                    </span>
-                  )}
-
-                  {/* Assignment Portal Dropdown Wrapper */}
-                  {["Admin", "TeamLeader", "BranchAdmin"].includes(user?.role) &&
-                    toggler.status &&
-                    toggler.id === complaint._id && (
-                      <div
-                        ref={portalRef}
-                        className="absolute top-full left-0 mt-2 z-30 w-64 bg-white shadow-xl rounded-xl border border-gray-100 p-2"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <AssignWork
-                          complaintId={complaint._id}
-                          currentAssgndVal={assignedto?.userName || null}
-                          show={(val) => setToggler({ id: "", status: val })}
-                        />
+                        {user?.type !== "ClientEmployee" && assignedby?.userName && (
+                          <span className="text-[10px] text-gray-500 font-medium bg-gray-50 ring-1 ring-gray-200 px-2 py-0.5 rounded-md">
+                            by {assignedby?.userName}
+                          </span>
+                        )}
                       </div>
+                    ) : (
+                      <span className="text-sm text-gray-400 italic font-medium">Not assigned</span>
                     )}
-                </div>}
+
+                    {["Admin", "TeamLeader", "BranchAdmin"].includes(user?.role) &&
+                      toggler.status &&
+                      toggler.id === complaint._id && (
+                        <div
+                          ref={portalRef}
+                          className="absolute top-full left-0 mt-2 z-30 w-64 bg-white shadow-xl rounded-xl border border-gray-100 p-2"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <AssignWork
+                            complaintId={complaint._id}
+                            currentAssgndVal={assignedto?.userName || null}
+                            show={(val) => setToggler({ id: "", status: val })}
+                          />
+                        </div>
+                      )}
+                  </td>
+                )}
 
                 {/* Date */}
-                <div className="col-span-2">
-                  <Link to={rowLink} className="text-sm text-gray-600 block hover:text-gray-900">
+                <td className="pl-2 py-4">
+                  <Link to={rowLink} className="text-sm text-gray-600 hover:text-gray-900">
                     {dateFormat(complaint.createdAt)}
                   </Link>
-                </div>
+                </td>
 
-                {/* Location / Client */}
-                <div className="col-span-2">
-                  <Link to={rowLink} className="text-sm font-medium block hover:opacity-85">
+                {/* Location / Client / Raised By */}
+                <td className="pl-2 py-4">
+                  <Link to={rowLink} className="text-sm font-medium hover:opacity-85">
                     {!isRegular ? (
-                      user?.role === "Admin" ? (
-                        <span className="text-blue-900 whitespace-break-spaces">{complaint.client?.name}</span>
+                      user?.type === "PestEmployee" ? (
+                        <span className="text-blue-900 whitespace-break-spaces">{complaint?.complaintDetails.clientName||"cle"}</span>
                       ) : (
                         <span className="text-blue-900 whitespace-break-spaces">{complaint.complaintDetails?.userName}</span>
                       )
-                    ) : ( 
-                      <span className="text-gray-600 block whitespace-break-spaces truncate">
+                    ) : (
+                      <span className="text-gray-600 whitespace-break-spaces truncate block">
                         {`${complaint.location?.floor || ""}, ${complaint.location?.location || ""}`}
                       </span>
                     )}
                   </Link>
-                </div>
+                </td>
 
-                {/* Pest Service */}
-                <div className="col-span-2 text-center text-sm text-gray-800">
+                {/* Service */}
+                <td className="pl-2 py-4 text-center text-sm text-gray-800">
                   {isRegular ? (
                     <span>{complaint.regularService?.[0]?.serviceName}</span>
                   ) : (
                     <span>{complaint.complaintDetails?.service?.join(", ")}</span>
                   )}
-                </div>
+                </td>
 
-                {/* Status Column */}
-                <div className="col-span-2 flex justify-center text-center">
+                {/* Status / Serviced By */}
+                <td className="pl-2 py-4 text-center">
                   {isRegular ? (
                     <span className="whitespace-nowrap text-xs font-semibold border border-gray-300 px-2 py-1 rounded-lg text-gray-600 bg-gray-50">
                       {complaint.regularService?.[0]?.userName}
@@ -143,19 +144,22 @@ const ComplaintTable = ({ data, user, toggle }) => {
                       {complaint?.complaintDetails?.status}
                     </span>
                   )}
-                </div>
-              </div>
+                </td>
+
+              </tr>
             );
           })}
 
           {data?.length === 0 && (
-            <div className="p-10 text-center text-gray-400 text-sm italic bg-white">
-              No complaints available to display.
-            </div>
+            <tr>
+              <td colSpan={isRegular ? 5 : 6} className="p-10 text-center text-gray-400 text-sm italic">
+                No complaints available to display.
+              </td>
+            </tr>
           )}
-        </div>
+        </tbody>
 
-      </div>
+      </table>
     </div>
   );
 };

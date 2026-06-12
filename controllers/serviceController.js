@@ -71,7 +71,9 @@ export const newComplaint = async (req, res) => {
       type: "Complaint",
       complaintDetails: {
         number: sr,
-        service: req.body.service,
+        service: Array.isArray(req.body.service)
+          ? req.body.service
+          : [req.body.service],
         userName: req.user.name,
         raisedBy: req.user.type,
         raisedByRole: req.user.role,
@@ -200,9 +202,7 @@ export const updateComplaint = async (req, res) => {
 
     // MAIN STATUS UPDATE
     complaint.complaintDetails.status = status;
-
     await complaint.save();
-
     return res.json({
       msg: "Updated successfully",
     });
@@ -216,49 +216,44 @@ export const updateComplaint = async (req, res) => {
 };
 
 export const getAllComplaints = async (req, res) => {
-  const { search, page, location } = req.query;
-  let query = {
-    type: "Complaint",
-  };
+  const { search, page, client, location } = req.query;
+
+  const query = { type: "Complaint" };
+
   if (req.user.role !== "Admin") {
     query.client = req.user.client;
+  } else if (client) {
+    query.client = client;
   }
+
   if (search) {
-    if (req.user.role !== "Admin") {
-      query = {
-        type: "Complaint",
-        client: req.user.client,
-        "complaintDetails.number": { $regex: search, $options: "i" },
-      };
-    } else {
-      query = {
-        type: "Complaint",
-        "complaintDetails.number": { $regex: search, $options: "i" },
-      };
-    }
+    query["complaintDetails.number"] = { $regex: search, $options: "i" };
   }
+
+  if (location && location !== "All") {
+    const matchingLocations = await Location.find({ floor: location }).select(
+      "_id",
+    );
+    query.location = { $in: matchingLocations.map((l) => l._id) };
+  }
+
   try {
-    let pageNumber = Number(page) || 1;
-    // let complaints = await Service.find()
-    let allComplaints = await Service.find(query)
+    const pageNumber = Number(page) || 1;
+    const limit = 15;
+
+    const total = await Service.countDocuments(query);
+    const complaints = await Service.find(query)
       .populate({
         path: "location client",
-        select: "floor subLocation  location name",
+        select: "floor subLocation location name",
       })
-      .sort("-createdAt");
-    if (location !== "All") {
-      allComplaints = allComplaints.filter(
-        (complaint) => complaint.location?.floor === location,
-      );
-    }
-    const total = allComplaints.length;
-    const complaints = allComplaints.slice(
-      15 * (pageNumber - 1),
-      15 * pageNumber,
-    );
+      .sort("-createdAt")
+      .skip(limit * (pageNumber - 1))
+      .limit(limit);
+
     return res.status(200).json({
       complaints,
-      pages: Math.min(10, Math.ceil(total / 15)),
+      pages: Math.min(10, Math.ceil(total / limit)),
     });
   } catch (error) {
     console.log(error);
@@ -385,6 +380,19 @@ export const assignWork = async (req, res) => {
       msg: "Internal server error",
       error: error.message,
     });
+  }
+};
+
+export const getAllAssignedWork = async (req, res) => {
+  try {
+    const complaints = await Service.find({
+      type: "Complaint",
+      "complaintDetails.assignedTo.userId": req.user._id,
+    }).sort({ updatedAt: -1 });
+    console.log(complaints);
+    res.status(200).json(complaints);
+  } catch (error) {
+    res.status(500).json({ msg: "server error" });
   }
 };
 

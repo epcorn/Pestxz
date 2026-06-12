@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react'
 import { MdOutlineQrCodeScanner } from "react-icons/md";
 import { Html5QrcodeScanner } from 'html5-qrcode';
+import { useSelector } from 'react-redux';
 
 function QrScanner() {
-
+  const { user } = useSelector(store => store.helper)
   // State to manage scanner visibility and the final result
   const [isScanning, setIsScanning] = useState(false);
   const [scanResult, setScanResult] = useState('');
@@ -38,15 +39,18 @@ function QrScanner() {
 
     scanner.render(onSuccess, onFailure);
 
-    // Turn off camera tracking if the user manually hits close / back steps
     return () => {
       scanner.clear().catch(err => console.error("Clean up failure", err));
     };
   }, [isScanning]);
   return (
     <div>
+      <div className='flex flex-col items-center gap-1 mt-5'>
+        <h2 className='text-2xl font-bold '>Welcome, <span className='text-blue-600'>{user.name}</span></h2>
+        <p className='text-xs outline px-3 py-1 leading-none rounded-2xl text-gray-400'>{user.role}</p>
+      </div>
       <div className='mt-10 text-center'>
-        <p className='text-gray-600 font-medium mb-2'>Scan QR Code</p>
+        <p className='text-gray-700 font-medium mb-2'>Scan QR Code</p>
 
         {/* Interactive Icon Button to trigger camera access */}
         <button

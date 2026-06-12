@@ -4,6 +4,7 @@ import { GrInProgress } from "react-icons/gr";
 import { GoIssueReopened } from "react-icons/go";
 import { AiOutlineFileDone } from "react-icons/ai";
 
+
 import { IoLockClosed, IoLockOpen } from "react-icons/io5";
 import { TbProgressAlert } from "react-icons/tb";
 
@@ -18,21 +19,24 @@ import { BsGear } from "react-icons/bs";
 import PieChart from "./PieChart";
 import MultiLineChart from "./MultiLineChart";
 import { clientAdminStatus } from "../../utils/constData";
+import { useGetUnscheduledReportsQuery } from "../../redux/locationSlice";
+import { useNavigate } from "react-router-dom";
+import UnscheduledNotification from "./UnscheduledNotification";
 
 const stats = [
-  { id: 1, name: "Total Complaints", value: "allcomplaints", icon: <RiErrorWarningLine className="w-4 h-4" />, bg: "bg-slate-400", bd: "border-l-slate-600", type: "com" },
-  { id: 2, name: "Open Complaints", value: "Open", icon: <IoMdTime className="w-4 h-4" />, bg: "bg-blue-600", bd: "border-l-blue-600", type: "com", text: "text-blue-700" },
-  { id: 3, name: "In Progress", value: "In Progress", icon: <GrInProgress className="h-4 w-4" />, bg: "bg-amber-500", bd: "border-l-amber-600", type: "com", text: "text-amber-700" },
-  { id: 4, name: "Closed Complaints", value: "Close", icon: <IoLockClosed className="w-4 h-4" />, bg: "bg-emerald-600", bd: "border-l-emerald-600", type: "com", text: "text-emerald-700" },
-  { id: 5, name: "Reopened Complaints", value: "reopenCount", icon: <GoIssueReopened className="w-4 h-4" />, bg: "bg-red-600", bd: "border-l-red-600", type: "com", text: "text-red-700" },
-  { id: 6, name: "Services Completed", value: "completedServices", icon: <AiOutlineFileDone className="w-5 h-5" />, bg: "bg-blue-600", bd: "border-l-blue-600", type: "reg", text: "text-green-700" },
+  // { id: 1, name: "Total Complaints", value: "allcomplaints", icon: <RiErrorWarningLine className="w-3 h-3 md:w-5 md:h-5" />, bg: "bg-slate-400", bd: "border-l-slate-600", type: "com" },
+  { id: 2, name: "Open Complaints", value: "Open", icon: <IoMdTime className="w-3 h-3 md:w-5 md:h-5" />, bg: "bg-blue-600", bd: "border-l-blue-600", type: "com", text: "text-blue-700" },
+  { id: 3, name: "In Progress", value: "In Progress", icon: <GrInProgress className="w-3 h-3 md:w-5 md:h-5" />, bg: "bg-amber-500", bd: "border-l-amber-600", type: "com", text: "text-amber-700" },
+  { id: 4, name: "Closed Complaints", value: "Close", icon: <IoLockClosed className="w-3 h-3 md:w-5 md:h-5" />, bg: "bg-emerald-600", bd: "border-l-emerald-600", type: "com", text: "text-emerald-700" },
+  // { id: 5, name: "Reopened Complaints", value: "reopenCount", icon: <GoIssueReopened className="w-3 h-3 md:w-5 md:h-5" />, bg: "bg-red-600", bd: "border-l-red-600", type: "com", text: "text-red-700" },
+  { id: 6, name: "Services Completed", value: "completedServices", icon: <AiOutlineFileDone className="w-3 h-3 md:w-5 md:h-5" />, bg: "bg-blue-600", bd: "border-l-blue-600", type: "reg", text: "text-green-700" },
 ];
-
-
 
 const ClientDashboard = () => {
   const [toggle, setToggle] = useState(sessionStorage.getItem("ClientDashboardToggle") || "Complaint");
+  const navigate = useNavigate()
   const [statusFilter, setStatusFilter] = useState("")
+
 
   const { user } = useSelector((store) => store.helper);
 
@@ -45,7 +49,6 @@ const ClientDashboard = () => {
 
   const { data: client } = useGetSingleClientQuery(user?.client, { skip: !user?.client });
 
-  console.log(adminDash)
   // Filter data efficiently using useMemo
   const complaints = useMemo(() => {
     if (statusFilter.length > 0) {
@@ -57,7 +60,6 @@ const ClientDashboard = () => {
 
   }, [toggle, clientDash, statusFilter]);
 
-  console.log(complaints, statusFilter.length)
   const handleCards = (value) => {
     if (["Close", "In Progress", "Open"].includes(value)) {
       // const shows = clientDash.all.filter(cl => cl.complaintDetails.status === value)
@@ -84,23 +86,26 @@ const ClientDashboard = () => {
         <div className="max-w-7xl mx-auto">
 
           {/* Design 2: Symmetrical Split Header */}
-          <div className="mb-3 flex flex-col md:flex-row md:items-end md:justify-between gap-4 border-b border-slate-200 pb-3">
-            <div>
+          <div className="mb-3 flex flex-col md:flex-row md:items-end md:justify-between gap-4 border-b border-slate-200 pb-3 ">
+            <div className="w-full">
               <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">
                 Welcome back, {user?.name}
               </h1>
-              <p className="text-slate-500 text-sm mt-1">
-                Here is your dashboard overview for today.
-              </p>
+              <div className="flex items-center gap-5 w-full">
+                <p className="text-slate-500 text-sm mt-1">
+                  Here is your dashboard overview for today.
+                </p>
+                <UnscheduledNotification />
+              </div>
             </div>
           </div>
 
           {/* Stat Cards */}
-          <div className="gap-3 flex flex-wrap">
+          <div className="flex flex-wrap gap-3">
             {stats.map((item, index) => (
               <div key={item.id} className={`${item.type === "com" ? "bg-red-100" : "bg-blue-100"} ${statusFilter === item.value ? "outline-2 shadow-2xl -translate-y-1" : ""} flex-1 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 border-l-4 ${item?.bd}`} onClick={() => handleCards(item.value)}>
                 <div className="w-full py-3 px-3">
-                  <div className="text-sm font-semibold text-slate-500 truncate text-center mb-3 flex items-center gap-2">
+                  <div className="text-[.6rem] md:text-sm font-semibold text-slate-500 truncate text-center mb-3 flex items-center gap-2">
                     <div className={`${item.bg} p-1 rounded-lg text-white`}> {item.icon} </div>
                     <span>{item.name} </span>
                   </div>

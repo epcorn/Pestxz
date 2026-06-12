@@ -12,29 +12,34 @@ function AllPremise() {
   console.log(allPremiseSchedules)
 
   return (
-    <section>
-      <div className='flex justify-between'>
-        <p>date</p>
-        <p>freqency</p>
-        <p>service name</p>
-        <p>location</p>
-        <p>date</p>
-      </div>
-      {allPremiseSchedules?.map(p => (
-        <div key={p._id} className='flex justify-between'>
-          <div>
-            <p>{new Date(p.createdAt).toISOString().split("T")[0]}</p>
-          </div>
-          <div>
-            <p>{p.frequency}</p>
-          </div>
-          <div>
-            <p>{p.floor},{p.location},{p.sublocation}</p>
-          </div>
-        </div>
-      ))}
-
+    <section className="bg-white rounded-md">
+      <table className="w-full  border-collapse text-left text-sm text-slate-700">
+        <thead>
+          <tr className="border-b-2 bg-gray-200 border-slate-200 font-semibold text-slate-900">
+            <th className="py-3 px-2">Date</th>
+            <th className="py-3 px-2">Location</th>
+            <th className="py-3 px-2">Service name</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-slate-100">
+          {allPremiseSchedules?.map((p, index) => (
+            <tr key={index}>
+              <td className="py-3 px-2 whitespace-nowrap">
+                {new Date(p.createdAt).toISOString().split("T")[0]}
+              </td>
+              <td className="py-3 px-2">
+                {p.floor}, {p.location}, {p.sublocation}
+              </td>
+              <td className="py-3 px-2">
+                {p.service.map(s => s.serviceName).join(", ")}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </section>
+
+
   )
 }
 

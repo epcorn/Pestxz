@@ -1,5 +1,3 @@
-// ComplaintModal.jsx
-
 import { useEffect, useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { useDispatch, useSelector } from "react-redux";
@@ -17,9 +15,10 @@ import {
   operatorComment,
 } from "../../utils/constData";
 import FormModal from "./FormModal";
+import { socket } from "../../socket";
 
 const ComplaintModal = ({ locationId, mode = "create" }) => {
-  
+
   const isCreate = mode === "create";
   const isUpdate = mode === "update";
   const isReview = mode === "review";
@@ -51,7 +50,7 @@ const ComplaintModal = ({ locationId, mode = "create" }) => {
   } = useForm({
     defaultValues: {
       location: null,
-      service: "",
+      service: [],
       comment: "",
       status: null,
     },
@@ -110,7 +109,6 @@ const ComplaintModal = ({ locationId, mode = "create" }) => {
   const currentSelectedId =
     selectedLocation?.value || locationId;
 
-  console.log(selectedLocation?.value, currentSelectedId, locationId)
   const targetedLocationRecord =
     clientLocations?.locations?.find(
       (loc) => loc._id?.toString() === currentSelectedId?.toString()
@@ -153,7 +151,9 @@ const ComplaintModal = ({ locationId, mode = "create" }) => {
       // CREATE
       if (isCreate) {
         form.set("comment", data.comment);
-        form.set("service", data.service);
+
+        const selectedServices = data.service.map(s => s.value)
+        selectedServices.forEach(s => form.append("service", s))
 
         const locationToUse = data?.location?.value;
         if (!locationToUse) {
@@ -161,26 +161,39 @@ const ComplaintModal = ({ locationId, mode = "create" }) => {
           return;
         }
         console.log(locationToUse, [...form])
-        res = await addComplaint({ id: locationToUse, form }).unwrap();
+        // res = await addComplaint({ id: locationToUse, form }).unwrap();
+
+        socket.emit("complaint-raised", {
+          user: user.name,
+          comment: data.comment
+        })
       }
       // UPDATE
       if (isUpdate) {
         form.set("status", data.status?.value || data.status);
         form.set("comment", data.comment?.value || data.comment);
-        res = await updateComplaint({ id: locationId, form }).unwrap();
+        // res = await updateComplaint({ id: locationId, form }).unwrap();
+
+        socket.emit("complaint-updated", {
+          user: user.name,
+          status: status.label,
+        })
       }
 
       // REVIEW
       if (isReview) {
         form.set("status", data.status?.value || data.status);
         form.set("comment", data.comment);
-        res = await updateComplaint({
-          id: locationId,
-          form,
-        }).unwrap();
+        // res = await updateComplaint({
+        //   id: locationId,
+        //   form,
+        // }).unwrap();
       }
-
+      console.log([data])
       toast.success(res?.msg || "Success");
+      socket.emit("complaint-updated", {
+        user: user.name
+      })
 
       dispatch(toggleModal({ name: "complaint", status: false }));
 
@@ -301,38 +314,20 @@ const ComplaintModal = ({ locationId, mode = "create" }) => {
         </>
       )}
 
-      <div className="col-span-2">
-        <label className="block text-md font-medium leading-6 text-gray-900 mb-1">
-          Services
-        </label>
-
-        <Controller
-          name="service"
-          control={control}
-          rules={{ required: "Select service" }}
-          render={({ field }) => (
-            <select
-              value={field.value || ""}
-              onChange={(e) =>
-                field.onChange(e.target.value)
-              }
-              className="w-full py-2 px-2 border-2 rounded-md outline-none transition border-neutral-300 focus:border-black"
-            >
-              <option value="">Select Service</option>
-
-              {serviceOptions?.map((serviceName, index) => (
-                <option key={index} value={serviceName}>
-                  {serviceName}
-                </option>
-              ))}
-            </select>
-          )}
-        />
-
-        <p className="text-xs text-red-500 pl-1 mt-1">
-          {errors.service?.message}
-        </p>
-      </div>
+      <Controller
+        name="service"
+        control={control}
+        rules={{ required: "Select at least one service" }}
+        render={({ field }) => (
+          <InputSelect
+            isMulti={true}
+            options={serviceOptions.map((s) => ({ label: s, value: s }))}
+            onChange={field.onChange}
+            value={field.value}
+            label="Services"
+          />
+        )}
+      />
 
       <div className="col-span-2">
         <label className="text-md font-medium leading-6 mr-2 text-gray-900">

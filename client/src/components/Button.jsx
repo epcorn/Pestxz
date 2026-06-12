@@ -20,6 +20,7 @@ const Button = ({
         disabled:opacity-70
         disabled:cursor-not-allowed
         rounded-lg
+        leading-none
         hover:opacity-80
         transition
         m-1 w-fit

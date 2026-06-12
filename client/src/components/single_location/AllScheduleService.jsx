@@ -5,7 +5,7 @@ import Button from "../Button";
 import { dateFormat } from "../../utils/helperFunctions";
 import ImagesModal from "../modals/ImagesModal";
 
-function LastRecentService({ data }) {
+function AllScheduleService({ data }) {
   const { user } = useSelector(store => store.helper)
   const [showDetail, setShowDetail] = useState(null);
   const dispatch = useDispatch();
@@ -37,14 +37,14 @@ function LastRecentService({ data }) {
                     className="grid grid-cols-1 md:grid-cols-[120px_120px_150px_1fr_150px] gap-3 md:gap-0 p-4 cursor-pointer bg-white/40 hover:bg-white/30 transition items-center"
                   >
                     {/* TYPE */}
-                    <div className="md:border-r md:border-neutral-200 md:px-3 flex items-center">
+                    <div className="md:border-r md:border-neutral-200 md:px-3 flex justify-between items-center">
                       <span className="text-xs font-bold uppercase text-neutral-400 md:hidden mr-2">Type:</span>
                       <span className="font-medium text-sm text-neutral-900">{service.type}</span>
                     </div>
 
                     {/* IMAGE */}
                     <div
-                      className="md:border-r md:border-neutral-200 md:px-3 flex items-center"
+                      className="md:border-r md:border-neutral-200 md:px-3 flex justify-between items-center"
                       onClick={(e) => e.stopPropagation()}
                     >
                       <span className="text-xs font-bold uppercase text-neutral-400 md:hidden mr-2">Images:</span>
@@ -77,7 +77,7 @@ function LastRecentService({ data }) {
                     </div>
 
                     {/* DATE */}
-                    <div className="md:border-r md:border-neutral-200 md:px-3 flex flex-row md:flex-col items-center md:items-start justify-start md:justify-center">
+                    <div className="md:border-r md:border-neutral-200 md:px-3 flex flex-row justify-between md:flex-col items-center md:items-start md:justify-center">
                       <span className="text-xs font-bold uppercase text-neutral-400 md:hidden mr-2">Date:</span>
                       <div className="flex flex-col">
                         <span className="text-sm text-neutral-900">{dateFormat(service?.regularService[0].date)}</span>
@@ -90,9 +90,9 @@ function LastRecentService({ data }) {
                     </div>
                     {/* SERVICE */}
 
-                    <div className="md:border-r md:border-neutral-200 md:px-3 flex flex-row md:flex-col items-center md:items-start justify-start md:justify-center">
+                    <div className="md:border-r md:border-neutral-200 md:px-3 flex flex-row md:flex-col items-center md:items-start justify-between md:justify-center">
                       <span className="text-xs font-bold uppercase text-neutral-400 md:hidden mr-2">Service:</span>
-                      <div className="flex flex-col min-w-0 flex-1">
+                      <div className="flex flex-col min-w-0 w-full text-right md:text-left">
                         <span className="font-medium text-sm text-neutral-900 truncate">
                           {service.regularService[0].serviceName}
                         </span>
@@ -103,7 +103,7 @@ function LastRecentService({ data }) {
                     </div>
 
                     {/* USER */}
-                    <div className="md:px-3 flex items-center">
+                    <div className="md:px-3 flex justify-between items-center">
                       <span className="text-xs font-bold uppercase text-neutral-400 md:hidden mr-2">Attend By:</span>
                       <span className="inline-flex items-center rounded-full bg-neutral-100 px-2.5 py-0.5 text-xs font-medium text-neutral-900 border border-neutral-500">
                         {service.regularService[0].userName}
@@ -205,4 +205,4 @@ function LastRecentService({ data }) {
   );
 }
 
-export default LastRecentService;
+export default AllScheduleService;

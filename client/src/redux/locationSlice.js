@@ -62,6 +62,28 @@ export const locationSlice = apiSlice.injectEndpoints({
         body: data,
       }),
     }),
+    getUnscheduledReports: builder.query({
+      query: (id) => ({
+        url: `/api/location/getUnscheduledReports/${id}`,
+      }),
+      providesTags: ["Location", "unscheduled"],
+    }),
+    unscheduledReport: builder.mutation({
+      query: (data) => ({
+        url: `/api/location/unSchedule`,
+        method: "POST",
+        body: data,
+      }),
+      invalidatesTags: ["Location","unscheduled"],
+    }),
+    statusUnschedule: builder.mutation({
+      query: (data) => ({
+        method: "PATCH",
+        url: `/api/location/statusUnschedule/${data.id}`,
+        body: data,
+      }),
+      invalidatesTags: ["Location","unscheduled"],
+    }),
   }),
 });
 
@@ -76,4 +98,7 @@ export const {
   useBackFillSchedulesQuery,
   useQrCounterMutation,
   useLazyBackFillSchedulesQuery,
+  useUnscheduledReportMutation,
+  useGetUnscheduledReportsQuery,
+  useStatusUnscheduleMutation,
 } = locationSlice;

@@ -10,11 +10,13 @@ import { useState } from "react";
 import { toast } from "react-toastify";
 import RightsIcon from "../components/modals/RightsIcon";
 import { useGetClientUsersQuery } from "../redux/userSlice";
+import { useEffect } from "react";
 
 const Users = () => {
   const dispatch = useDispatch();
   const user = useSelector(selectCurrentUser);
   const [userDetails, setUserDetails] = useState(null);
+  const [selectedClient, setSelectedClient] = useState("");
   const { isModalOpen, user: loginUser } = useSelector(
     (store) => store.helper
   );
@@ -37,6 +39,7 @@ const Users = () => {
     dispatch(toggleModal({ name: "user", status: true, })
     );
   };
+  console.log(data)
 
   const handleNewUserModal = () => {
     setUserDetails(null);
@@ -57,6 +60,15 @@ const Users = () => {
       toast.error("Error deleting user");
     }
   };
+  // useEffect(() => {
+  //   setClient(data)
+  // }, [])
+  console.log(selectedClient)
+
+  const filteredUsers = selectedClient
+    ? data?.filter((u) => selectedClient === "express" ? u?.type === "PestEmployee" : u?.client?.name === selectedClient)
+    : data;
+
 
   return (
     <div className="p-4 md:p-6">
@@ -90,9 +102,9 @@ const Users = () => {
           </div>
 
           {/* TABLE */}
-          <div className="overflow-x-auto border border-gray-200 rounded-lg bg-white">
-            <table className="w-full text-sm">
-              <thead className="bg-gray-100">
+          <div className=" overflow-x-auto border border-gray-200 rounded-lg bg-white">
+            <table className="min-w-4xl w-full text-sm table-fixed">
+              <thead className="bg-gray-300">
                 <tr>
                   <th className="px-4 py-3 text-left font-semibold text-gray-600">
                     Name
@@ -106,11 +118,23 @@ const Users = () => {
                     Role
                   </th>
 
-                  {/* <th className="px-4 py-3 text-left font-semibold text-gray-600">
-                    {loginUser?.role === "ClientAdmin"
-                      ? "Department"
-                      : "Client"}
-                  </th> */}
+                  <th className="px-4 py-3 text-left font-semibold text-gray-600">
+
+                    {user.role === "Admin" && <select
+                      value={selectedClient}
+                      onChange={(e) => setSelectedClient(e.target.value)}
+                    >
+                      <option value="">
+                        {loginUser?.role === "Admin" ? "All clients" : "Client"}
+                      </option>
+                      <option value="express">Express Employee</option>
+                      {Array.from(
+                        new Set(data?.map((d) => d?.client?.name).filter(Boolean))
+                      ).map((name) => (
+                        <option key={name} value={name}>{name}</option>
+                      ))}
+                    </select>}
+                  </th>
 
                   <th className="px-4 py-3 text-left font-semibold text-gray-600">
                     Rights
@@ -123,76 +147,83 @@ const Users = () => {
                   )}
                 </tr>
               </thead>
-
-              <tbody>
-                {data?.map((item) => (
-                  <tr
-                    key={item._id}
-                    className="border-t border-gray-100 hover:bg-gray-50"
-                  >
-                    <td className="px-4 py-3">
-                      {item?.name}
-                    </td>
-
-                    <td className="px-4 py-3 text-gray-600">
-                      {item?.email}
-                    </td>
-
-                    <td className="px-4 py-3">
-                      {user.role === "Admin" && <p className="grid ">
-                        <>
-                          {item?.role}
-                        </>
-                        <span className=" text-xs outline px-2 py-px text-gray-400 rounded-lg whitespace-nowrap w-fit">
-                          {item?.client?.name || item?.type || "-"}
-                        </span>
-                      </p>}
-                      {user.role === "ClientAdmin" && <p className="grid ">
-
-                        {item?.role === "ClientAdmin" ? "Admin" : "Employee"}
-
-                      </p>}
-                    </td>
-
-                    <td className="px-4 py-3">
-                      <RightsIcon
-                        initialRights={item?.rights}
-                      />
-                    </td>
-
-                    {/* ONLY ADMIN CAN SEE */}
-                    {loginUser?.role === "Admin" && (
-                      <td className="px-4 py-3">
-                        <div className="flex items-center justify-center gap-2">
-                          <button
-                            type="button"
-                            onClick={() =>
-                              handleUpdateUserModal(item)
-                            }
-                            className="px-3 py-1 text-xs rounded bg-blue-100 text-blue-700 hover:bg-blue-200"
-                          >
-                            Edit
-                          </button>
-
-                          {item?.role !== "Admin" && (
-                            <DeleteModal
-                              label=""
-                              title="Delete"
-                              handleDelete={handleDelete}
-                              isLoading={deleteLoading}
-                              id={{
-                                id: item._id,
-                                name: item.name,
-                              }}
-                            />
-                          )}
-                        </div>
-                      </td>
-                    )}
-                  </tr>
-                ))}
-              </tbody>
             </table>
+
+            <div className="overflow-auto min-w-4xl max-h-[500px]">
+
+              <table className="table-fixed text-sm w-full">
+                <tbody>
+                  {filteredUsers?.map((item) => (
+                    <tr
+                      key={item._id}
+                      className="border-t border-gray-100 hover:bg-gray-50"
+                    >
+                      <td className="px-4 py-3">
+                        {item?.name}
+                      </td>
+
+                      <td className="px-4 py-3 text-gray-600">
+                        {item?.email}
+                      </td>
+
+                      <td className="px-4 py-3">
+                        {user.role === "Admin" && <p className="grid ">
+                          <>
+                            {item?.role}
+                          </>
+                          <span className=" text-xs outline px-2 py-px text-gray-400 rounded-lg whitespace-nowrap w-fit">
+                            {item?.client?.name || item?.type || "-"}
+                          </span>
+                        </p>}
+                        {user.role === "ClientAdmin" && <p className="grid ">
+                          {item?.role === "ClientAdmin" ? "Admin" : "Employee"}
+                        </p>}
+                      </td>
+
+                      <td className="px-4 py-3 text-gray-600">
+                        {item.client ? item?.client?.name : "Express Employee"}
+                      </td>
+
+                      <td className="px-4 py-3">
+                        <RightsIcon
+                          initialRights={item?.rights}
+                        />
+                      </td>
+
+                      {/* ONLY ADMIN CAN SEE */}
+                      {loginUser?.role === "Admin" && (
+                        <td className="px-4 py-3">
+                          <div className="flex items-center justify-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                handleUpdateUserModal(item)
+                              }
+                              className="px-3 py-1 text-xs rounded bg-blue-100 text-blue-700 hover:bg-blue-200"
+                            >
+                              Edit
+                            </button>
+
+                            {item?.role !== "Admin" && (
+                              <DeleteModal
+                                label=""
+                                title="Delete"
+                                handleDelete={handleDelete}
+                                isLoading={deleteLoading}
+                                id={{
+                                  id: item._id,
+                                  name: item.name,
+                                }}
+                              />
+                            )}
+                          </div>
+                        </td>
+                      )}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       )}

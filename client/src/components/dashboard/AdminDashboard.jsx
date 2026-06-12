@@ -43,7 +43,7 @@ function AdminDashboard() {
   );
 
   return (
-    <section className="p-4 md:p-6 bg-gray-50 min-h-screen space-y-6">
+    <section className="p-2 md:p-6 bg-gray-50 min-h-screen space-y-6">
 
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-200 pb-5">

@@ -2,6 +2,7 @@ import express from "express";
 import {
   assignWork,
   dailyServiceReport,
+  getAllAssignedWork,
   getAllComplaints,
   getSingleComplaint,
   newComplaint,
@@ -23,5 +24,6 @@ router
   .put(updateComplaint);
 
 router.put("/assign-work", assignWork);
+router.get("/assign-work", getAllAssignedWork);
 
 export default router;

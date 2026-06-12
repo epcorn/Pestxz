@@ -139,3 +139,4 @@ export const updateClient = async (req, res) => {
     return res.status(500).json({ msg: "Server error", error: error.message });
   }
 };
+

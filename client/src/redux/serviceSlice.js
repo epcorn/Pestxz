@@ -26,9 +26,9 @@ export const serviceSlice = apiSlice.injectEndpoints({
       invalidatesTags: ["Complaint", "Location"],
     }),
     allComplaints: builder.query({
-      query: ({ search, page, location }) => ({
+      query: ({ search, page, location, client }) => ({
         url: "/api/service/allComplaints",
-        params: { search, page, location },
+        params: { search, page, location, client },
       }),
       providesTags: ["Complaint"],
     }),
@@ -46,6 +46,13 @@ export const serviceSlice = apiSlice.injectEndpoints({
         url: `/api/service/assign-work`,
         body: data,
       }),
+      providesTags: ["assign"],
+    }),
+    getAllAssignedWork: builder.query({
+      query: () => ({
+        url: `/api/service/assign-work`,
+      }),
+      invalidatesTags: ["Complaint", "Location", "assign"],
     }),
     dailyServiceReport: builder.query({
       //new added 08-05-2026
@@ -63,6 +70,7 @@ export const {
   useAllComplaintsQuery,
   useRegularServiceMutation,
   useAssignWorkMutation,
+  useGetAllAssignedWorkQuery,
 
   useDailyServiceReportQuery, //new added 08-05-2026
 } = serviceSlice;

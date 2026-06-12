@@ -18,18 +18,70 @@ import {
   authorizeUser,
 } from "./middleware/authMiddleware.js";
 import { createAdmin } from "./models/userModel.js";
-
-// import './cron/updateSchedule.cron.js' //cron job for service- schedules
+import { createServer } from "http";
+import { Server } from "socket.io";
 
 dotenv.config();
+const app = express();
+const httpServer = createServer(app);
+const io = new Server(httpServer, {
+  cors: {
+    origin:
+      process.env.NODE_ENV === "production"
+        ? process.env.CLIENT_URL
+        : "http://localhost:3000",
+    credentials: true,
+  },
+});
 
 cloudinary.config({
   cloud_name: process.env.CLOUD_NAME,
   api_key: process.env.CLOUD_KEY,
   api_secret: process.env.CLOUD_SECRET,
 });
+io.on("connection", (socket) => {
+  socket.on("join-admin", (role) => {
+    if (
+      [
+        "Admin",
+        "ClientAdmin",
+        "Operator",
+        "BranchAdmin",
+        "Supervisor",
+        "TeamLeader",
+      ].includes(role)
+    ) {
+      socket.join("admin-room");
+      console.log(`${role} joined admin-room`); // helpful for debugging
+    }
+  });
 
-const app = express();
+  // raised — only admins need to know
+  socket.on("unscheduled-raised", (data) => {
+    io.to("admin-room").emit("new-unscheduled-work", data); // 👈 was broadcast.emit
+  });
+
+  // updated
+  socket.on("unscheduled-updated", (data) => {
+    io.to("admin-room").emit("work-status-changed", data); // 👈 was broadcast.emit
+  });
+
+  // approved
+  socket.on("unscheduled-approved", (data) => {
+    io.to("admin-room").emit("work-status-approved", data); // 👈 was broadcast.emit
+  });
+
+  // rejected
+  socket.on("unscheduled-rejected", (data) => {
+    io.to("admin-room").emit("work-status-rejected", data); // 👈 was broadcast.emit
+  });
+
+  // complaint raised
+  socket.on("complaint-raised", (data) => {
+    io.to("admin-room").emit("new-complaint", data);
+  });
+});
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
@@ -74,14 +126,17 @@ if (process.env.NODE_ENV === "production") {
 app.use(notFound);
 
 const port = process.env.PORT || 5000;
-export const MONGOURL = process.env.MONGO_URI;
+export const MONGOURL =
+  process.env.NODE_ENV === "production"
+    ? process.env.MONGO_URI
+    : process.env.MONGO_LOCAL;
 
 // createAdmin();
 // addAdminsjson()   // do not run this if not required
 const connectDB = async () => {
   try {
     await mongoose.connect(MONGOURL);
-    app.listen(port, () => console.log("server is listening"));
+    httpServer.listen(port, () => console.log("server is listening"));
   } catch (error) {
     console.error(`Error: ${error.message}`);
     process.exit(1);

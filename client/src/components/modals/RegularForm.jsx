@@ -20,6 +20,10 @@ function RegularForm({ serviceData, id, locationName, setRegular }) {
   const STORAGE_KEY = getStorageKey(id, locationName);
   const today = todayShort();
 
+  const upComing = serviceData.map(s =>
+    s.schedule.filter(sc => sc.status === "Pending")
+  );
+
   useEffect(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (!saved) return;
@@ -118,8 +122,14 @@ function RegularForm({ serviceData, id, locationName, setRegular }) {
 
   if (!servicesForToday?.length) {
     return (
-      <div className="w-full p-6 outline outline-gray-400 rounded-2xl text-center text-gray-500">
-        <p>No services scheduled for today ({today}).</p>
+      <div className="w-full p-6 outline outline-gray-400 rounded-2xl text-center text-xl text-gray-500">
+        <p>
+          {/* No services scheduled for today ({today}) */}
+          Next Schedule Date is
+          {upComing?.map(u => (
+            <strong key={u[0].date}> ({formatShortDate(u[0].date)}) </strong>
+          ))}
+          .</p>
       </div>
     );
   }

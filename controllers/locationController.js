@@ -1,6 +1,7 @@
 import Client from "../models/clientModel.js";
 import Location from "../models/locationModel.js";
 import Service from "../models/serviceModel.js";
+import { Unscheduled } from "../models/unScheduleModel.js";
 import {
   capitalLetter,
   generateSchedule,
@@ -553,12 +554,19 @@ export const getLocationDetails = async (req, res) => {
       location: id,
     }).sort("-createdAt");
 
+    const unscheduled = await Unscheduled.find({ location: location._id }).sort({
+      updatedAt: -1,
+    });
+
+    console.log(unscheduled);
+
     return res.json({
       location,
       client: client?.name || "",
       complaints,
       lastServices,
       regularService,
+      unscheduled,
     });
   } catch (error) {
     console.log(error);

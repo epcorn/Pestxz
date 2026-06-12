@@ -36,9 +36,9 @@ const Complaints = () => {
   const { data, isLoading, isFetching, error } = useAllComplaintsQuery({
     search,
     page,
+    client: location.client || "",
     location: location?.floor || "All",
   });
-
 
   const pages = Array.from({ length: data?.pages }, (_, index) => index + 1);
 
@@ -53,7 +53,9 @@ const Complaints = () => {
     setLocation({ client: "", floor: "" });
   };
 
-  const complaints = data?.complaints?.filter(d => d?.type !== "Regular")
+  const complaints = data?.complaints?.filter(d => d?.type !== "Regular") ?? []
+
+  console.log(complaints)
 
   return (
     <>
@@ -101,7 +103,7 @@ const Complaints = () => {
 
                   className="mr-2 mt-0.5 w-40 py-0.5 h-8.5 px-2 border-2 rounded-md outline-none transition border-neutral-300 focus:border-black disabled:bg-slate-100"
                 >
-                  <option value="">--All--</option>
+                  <option value="">Client Name</option>
                   {clients?.map((client, index) => (
                     <option key={client._id} value={client._id}>
                       {client.name}
@@ -115,7 +117,7 @@ const Complaints = () => {
 
                 className="mr-2 mt-0.5 w-40 py-0.5 h-8.5 px-2 border-2 rounded-md outline-none transition border-neutral-300 focus:border-black disabled:bg-slate-100"
               >
-                <option value="">--All--</option>
+                <option value="">Location</option>
                 {clientLocations?.floors.map((item, index) => (
                   <option key={index} value={item}>
                     {item}
@@ -163,7 +165,7 @@ const Complaints = () => {
       )
       }
       {
-        data?.complaints?.length < 1 && (
+        complaints?.length < 1 && (
           <p className="text-center pt-2 text-red-600 font-semibold text-lg">
             No Complaint Found
           </p>
@@ -178,7 +180,7 @@ export default Complaints;
 
 export function AssignWork({ complaintId, currentAssgndVal = null, show }) {
   const { user } = useSelector((store) => store.helper);
-  const { data: users } = useAllUserQuery({ skip: user.role !== "Admin" });
+  const { data: users } = useAllUserQuery(undefined, { skip: user.role !== "Admin" });
   const [assignWork] = useAssignWorkMutation();
 
   const operators = users?.filter(u => u.role === "Operator")?.map(op => ({
