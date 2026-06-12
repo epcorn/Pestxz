@@ -46,13 +46,13 @@ export const serviceSlice = apiSlice.injectEndpoints({
         url: `/api/service/assign-work`,
         body: data,
       }),
-      providesTags: ["assign"],
+      providesTags: ["assign", "Complaint", "Location"],
     }),
     getAllAssignedWork: builder.query({
       query: () => ({
         url: `/api/service/assign-work`,
       }),
-      invalidatesTags: ["Complaint", "Location", "assign"],
+      providesTags: ["Complaint", "Location", "assign"],
     }),
     dailyServiceReport: builder.query({
       //new added 08-05-2026

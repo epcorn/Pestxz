@@ -161,7 +161,7 @@ const ComplaintModal = ({ locationId, mode = "create" }) => {
           return;
         }
         console.log(locationToUse, [...form])
-        // res = await addComplaint({ id: locationToUse, form }).unwrap();
+        res = await addComplaint({ id: locationToUse, form }).unwrap();
 
         socket.emit("complaint-raised", {
           user: user.name,
@@ -172,7 +172,7 @@ const ComplaintModal = ({ locationId, mode = "create" }) => {
       if (isUpdate) {
         form.set("status", data.status?.value || data.status);
         form.set("comment", data.comment?.value || data.comment);
-        // res = await updateComplaint({ id: locationId, form }).unwrap();
+        res = await updateComplaint({ id: locationId, form }).unwrap();
 
         socket.emit("complaint-updated", {
           user: user.name,
@@ -184,10 +184,10 @@ const ComplaintModal = ({ locationId, mode = "create" }) => {
       if (isReview) {
         form.set("status", data.status?.value || data.status);
         form.set("comment", data.comment);
-        // res = await updateComplaint({
-        //   id: locationId,
-        //   form,
-        // }).unwrap();
+        res = await updateComplaint({
+          id: locationId,
+          form,
+        }).unwrap();
       }
       console.log([data])
       toast.success(res?.msg || "Success");

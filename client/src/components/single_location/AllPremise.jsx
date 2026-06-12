@@ -12,7 +12,7 @@ function AllPremise() {
   console.log(allPremiseSchedules)
 
   return (
-    <section className="bg-white rounded-md">
+    <section className="bg-white rounded-md overflow-hidden">
       <table className="w-full  border-collapse text-left text-sm text-slate-700">
         <thead>
           <tr className="border-b-2 bg-gray-200 border-slate-200 font-semibold text-slate-900">
@@ -38,9 +38,7 @@ function AllPremise() {
         </tbody>
       </table>
     </section>
-
-
   )
 }
 
-export default AllPremise
+export default AllPremise;
