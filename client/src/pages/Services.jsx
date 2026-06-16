@@ -25,6 +25,7 @@ import ServiceFormModal from "../components/modals/ServiceFormModal";
 import ServiceList from "../components/modals/ServiceList";
 import Frequency from "../components/Frequency";
 import { useGetSingleUserQuery, userSlice } from "../redux/userSlice";
+import Headers from "../components/Headers";
 
 
 const Services = () => {
@@ -77,15 +78,11 @@ const Services = () => {
   return (
     <>
       <section className="w-full space-y-5 p-1">
-        {/* Main layout flexbox/grid fix container */}
-        {/* <div className="grid grid-cols-1 md:grid-cols-5 gap-2 items-stretch">
-          <div className="col-span-1 md:col-span-3">
-            <ServiceFormModal addService={addService} />
-            </div>
-            <div className="md:col-span-2 flex">
-            <Frequency frequencies={frequencies} removeFreq={removeFreq} />
-            </div>
-            </div> */}
+
+        {/* heading  */}
+        <div>
+          <Headers header={'Services'} user={user}/>
+        </div>
         <div >
           <ServiceFormModal addService={addService} />
         </div>
@@ -118,7 +115,7 @@ const Services = () => {
                         }))
                       }
                       onClick={(e) => e.stopPropagation()}
-                      onBlur={() =>setUpdate({ id: null, value: "" })}
+                      onBlur={() => setUpdate({ id: null, value: "" })}
                       onKeyDown={async (e) => {
                         if (e.key === "Enter") {
                           try {

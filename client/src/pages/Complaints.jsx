@@ -13,6 +13,7 @@ import { useAllClientsQuery } from "../redux/clientSlice";
 import { useAllUserQuery } from "../redux/adminSlice";
 import { toast } from "react-toastify";
 import Select from "react-select";
+import Headers from "../components/Headers";
 
 const Complaints = () => {
   const [page, setPage] = useState(1);
@@ -66,23 +67,15 @@ const Complaints = () => {
       )}
       <div className="md:flex flex-col justify-around">
         {/* heading */}
-        <div className="mb-6 text-center">
-          <h2 className="text-2xl font-light text-slate-800">
-            Hello, <span className="capitalize font-semibold text-sky-700">{user.name}</span>
-          </h2>
-          <span className="inline-block mt-1 px-2.5 py-0.5 text-xs font-medium tracking-wide bg-slate-100 text-slate-600 rounded-full border border-slate-200">
-            {user.role}
-          </span>
-        </div>
-
+        <Headers header={'Complaints'} user={user}/>
         {/* search section  */}
-        <div className="flex justify-between">
-          <form onSubmit={handleSearch} className="flex items-center flex-wrap">
-            <div className="flex items-center px-1 bg-white border w-full md:w-60 lg:w-80 rounded border-gray-300 mr-3">
+        <div className="">
+          <form onSubmit={handleSearch} className="flex flex-wrap ">
+            <div className="flex items-center px-1 bg-white border max-w-52 rounded border-gray-500 mr-3">
               <AiOutlineSearch />
               <input
                 type="text"
-                className="py-1 md:py-1.5 pl-1 w-full focus:outline-none text-sm rounded text-gray-600 placeholder-gray-500"
+                className="py-1 pl-1 w-full focus:outline-none text-sm rounded text-gray-600 placeholder-gray-500"
                 placeholder="Complaint number"
                 value={tempSearch}
                 onChange={(e) => setTempSearch(e.target.value)}
@@ -93,58 +86,56 @@ const Complaints = () => {
                 </button>
               )}
             </div>
-            <div className="flex gap-2">
-              {/* <label htmlFor="">Select Floors</label> */}
-
-              {user.role === "Admin" &&
-                <select
-                  value={location.client}
-                  onChange={(e) => { setLocation(prev => ({ ...prev, client: e.target.value })); setMyClient(e.target.value) }}
-
-                  className="mr-2 mt-0.5 w-40 py-0.5 h-8.5 px-2 border-2 rounded-md outline-none transition border-neutral-300 focus:border-black disabled:bg-slate-100"
-                >
-                  <option value="">Client Name</option>
-                  {clients?.map((client, index) => (
-                    <option key={client._id} value={client._id}>
-                      {client.name}
-                    </option>
-                  ))}
-                </select>
-              }
+            {/* <label htmlFor="">Select Floors</label> */}
+            {user.role === "Admin" &&
               <select
-                value={location.floor}
-                onChange={(e) => setLocation(prev => ({ ...prev, floor: e.target.value }))}
+                value={location.client}
+                onChange={(e) => { setLocation(prev => ({ ...prev, client: e.target.value })); setMyClient(e.target.value) }}
 
                 className="mr-2 mt-0.5 w-40 py-0.5 h-8.5 px-2 border-2 rounded-md outline-none transition border-neutral-300 focus:border-black disabled:bg-slate-100"
               >
-                <option value="">Location</option>
-                {clientLocations?.floors.map((item, index) => (
-                  <option key={index} value={item}>
-                    {item}
+                <option value="">Client Name</option>
+                {clients?.map((client, index) => (
+                  <option key={client._id} value={client._id}>
+                    {client.name}
                   </option>
                 ))}
               </select>
-            </div>
+            }
+            <select
+              value={location.floor}
+              onChange={(e) => setLocation(prev => ({ ...prev, floor: e.target.value }))}
+
+              className="mr-2 mt-0.5 w-40 py-0.5 h-8.5 px-2 border-2 rounded-md outline-none transition border-neutral-300 focus:border-black disabled:bg-slate-100"
+            >
+              <option value="">Location</option>
+              {clientLocations?.floors.map((item, index) => (
+                <option key={index} value={item}>
+                  {item}
+                </option>
+              ))}
+            </select>
+
 
             <Button type="submit" label="Search" color="bg-black" height="h-8" />
+            {user.rights.raise &&
+              <button
+                className="px-4 py-2 w-fit ml-auto bg-blue-800 text-white rounded-lg"
+                onClick={() =>
+                  dispatch(toggleModal({ name: "complaint", status: true }))
+                }
+              >New Complaint</button>
+            }
           </form>
           {/* new complaint button  */}
         </div >
-        {user.rights.raise && user.type === "ClientEmployee" &&
-          <button
-            className="px-4 py-2 w-fit ml-auto bg-blue-800 text-white rounded-lg"
-            onClick={() =>
-              dispatch(toggleModal({ name: "complaint", status: true }))
-            }
-          >New Complaint</button>
-        }
       </div >
       {isModalOpen.complaint && <ComplaintModal mode={"create"} />}
       {data && (
         <>
           <ComplaintTable data={complaints} user={user} />
 
-          {pages.length > 1 && (
+          {pages.length > 0 && (
             <nav className="mb-4">
               <ul className="list-style-none flex justify-center mt-2">
                 {pages.map((item) => (

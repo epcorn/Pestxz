@@ -12,6 +12,7 @@ import { removeCredentials } from "../redux/helperSlice";
 import { useLogoutMutation } from "../redux/userSlice";
 import { useGetSingleClientQuery } from "../redux/clientSlice";
 import { MdOutlineQrCodeScanner } from "react-icons/md";
+import TickerTape from "./TickerTape";
 
 
 const roles = ["Admin", "Operator", "Supervisor", "TeamLeader", "BranchAdmin", "PestAdmin", "ClientAdmin", "ClientEmployee"]
@@ -103,7 +104,7 @@ const Sidebar = () => {
   return (
     <aside className="antialiased">
       <nav className="fixed top-0 left-0 right-0 max-h-20 lg:left-40 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200 py-3 md:px-6 px-3 transition-all duration-300">
-        <div className="flex items-center justify-between w-full max-w-7xl mx-auto">
+        <div className="flex items-start justify-between w-full max-w-7xl mx-auto">
 
           {/* Left Section: Mobile Menu & Client Context */}
           <div className="flex items-center gap-4">
@@ -117,16 +118,39 @@ const Sidebar = () => {
             </button>
 
             {/* Client Name (Context-aware display) */}
-            <div className="flex flex-col lg:pl-16">
-              {client?.name ?
-                <strong className="text-xl md:text-2xl text-slate-800 leading-tight">{client?.name}</strong>
-                : <p className="text-sm md:text-2xl text-slate-800 leading-tight flex flex-col"><strong className="font-black line-clamp-1">Express Pesticides Private Limited</strong><span className="text-xs font-normal">Pest Management Division</span></p>
-              }
+            <div className="flex flex-col lg:pl-16 w-full overflow-hidden">
+              {client?.name ? (
+                <strong className="text-xl md:text-2xl text-slate-800 leading-tight">
+                  {client?.name}
+                </strong>
+              ) : (
+                // w-full with overflow-hidden gives the marquee container a solid layout boundary
+                <div className="w-full overflow-hidden flex flex-col gap-1.5">
+
+                  {/* Brand Header Stack */}
+                  <div className="flex flex-col">
+                    <strong className="h4 font-black text-slate-800 leading-tight line-clamp-1">
+                      Express Pesticides Private Limited
+                    </strong>
+                    <span className="text-xs font-normal text-slate-500 tracking-wide">
+                      Pest Management Division
+                    </span>
+                  </div>
+
+                  {/* Marquee Banner Container */}
+                  {/* Moving this to its own row prevents layout breaking */}
+                  <div className="w-full pt-1 hidden lg:block">
+                    <TickerTape />
+                  </div>
+
+                </div>
+              )}
             </div>
+
           </div>
 
           {/* Right Section: Brand Logo */}
-          <div className="flex items-center gap-1 md:gap-3 bg-slate-50 pl-4 pr-3 py-1.5 rounded-xl border border-slate-100">
+          <div className="hidden md:flex items-center gap-1 md:gap-3 bg-slate-50 pl-4 pr-3 py-1.5 rounded-xl border border-slate-100">
             <div className="flex flex-col items-start justify-center order-2">
               <span className="text-lg md:text-2xl font-extrabold tracking-tight text-slate-900 leading-none">
                 PestXZ
@@ -138,6 +162,9 @@ const Sidebar = () => {
             <img src={logo} className="h-7 md:h-10 w-auto object-contain order-1" alt="PestXZ Logo" />
           </div>
 
+        </div>
+        <div className="block lg:hidden absolute px-2 h-7 w-full left-0 top-full ">
+          <TickerTape />
         </div>
       </nav>
 

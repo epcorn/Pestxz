@@ -5,7 +5,6 @@ function ServiceShow({ services }) {
 
   const [expandedServiceId, setExpandedServiceId] = useState(null);
   const missed = services?.[0]?.schedule.filter(sc => sc.status === "Missed")
-  console.log(missed)
   return (
     <div className="w-full overflow-auto border border-gray-800 rounded-lg bg-white">
       <div className="min-w-[768px]">

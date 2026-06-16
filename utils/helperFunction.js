@@ -377,7 +377,7 @@ export const autoMarkMissed = async () => {
           completed: false,
         },
       },
-    });
+    }).select("service createdAt");
 
     let updatedCount = 0;
 
@@ -424,16 +424,5 @@ export const autoMarkMissed = async () => {
   }
 };
 
-function runAtSpecificTime(callback) {
-  const now = new Date();
-  const midnight = new Date();
 
-  midnight.setHours(0, 0, 0, 0);
-  midnight.setDate(midnight.getDate() + 1);
-
-  const delay = midnight.getTime() - now.getTime();
-
-  setTimeout(callback, delay);
-}
-// runAtSpecificTime(autoMarkMissed);
-autoMarkMissed();
+// autoMarkMissed();

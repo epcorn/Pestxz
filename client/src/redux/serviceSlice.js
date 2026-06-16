@@ -46,13 +46,27 @@ export const serviceSlice = apiSlice.injectEndpoints({
         url: `/api/service/assign-work`,
         body: data,
       }),
-      providesTags: ["assign", "Complaint", "Location"],
+      invalidatesTags: ["assign", "Complaint", "Location"],
     }),
     getAllAssignedWork: builder.query({
       query: () => ({
         url: `/api/service/assign-work`,
       }),
       providesTags: ["Complaint", "Location", "assign"],
+    }),
+    casualService: builder.mutation({
+      query: (data) => ({
+        url: `/api/service/casual/${data.id}`,
+        method: "POST",
+        body: data,
+      }),
+      invalidatesTags: ["Casual", "Location"],
+    }),
+    getCasuals: builder.query({
+      query: (data) => ({
+        url: `/api/service/casual`,
+      }),
+      providesTags: ["Casual"],
     }),
     dailyServiceReport: builder.query({
       //new added 08-05-2026
@@ -70,6 +84,8 @@ export const {
   useAllComplaintsQuery,
   useRegularServiceMutation,
   useAssignWorkMutation,
+  useCasualServiceMutation,
+  useGetCasualsQuery,
   useGetAllAssignedWorkQuery,
 
   useDailyServiceReportQuery, //new added 08-05-2026

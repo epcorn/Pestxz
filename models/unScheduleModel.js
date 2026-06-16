@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 const unScheduleSchema = new mongoose.Schema(
   {
     type: { type: String, default: "Unscheduled" },
+    read: { type: Boolean, default: false },
     serviceId: { type: String },
     serviceName: { type: String },
     serviceDate: { type: String },

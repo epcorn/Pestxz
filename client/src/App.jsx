@@ -32,9 +32,8 @@ import NotificationManager from "./components/NotificationManager";
 import QrScanner from "./components/dashboard/QrScanner";
 
 
-
-
 const Layout = () => {
+
   return (
     <>
       <NotificationManager />
@@ -52,13 +51,11 @@ const Router = createBrowserRouter(
       <Route index={true} path="/" element={<Landing />} />
       <Route path="" element={<MainLayout />}>
         <Route path="" element={<ProtectedRoute />}>
-          <Route path="dashboard/stats" element={<NewDashboard />} />
+          {/* <Route path="dashboard/stats" element={<NewDashboard />} /> */}
           <Route path="dashboard/scan" element={<QrScanner />} />
-          {/* <Route
-              index={true}
-              path="dashboard/stats"
-              element={<Dashboard />}
-            /> */}
+          <Route
+            index={true} path="dashboard/stats" element={<Dashboard />}
+          />
           <Route path="dashboard/complaints" element={<Complaints />} />
           <Route path="/location/:id" element={<SingleLocation />} />
           <Route path="/complaint/:id" element={<SingleComplaint />} />
@@ -81,6 +78,18 @@ const Router = createBrowserRouter(
   )
 );
 function App() {
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker
+        .register("/sw.js")
+        .then((registration) => {
+          console.log("Service Worker registered:", registration.scope);
+        })
+        .catch((error) => {
+          console.log("Service Worker registration failed:", error);
+        });
+    });
+  }
 
   return <RouterProvider router={Router} />;
 }

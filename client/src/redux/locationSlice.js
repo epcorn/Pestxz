@@ -74,7 +74,7 @@ export const locationSlice = apiSlice.injectEndpoints({
         method: "POST",
         body: data,
       }),
-      invalidatesTags: ["Location","unscheduled"],
+      invalidatesTags: ["Location", "unscheduled"],
     }),
     statusUnschedule: builder.mutation({
       query: (data) => ({
@@ -82,7 +82,7 @@ export const locationSlice = apiSlice.injectEndpoints({
         url: `/api/location/statusUnschedule/${data.id}`,
         body: data,
       }),
-      invalidatesTags: ["Location","unscheduled"],
+      invalidatesTags: ["Location", "unscheduled"],
     }),
   }),
 });

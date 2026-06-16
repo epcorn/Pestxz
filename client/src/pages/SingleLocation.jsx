@@ -24,6 +24,8 @@ import { useGetSingleUserQuery } from "../redux/userSlice";
 import AllPremise from "../components/single_location/AllPremise";
 import UnScheduledList from "../components/single_location/UnScheduledList";
 import UnscheduledForm from "../components/single_location/UnscheduledForm";
+import CasualLists from "../components/single_location/casual/CasualLists";
+import CasualForm from "../components/single_location/casual/CasualForm";
 
 
 const SingleLocation = () => {
@@ -46,7 +48,6 @@ const SingleLocation = () => {
 
   const servicesIds = data?.location?.service?.map(s => s.serviceId);
 
-  console.log(data)
   return (
     <>
       {isLoading ? (
@@ -123,8 +124,8 @@ const SingleLocation = () => {
                 {isModalOpen.unscheduled && <UnscheduledForm existing={servicesIds} type={'raise'} locationId={data.location._id} />}
               </>
             )}
-          {/* {
-            (user.role === "Operator") && (
+          {
+            (["PestEmployee"].includes(user.type)) && (
               <>
                 <Button
                   label="Casual Service"
@@ -133,9 +134,9 @@ const SingleLocation = () => {
                     status: true,
                   }))} />
 
-                {isModalOpen.unscheduled && <UnscheduledForm />}
+                {isModalOpen?.casual && <CasualForm mode="create" client={data?.location?.client} />}
               </>
-            )} */}
+            )}
 
           <div className="text-xs md:text-sm font-bold flex gap-3 my-5 *:outline *:px-2 *:py-1 *:rounded-2xl *:cursor-pointer *:transition-all">
             <span className={`${toggleLists === "allComp" ? "bg-blue-600 text-white" : ""}`}
@@ -143,8 +144,12 @@ const SingleLocation = () => {
               Complaints</span>
             <span className={`${toggleLists === "allReg" ? "bg-blue-600 text-white" : ""}`}
               onClick={() => setToggleLists(toggleLists === "allReg" ? "" : "allReg")}>Scheduled</span>
-            <span className={`${toggleLists === "allUnsch" ? "bg-blue-600 text-white" : ""}`} onClick={() => setToggleLists(toggleLists === "allUnsch" ? "" : "allUnsch")}>Un-Scheduled</span>
-            <span>Casual</span>
+            <span
+              className={`${toggleLists === "allUnsch" ? "bg-blue-600 text-white" : ""}`}
+              onClick={() => setToggleLists(toggleLists === "allUnsch" ? "" : "allUnsch")}>Un-Scheduled</span>
+            <span
+              className={`${toggleLists === "allCasual" ? "bg-blue-600 text-white" : ""}`}
+              onClick={() => setToggleLists(toggleLists === "allCasual" ? "" : "allCasual")}>Casual</span>
           </div>
           {/* divider */}
           <hr className="h-px my-4 border-0 bg-gray-700" />
@@ -224,7 +229,7 @@ const SingleLocation = () => {
             <div className="bg-blue-200 p-px rounded-t-2xl">
               <h2 className="text-xl font-bold px-5 my-2 flex justify-between items-center"
               >
-                <span>All Scheduled Services Done({data?.regularService.length})</span>
+                <span>All Scheduled Services Done({data?.regularService.length || 0})</span>
                 <IoIosArrowDown className={`${isModalOpen?.allReg ? "rotate-180" : ""} transition-all`} />
               </h2>
               <AllScheduleService data={data?.regularService} />
@@ -234,12 +239,21 @@ const SingleLocation = () => {
             <div className="bg-blue-200 p-px rounded-t-2xl">
               <h2 className="text-base md:text-xl font-bold px-5 my-2 flex justify-between items-center"
               >
-                <span>All Scheduled Services Done({data?.regularService.length})</span>
+                <span>All Un-Scheduled Services Done({data?.unscheduled.length || 0})</span>
                 <IoIosArrowDown className={`${isModalOpen?.allReg ? "rotate-180" : ""} transition-all`} />
               </h2>
               <UnScheduledList work={data?.unscheduled || []} />
             </div>
-
+          }
+          {toggleLists === "allCasual" &&
+            <div className="bg-blue-200 p-px rounded-t-2xl">
+              <h2 className="text-base md:text-xl font-bold px-5 my-2 flex justify-between items-center"
+              >
+                <span>All Casual Services Done({data?.casuals?.length || 0})</span>
+                <IoIosArrowDown className={`${isModalOpen?.allCasual ? "rotate-180" : ""} transition-all`} />
+              </h2>
+              <CasualLists work={data?.casuals || []} />
+            </div>
           }
 
           {/* last regular service */}

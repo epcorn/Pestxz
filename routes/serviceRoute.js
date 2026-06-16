@@ -1,19 +1,24 @@
 import express from "express";
 import {
   assignWork,
-  dailyServiceReport,
+  casualServices,
   getAllAssignedWork,
   getAllComplaints,
+  getCasualServices,
   getSingleComplaint,
   newComplaint,
   newRegularService,
   updateComplaint,
 } from "../controllers/serviceController.js";
+import { dailyServiceReport } from "../controllers/dailyReports.js";
 
 const router = express.Router();
 
 router.get("/allComplaints", getAllComplaints);
 router.get("/dailyServiceReport", dailyServiceReport);
+
+router.post("/casual/:id", casualServices);
+router.post("/casual/", getCasualServices);
 
 router.post("/clientComplaint/:id", newComplaint);
 router.post("/regular/:id", newRegularService);

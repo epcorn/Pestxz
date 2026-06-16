@@ -24,8 +24,21 @@ function NotificationManager() {
       Notification.requestPermission()
     }
 
-    const sendNotification = (title, body) => {
+    const sendNotification = async (title, body) => {
       if ("Notification" in window && Notification.permission === "granted") {
+        if ("serviceWorker" in navigator) {
+          try {
+            const registration = await navigator.serviceWorker.ready;
+            registration.showNotification(title, {
+              body,
+              vibrate: [200],
+              tag: title.replace(/\s+/g, '-').toLowerCase()
+            })
+            return;
+          } catch (error) {
+            console.error("Service worker failed")
+          }
+        }
         const notif = new Notification(title, { body, icon: "/logo.png" })
         notif.onclick = () => window.focus()
       }

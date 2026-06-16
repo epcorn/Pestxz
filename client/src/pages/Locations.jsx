@@ -11,6 +11,7 @@ import { toast } from "react-toastify";
 import { Link } from "react-router-dom";
 import { useAllUserQuery } from "../redux/adminSlice";
 import ImagesModal from "../components/modals/ImagesModal";
+import Headers from "../components/Headers";
 
 const Locations = () => {
   const [selectFloor, setSelectFloor] = useState([])
@@ -36,26 +37,11 @@ const Locations = () => {
 
       {!error && data && (
         <div>
-          <div className="mb-6 text-center">
-            <h2 className="text-2xl font-light text-slate-800">
-              Hello, <span className="capitalize font-semibold text-sky-700">{user.name}</span>
-            </h2>
-            <span className="inline-block mt-1 px-2.5 py-0.5 text-xs font-medium tracking-wide bg-slate-100 text-slate-600 rounded-full border border-slate-200">
-              {user.role}
-            </span>
-          </div>
-
           {/* Main Page Heading Section */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-5 mb-5 border-b border-slate-200 gap-4">
-            <div>
-              <h1 className="text-3xl font-bold tracking-tight text-slate-900">
-                Location Management
-              </h1>
-              <p className="mt-1 text-sm text-slate-500">
-                View, add, edit, and manage all physical client locations and floor plans.
-              </p>
-            </div>
-            
+            <Headers header={'Location Managements'} user={user} />
+
+
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 my-5 mx-2">
             <div>

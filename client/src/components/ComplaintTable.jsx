@@ -22,20 +22,19 @@ const ComplaintTable = ({ data, user, toggle }) => {
     return () => document.removeEventListener("mousedown", handleOutsideClick);
   }, [toggler.status]);
 
-  console.log(data)
   return (
-    <div className="w-full min-h-96 overflow-x-auto border border-gray-200 rounded-lg shadow-sm bg-white">
-      <table className="min-w-[1024px] w-full border-collapse">
+    <div className="w-full min-h-96 mt-2 overflow-x-auto border border-gray-200 rounded-lg shadow-sm bg-white">
+      <table className="min-w-[1024px] w-full border-collapse" style={{ tableLayout: "fixed" }}>
 
         <thead>
-          <tr className="bg-neutral-600 text-white text-[11px] font-bold uppercase tracking-wider">
-            <th className="pl-2 py-3 text-left">Number</th>
+          <tr className="bg-neutral-600 text-white text-sm font-bold uppercase tracking-wider">
+            <th className="pl-2 py-3 text-center">Number</th>
             {!isRegular && <th className="pl-2 py-3 text-left">Assigned To</th>}
             <th className="pl-2 py-3 text-left">Date</th>
             <th className="pl-2 py-3 text-left">
               {isRegular ? "Location" : user?.type === "PestEmployee" ? "Client" : "Raised By"}
             </th>
-            <th className="pl-2 py-3 text-center">Service</th>
+            <th className="pl-2 py-3">Service</th>
             <th className="pl-2 py-3 text-center">
               {isRegular ? "Serviced By" : "Status"}
             </th>
@@ -49,11 +48,11 @@ const ComplaintTable = ({ data, user, toggle }) => {
             const rowLink = isRegular ? `/location/${complaint.location?._id}` : `/complaint/${complaint._id}`;
 
             return (
-              <tr key={complaint._id} className="bg-white hover:bg-neutral-50 transition-colors ">
+              <tr key={complaint._id} className="bg-white hover:bg-neutral-50 transition-colors divide-y *:not-last:border-r *:border-gray-400 text-xs md:text-sm">
 
                 {/* Complaint Number */}
-                <td className="pl-2 py-4">
-                  <Link to={rowLink} className="text-sm font-bold text-blue-600 hover:text-blue-800 transition-colors">
+                <td className="pl-2 py-4 text-center">
+                  <Link to={rowLink} className="font-bold text-blue-600 hover:text-blue-800 transition-colors">
                     {complaint.complaintDetails?.number || (i + 2)}
                   </Link>
                 </td>
@@ -69,17 +68,17 @@ const ComplaintTable = ({ data, user, toggle }) => {
                   >
                     {assignedto?.status ? (
                       <div className="flex flex-col gap-1 items-start">
-                        <span className="text-sm text-gray-700 font-semibold tracking-wide">
+                        <span className="text-gray-700 font-semibold tracking-wide">
                           {assignedto?.userName}
                         </span>
                         {user?.type !== "ClientEmployee" && assignedby?.userName && (
-                          <span className="text-[10px] text-gray-500 font-medium bg-gray-50 ring-1 ring-gray-200 px-2 py-0.5 rounded-md">
+                          <span className="text-[.7rem] text-gray-500 font-medium bg-gray-50 ring-1 ring-gray-200 px-2 py-0.5 rounded-md">
                             by {assignedby?.userName}
                           </span>
                         )}
                       </div>
                     ) : (
-                      <span className="text-sm text-gray-400 italic font-medium">Not assigned</span>
+                      <span className="text-gray-400 italic font-medium">Not assigned</span>
                     )}
 
                     {["Admin", "TeamLeader", "BranchAdmin"].includes(user?.role) &&
@@ -87,7 +86,7 @@ const ComplaintTable = ({ data, user, toggle }) => {
                       toggler.id === complaint._id && (
                         <div
                           ref={portalRef}
-                          className="absolute top-full left-0 mt-2 z-30 w-64 bg-white shadow-xl rounded-xl border border-gray-100 p-2"
+                          className="absolute top-0 left-0 mt-2 z-30 w-64 bg-white shadow-xl rounded-xl border border-gray-100 p-2"
                           onClick={(e) => e.stopPropagation()}
                         >
                           <AssignWork
@@ -112,7 +111,7 @@ const ComplaintTable = ({ data, user, toggle }) => {
                   <Link to={rowLink} className="text-sm font-medium hover:opacity-85">
                     {!isRegular ? (
                       user?.type === "PestEmployee" ? (
-                        <span className="text-blue-900 whitespace-break-spaces">{complaint?.complaintDetails.clientName||"cle"}</span>
+                        <span className="text-blue-900 whitespace-break-spaces">{complaint?.complaintDetails.clientName || "cle"}</span>
                       ) : (
                         <span className="text-blue-900 whitespace-break-spaces">{complaint.complaintDetails?.userName}</span>
                       )
@@ -125,7 +124,7 @@ const ComplaintTable = ({ data, user, toggle }) => {
                 </td>
 
                 {/* Service */}
-                <td className="pl-2 py-4 text-center text-sm text-gray-800">
+                <td className="pl-2 py-4 text-sm text-gray-800">
                   {isRegular ? (
                     <span>{complaint.regularService?.[0]?.serviceName}</span>
                   ) : (
@@ -134,7 +133,7 @@ const ComplaintTable = ({ data, user, toggle }) => {
                 </td>
 
                 {/* Status / Serviced By */}
-                <td className="pl-2 py-4 text-center">
+                <td className="pl-2 py-4 text-center outline outline-gray-300">
                   {isRegular ? (
                     <span className="whitespace-nowrap text-xs font-semibold border border-gray-300 px-2 py-1 rounded-lg text-gray-600 bg-gray-50">
                       {complaint.regularService?.[0]?.userName}

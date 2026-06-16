@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { MdOutlineQrCodeScanner } from "react-icons/md";
 import { Html5QrcodeScanner } from 'html5-qrcode';
 import { useSelector } from 'react-redux';
+import Headers from '../Headers';
 
 function QrScanner() {
   const { user } = useSelector(store => store.helper)
@@ -45,10 +46,7 @@ function QrScanner() {
   }, [isScanning]);
   return (
     <div>
-      <div className='flex flex-col items-center gap-1 mt-5'>
-        <h2 className='text-2xl font-bold '>Welcome, <span className='text-blue-600'>{user.name}</span></h2>
-        <p className='text-xs outline px-3 py-1 leading-none rounded-2xl text-gray-400'>{user.role}</p>
-      </div>
+      <Headers header={"Scanner"} user={user} />
       <div className='mt-10 text-center'>
         <p className='text-gray-700 font-medium mb-2'>Scan QR Code</p>
 

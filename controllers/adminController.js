@@ -1,6 +1,8 @@
+import mongoose from "mongoose";
 import Admin from "../models/adminModel.js";
 import Client from "../models/clientModel.js";
 import Frequency from "../models/frequencyModal.js";
+import Location from "../models/locationModel.js";
 import Service from "../models/serviceModel.js";
 import { capitalLetter } from "../utils/helperFunction.js";
 
@@ -276,6 +278,17 @@ export const clientAdminDashboard = async (req, res) => {
       "-adminPass -adminName",
     );
     if (!client) return res.status(404).json({ msg: "Client not found" });
+    const statusCounts = await Location.aggregate([
+      { $match: { client: req.user.client } },
+      { $unwind: "$service" },
+      { $unwind: "$service.schedule" },
+      {
+        $group: {
+          _id: "$service.schedule.status",
+          count: { $sum: 1 },
+        },
+      },
+    ]);
 
     // ── Single query, split in JS ─────────────────────────────────
     const services = await Service.find({ client: id || req.user.client })
@@ -295,6 +308,7 @@ export const clientAdminDashboard = async (req, res) => {
       Close: 0,
       reopenCount: 0,
       completedServices: 0,
+      statusCounts,
     };
 
     complaints.forEach((complaint) => {
@@ -381,86 +395,115 @@ export const clientAdminDashboard = async (req, res) => {
 
 export const adminDashboard = async (req, res) => {
   const { id } = req.params;
+  const clientFilter = id && id !== "select" ? { client: id } : {};
 
   try {
-    let complaints = [];
+    // ── 1. Fetch complaints ────────────────────────────────────────────────
+    const populateOpts = [
+      { path: "location", select: "floor subLocation location" },
+      { path: "client", select: "name -_id" },
+    ];
 
-    if (id && id !== "select") {
-      complaints = await Service.find({
-        client: id,
-      })
-        .sort("-updatedAt")
-        .populate({
-          path: "location",
-          select: "floor subLocation location",
-        })
-        .populate({
-          path: "client",
-          select: "name",
-        });
-    } else {
-      complaints = await Service.find()
-        .sort("-updatedAt")
-        .populate({
-          path: "location",
-          select: "floor subLocation location",
-        })
-        .populate({
-          path: "client",
-          select: "name",
-        });
-    }
+    const [complaints, allComplaints] = await Promise.all([
+      Service.find(clientFilter).sort("-updatedAt").populate(populateOpts),
+      Service.find({ type: "Complaint" }).populate([
+        { path: "location", select: "floor subLocation location" },
+        { path: "client", select: "name" },
+      ]),
+    ]);
 
-    const allcomplaints = await Service.find({
-      type: "Complaint",
-    })
-      .populate({
-        path: "location",
-        select: "floor subLocation location",
-      })
-      .populate({
-        path: "client",
-        select: "name",
+    // ── 2. Helper: attach clientName ───────────────────────────────────────
+    const withClientName = (item) => ({
+      ...item._doc,
+      clientName:
+        item?.client?.name || item?.complaintDetails?.clientName || "-",
+    });
+
+    // ── 3. Summary counts ──────────────────────────────────────────────────
+    const onlyComplaints = complaints.filter((c) => c.type === "Complaint");
+    const onlyRegulars = complaints.filter((c) => c.type === "Regular");
+
+    const statusMap = {
+      Open: "open",
+      "In Progress": "inProgress",
+      Close: "closed",
+    };
+    const complaintData = onlyComplaints.reduce(
+      (acc, c) => {
+        const key = statusMap[c?.complaintDetails?.status];
+        if (key) acc[key] += 1;
+        return acc;
+      },
+      {
+        total: onlyComplaints.length,
+        open: 0,
+        inProgress: 0,
+        closed: 0,
+        missed: 0,
+        completed: onlyRegulars.length,
+      },
+    );
+
+    // ── 4. Service schedule counts ─────────────────────────────────────────
+    const locationMatch =
+      id && id !== "select"
+        ? { $match: { client: new mongoose.Types.ObjectId(id) } }
+        : { $match: {} };
+
+    const serviceCount = await Location.aggregate([
+      locationMatch,
+      { $unwind: "$service" },
+      { $unwind: "$service.schedule" },
+      { $group: { _id: "$service.schedule.status", count: { $sum: 1 } } },
+      { $project: { _id: 0, label: "$_id", count: 1 } },
+    ]);
+
+    // ── 5. Month-wise breakdown ────────────────────────────────────────────
+    const monthlyMap = {};
+
+    for (const item of complaints) {
+      const date = new Date(item.createdAt);
+      const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+      const label = date.toLocaleString("default", {
+        month: "long",
+        year: "numeric",
       });
 
-    // ADD CLIENT NAME
-    const formattedComplaints = complaints.map((item) => ({
-      ...item._doc,
-      clientName:
-        item?.client?.name || item?.complaintDetails?.clientName || "-",
-    }));
+      if (!monthlyMap[key]) {
+        monthlyMap[key] = {
+          month: label,
+          complaints: 0,
+          regulars: 0,
+          open: 0,
+          inProgress: 0,
+          closed: 0,
+        };
+      }
 
-    const formattedAllComplaints = allcomplaints.map((item) => ({
-      ...item._doc,
-      clientName:
-        item?.client?.name || item?.complaintDetails?.clientName || "-",
-    }));
-
-    const complaintData = {
-      total: complaints.length,
-      open: 0,
-      inProgress: 0,
-      closed: 0,
-    };
-
-    for (let complaint of complaints) {
-      const status = complaint?.complaintDetails?.status;
-
-      if (status === "Open") complaintData.open += 1;
-      else if (status === "In Progress") complaintData.inProgress += 1;
-      else if (status === "Close") complaintData.closed += 1;
+      if (item.type === "Complaint") {
+        monthlyMap[key].complaints += 1;
+        const status = item?.complaintDetails?.status;
+        if (status === "Open") monthlyMap[key].open += 1;
+        if (status === "In Progress") monthlyMap[key].inProgress += 1;
+        if (status === "Close") monthlyMap[key].closed += 1;
+      } else if (item.type === "Regular") {
+        monthlyMap[key].regulars += 1;
+      }
     }
 
+    const monthlyData = Object.entries(monthlyMap)
+      .sort(([a], [b]) => a.localeCompare(b)) // chronological order
+      .map(([, v]) => v);
+
+    // ── 6. Response ────────────────────────────────────────────────────────
     return res.json({
-      complaintData: [complaintData],
-      all: formattedAllComplaints,
-      latestComplaints: formattedComplaints.slice(0, 7),
+      complaintData: [{ ...complaintData, serviceCount }],
+      all: allComplaints.map(withClientName),
+      latestComplaints: complaints.slice(0, 10).map(withClientName),
+      monthlyData,
     });
   } catch (error) {
-    console.log(error);
-
-    res.status(500).json({
-      msg: "Server error, try again later",
-    });
+    console.error(error);
+    res.status(500).json({ msg: "Server error, try again later" });
   }
 };

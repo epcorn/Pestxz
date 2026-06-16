@@ -84,6 +84,10 @@ export const statusUnscheduled = async (req, res) => {
   try {
     const unschedule = await Unscheduled.findById(id);
 
+    if (data?.read) {
+      unschedule.read = true;
+    }
+
     if (data?.req === "update") {
     } else if (data.req === "approval") {
       unschedule.approval.status = data?.status;

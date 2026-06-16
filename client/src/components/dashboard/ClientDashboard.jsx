@@ -62,10 +62,8 @@ const ClientDashboard = () => {
 
   const handleCards = (value) => {
     if (["Close", "In Progress", "Open"].includes(value)) {
-      // const shows = clientDash.all.filter(cl => cl.complaintDetails.status === value)
       setStatusFilter(value)
       setToggle("Complaint")
-      console.log(value)
     }
   }
 
@@ -75,6 +73,10 @@ const ClientDashboard = () => {
       sessionStorage.setItem("ClientDashboardToggle", e.target.value)
     }
   }
+  const { statusCounts, ...allData } = adminDash?.dashBoardData || {};
+  const statusCount = Object.assign({}, ...(adminDash?.dashBoardData?.statusCounts?.map(s => ({ [s._id]: s.count })) || []));
+
+  console.log(adminDash)
 
   return (
     <section className="p-4 md:px-8 bg-slate-50/50 min-h-screen font-sans">
@@ -120,16 +122,18 @@ const ClientDashboard = () => {
             ))}
           </div>
 
-          <div className="flex my-2 gap-5 items-stretch w-full p-4 overflow-x-auto">
+          <div className="flex my-2 gap-5 items-stretch w-full p-4 overflow-x-auto snap-x snap-mandatory *:snap-center">
 
             {/* Line Chart Container (Takes up remaining space) */}
             <div className="relative flex-1 min-w-[600px] bg-neutral-200 border border-gray-200 p-4 h-full rounded-2xl shadow">
-              <MultiLineChart values={adminDash?.monthlyData} />
+              <h3 className="h4 text-center">Multiline chart</h3>
+              <MultiLineChart values={adminDash?.monthlyData} weekly={adminDash.weekly} toggle={"values"}/>
+              {/* <select name="" id=""></select> */}
             </div>
 
             {/* Pie Chart Container (Fixed, tight fit) */}
             <div className="relative w-full md:w-[350px] flex items-center justify-center border border-gray-300 p-4 rounded-2xl bg-neutral-200 shadow">
-              <PieChart values={adminDash?.dashBoardData} />
+              <PieChart values={{ ...allData, ...statusCount }} />
             </div>
 
           </div>
@@ -139,9 +143,9 @@ const ClientDashboard = () => {
           <div className="mt-12">
             <div className="flex flex-col md:flex-row md:items-center  md:justify-between mb-5">
               <div className="order-2 md:order-1">
-                <h4 className="text-lg font-bold text-slate-800">Latest {toggle === "Regular" ? "Regular service" : "Complaints"} Update</h4>
+                <h4 className="text-lg font-bold text-slate-800"> Latest {toggle === "Regular" ? "Regular service" : "Complaints"} Update</h4>
                 <div>
-                  <p className="text-xs text-slate-400 mt-0.5">Real-time ticket logging status</p>
+                  {/* <p className="text-xs text-slate-400 mt-0.5">Real-time ticket logging status</p> */}
                   {statusFilter && <div className="text-sm text-gray-700">
                     Filtered By: <span className="font-semibold">{statusFilter}</span> <span className="underline text-cyan-600 text-sm" onClick={() => setStatusFilter("")}>Clear</span>
                   </div>}

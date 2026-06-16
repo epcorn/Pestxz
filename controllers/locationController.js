@@ -1,3 +1,4 @@
+import Casual from "../models/casualServiceModel.js";
 import Client from "../models/clientModel.js";
 import Location from "../models/locationModel.js";
 import Service from "../models/serviceModel.js";
@@ -554,7 +555,12 @@ export const getLocationDetails = async (req, res) => {
       location: id,
     }).sort("-createdAt");
 
-    const unscheduled = await Unscheduled.find({ location: location._id }).sort({
+    const unscheduled = await Unscheduled.find({ location: location._id }).sort(
+      {
+        updatedAt: -1,
+      },
+    );
+    const casuals = await Casual.find({ location: location._id }).sort({
       updatedAt: -1,
     });
 
@@ -566,7 +572,8 @@ export const getLocationDetails = async (req, res) => {
       complaints,
       lastServices,
       regularService,
-      unscheduled,
+      unscheduled: unscheduled || [],
+      casuals: casuals || [],
     });
   } catch (error) {
     console.log(error);

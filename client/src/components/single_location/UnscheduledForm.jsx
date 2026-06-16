@@ -29,7 +29,7 @@ function UnscheduledForm({ existing, locationId, type, id }) {
     if (type === "raise") {
       data.type = "raise"
       data.locationId = locationId
-      const res = await updateUnscheduledReport(data).unwrap()
+      // const res = await updateUnscheduledReport(data).unwrap()
       data.raisedBy = user.name
       socket.emit("unscheduled-raised", data)
       toast.success(res?.msg || "done")
@@ -92,7 +92,8 @@ function UnscheduledForm({ existing, locationId, type, id }) {
     </div>
   )
   return (
-    <FormModal formBody={type === "raise" ? raisebody : updatebody} open={isModalOpen.unscheduled}
+    <FormModal formBody={type === "raise" ? raisebody : updatebody} 
+    open={isModalOpen.unscheduled}
       title='Report Un-Scheduled work'
       disabled={unScLoading}
       submitLabel={type === "raise" ? "Report" : "Update"}

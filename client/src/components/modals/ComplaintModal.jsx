@@ -16,9 +16,13 @@ import {
 } from "../../utils/constData";
 import FormModal from "./FormModal";
 import { socket } from "../../socket";
+import { useAllClientsQuery } from "../../redux/clientSlice";
+import { useAllUserQuery } from "../../redux/adminSlice";
+import { useGetSingleUserQuery } from "../../redux/userSlice";
 
 const ComplaintModal = ({ locationId, mode = "create" }) => {
 
+  const [selectClient, setSelectClient] = useState("")
   const isCreate = mode === "create";
   const isUpdate = mode === "update";
   const isReview = mode === "review";
@@ -28,16 +32,19 @@ const ComplaintModal = ({ locationId, mode = "create" }) => {
   const dispatch = useDispatch();
   const { isModalOpen, user } = useSelector((store) => store.helper);
 
+  const { data: DBUser } = useGetSingleUserQuery(user._id, { skip: !user._id });
+  console.log(DBUser)
+  const { data: clients } = useAllClientsQuery(undefined, { skip: user.role !== "Admin" });
+
+  console.log(clients)
+  const clientOptions = clients?.map(c => ({ label: c.name, value: c._id }))
   const [addComplaint, { isLoading: addLoading }] =
     useNewComplaintMutation();
 
   const [updateComplaint, { isLoading: updateLoading }] =
     useUpdateComplaintMutation();
 
-  const { data: clientLocations } = useAllLocationsQuery(
-    { id: user?.type === "ClientEmployee" ? user?.type : locationId },
-    { skip: !user?.type }
-  );
+
 
   const {
     register,
@@ -57,7 +64,14 @@ const ComplaintModal = ({ locationId, mode = "create" }) => {
   });
 
   const selectedLocation = watch("location");
+  const watchedClient = watch("client");
+  const locationQueryId = user.role === "Admin" ? watchedClient?.value : user?.type === "ClientEmployee" ? user?.type : locationId
 
+  console.log(locationQueryId, user._id)
+  const { data: clientLocations } = useAllLocationsQuery(
+    { id: locationQueryId },
+    { skip: user.role === "Admin" ? !watchedClient?.value : !user?.type }
+  );
   // SET INITIAL FLOOR
   useEffect(() => {
     if (!clientLocations?.floors?.length) return;
@@ -65,6 +79,7 @@ const ComplaintModal = ({ locationId, mode = "create" }) => {
       setFloor(clientLocations.floors[0]);
     }
   }, [clientLocations, floor]);
+
 
   // LOCATION OPTIONS
   const locationOptions = useMemo(() => {
@@ -268,9 +283,32 @@ const ComplaintModal = ({ locationId, mode = "create" }) => {
   );
 
   const clientFormBody = (
-    <div className="grid md:grid-cols-2 gap-y-3 mb-4">
-      {user.rights.raise && (
+    <div className="grid grid-cols-2 gap-3 mb-4">
+      {DBUser.rights.raise && (
         <>
+          {user.role === "Admin" &&
+            <div>
+              <Controller
+                name="client"
+                control={control}
+                rules={{
+                  required: "Client is required",
+                }}
+                render={({ field }) => (
+                  <InputSelect
+                    isMulti={false}
+                    options={clientOptions}
+                    onChange={field.onChange}
+                    value={field.value}
+                    label="Client"
+                  />
+                )}
+              />
+              <p className="text-xs text-red-500 pl-1 mt-1">
+                {errors.client?.message}
+              </p>
+            </div>}
+
           <div className="mr-2 mt-2">
             <label className="block text-md font-medium leading-6 text-gray-900">
               Floor
@@ -329,9 +367,9 @@ const ComplaintModal = ({ locationId, mode = "create" }) => {
         )}
       />
 
-      <div className="col-span-2">
+      <div className="mt-2">
         <label className="text-md font-medium leading-6 mr-2 text-gray-900">
-          Images*
+          Images<span></span>
         </label>
 
         <input
@@ -341,8 +379,8 @@ const ComplaintModal = ({ locationId, mode = "create" }) => {
           onChange={(e) =>
             setImages(Array.from(e.target.files))
           }
-          className="mt-0.5 block w-full text-sm text-slate-500
-          file:mr-4 file:py-2 file:px-4
+          className="mt-1 block w-full text-sm text-slate-500
+          file:mr-4 file:py-2 file:px-4 outline  rounded
           file:rounded-md file:border-0
           file:text-sm file:font-semibold
           file:bg-zinc-100 file:text-zinc-700

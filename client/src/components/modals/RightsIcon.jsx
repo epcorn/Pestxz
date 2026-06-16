@@ -13,13 +13,13 @@ function RightsIcon({ initialRights }) {
   const activePermissions = permissionsList.filter(p => initialRights?.[p.key]);
 
   return (
-    <div className="w-full flex justify-center py-1">
-      <div className="flex flex-wrap gap-1 justify-center">
+    <div className="w-full flex py-1">
+      <div className="columns-3 gap-1 justify-center">
         {activePermissions.length > 0 ? (
           activePermissions.map((permission) => (
             <span
               key={permission.key}
-              className={`px-1.5 py-0.5 text-xs font-bold border rounded-md whitespace-nowrap ${permission.color}`}
+              className={`px-1.5 block py-0.5 text-xs font-bold border rounded-md whitespace-nowrap ${permission.color}`}
               title={permission.label}
             >
               {permission.label}
@@ -35,4 +35,4 @@ function RightsIcon({ initialRights }) {
   )
 }
 
-export default RightsIcon
+export default RightsIcon;

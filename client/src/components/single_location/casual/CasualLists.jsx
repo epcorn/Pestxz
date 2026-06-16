@@ -1,17 +1,19 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
-function UnScheduledList({ work = [] }) {
+function CasualLists({ work = [] }) {
   const navigate = useNavigate();
   // Check if the array is empty
   if (work.length === 0) {
-    return <div className="p-4 text-gray-500 text-center">No unscheduled work found.</div>;
+    return <div className="p-4 text-gray-500 text-center">No Casual work found.</div>;
   }
+
+  console.log(work)
   return (
     <div className="text-xs md:text-sm overflow-x-auto w-full">
-      <table className="min-w-full border-collapse text-left border border-gray-400">
+      <table className="min-w-[800px] w-full border-collapse text-left border border-gray-400">
         <thead>
-          <tr className="bg-gray-100 border-b border-gray-400 *:not-last:border-r">
+          <tr className="bg-gray-100 border-b border-gray-400 *:not-last:border-r ">
             <th className="p-3 font-bold text-gray-700">Index</th>
             <th className="p-3 font-bold text-gray-700">Date</th>
             <th className="p-3 font-bold text-gray-700">Raised By</th>
@@ -22,17 +24,17 @@ function UnScheduledList({ work = [] }) {
         </thead>
         <tbody>
           {work.map((w, i) => (
-            <tr key={w._id} className={`border-b border-b-gray-400 hover:bg-gray-50 transition-all text-xs md:text-sm *:not-last:border-r ${w.approval.status === "Approved" ? "bg-green-300" : w.approval.status === "Rejected" ? "bg-red-200" : "bg-cyan-200"} ${w.update.status ? "bg-green-400" : "bg-red-400"}`} onClick={() => navigate(`/unschedule/${w._id}`)}>
+            <tr key={w._id} className={`border-b border-b-gray-400 hover:bg-gray-50 transition-all text-xs md:text-sm *:not-last:border-r`} >
               <td className="p-3 text-gray-900">{i + 1}</td>
               <td className="p-3 text-gray-900 whitespace-nowrap">
                 {new Date(w.updatedAt).toLocaleString()}
               </td>
               <td className="p-3 text-gray-900">
-                {w.raisedBy?.user || 'N/A'}
+                {w.user.name || 'N/A'}
               </td>
               <td className="p-3 text-gray-900">{w.serviceName}</td>
-              <td className="p-3 text-gray-900 ">{w.comment}</td>
-              <td className="p-3 text-gray-900">{w?.approval?.status}</td>
+              <td className="p-3 text-gray-900 line-clamp-2">{w.comment}</td>
+              <td className="p-3 text-gray-900">{w?.status}</td>
             </tr>
           ))}
         </tbody>
@@ -41,4 +43,4 @@ function UnScheduledList({ work = [] }) {
   );
 }
 
-export default UnScheduledList;
+export default CasualLists;

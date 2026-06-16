@@ -20,6 +20,8 @@ import {
 import { createAdmin } from "./models/userModel.js";
 import { createServer } from "http";
 import { Server } from "socket.io";
+// import cron from "node-cron";
+import { autoMarkMissed } from "./utils/helperFunction.js";
 
 dotenv.config();
 const app = express();
@@ -33,6 +35,15 @@ const io = new Server(httpServer, {
     credentials: true,
   },
 });
+
+// cron.schedule(
+//   "0 0 * * *",
+//   () => {
+//     console.log("Running schedule work");
+//     autoMarkMissed();
+//   },
+//   { scheduled: true, timezone: "Asia/Kolkata" },
+// );
 
 cloudinary.config({
   cloud_name: process.env.CLOUD_NAME,
@@ -52,7 +63,7 @@ io.on("connection", (socket) => {
       ].includes(role)
     ) {
       socket.join("admin-room");
-      console.log(`${role} joined admin-room`); // helpful for debugging
+      console.log(`${role} joined Pestxz-room`); // helpful for debugging
     }
   });
 

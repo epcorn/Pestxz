@@ -11,7 +11,6 @@ import {
 } from 'chart.js';
 import { Line } from 'react-chartjs-2';
 
-// Register specific modules required for drawing lines and points
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -22,36 +21,43 @@ ChartJS.register(
   Legend
 );
 
-function MultiLineChart({ values }) {
-  // Shared X-axis labels
+// Color helper for dynamic admin charts
+const getColor = (index, alpha = 1) => {
+  const colors = [
+    `rgba(54, 162, 235, ${alpha})`,   // Blue
+    `rgba(255, 159, 64, ${alpha})`,   // Orange
+    `rgba(153, 102, 255, ${alpha})`,  // Purple
+    `rgba(90, 184, 201, ${alpha})`,   // Teal
+    `rgba(255, 99, 132, ${alpha})`,   // Red
+    `rgba(75, 192, 192, ${alpha})`,   // Green
+  ];
+  return colors[index % colors.length];
+};
 
-  const labels = values.map(item => item.month)
+function MultiLineChart({ values = [], admin = [], toggle }) {
 
-  // const labels = ['January', 'February', 'March', 'April', 'May', 'June'];
-
-  const data = {
-
-    labels,
+  // --- 1. VALUES CHART CONFIGURATION ---
+  const valuesLabels = values?.map(item => item.month || '');
+  const valuesData = {
+    labels: valuesLabels,
     datasets: [
       {
         label: 'Complaints',
-        data: values.map(item => item.complaints || 0),
+        data: values.map(item => item.complaints ?? 0),
         borderColor: 'rgba(75, 192, 192, 1)',
         backgroundColor: 'rgba(75, 192, 192, 0.2)',
-        tension: 0.5, // Smoothes out the lines (0 = sharp angles)
+        tension: 0.4,
       },
       {
         label: 'Close Complaints',
-        data: values.map(item => item.Close || 0),
-        // data: 7,
+        data: values.map(item => item.Close ?? 0),
         borderColor: 'rgba(255, 99, 132, 1)',
         backgroundColor: 'rgba(255, 99, 132, 0.2)',
         tension: 0.2,
       },
       {
         label: 'Regular Services',
-        data: values.map(i => i.completedServices || 0),
-        // data: [2, 5, 3, 8, 10, 4],
+        data: values.map(item => item.completedServices ?? 0),
         borderColor: 'rgba(255, 206, 86, 1)',
         backgroundColor: 'rgba(255, 206, 86, 0.2)',
         tension: 0.2,
@@ -59,35 +65,71 @@ function MultiLineChart({ values }) {
     ],
   };
 
-  const options = {
+  // --- 2. ADMIN CHART CONFIGURATION ---
+  const adminLabels = admin?.map(item => item.month || '');
+
+  // Get keys only from the first object to generate charts dynamically
+  const adminKeys = admin.length > 0
+    ? Object.keys(admin[0]).filter(key => key !== 'month')
+    : [];
+console.log(admin)
+  const adminDatasets = adminKeys.map((key, index) => ({
+    label: key.charAt(0).toUpperCase() + key.slice(1),
+    data: admin.map(item => item[key] ?? 0),
+    borderColor: getColor(index, 1),
+    backgroundColor: getColor(index, 0.2),
+    tension: 0.3,
+  }));
+
+  const adminData = {
+    labels: adminLabels,
+    datasets: adminDatasets,
+  };
+
+  // --- 3. SHARED OPTIONS CONFIG ---
+  const getOptions = (titleText) => ({
     responsive: true,
     maintainAspectRatio: false,
+    interaction: {
+      mode: 'index',
+      intersect: false,
+    },
     plugins: {
       legend: {
-        position: 'top', labels: { font: { size: 10 }, color: "black" }
-      },
-      tooltip: {
-        position: "nearest"
+        position: 'top',
+        labels: { font: { size: 11 }, color: 'black' },
       },
       title: {
         display: true,
-        text: 'Performance Analytics Over Time',
+        text: titleText,
+        font: { size: 14, weight: 'bold' },
+        padding: { bottom: 10 }
       },
     },
     scales: {
-      y: {
-        beginAtZero: true,
-      },
+      y: { beginAtZero: true },
     },
-  };
-
+  });
 
   return (
-    <div style={{ position: 'relative', width: '100%', height: '100%', minHeight: '250px' }}>
-      <Line data={data} options={options} />
-    </div>
-  );
+    <>
 
+      {/* Values Data Chart */}
+      {toggle === "values" &&
+        <div style={{ position: 'relative', width: '100%', height: '300px' }}>
+          <Line data={valuesData} options={getOptions('User Performance Analytics')} />
+        </div>
+      }
+
+      {/* Admin Data Chart */}
+      {toggle === "admin" &&
+        < div style={{ position: 'relative', width: '100%', height: '300px' }}>
+          <Line data={adminData} options={getOptions('Admin Metrics Overview')} />
+        </div>
+      }
+
+    </ >
+  );
 }
 
 export default MultiLineChart;

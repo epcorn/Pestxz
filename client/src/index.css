@@ -6,15 +6,45 @@
 .close-req {
   @apply bg-yellow-200 text-yellow-700 shadow shadow-yellow-200;
 }
-.open{
-  @apply bg-blue-200 text-blue-700 shadow shadow-blue-200
+.open {
+  @apply bg-blue-200 text-blue-700 shadow shadow-blue-200;
 }
-.close{
-  @apply bg-green-200 text-green-700 shadow shadow-green-200
+.close {
+  @apply bg-green-200 text-green-700 shadow shadow-green-200;
 }
 :root {
   background-color: rgb(241 245 249);
 }
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
+}
+
+.h1 {
+  font-size: clamp(2.25rem, 5vw, 3.5rem);
+}
+.h2 {
+  font-size: clamp(1.75rem, 4vw, 2.5rem);
+}
+.h3 {
+  font-size: clamp(1.35rem, 3vw, 1.85rem);
+}
+.h4 {
+  font-size: clamp(1.1rem, 2.5vw, 1.4rem);
+}
+@keyframes marquee {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee {
+  animation: marquee 25s linear infinite;
+}
+
+/* Optional: Pauses the scroll when user hovers over it */
+.animate-marquee:hover {
+  animation-play-state: paused;
 }

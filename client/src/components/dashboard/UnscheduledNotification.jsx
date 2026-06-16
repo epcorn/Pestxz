@@ -1,15 +1,18 @@
 import { FaBell } from "react-icons/fa";
-import { useGetUnscheduledReportsQuery } from "../../redux/locationSlice";
+import { useGetUnscheduledReportsQuery, useStatusUnscheduleMutation } from "../../redux/locationSlice";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 function UnscheduledNotification({ id, user }) {
   const [showNotif, setShowNotif] = useState(false);
   const navigate = useNavigate();
+
+  const [updateUnschedule] = useStatusUnscheduleMutation()
   const { data: unscheduled = [], isLoading: unscLoading } = useGetUnscheduledReportsQuery(id || undefined);
 
   const sliced = unscheduled
-  console.log(sliced)
+
+  console.log(unscheduled)
   return (
     <div className="relative p-1 outline outline-gray-200 rounded-full w-fit ml-auto z-30">
       {/* Bell Icon Trigger */}
@@ -37,14 +40,16 @@ function UnscheduledNotification({ id, user }) {
                 {sliced.map((un, i) => (
                   <li
                     key={un._id}
-                    className="text-sm bg-gray-50 hover:bg-gray-100 p-2 rounded-md cursor-pointer transition-colors block"
-                    onClick={() => {
+                    className={`text-sm p-2 rounded-md cursor-pointer transition-colors block ${un?.read === true ? "bg-gray-50" : "bg-gray-200"} outline outline-gray-400`}
+                    onClick={async () => {
                       navigate(`/unschedule/${un._id}`);
+                      const data = { id: un._id, read: true }
+                      await updateUnschedule(data).unwrap()
                       setShowNotif(false);
                     }}
                   >
                     <p className="text-gray-700 break-words leading-snug">
-                      <span className="text-gray-400 mr-1">{i + 1}.</span>
+                      <span className="text-gray-600 mr-1">{i + 1}.</span>
                       <strong>{un.userName}</strong> has placed a request for service <strong>{un.raisedBy?.user}</strong> with a comment <span className="italic text-gray-500">({un.comment})</span>
                     </p>
                     <p className="text-[10px] text-right text-gray-400 mt-1">
