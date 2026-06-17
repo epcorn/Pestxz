@@ -28,7 +28,7 @@ const stats = [
   { id: 2, name: "Open Complaints", value: "Open", icon: <IoMdTime className="w-3 h-3 md:w-5 md:h-5" />, bg: "bg-blue-600", bd: "border-l-blue-600", type: "com", text: "text-blue-700" },
   { id: 3, name: "In Progress", value: "In Progress", icon: <GrInProgress className="w-3 h-3 md:w-5 md:h-5" />, bg: "bg-amber-500", bd: "border-l-amber-600", type: "com", text: "text-amber-700" },
   { id: 4, name: "Closed Complaints", value: "Close", icon: <IoLockClosed className="w-3 h-3 md:w-5 md:h-5" />, bg: "bg-emerald-600", bd: "border-l-emerald-600", type: "com", text: "text-emerald-700" },
-  // { id: 5, name: "Reopened Complaints", value: "reopenCount", icon: <GoIssueReopened className="w-3 h-3 md:w-5 md:h-5" />, bg: "bg-red-600", bd: "border-l-red-600", type: "com", text: "text-red-700" },
+  { id: 5, name: "Reopened Complaints", value: "reopenCount", icon: <GoIssueReopened className="w-3 h-3 md:w-5 md:h-5" />, bg: "bg-red-600", bd: "border-l-red-600", type: "com", text: "text-red-700" },
   { id: 6, name: "Services Completed", value: "completedServices", icon: <AiOutlineFileDone className="w-3 h-3 md:w-5 md:h-5" />, bg: "bg-blue-600", bd: "border-l-blue-600", type: "reg", text: "text-green-700" },
 ];
 

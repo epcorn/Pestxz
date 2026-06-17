@@ -33,18 +33,14 @@ const ComplaintModal = ({ locationId, mode = "create" }) => {
   const { isModalOpen, user } = useSelector((store) => store.helper);
 
   const { data: DBUser } = useGetSingleUserQuery(user._id, { skip: !user._id });
-  console.log(DBUser)
-  const { data: clients } = useAllClientsQuery(undefined, { skip: user.role !== "Admin" });
+  const { data: clients } = useAllClientsQuery(undefined, { skip: user.type !== "PestEmployee" });
 
-  console.log(clients)
   const clientOptions = clients?.map(c => ({ label: c.name, value: c._id }))
   const [addComplaint, { isLoading: addLoading }] =
     useNewComplaintMutation();
 
   const [updateComplaint, { isLoading: updateLoading }] =
     useUpdateComplaintMutation();
-
-
 
   const {
     register,
@@ -65,9 +61,8 @@ const ComplaintModal = ({ locationId, mode = "create" }) => {
 
   const selectedLocation = watch("location");
   const watchedClient = watch("client");
-  const locationQueryId = user.role === "Admin" ? watchedClient?.value : user?.type === "ClientEmployee" ? user?.type : locationId
+  const locationQueryId = user.type === "PestEmployee" ? watchedClient?.value : user?.type === "ClientEmployee" ? user?.type : locationId
 
-  console.log(locationQueryId, user._id)
   const { data: clientLocations } = useAllLocationsQuery(
     { id: locationQueryId },
     { skip: user.role === "Admin" ? !watchedClient?.value : !user?.type }
@@ -286,7 +281,7 @@ const ComplaintModal = ({ locationId, mode = "create" }) => {
     <div className="grid grid-cols-2 gap-3 mb-4">
       {DBUser.rights.raise && (
         <>
-          {user.role === "Admin" &&
+          {user.type === "PestEmployee" &&
             <div>
               <Controller
                 name="client"

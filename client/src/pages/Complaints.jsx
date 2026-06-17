@@ -14,6 +14,7 @@ import { useAllUserQuery } from "../redux/adminSlice";
 import { toast } from "react-toastify";
 import Select from "react-select";
 import Headers from "../components/Headers";
+import { useGetSingleUserQuery } from "../redux/userSlice";
 
 const Complaints = () => {
   const [page, setPage] = useState(1);
@@ -24,8 +25,8 @@ const Complaints = () => {
   const dispatch = useDispatch();
 
   const { user, isModalOpen } = useSelector((store) => store.helper);
-  const { data: clients = [] } = useAllClientsQuery({ skip: user.rights.raise });
-
+  const { data: DBuser } = useGetSingleUserQuery(user._id, { skip: !user._id });
+  const { data: clients = [] } = useAllClientsQuery();
 
   const { data: clientLocations, isLoading: locationLoading } =
     useAllLocationsQuery({
@@ -41,6 +42,7 @@ const Complaints = () => {
     location: location?.floor || "All",
   });
 
+  console.log(data, error,isFetching)
   const pages = Array.from({ length: data?.pages }, (_, index) => index + 1);
 
   const handleSearch = (e) => {
@@ -56,8 +58,6 @@ const Complaints = () => {
 
   const complaints = data?.complaints?.filter(d => d?.type !== "Regular") ?? []
 
-  console.log(complaints)
-
   return (
     <>
       {isLoading || isFetching ? (
@@ -67,7 +67,7 @@ const Complaints = () => {
       )}
       <div className="md:flex flex-col justify-around">
         {/* heading */}
-        <Headers header={'Complaints'} user={user}/>
+        <Headers header={'Complaints'} user={user} />
         {/* search section  */}
         <div className="">
           <form onSubmit={handleSearch} className="flex flex-wrap ">
@@ -87,9 +87,9 @@ const Complaints = () => {
               )}
             </div>
             {/* <label htmlFor="">Select Floors</label> */}
-            {user.role === "Admin" &&
+            {user.type === "PestEmployee" &&
               <select
-                value={location.client}
+                value={location?.client}
                 onChange={(e) => { setLocation(prev => ({ ...prev, client: e.target.value })); setMyClient(e.target.value) }}
 
                 className="mr-2 mt-0.5 w-40 py-0.5 h-8.5 px-2 border-2 rounded-md outline-none transition border-neutral-300 focus:border-black disabled:bg-slate-100"
@@ -118,7 +118,7 @@ const Complaints = () => {
 
 
             <Button type="submit" label="Search" color="bg-black" height="h-8" />
-            {user.rights.raise &&
+            {DBuser && DBuser.rights.raise &&
               <button
                 className="px-4 py-2 w-fit ml-auto bg-blue-800 text-white rounded-lg"
                 onClick={() =>
@@ -154,13 +154,6 @@ const Complaints = () => {
           )}
         </>
       )
-      }
-      {
-        complaints?.length < 1 && (
-          <p className="text-center pt-2 text-red-600 font-semibold text-lg">
-            No Complaint Found
-          </p>
-        )
       }
     </>
   );

@@ -16,6 +16,8 @@ const clientSchema = new mongoose.Schema(
 
     adminName: { type: String },
     adminPass: { type: String },
+
+    reportURL:{type:String}
   },
   {
     timestamps: true,
@@ -38,6 +40,18 @@ clientSchema.statics.findSafeAll = function (query = {}) {
 
 clientSchema.virtual("services", {
   ref: "Service",
+  localField: "_id",
+  foreignField: "client",
+  justOne: false,
+});
+clientSchema.virtual("unschedules", {
+  ref: "unschedule",
+  localField: "_id",
+  foreignField: "client",
+  justOne: false,
+});
+clientSchema.virtual("casuals", {
+  ref: "Casual",
   localField: "_id",
   foreignField: "client",
   justOne: false,

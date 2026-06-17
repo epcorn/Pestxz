@@ -1,36 +1,42 @@
+import { populate } from "dotenv";
 import Client from "../models/clientModel.js";
+import Service from "../models/serviceModel.js";
+import exceljs from "exceljs";
+import { removeOldQr, sendEmail, uploadFile } from "../utils/helperFunction.js";
+import fs from "fs";
+import path from "path";
 
 export const dailyServiceReport = async (req, res) => {
   try {
     // const id = req.user.client ? req.user.client : null;
-    const date = new Date();
-    const today = date.setUTCHours(0, 0, 0, 0);
-    const yesterday = new Date(
-      date.getFullYear(),
-      date.getMonth(),
-      date.getDate(),
-    ).setUTCHours(0, 0, 0, 0);
+    // const date = new Date();
+    // const today = date.setUTCHours(0, 0, 0, 0);
+    // const yesterday = new Date(
+    //   date.getFullYear(),
+    //   date.getMonth(),
+    //   date.getDate(),
+    // ).setUTCHours(0, 0, 0, 0);
 
-    const clients = await Client.find().populate({
-      path: "services",
-      // match: {
-      //   updatedAt: {
-      //     $gte: yesterday,
-      //     $lt: today,
-      //   },
-      // },
-      populate: {
-        path: "location",
-      },
-    });
-    let regulars, complaints;
-    for (let service of clients) {
-      regulars = service.services.filter((s) => s.type === "Regulars");
-      complaints = service.services.filter((s) => s.type === "Complaint");
-      // for(i=0;i<regulars.length;i++){
+    // const clients = await Client.find().populate({
+    //   path: "services",
+    //   match: {
+    //     updatedAt: {
+    //       $gte: yesterday,
+    //       $lt: today,
+    //     },
+    //   },
+    //   populate: {
+    //     path: "location",
+    //   },
+    // });
+    // let regulars, complaints;
+    // for (let service of clients) {
+    //   regulars = service.services.filter((s) => s.type === "Regulars");
+    //   complaints = service.services.filter((s) => s.type === "Complaint");
+    // for(i=0;i<regulars.length;i++){
 
-      // }
-    }
+    // }
+    // }
 
     // for (let client of clients) {
     //   if (client.services.length > 0) {
@@ -117,7 +123,241 @@ export const dailyServiceReport = async (req, res) => {
     //   }
     // }
 
-    return res.json({ msg: "Report generated", regulars,complaints });
+    const { value = "all" } = req.params;
+    const todayStart = new Date();
+    todayStart.setUTCHours(0, 0, 0, 0);
+    const todayEnd = new Date();
+    todayEnd.setUTCHours(23, 59, 59, 999);
+    const clientQuery =
+      req.user.role === "ClientAdmin" ? { _id: req.user.client } : {};
+    const selectFields = req.user.client ? "" : "-adminPass";
+    let populateOptions = [];
+    let uploadURL;
+
+    if (value === "today") {
+      const todayMatchCondition = {
+        updatedAt: { $gte: todayStart, $lte: todayEnd },
+      };
+      populateOptions = [
+        {
+          path: "services",
+          match: todayMatchCondition,
+          populate: { path: "location" },
+        },
+        {
+          path: "unschedules",
+          match: todayMatchCondition,
+          populate: { path: "location" },
+        },
+        {
+          path: "casuals",
+          match: todayMatchCondition,
+          populate: { path: "location" },
+        },
+      ];
+    } else {
+      populateOptions = [
+        { path: "services", populate: { path: "location" } },
+        { path: "unschedules", populate: { path: "location" } },
+        { path: "casuals", populate: { path: "location" } },
+      ];
+    }
+
+    const clients = await Client.find(clientQuery)
+      .select(selectFields)
+      .populate(populateOptions);
+
+    const sufix =
+      value === "all" ? "All" : todayStart.toISOString().split("T")[0];
+    const generatedFiles = [];
+
+    for (let clientDoc of clients) {
+      const client = clientDoc.toObject({ virtuals: true });
+
+      if (client.reportUrl) {
+        await removeOldQr(client.reportUrl);
+        console.log("removed old url");
+      }
+      // ✅ Fresh workbook per client so rows don't bleed across clients
+      const workbook = new exceljs.Workbook();
+      await workbook.xlsx.readFile("./tmp/dailyReport.xlsx");
+      const regularWorksheet = workbook.getWorksheet("Regular service");
+      const complaintWorksheet = workbook.getWorksheet("Complaints");
+      const unschWorksheet = workbook.getWorksheet("Unscheduled-Work");
+
+      // ✅ Row counters reset per client (moved inside loop)
+      let currRow = 4;
+      let compRow = 4;
+      let unschCount = 4;
+
+      const regulars = client.services.filter((ser) => ser.type === "Regular");
+      const complaints = client.services.filter(
+        (ser) => ser.type === "Complaint",
+      );
+
+      // --- Regular Services ---
+      const regularData = regulars.map((reg) => {
+        const regs = reg.regularService[0];
+        const loc = reg.location;
+
+        const flattenedScopes = regs.scopes
+          ? regs.scopes.flatMap((sc) =>
+              sc.consumables && sc.consumables.length > 0
+                ? sc.consumables.map((con) => ({
+                    scopeName: sc.scopeName || "",
+                    consumableName: con.consumableName || "",
+                    usedCalibration: con.usedCalibration || "",
+                    comment: con.comment || "",
+                  }))
+                : [
+                    {
+                      scopeName: sc.scopeName || "",
+                      consumableName: "",
+                      usedCalibration: "",
+                      comment: "",
+                    },
+                  ],
+            )
+          : null;
+
+        return {
+          serviceDate: regs.serviceDate,
+          frequency: regs.frequency,
+          userName: regs.userName,
+          location: `${loc.floor}, ${loc.location}, ${loc.subLocation}`,
+          serviceName: regs.serviceName,
+          scopes: flattenedScopes,
+        };
+      });
+
+      regularData.forEach((dataItem) => {
+        const row = regularWorksheet.getRow(currRow);
+        let scopeRichText;
+
+        if (dataItem.scopes && dataItem.scopes.length > 0) {
+          scopeRichText = { richText: [] };
+          dataItem.scopes.forEach((sc, index) => {
+            scopeRichText.richText.push({
+              font: { bold: true },
+              text: sc.scopeName,
+            });
+            scopeRichText.richText.push({
+              font: { bold: false },
+              text: ` → ${sc.consumableName} → ${sc.usedCalibration} → ${sc.comment}`,
+            });
+            if (index < dataItem.scopes.length - 1) {
+              scopeRichText.richText.push({
+                font: { bold: false },
+                text: "\n",
+              });
+            }
+          });
+        } else {
+          scopeRichText = "N/A";
+        }
+
+        row.getCell(1).value = dataItem.serviceDate;
+        row.getCell(2).value = dataItem.frequency;
+        row.getCell(3).value = dataItem.userName;
+        row.getCell(4).value = dataItem.location;
+        row.getCell(5).value = dataItem.serviceName;
+        row.getCell(6).value = scopeRichText;
+        row.getCell(6).alignment = { wrapText: true, vertical: "middle" };
+
+        row.commit();
+        currRow++;
+      });
+
+      // --- Complaints ---
+      const complaintData = complaints.map((com) => {
+        const comp = com.complaintDetails;
+        const updt = com.complaintUpdate.at(-1);
+        const loc = com.location;
+        return {
+          date: new Date(updt.date).toLocaleString(),
+          number: comp.number,
+          location: `${loc.floor}, ${loc.location}, ${loc.subLocation}`,
+          status: comp.status,
+          comment: comp.comment,
+          service: comp.service.join(", "),
+          reopenC: comp.reopenCount,
+          assignedto: comp.assignedTo.userName,
+        };
+      });
+
+      complaintData.forEach((d) => {
+        const row = complaintWorksheet.getRow(compRow);
+        row.getCell(1).value = d.date;
+        row.getCell(2).value = d.number;
+        row.getCell(3).value = d.service;
+        row.getCell(4).value = d.assignedto;
+        row.getCell(5).value = d.location;
+        row.getCell(6).value = d.comment;
+        row.getCell(7).value = d.status;
+        row.getCell(8).value = d.reopenC;
+        row.commit();
+        compRow++;
+      });
+
+      // --- Unscheduled Work ---
+      client.unschedules.forEach((unsc) => {
+        const row = unschWorksheet.getRow(unschCount);
+        const loc = unsc.location;
+        row.getCell(1).value = new Date(unsc.createdAt).toLocaleString();
+        row.getCell(2).value = new Date(unsc.updatedAt).toLocaleString();
+        row.getCell(3).value =
+          `${loc?.floor}, ${loc?.location}, ${loc?.subLocation}`;
+        row.getCell(4).value = unsc?.serviceName;
+        row.getCell(5).value = unsc.raisedBy.user;
+        row.getCell(6).value = unsc?.approval?.name;
+        row.getCell(7).value = unsc?.comment;
+        row.getCell(8).value = unsc?.update?.status;
+        row.commit();
+        unschCount++;
+      });
+
+      // ✅ Per-client file: always include client name in filename
+      const clientName = client.name.replace(/\s+/g, "_"); // sanitize spaces
+      const fileName = `${clientName}_Daily_Service_Report-${sufix}.xlsx`;
+      const filePath = `./tmp/reports/${fileName}`;
+      await workbook.xlsx.writeFile(filePath);
+
+      await removeOldQr(filePath); //removes old sheet
+      uploadURL = await uploadFile({ filePath });
+
+      if (uploadURL) {
+        await Client.findByIdAndUpdate(client._id, { reportURL: uploadURL });
+        generatedFiles.push({ client: client.name, url: uploadURL });
+      } else {
+        console.log(`Failed to upload report for ${client.name}`);
+        generatedFiles.push({ client: client.name, url: null });
+      }
+
+      // const fileBuffer = fs.readFileSync(filePath);
+      // const fileBase64 = fileBuffer.toString("base64");
+
+      // const attachment = [{ content: fileBase64, name: fileName }];
+
+      // await sendEmail({
+      //   attachment,
+      //   emailList: [{ email: req.user.email }],
+      //   dynamicData: {
+      //     clientName: client.name,
+      //     reportType: value === "today" ? "Today's report" : "Full Report",
+      //     generatedOn: new Date().toLocaleString(),
+      //   },
+      //   templateId: 1,
+      // });
+
+      // fs.unlinkSync(filePath);
+      // generatedFiles.push(filePath);
+    }
+
+    return res.json({
+      msg: `Report generated for ${value}`,
+      files: generatedFiles,
+      uploadURL,
+    });
   } catch (error) {
     console.log(error);
     res.status(500).json({ msg: "Server error, try again later" });

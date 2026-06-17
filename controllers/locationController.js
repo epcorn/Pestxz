@@ -174,13 +174,13 @@ export const getAllLocations = async (req, res) => {
       const location = await Location.findById(id).select("client");
       if (location) {
         clientId = location.client;
-        console.log("getAllLocations Id ln-156:", clientId);
+        // console.log("getAllLocations Id ln-156:", clientId);
       } else {
         clientId = id;
       }
     }
     // FIND CLIENT
-    const client = await Client.findByIdSafe(clientId);
+    const client = await Client.findById(clientId).select("-adminPass -adminName");
     if (!client) {
       return res.status(404).json({ msg: "Client not found" });
     }

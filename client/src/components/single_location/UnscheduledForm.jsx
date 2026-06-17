@@ -88,6 +88,8 @@ function UnscheduledForm({ existing, locationId, type, id }) {
       />
       {errors.status && <p className="text-red-500 text-sm mt-1">{errors.status.message}</p>}
 
+      
+
       <InputRow register={register} id={'comment'} label={'Comment'} required={true} />
     </div>
   )

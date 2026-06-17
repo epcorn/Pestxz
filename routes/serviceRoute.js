@@ -15,7 +15,7 @@ import { dailyServiceReport } from "../controllers/dailyReports.js";
 const router = express.Router();
 
 router.get("/allComplaints", getAllComplaints);
-router.get("/dailyServiceReport", dailyServiceReport);
+router.get("/dailyServiceReport/:value", dailyServiceReport);
 
 router.post("/casual/:id", casualServices);
 router.post("/casual/", getCasualServices);

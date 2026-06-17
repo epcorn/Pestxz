@@ -45,7 +45,7 @@ const navList = [
     icon: <FaBug className="w-6 h-6" />,
     name: "Complaints",
     to: "/complaints",
-    role: ["Admin", "ClientAdmin", "ClientEmployee"],
+    role: ["Admin", "ClientAdmin", "ClientEmployee","TeamLeader"],
   },
   {
     icon: <MdLocationOn className="w-6 h-6" />,
@@ -63,7 +63,7 @@ const navList = [
     icon: <FaFileAlt className="w-6 h-6" />,
     name: "Reports",
     to: "/reports",
-    role: ["Admin"],
+    role: ["Admin", "ClientAdmin"],
   },
 ];
 

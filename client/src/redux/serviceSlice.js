@@ -70,8 +70,8 @@ export const serviceSlice = apiSlice.injectEndpoints({
     }),
     dailyServiceReport: builder.query({
       //new added 08-05-2026
-      query: () => ({
-        url: `/api/service/dailyServiceReport`,
+      query: (value) => ({
+        url: `/api/service/dailyServiceReport/${value}`,
       }),
     }),
   }),

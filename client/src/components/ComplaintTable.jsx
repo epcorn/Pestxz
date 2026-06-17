@@ -81,7 +81,7 @@ const ComplaintTable = ({ data, user, toggle }) => {
                       <span className="text-gray-400 italic font-medium">Not assigned</span>
                     )}
 
-                    {["Admin", "TeamLeader", "BranchAdmin"].includes(user?.role) &&
+                    {user.type === "PestEmployee" &&
                       toggler.status &&
                       toggler.id === complaint._id && (
                         <div
@@ -151,7 +151,7 @@ const ComplaintTable = ({ data, user, toggle }) => {
 
           {data?.length === 0 && (
             <tr>
-              <td colSpan={isRegular ? 5 : 6} className="p-10 text-center text-gray-400 text-sm italic">
+              <td colSpan={isRegular ? 5 : 6} className="p-10 text-center text-lg text-red-500 font-bold italic">
                 No complaints available to display.
               </td>
             </tr>

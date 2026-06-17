@@ -221,7 +221,7 @@ export const getAllComplaints = async (req, res) => {
 
   const query = { type: "Complaint" };
 
-  if (req.user.role !== "Admin") {
+  if (req.user.type !== "PestEmployee") {
     query.client = req.user.client;
   } else if (client) {
     query.client = client;
@@ -451,4 +451,3 @@ export const getCasualServices = async (req, res) => {
     res.status(500).json({ msg: "server error" });
   }
 };
-
