@@ -26,7 +26,8 @@ const casualSchema = new mongoose.Schema(
       id: { type: mongoose.Schema.Types.ObjectId },
     },
     completedAt: { type: Date },
-
+    type: { type: String, default: "casual" },
+    status: { type: String, default: "Raise" },
     client: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Client",

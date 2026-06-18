@@ -2,11 +2,13 @@ import Admin from "../models/adminModel.js";
 import Location from "../models/locationModel.js";
 import Service from "../models/serviceModel.js";
 import { Unscheduled } from "../models/unScheduleModel.js";
+import { uploadFile } from "../utils/helperFunction.js";
 
 export const unScheduleReport = async (req, res) => {
   const data = req.body;
   try {
     let unschedule;
+
     // update service work
     if (data.type === "update") {
       unschedule = await Unscheduled.findByIdAndUpdate(
@@ -27,26 +29,52 @@ export const unScheduleReport = async (req, res) => {
     // new create or raise
     if (data.type === "raise") {
       const location = await Location.findById(data.locationId);
+      const service_data = JSON.parse(data.service);
+
+      const imageUrl = [];
+      if (req.files?.image) {
+        const images = Array.isArray(req.files.image)
+          ? req.files.image
+          : [req.files.image];
+
+        for (const img of images) {
+          const link = await uploadFile({
+            filePath: img.tempFilePath,
+          });
+          if (!link) {
+            res
+              .status(400)
+              .json({ msg: "Image upload error. Try again later" });
+            return;
+          }
+          console.log("image upload success ");
+          imageUrl.push(link);
+        }
+      }
+
       if (!location) return res.status(400).json({ msg: "location not found" });
       const service = await Admin.findOne({
-        "service._id": data.service.value,
+        "service._id": service_data.value,
       });
+
       unschedule = await Unscheduled.create({
         client: location.client,
         location: data.locationId,
         comment: data.comment,
+        image: imageUrl,
         raisedBy: { user: req.user.name, id: req.user._id },
-        serviceName: data.service.label,
-        serviceId: data.service.value,
+        serviceName: service_data.label,
+        serviceId: service_data.value,
         scopes: service.service.flatMap((s) => s.scopes),
         type: "Unscheduled",
       });
       return res
         .status(200)
-        .json({ msg: `Pest reported ${unschedule.serviceName}` });
+        .json({ msg: `Pest reported ${unschedule.serviceName}`, imageUrl });
     }
   } catch (error) {
     console.error("server error: ", error.message);
+    return res.status(500).json({ msg: "Server error" });
   }
 };
 

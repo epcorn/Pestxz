@@ -1,14 +1,28 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import Button from '../../Button';
+import { useDispatch, useSelector } from 'react-redux';
+import { toggleModal } from '../../../redux/helperSlice';
+import ImagesModal from '../../modals/ImagesModal';
+import CasualForm from './CasualForm';
 
 function CasualLists({ work = [] }) {
+  const dispatch = useDispatch();
+  const { isModalOpen, user } = useSelector(store => store.helper);
+  // Track open row using the ID string directly (null means closed)
+  const [expandedRowId, setExpandedRowId] = useState(null);
+
   const navigate = useNavigate();
-  // Check if the array is empty
+
   if (work.length === 0) {
     return <div className="p-4 text-gray-500 text-center">No Casual work found.</div>;
   }
 
-  console.log(work)
+  const handleRowClick = (id) => {
+    // If clicking already open row, close it. Otherwise, open the new one.
+    setExpandedRowId(prevId => prevId === id ? null : id);
+  };
+  
   return (
     <div className="text-xs md:text-sm overflow-x-auto w-full">
       <table className="min-w-[800px] w-full border-collapse text-left border border-gray-400">
@@ -18,24 +32,47 @@ function CasualLists({ work = [] }) {
             <th className="p-3 font-bold text-gray-700">Date</th>
             <th className="p-3 font-bold text-gray-700">Raised By</th>
             <th className="p-3 font-bold text-gray-700">Service</th>
-            <th className="p-3 font-bold text-gray-700 max-w-3xs min-w-3xs">Comment</th>
+            <th className="p-3 font-bold text-gray-700 max-w-3xs min-w-3xs">Image</th>
             <th className="p-3 font-bold text-gray-700">Status</th>
           </tr>
         </thead>
         <tbody>
           {work.map((w, i) => (
-            <tr key={w._id} className={`border-b border-b-gray-400 hover:bg-gray-50 transition-all text-xs md:text-sm *:not-last:border-r`} >
-              <td className="p-3 text-gray-900">{i + 1}</td>
-              <td className="p-3 text-gray-900 whitespace-nowrap">
-                {new Date(w.updatedAt).toLocaleString()}
-              </td>
-              <td className="p-3 text-gray-900">
-                {w.user.name || 'N/A'}
-              </td>
-              <td className="p-3 text-gray-900">{w.serviceName}</td>
-              <td className="p-3 text-gray-900 line-clamp-2">{w.comment}</td>
-              <td className="p-3 text-gray-900">{w?.status}</td>
-            </tr>
+            <React.Fragment key={w._id}>
+              <tr
+                className="border-b border-b-gray-400 hover:bg-gray-50 transition-all text-xs md:text-sm *:not-last:border-r cursor-pointer"
+                onClick={() => handleRowClick(w._id)}
+              >
+                <td className="p-3 text-gray-900">{i + 1}</td>
+                <td className="p-3 text-gray-900 whitespace-nowrap">
+                  {new Date(w.updatedAt).toLocaleString()}
+                </td>
+                <td className="p-3 text-gray-900">
+                  {w.user?.name || 'N/A'}
+                </td>
+                <td className="p-3 text-gray-900">{w.serviceName}</td>
+                <td className="p-3 text-gray-900">
+                  <Button
+                    label={`Show (${w.image?.length || 0})`}
+                    onClick={(e) => {
+                      e.stopPropagation(); // Stops row expansion from firing
+                      dispatch(toggleModal({ name: `image_${w._id}`, status: !isModalOpen[`image_${w._id}`] }));
+                    }}
+                  />
+                  {isModalOpen[`image_${w._id}`] && <ImagesModal image={w.image} name={`image_${w._id}`} />}
+                </td>
+                <td className="p-3 text-gray-900">{w?.status || "Raised"}</td>
+              </tr>
+
+              {/* Correct HTML Table Expansion */}
+              {expandedRowId === w._id && (
+                <tr className="bg-gray-50 border-b border-b-gray-400">
+                  <td colSpan={6} className="p-4">
+                    <Expand data={w} user={user} dispatch={dispatch} isModalOpen={isModalOpen} toggleModal={toggleModal} />
+                  </td>
+                </tr>
+              )}
+            </React.Fragment>
           ))}
         </tbody>
       </table>
@@ -44,3 +81,21 @@ function CasualLists({ work = [] }) {
 }
 
 export default CasualLists;
+
+function Expand({ data, user, isModalOpen, dispatch, toggleModal }) {
+  return (
+    <div className="text-gray-700">
+      <p className="font-semibold mb-0 text-center">Details View:</p>
+      {user.role === "Operator"
+        ?
+        <div>
+          <Button label={"Update Work"} onClick={() => dispatch(toggleModal({ name: "updatecasualForm", status: true }))} />
+          {isModalOpen.casualForm &&
+            <CasualForm mode={'update'} name={'updatecasualForm'} client={data.client} casualId={data._id} />}
+        </div>
+        : <p className="text-xs mt-2 text-gray-500 text-center">No work update</p>
+      }
+
+    </div>
+  );
+}

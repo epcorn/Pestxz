@@ -34,22 +34,30 @@ const getColor = (index, alpha = 1) => {
   return colors[index % colors.length];
 };
 
+const keyMapping = {
+  "complaints": "Total Complaints",
+  "regulars": "Total Services",
+
+}
+
 function MultiLineChart({ values = [], admin = [], toggle }) {
 
   // --- 1. VALUES CHART CONFIGURATION ---
   const valuesLabels = values?.map(item => item.month || '');
+
+
   const valuesData = {
     labels: valuesLabels,
     datasets: [
       {
-        label: 'Complaints',
+        label: 'Total Complaints',
         data: values.map(item => item.complaints ?? 0),
         borderColor: 'rgba(75, 192, 192, 1)',
         backgroundColor: 'rgba(75, 192, 192, 0.2)',
         tension: 0.4,
       },
       {
-        label: 'Close Complaints',
+        label: 'Closed Complaints',
         data: values.map(item => item.Close ?? 0),
         borderColor: 'rgba(255, 99, 132, 1)',
         backgroundColor: 'rgba(255, 99, 132, 0.2)',
@@ -70,11 +78,13 @@ function MultiLineChart({ values = [], admin = [], toggle }) {
 
   // Get keys only from the first object to generate charts dynamically
   const adminKeys = admin.length > 0
-    ? Object.keys(admin[0]).filter(key => key !== 'month')
+    ? Object.keys(admin[0]).filter(key => ['complaints', 'regulars'].includes(key))
     : [];
-console.log(admin)
+
+
+
   const adminDatasets = adminKeys.map((key, index) => ({
-    label: key.charAt(0).toUpperCase() + key.slice(1),
+    label: keyMapping[key] || (key.charAt(0).toUpperCase() + key.slice(1)),
     data: admin.map(item => item[key] ?? 0),
     borderColor: getColor(index, 1),
     backgroundColor: getColor(index, 0.2),
@@ -85,6 +95,8 @@ console.log(admin)
     labels: adminLabels,
     datasets: adminDatasets,
   };
+
+  console.log(admin)
 
   // --- 3. SHARED OPTIONS CONFIG ---
   const getOptions = (titleText) => ({

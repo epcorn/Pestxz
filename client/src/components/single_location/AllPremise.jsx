@@ -21,23 +21,30 @@ function AllPremise() {
             <th className="py-3 px-2 text-center">No.</th>
             <th className="py-3 px-2">Location</th>
             <th className="py-3 px-2">Service name</th>
+            <th className="py-3 px-2">Status</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-300 ">
-          {allPremiseSchedules?.map((p, index) => (
-            <tr key={index} className='*:not-last:border-r'>
+          {allPremiseSchedules?.map((p, index) => {
+            const completed = p.service.some(ser => ser.schedule.some(sc => sc.date === today && sc.completed))
+            return (
+              <tr key={index} className={`*:not-last:border-r ${completed ? "bg-green-400" : ""}`}>
 
-              <td className="py-3 px-2 text-center">
-                {index + 1}
-              </td>
-              <td className="py-3 px-2">
-                {p.floor}, {p.location}, {p.sublocation}
-              </td>
-              <td className="py-3 px-2">
-                {p.service.map(s => s.serviceName).join(", ")}
-              </td>
-            </tr>
-          ))}
+                <td className="py-3 px-2 text-center">
+                  {index + 1}
+                </td>
+                <td className="py-3 px-2">
+                  {p.floor}, {p.location}, {p.sublocation}
+                </td>
+                <td className="py-3 px-2">
+                  {p.service.map(s => s.serviceName).join(", ")}
+                </td>
+                <td className="py-3 px-2">
+                  {completed ? "Completed" : "Pending"}
+                </td>
+              </tr>
+            )
+          })}
         </tbody>
       </table>
     </section>

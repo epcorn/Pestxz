@@ -91,6 +91,10 @@ io.on("connection", (socket) => {
   socket.on("complaint-raised", (data) => {
     io.to("admin-room").emit("new-complaint", data);
   });
+
+  socket.on("complaint-updated", (data) => {
+    io.to("admin-room").emit("complaint-updated", data);
+  });
 });
 
 app.use(express.json());
@@ -116,7 +120,7 @@ app.use(
 app.use(
   "/api/admin",
   authenticateUser,
-  authorizeUser("Admin", "ClientAdmin", "TeamLeader"),
+  authorizeUser("Admin", "ClientAdmin", "Operator", "TeamLeader"),
   adminRoute,
 );
 app.use("/api/location", authenticateUser, locationRoute);

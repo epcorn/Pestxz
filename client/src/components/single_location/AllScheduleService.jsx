@@ -105,7 +105,7 @@ function AllScheduleService({ data }) {
                     {/* USER */}
                     <div className="md:px-3 flex justify-between items-center">
                       <span className="text-xs font-bold uppercase text-neutral-400 md:hidden mr-2">Attend By:</span>
-                      <span className="inline-flex items-center rounded-full bg-neutral-100 px-2.5 py-0.5 text-xs font-medium text-neutral-900 border border-neutral-500">
+                      <span className="inline-flex items-center rounded-full bg-neutral-100 px-2.5 py-0.5 text-xs font-medium text-neutral-900 border border-neutral-500 whitespace-nowrap">
                         {service.regularService[0].userName}
                       </span>
                     </div>

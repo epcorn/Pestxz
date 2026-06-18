@@ -9,6 +9,7 @@ import { useGetSingleUserQuery } from '../redux/userSlice';
 import { toggleModal } from '../redux/helperSlice';
 import UnscheduledForm from '../components/single_location/UnscheduledForm';
 import { socket } from '../socket';
+import ImagesModal from '../components/modals/ImagesModal';
 
 function SingleUnschedule() {
   const { id } = useParams();
@@ -77,9 +78,10 @@ function SingleUnschedule() {
         </p>
         <p>
           <strong className='underline'>Images: </strong>
-          <span className='font-bold text-gray-600'>
-            {unscheduled?.image || []}
-          </span>
+          <Button disabled={unscheduled?.image?.length === 0} small={true} label={'Show'}
+            onClick={() => dispatch(toggleModal({ name: "unscimage", status: true }))}
+          />
+          {isModalOpen.unscimage && <ImagesModal name={'unscimage'} image={unscheduled?.image||""} />}
         </p>
       </div>
 

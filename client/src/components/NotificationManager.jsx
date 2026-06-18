@@ -4,7 +4,7 @@ import { socket } from '../socket'
 import { apiSlice } from '../redux/apiSlice'
 import { toast } from 'react-toastify'
 
-const ADMIN_ROLES = ["Admin", "Operator", "ClientAdmin", "BranchAdmin"]
+const ADMIN_ROLES = ["Admin", "Operator", "TeamLeader", "ClientAdmin", "BranchAdmin"]
 
 function NotificationManager() {
   const { user } = useSelector(store => store.helper)
@@ -86,13 +86,14 @@ function NotificationManager() {
 
     const complaintUpdate = (data) => {
       if (!isAdmin()) return
+      dispatch(apiSlice.util.invalidateTags(["Complaint", "assign"]))
       notificationSound.play().catch(error => { console.warn("Browser blocked autoplay") })
-      dispatch(apiSlice.util.invalidateTags(["Complaint"]))
-      sendNotification("Update on Complaint", `complaint got ${data.status} by ${data.user}`)
+      sendNotification("Update on Complaint", `complaint updated by ${data.user}`)
     }
 
 
 
+    socket.on("complaint-updated", complaintUpdate)
     socket.on("new-unscheduled-work", onNewWork)
     socket.on("work-status-changed", onStatusChanged)
     socket.on("work-status-approved", onApproved)
@@ -105,6 +106,7 @@ function NotificationManager() {
       socket.off("work-status-approved", onApproved)
       socket.off("work-status-rejected", onRejected)
       socket.off("new-complaint", onNewComplaint)
+      socket.off("complaint-updated", complaintUpdate)
     }
   }, [user?.role, dispatch])
 

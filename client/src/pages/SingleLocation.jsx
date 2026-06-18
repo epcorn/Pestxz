@@ -26,6 +26,7 @@ import UnScheduledList from "../components/single_location/UnScheduledList";
 import UnscheduledForm from "../components/single_location/UnscheduledForm";
 import CasualLists from "../components/single_location/casual/CasualLists";
 import CasualForm from "../components/single_location/casual/CasualForm";
+import Headers from "../components/Headers";
 
 
 const SingleLocation = () => {
@@ -57,21 +58,14 @@ const SingleLocation = () => {
       )}
       {data && (
         <div>
-          <div className="mb-6 text-center">
-            <h2 className="text-2xl font-light text-slate-800">
-              Hello, <span className="capitalize font-semibold text-sky-700">{user.name}</span>
-            </h2>
-            <span className="inline-block mt-1 px-2.5 py-0.5 text-xs font-medium tracking-wide bg-slate-100 text-slate-600 rounded-full border border-slate-200">
-              {user.role}
-            </span>
-          </div>
+          <Headers header={'Location'} user={DBUser} />
           <div className="py-1 border-b border-neutral-200">
             {/* Location Details */}
             <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm text-neutral-700">
-              <div>
+              {user.type === "PestEmployee" && <div>
                 <span className="font-bold text-neutral-900">Client Name:</span>{" "}
                 {data.client}
-              </div>
+              </div>}
               <div>
                 <span className="font-bold text-neutral-900">Floor:</span>{" "}
                 {data.location.floor}
@@ -134,7 +128,7 @@ const SingleLocation = () => {
                     status: true,
                   }))} />
 
-                {isModalOpen?.casual && <CasualForm mode="create" client={data?.location?.client} />}
+                {isModalOpen?.casual && <CasualForm mode="create" name={"casual"} client={data?.location?.client} />}
               </>
             )}
 
@@ -242,7 +236,7 @@ const SingleLocation = () => {
                 <span>All Un-Scheduled Services Done({data?.unscheduled.length || 0})</span>
                 <IoIosArrowDown className={`${isModalOpen?.allReg ? "rotate-180" : ""} transition-all`} />
               </h2>
-              <UnScheduledList work={data?.unscheduled || []} />
+              {!isLoading && <UnScheduledList work={data?.unscheduled || []} />}
             </div>
           }
           {toggleLists === "allCasual" &&
@@ -257,7 +251,7 @@ const SingleLocation = () => {
           }
 
           {/* last regular service */}
-          {user.type === "PestEmployee" && (
+          {DBUser && DBUser.rights.scan_Scheduled && (
             <div>
               {/* Form / Button Action Container */}
               <div className="flex justify-center items-center mt-5 pt-2">

@@ -6,15 +6,23 @@ import { Pie, Doughnut, Line } from 'react-chartjs-2'
 ChartJS.register(ArcElement, Tooltip, Legend);
 
 function PieChart({ values, line = false }) {
-  const filteredKeys = Object.keys(values).filter(key => !["allcomplaints", "Pending", "Invalid"].includes(key))
+  const filteredKeys = Object.keys(values).filter(key => !["allcomplaints", "Pending", "Invalid", "total", "completed"].includes(key))
   const chartDataValues = filteredKeys.map(key => values[key])
 
   const keyMapping = {
     "Open": "Open Complaints",
+    "open": "Open Complaints",
+    "Done": "Complaints resolved",
     "Close": "Close Complaints",
+    "closed": "Close Complaints",
+    "missed": "Missed Services",
+    "Missed": "Missed Services",
     "In Progress": "In Progress Complaints",
+    "inProgress": "In Progress Complaints",
     "completedServices": "Completed Services",
-    "reOpenCount": "Reopen Complaints"
+    "completed": "Completed Services",
+    "reOpenCount": "Reopened Complaints",
+    "reopenCount": "Reopened Complaints"
   };
   const newKeys = filteredKeys.map(f => keyMapping[f] || f)
 
@@ -40,17 +48,12 @@ function PieChart({ values, line = false }) {
     }]
   }
   const options = {
-    responsive: true, plugins: { legend: { display: false, position: "bottom", labels: { font: { size: 10 }, color: "black" } }, tootip: { position: "nearest" }, title: { display: true, text: "Status of Services" } }
+    responsive: true, plugins: { legend: { display: true, position: "bottom", labels: { font: { size: 10 }, color: "black" } }, tootip: { position: "nearest" }, title: { display: true, text: "Status of Services" } }
   }
   return (
     <>
-      <div className='flex-1 flex overflow-x-auto snap-x snap-mandatory scroll-smooth'>
-        {/* {line &&
-          <div style={{ width: '650px', margin: "0 auto" }} className='shrink-0 snap-center'>
-            <Line data={data} options={options} />
-          </div>
-        } */}
-        <div style={{ width: '250px', margin: "0 auto" }} className='shrink-0 snap-center'>
+      <div className=''>
+        <div style={{ width: '350px', margin: "0 auto" }}>
           <Doughnut data={data} options={options} />
         </div>
       </div>

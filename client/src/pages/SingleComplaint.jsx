@@ -25,7 +25,7 @@ const SingleComplaint = () => {
   const [rating, setRating] = useState({ id: null, rating: null });
   const { user, isModalOpen } = useSelector((store) => store.helper);
 
-  const { data, isLoading, error } = useSingleComplaintQuery(id);
+  const { data, isLoading, error } = useSingleComplaintQuery(id, { refetchOnMountOrArgChange: true });
   const { data: location, isLoading: locaLoading } = useGetSingleLocationQuery(
     data?.location,
     { skip: !data?.location }
@@ -34,7 +34,7 @@ const SingleComplaint = () => {
     user?._id,
     { skip: !user?._id }
   );
-
+  console.log(data)
   // Auto-cleanup modals on unmount
   useEffect(() => {
     return () => {
@@ -62,7 +62,7 @@ const SingleComplaint = () => {
   const details = data.complaintDetails
 
   return (
-    <div className="max-w-7xl mx-auto px-2 sm:px-3 lg:px-8 py-4 space-y-6">
+    <div className={`max-w-7xl mx-auto px-2 sm:px-3 lg:px-8 py-4 space-y-6 ${data.complaintDetails.finalClosed ? "bg-red-200 *:bg-red-50 **:bg-red-50 cursor-not-allowed" : ""}`}>
       {/* COMPLAINT TOP CARD METADATA */}
       <div className="bg-neutral-50 rounded-lg border border-neutral-200 shadow-xs overflow-hidden">
         <div className="p-3 sm:p-4 text-xs">

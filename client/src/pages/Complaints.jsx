@@ -40,9 +40,9 @@ const Complaints = () => {
     page,
     client: location.client || "",
     location: location?.floor || "All",
-  });
+  }, { refetchOnMountOrArgChange: true, pollingInterval: 30000, });
 
-  console.log(data, error,isFetching)
+  console.log(data, error, isFetching)
   const pages = Array.from({ length: data?.pages }, (_, index) => index + 1);
 
   const handleSearch = (e) => {

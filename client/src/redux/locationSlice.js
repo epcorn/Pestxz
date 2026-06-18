@@ -73,6 +73,7 @@ export const locationSlice = apiSlice.injectEndpoints({
         url: `/api/location/unSchedule`,
         method: "POST",
         body: data,
+        formData: true,
       }),
       invalidatesTags: ["Location", "unscheduled"],
     }),

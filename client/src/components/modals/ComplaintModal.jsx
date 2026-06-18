@@ -177,33 +177,33 @@ const ComplaintModal = ({ locationId, mode = "create" }) => {
           user: user.name,
           comment: data.comment
         })
+        console.log("complaint emmited")
       }
       // UPDATE
       if (isUpdate) {
         form.set("status", data.status?.value || data.status);
         form.set("comment", data.comment?.value || data.comment);
         res = await updateComplaint({ id: locationId, form }).unwrap();
-
+        
         socket.emit("complaint-updated", {
           user: user.name,
           status: status.label,
         })
+        console.log("complaint emmited")
       }
-
+      
       // REVIEW
       if (isReview) {
         form.set("status", data.status?.value || data.status);
         form.set("comment", data.comment);
-        res = await updateComplaint({
-          id: locationId,
-          form,
-        }).unwrap();
+        res = await updateComplaint({ id: locationId, form, }).unwrap();
+        toast.success(res?.msg || "Success");
+        
+        socket.emit("complaint-updated", {
+          user: user.name
+        })
+        console.log("complaint emmited")
       }
-      console.log([data])
-      toast.success(res?.msg || "Success");
-      socket.emit("complaint-updated", {
-        user: user.name
-      })
 
       dispatch(toggleModal({ name: "complaint", status: false }));
 

@@ -245,7 +245,7 @@ function RegularForm({ serviceData, id, locationName, setRegular }) {
                     type="button"
                     disabled={isLoading}
                     onClick={() => submitSingleService(ser, todaySchedule)}
-                    className="bg-green-600 px-5 py-2 text-white rounded"
+                    className="bg-green-600 px-5 py-2 text-white rounded disabled:cursor-not-allowed disabled:opacity-35"
                   >
                     {isLoading ? "Submitting..." : "Complete Service"}
                   </button>

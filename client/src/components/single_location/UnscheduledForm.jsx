@@ -26,10 +26,24 @@ function UnscheduledForm({ existing, locationId, type, id }) {
   const switchs = type === "raise" ? serviceList : labels
 
   const submit = async (data) => {
+    const formData = new FormData();
+
     if (type === "raise") {
+      formData.append("type", "raise");
+      formData.append("locationId", locationId);
+      formData.append("comment", data.comment)
+      formData.append("service", JSON.stringify(data.service))
+
+      for (let i = 0; i < data.image.length; i++) {
+        formData.append("image", data.image[i])
+      }
+      for (let [key, value] of formData.entries()) {
+        console.log(key, value);
+      }
+
+      const res = await updateUnscheduledReport(formData).unwrap()
       data.type = "raise"
       data.locationId = locationId
-      // const res = await updateUnscheduledReport(data).unwrap()
       data.raisedBy = user.name
       socket.emit("unscheduled-raised", data)
       toast.success(res?.msg || "done")
@@ -66,9 +80,28 @@ function UnscheduledForm({ existing, locationId, type, id }) {
       />
       {errors.service && <p className="text-red-500 text-sm mt-1">{errors.service.message}</p>}
 
+      <div>
+        <label className="text-md font-medium leading-6 mr-2 text-gray-900">
+          Images
+        </label>
+        <input
+          type="file"
+          multiple
+          accept="image/*"
+          {...register("image")}
+          className="mt-0.5 block w-full text-sm text-slate-500
+          file:mr-4 file:py-2 file:px-4
+          file:rounded-md file:border-0
+          file:text-sm file:font-semibold
+          file:bg-zinc-100 file:text-zinc-700
+          hover:file:bg-zinc-200"
+        />
+      </div>
+
       <InputRow register={register} id='comment' label='Comment' required={true} />
     </div>
   )
+
   const updatebody = (
     <div>
       <Controller
@@ -88,14 +121,14 @@ function UnscheduledForm({ existing, locationId, type, id }) {
       />
       {errors.status && <p className="text-red-500 text-sm mt-1">{errors.status.message}</p>}
 
-      
+
 
       <InputRow register={register} id={'comment'} label={'Comment'} required={true} />
     </div>
   )
   return (
-    <FormModal formBody={type === "raise" ? raisebody : updatebody} 
-    open={isModalOpen.unscheduled}
+    <FormModal formBody={type === "raise" ? raisebody : updatebody}
+      open={isModalOpen.unscheduled}
       title='Report Un-Scheduled work'
       disabled={unScLoading}
       submitLabel={type === "raise" ? "Report" : "Update"}

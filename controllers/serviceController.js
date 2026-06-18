@@ -52,10 +52,12 @@ export const newComplaint = async (req, res) => {
     }
     const sr = `${client?.contractNo?.replace(/\//g, "")}-COM${nextNumber}`;
     const imageLinks = [];
+
     if (req.files?.images) {
       const images = Array.isArray(req.files.images)
         ? req.files.images
         : [req.files.images];
+
       for (const image of images) {
         const link = await uploadFile({
           filePath: image.tempFilePath,
@@ -102,7 +104,6 @@ export const newComplaint = async (req, res) => {
       msg: `Your complaint number is ${complaint.complaintDetails.number}`,
     });
   } catch (error) {
-    console.log(error);
     return res.status(500).json({
       msg: "Server error, try again later",
     });
@@ -180,6 +181,8 @@ export const updateComplaint = async (req, res) => {
       const reopenCount = complaint.complaintDetails.reopenCount || 0;
       if (reopenCount >= 3) {
         complaint.complaintDetails.finalClosed = true;
+        complaint.complaintDetails.status = "Final Closed";
+
         await complaint.save();
         return res.status(400).json({
           msg: "Maximum reopen limit reached. Complaint permanently closed.",
@@ -252,7 +255,6 @@ export const getAllComplaints = async (req, res) => {
       .skip(limit * (pageNumber - 1))
       .limit(limit);
 
-    console.log(complaints.length);
     return res.status(200).json({
       complaints,
       pages: Math.min(10, Math.ceil(total / limit)),
@@ -344,7 +346,6 @@ export const newRegularService = async (req, res) => {
 
     return res.status(201).json({ msg: "Service updated successfully" });
   } catch (error) {
-    console.log(error);
     return res.status(500).json({ msg: "Server error, try again later" });
   }
 };
@@ -392,7 +393,7 @@ export const getAllAssignedWork = async (req, res) => {
       type: "Complaint",
       "complaintDetails.assignedTo.userId": req.user._id,
     }).sort({ updatedAt: -1 });
-    console.log(complaints);
+
     res.status(200).json(complaints);
   } catch (error) {
     res.status(500).json({ msg: "server error" });
@@ -404,38 +405,62 @@ export const casualServices = async (req, res) => {
   const data = req.body;
 
   try {
+    const imageUrl = [];
     let casualService;
+
     if (id === "create") {
+      if (req.files?.images) {
+        const images = Array.isArray(req.files.images)
+          ? req.files.images
+          : [req.files.images];
+
+        for (const image of images) {
+          const link = await uploadFile({
+            filePath: image.tempFilePath,
+          });
+          if (!link) {
+            return res
+              .status(400)
+              .json({ msg: "Image upload error. Try again later" });
+          }
+          imageUrl.push(link);
+        }
+      }
+
       await Casual.create({
+        status: "raise",
         client: data.client,
         location: data.location,
-        serviceId: data.service.value,
-        serviceName: data.service.label,
+        image: imageUrl,
+        serviceId: data.serviceId,
+        serviceName: data.serviceName,
         user: { name: req.user.name, id: req.user._id },
       });
 
       return res.status(200).json({ msg: `casual service created by ` });
     }
     if (id.length === 24) {
-      // client: data.client._id,
-      // location: data.location.id,
-      // serviceId: data.serviceId,
-      // serviceName: data,
-      // serviceName,
-      // scopes: data.scopes.map((sc) => ({
-      //   scopeId: sc.scopeId,
-      //   scopeName: sc.scopeName,
-      //   consumables: sc.consumables.map((con) => ({
-      //     consumableId: con.consumableId,
-      //     consumableName: con.consumableName,
-      //     calibration: con.calibration,
-      //     action: con.action,
-      //     comment: con.comment,
-      //   })),
-      // })),
+      const casual = await Casual.findByIdAndUpdate(id, {
+        client: data.client._id,
+        location: data.location.id,
+        serviceId: data.serviceId,
+        serviceName: data,
+        status: "Done",
+        serviceName,
+        scopes: data.scopes.map((sc) => ({
+          scopeId: sc.scopeId,
+          scopeName: sc.scopeName,
+          consumables: sc.consumables.map((con) => ({
+            consumableId: con.consumableId,
+            consumableName: con.consumableName,
+            calibration: con.calibration,
+            action: con.action,
+            comment: con.comment,
+          })),
+        })),
+      });
     }
   } catch (error) {
-    console.log(error);
     res.status(500).json(error.message);
   }
 };

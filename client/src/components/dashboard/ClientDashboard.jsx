@@ -3,6 +3,7 @@ import { IoMdTime } from "react-icons/io";
 import { GrInProgress } from "react-icons/gr";
 import { GoIssueReopened } from "react-icons/go";
 import { AiOutlineFileDone } from "react-icons/ai";
+import { motion } from 'motion/react'
 
 
 import { IoLockClosed, IoLockOpen } from "react-icons/io5";
@@ -22,31 +23,32 @@ import { clientAdminStatus } from "../../utils/constData";
 import { useGetUnscheduledReportsQuery } from "../../redux/locationSlice";
 import { useNavigate } from "react-router-dom";
 import UnscheduledNotification from "./UnscheduledNotification";
-
-const stats = [
-  // { id: 1, name: "Total Complaints", value: "allcomplaints", icon: <RiErrorWarningLine className="w-3 h-3 md:w-5 md:h-5" />, bg: "bg-slate-400", bd: "border-l-slate-600", type: "com" },
-  { id: 2, name: "Open Complaints", value: "Open", icon: <IoMdTime className="w-3 h-3 md:w-5 md:h-5" />, bg: "bg-blue-600", bd: "border-l-blue-600", type: "com", text: "text-blue-700" },
-  { id: 3, name: "In Progress", value: "In Progress", icon: <GrInProgress className="w-3 h-3 md:w-5 md:h-5" />, bg: "bg-amber-500", bd: "border-l-amber-600", type: "com", text: "text-amber-700" },
-  { id: 4, name: "Closed Complaints", value: "Close", icon: <IoLockClosed className="w-3 h-3 md:w-5 md:h-5" />, bg: "bg-emerald-600", bd: "border-l-emerald-600", type: "com", text: "text-emerald-700" },
-  { id: 5, name: "Reopened Complaints", value: "reopenCount", icon: <GoIssueReopened className="w-3 h-3 md:w-5 md:h-5" />, bg: "bg-red-600", bd: "border-l-red-600", type: "com", text: "text-red-700" },
-  { id: 6, name: "Services Completed", value: "completedServices", icon: <AiOutlineFileDone className="w-3 h-3 md:w-5 md:h-5" />, bg: "bg-blue-600", bd: "border-l-blue-600", type: "reg", text: "text-green-700" },
-];
+import { StatCard } from "./AdminDashboard";
+import UnScheduledList from "../single_location/UnScheduledList";
 
 const ClientDashboard = () => {
   const [toggle, setToggle] = useState(sessionStorage.getItem("ClientDashboardToggle") || "Complaint");
   const navigate = useNavigate()
-  const [statusFilter, setStatusFilter] = useState("")
-
-
+  const [statusFilter, setStatusFilter] = useState("");
   const { user } = useSelector((store) => store.helper);
 
+
   const { data: adminDash = { latestComplaints: [], complaintData: [] }, isLoading, error } =
-    useClientAdminDashboardQuery(user?.client, { skip: !user?.client });
+    useClientAdminDashboardQuery(user?.client, {
+      skip: !user?.client, refetchOnMountOrArgChange: true, // ✅
+      pollingInterval: 30000,
+    });
 
   const { data: clientDash, isLoading: clgLoading } = useAdminDashboardQuery(user.client, {
     skip: !user.client
   });
 
+  const { data: unschedule, isLoading: unscLoading } = useGetUnscheduledReportsQuery({
+    refetchOnMountOrArgChange: true, // ✅
+    pollingInterval: 30000,
+  });
+
+  console.log(unschedule)
   const { data: client } = useGetSingleClientQuery(user?.client, { skip: !user?.client });
 
   // Filter data efficiently using useMemo
@@ -55,9 +57,7 @@ const ClientDashboard = () => {
       return clientDash?.all.filter(cl => cl.complaintDetails.status === statusFilter)
     }
     if (!clientDash?.latestComplaints) return [];
-
     return clientDash.latestComplaints.filter(lat => lat.type === toggle);
-
   }, [toggle, clientDash, statusFilter]);
 
   const handleCards = (value) => {
@@ -76,7 +76,7 @@ const ClientDashboard = () => {
   const { statusCounts, ...allData } = adminDash?.dashBoardData || {};
   const statusCount = Object.assign({}, ...(adminDash?.dashBoardData?.statusCounts?.map(s => ({ [s._id]: s.count })) || []));
 
-  console.log(adminDash)
+  const dashData = adminDash?.dashBoardData;
 
   return (
     <section className="p-4 md:px-8 bg-slate-50/50 min-h-screen font-sans">
@@ -97,29 +97,20 @@ const ClientDashboard = () => {
                 <p className="text-slate-500 text-sm mt-1">
                   Here is your dashboard overview for today.
                 </p>
-                <UnscheduledNotification />
+
               </div>
             </div>
           </div>
 
           {/* Stat Cards */}
           <div className="flex flex-wrap gap-3">
-            {stats.map((item, index) => (
-              <div key={item.id} className={`${item.type === "com" ? "bg-red-100" : "bg-blue-100"} ${statusFilter === item.value ? "outline-2 shadow-2xl -translate-y-1" : ""} flex-1 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 border-l-4 ${item?.bd}`} onClick={() => handleCards(item.value)}>
-                <div className="w-full py-3 px-3">
-                  <div className="text-[.6rem] md:text-sm font-semibold text-slate-500 truncate text-center mb-3 flex items-center gap-2">
-                    <div className={`${item.bg} p-1 rounded-lg text-white`}> {item.icon} </div>
-                    <span>{item.name} </span>
-                  </div>
-                  <div className="text-center">
-                    <h3 className={`text-3xl font-bold tracking-tight ${item.text}`}>
-                      {adminDash?.dashBoardData?.[item.value]}
-                    </h3>
-                  </div>
-                </div>
-
-              </div>
-            ))}
+            <StatCard title={'Open Complaints'} value={dashData.Open} textColor={'text-green-600'} color={'border-l-red-500'} />
+            <StatCard title={'In Progress'} value={dashData['In Progress']} textColor={'text-amber-600'} color={'border-l-amber-500'} />
+            <StatCard title={'Closed Complaints'} value={dashData.Close} textColor={'text-green-600'} color={'border-l-green-500'} />
+            <StatCard title={'Closed Complaints'} value={dashData.allcomplaints} textColor={'text-blue-600'} color={'border-l-blue-500'} />
+            {dashData.statusCounts.map(st => st._id !== "Invalid" &&
+              <StatCard key={st._id} title={st._id} value={st.count} textColor={'text-fuchsia-600'} color={'border-l-fuchsia-500'} />
+            )}
           </div>
 
           <div className="flex my-2 gap-5 items-stretch w-full p-4 overflow-x-auto snap-x snap-mandatory *:snap-center">
@@ -127,7 +118,7 @@ const ClientDashboard = () => {
             {/* Line Chart Container (Takes up remaining space) */}
             <div className="relative flex-1 min-w-[600px] bg-neutral-200 border border-gray-200 p-4 h-full rounded-2xl shadow">
               <h3 className="h4 text-center">Multiline chart</h3>
-              <MultiLineChart values={adminDash?.monthlyData} weekly={adminDash.weekly} toggle={"values"}/>
+              <MultiLineChart values={adminDash?.monthlyData} weekly={adminDash.weekly} toggle={"values"} />
               {/* <select name="" id=""></select> */}
             </div>
 
@@ -138,12 +129,11 @@ const ClientDashboard = () => {
 
           </div>
 
-
           {/* Table Section */}
           <div className="mt-12">
             <div className="flex flex-col md:flex-row md:items-center  md:justify-between mb-5">
               <div className="order-2 md:order-1">
-                <h4 className="text-lg font-bold text-slate-800"> Latest {toggle === "Regular" ? "Regular service" : "Complaints"} Update</h4>
+                <h4 className="text-lg font-bold text-slate-800"> Latest {toggle !== "Complaint" ? toggle + " service" : toggle} Update</h4>
                 <div>
                   {/* <p className="text-xs text-slate-400 mt-0.5">Real-time ticket logging status</p> */}
                   {statusFilter && <div className="text-sm text-gray-700">
@@ -152,26 +142,42 @@ const ClientDashboard = () => {
                 </div>
               </div>
               <div className="ml-auto order-1 md:order-2 flex items-center gap-2">
-                {["Complaint", "Regular"].map((type) => (
-                  <button
-                    key={type}
-                    onClick={() => {
-                      setToggle(type);
-                      setStatusFilter('')
-                      sessionStorage.setItem("ClientDashboardToggle", type);
-                    }}
-                    className={`text-xs font-bold px-3 py-1.5 rounded tracking-wider uppercase transition-colors duration-150 ${toggle === type
-                      ? "bg-cyan-600 text-white"
-                      : "bg-slate-200 text-slate-600 hover:bg-slate-300"
-                      }`}
-                  >
-                    {type === "Regular" ? "Regular Service" : type}
-                  </button>
-                ))}
+                {["Complaint", "Regular", "Unscheduled", "Casual"].map((type) => {
+                  const isActive = toggle === type;
+
+                  return (
+                    <button
+                      key={type}
+                      onClick={() => {
+                        setToggle(type);
+                        setStatusFilter('');
+                        sessionStorage.setItem("ClientDashboardToggle", type);
+                      }}
+                      /* 1. Changed absolute bg colors to transparent classes so the indicator can sit behind it */
+                      className={`relative text-xs font-bold px-3 py-1.5 rounded tracking-wider uppercase transition-colors duration-150 outline-none ${isActive
+                          ? "text-white"
+                          : "text-slate-600 bg-slate-200 hover:bg-slate-300"
+                        }`}
+                    >
+                      {/* 2. The Shared Layout Indicator Layer */}
+                      {isActive && (
+                        <motion.div
+                          layoutId="activeTabIndicator" // Must be a unique string across this page
+                          className="absolute inset-0 bg-cyan-600 rounded -z-10"
+                          transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                        />
+                      )}
+
+                      {type === "Regular" ? "Service" : type}
+                    </button>
+                  );
+                })}
               </div>
             </div>
             <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
-              <ComplaintTable data={complaints} user={user} toggle={toggle} />
+              {["Regular", "Complaint"].includes(toggle) && <ComplaintTable data={complaints} user={user} toggle={toggle} />}
+              {toggle === "Unscheduled" && <UnScheduledList work={unschedule} />}
+              {toggle === "Casual" && <UnScheduledList />}
             </div>
           </div>
 
@@ -182,3 +188,4 @@ const ClientDashboard = () => {
 };
 
 export default ClientDashboard;
+

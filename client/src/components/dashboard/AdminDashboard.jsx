@@ -290,9 +290,9 @@ function Row({ item, index, isRegular, assignId, assignRef, setAssignId, navigat
 
 
 
-function StatCard({ title, value, color, textColor }) {
+export function StatCard({ title, value, color, textColor }) {
   return (
-    <div className={`bg-gray-50 shadow flex-1 border-l-2 ${color} px-3 py-2 md:px-5 md:py-3 rounded-lg border border-gray-100 whitespace-nowrap`}>
+    <div className={`bg-gray-50 shadow flex-1 border-l-2 ${color} px-3 py-2 md:px-5 md:py-3 rounded-l-xl border border-gray-100 whitespace-nowrap`}>
       <p className="text-[9px] md:text-xs uppercase tracking-wide text-gray-400 font-semibold">{title}</p>
       <p className={`text-lg md:text-2xl font-bold leading-tight ${textColor}`}>{value}</p>
     </div>

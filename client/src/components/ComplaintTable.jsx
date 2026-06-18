@@ -81,7 +81,7 @@ const ComplaintTable = ({ data, user, toggle }) => {
                       <span className="text-gray-400 italic font-medium">Not assigned</span>
                     )}
 
-                    {user.type === "PestEmployee" &&
+                    {["TeamLeader", "Admin", "BranchAdmin"].includes(user.role) &&
                       toggler.status &&
                       toggler.id === complaint._id && (
                         <div
@@ -124,7 +124,7 @@ const ComplaintTable = ({ data, user, toggle }) => {
                 </td>
 
                 {/* Service */}
-                <td className="pl-2 py-4 text-sm text-gray-800">
+                <td className="pl-2 py-4 text-sm text-gray-800 text-center">
                   {isRegular ? (
                     <span>{complaint.regularService?.[0]?.serviceName}</span>
                   ) : (
