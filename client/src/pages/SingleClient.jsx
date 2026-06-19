@@ -76,7 +76,7 @@ const SingleClient = () => {
       throw new Error("download error");
     }
   }
-  console.log(data);
+  
 
   const handleDownloadAll = async () => {
     let qrs;
@@ -95,9 +95,7 @@ const SingleClient = () => {
     const res = await makeQrDOCX(payload).unwrap();
     saveAs(me.qr, `${data.clientName}-Location.docx`)
 
-    console.log(qrs, ids)
   }
-
   return (
     <>
       {isLoading || isFetching ? (
@@ -208,7 +206,7 @@ const SingleClient = () => {
           </div>
 
           <div className="">
-            <Button label={'Download All Qr'}
+            <Button label={selectedQr.length > 0 ? "Download Selected Qr" : 'Download All Qr'}
               onClick={handleDownloadAll}
             />
           </div>

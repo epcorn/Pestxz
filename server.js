@@ -22,6 +22,7 @@ import { createServer } from "http";
 import { Server } from "socket.io";
 // import cron from "node-cron";
 import { autoMarkMissed } from "./utils/helperFunction.js";
+import nodeCron from "node-cron";
 
 dotenv.config();
 const app = express();
@@ -36,14 +37,22 @@ const io = new Server(httpServer, {
   },
 });
 
-// cron.schedule(
-//   "0 0 * * *",
-//   () => {
-//     console.log("Running schedule work");
-//     autoMarkMissed();
-//   },
-//   { scheduled: true, timezone: "Asia/Kolkata" },
-// );
+
+app.post("/api/cron/auto-mark-missed", (req, res) => {
+  const authHeader = req.headers["x-cron-auth"];
+  if (authHeader !== "my_super_secret_password_123") {
+    return res.status(401).send("Unauthorized");
+  }
+
+  try {
+    console.log("Running schedule work via cron-job.org");
+    autoMarkMissed();
+    return res.status(200).send("Job executed successfully");
+  } catch (error) {
+    console.error("Cron failed:", error);
+    return res.status(500).send("Internal Server Error");
+  }
+});
 
 cloudinary.config({
   cloud_name: process.env.CLOUD_NAME,

@@ -17,9 +17,15 @@ const __dirname = path.dirname(__filename);
 
 // Fetch a URL and return it as a Buffer
 const fetchImageBuffer = async (url) => {
+  if (!url || typeof url !== "string") {
+    throw new Error(`Invalid QR url: ${url}`);
+  }
   const response = await fetch(url);
   if (!response.ok) throw new Error(`Failed to fetch image: ${url}`);
   const arrayBuffer = await response.arrayBuffer();
+  if (!arrayBuffer || arrayBuffer.byteLength === 0) {
+    throw new Error(`Empty image data for url: ${url}`);
+  }
   return Buffer.from(arrayBuffer);
 };
 
@@ -119,7 +125,7 @@ export const makeQrFile = async (req, res) => {
     if (fs.existsSync(outputPath)) {
       fs.unlinkSync(outputPath);
     }
-    res.status(200).json({ msg: "success", file: docName });
+    res.status(200).json({ msg: "success", file: docName, qr: admin.qr });
   } catch (error) {
     console.error("makeQrFile error:", error);
     res.status(500).json({ error: error.message });

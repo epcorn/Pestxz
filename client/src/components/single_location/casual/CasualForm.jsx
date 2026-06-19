@@ -21,7 +21,7 @@ function CasualForm({ mode, client, casualId, name }) {
   const { data: DBuser } = useAllUserQuery();
   const [casualService, { isLoading: submitLoading }] = useCasualServiceMutation();
 
-  const operators = DBuser.filter(u => u.role === "Operator").map(i => ({ value: i._id, label: i.name }));
+  const operators = DBuser?.filter(u => u.role === "Operator").map(i => ({ value: i._id, label: i.name }));
 
   console.log(operators);
 
@@ -38,7 +38,7 @@ function CasualForm({ mode, client, casualId, name }) {
       const formData = new FormData();
       if (mode === "create") {
         // 2. Append all text and select fields
-        Object.keys(data).forEach((key) => {
+        Object.keys(data)?.forEach((key) => {
           if (key === "images") return;
           if (key === "service" && data.service) {
             formData.append("serviceId", data.service.value);

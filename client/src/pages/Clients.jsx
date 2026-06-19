@@ -6,10 +6,11 @@ import { toast } from "react-toastify";
 import { useSelector, useDispatch } from "react-redux";
 import { toggleModal } from "../redux/helperSlice";
 import { MdAddCircle } from "react-icons/md";
+import Headers from "../components/Headers";
 
 const Clients = () => {
   const dispatch = useDispatch();
-  const { isModalOpen } = useSelector((store) => store.helper);
+  const { isModalOpen, user } = useSelector((store) => store.helper);
 
   const { data, isLoading, isFetching, error } = useAllClientsQuery();
   const [deleteClient, { isLoading: deleteLoading }] = useDeleteClientMutation();
@@ -29,15 +30,9 @@ const Clients = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-0 md:px-3 lg:px-5 py-6">
+      <Headers header={"Client Registry"} user={user}/>
 
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 mb-6 border-b border-neutral-200">
-        <div>
-          <h1 className="text-2xl font-bold text-neutral-900 tracking-tight">Clients Registry</h1>
-
-        </div>
-        <NewClientModal />
-      </div>
-
+      <NewClientModal />
       {(isLoading || isFetching) ? (
         <div className="py-12 flex justify-center items-center">
           <Loading />
@@ -116,7 +111,7 @@ const Clients = () => {
           </div>
         </div>
       ) : (
-        
+
         <div className="text-center py-12 border-2 border-dashed border-neutral-200 rounded-xl bg-white">
           <p className="text-sm text-neutral-500">No client data found records inside registry.</p>
         </div>

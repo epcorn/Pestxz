@@ -24,6 +24,7 @@ function RegularForm({ serviceData, id, locationName, setRegular }) {
     s.schedule.filter(sc => sc.status === "Pending")
   );
 
+  console.log(upComing)
   useEffect(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (!saved) return;
