@@ -37,23 +37,6 @@ const io = new Server(httpServer, {
   },
 });
 
-
-app.post("/api/cron/auto-mark-missed", (req, res) => {
-  const authHeader = req.headers["x-cron-auth"];
-  if (authHeader !== "my_super_secret_password_123") {
-    return res.status(401).send("Unauthorized");
-  }
-
-  try {
-    console.log("Running schedule work via cron-job.org");
-    autoMarkMissed();
-    return res.status(200).send("Job executed successfully");
-  } catch (error) {
-    console.error("Cron failed:", error);
-    return res.status(500).send("Internal Server Error");
-  }
-});
-
 cloudinary.config({
   cloud_name: process.env.CLOUD_NAME,
   api_key: process.env.CLOUD_KEY,
@@ -111,6 +94,21 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(fileUpload({ useTempFiles: true }));
 if (process.env.NODE_ENV !== "production") app.use(morgan("dev"));
+
+app.post("/api/cron/auto-mark-missed", (req, res) => {
+  const authHeader = req.headers["x-cron-auth"];
+  if (authHeader !== "my_super_secret_password_123") {
+    return res.status(401).send("Unauthorized");
+  }
+  try {
+    console.log("Running schedule work via cron-job.org");
+    autoMarkMissed();
+    return res.status(200).send("Job executed successfully");
+  } catch (error) {
+    console.error("Cron failed:", error);
+    return res.status(500).send("Internal Server Error");
+  }
+});
 
 app.use("/api/user", userRoute);
 app.use(
