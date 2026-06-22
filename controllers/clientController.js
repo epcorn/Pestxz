@@ -59,6 +59,7 @@ export const registerClient = async (req, res) => {
       await User.create({
         email,
         name: adminName,
+        phone,
         password: adminPass,
         role: "ClientAdmin",
         type: "ClientEmployee",

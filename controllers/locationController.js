@@ -33,7 +33,7 @@ export const qrCounter = async (req, res) => {
       { $inc: { qrCount: 1 } },
       { new: true },
     );
-    
+
     if (location.matchedCount === 0)
       return res.status(400).json({ msg: "location not found" });
 
@@ -403,8 +403,9 @@ export const updateLocation = async (req, res) => {
       Object.keys(diff).length > 0
         ? {
             changedAt: new Date(),
-            changedBy: req.user?.id || null,
-            reason: req.body.changes || "",
+            changedBy_id: req.user?.id || null,
+            changedBy_user: req.user?.name || null,
+            reason: req?.body?.changes,
             diff,
           }
         : null;

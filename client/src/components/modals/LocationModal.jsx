@@ -8,12 +8,13 @@ import {
   useAddLocationMutation,
   useUpdateLocationMutation,
 } from "../../redux/locationSlice";
-import { InputRow, InputSelect, Loading } from "..";
+import { Button, InputRow, InputSelect, Loading } from "..";
 import { useDispatch, useSelector } from "react-redux";
 import FormModal from "./FormModal";
-import { toggleModal } from "../../redux/helperSlice";
+import { toggleModal, } from "../../redux/helperSlice";
 import { timeList } from "../../utils/constData";
 import { frequencies } from "../../utils/helperFunctions";
+import History from "../History";
 
 const defaultService = {
   serviceId: "",
@@ -24,7 +25,7 @@ const defaultService = {
 
 const LocationModal = ({ clientId, locationDetails }) => {
   const dispatch = useDispatch();
-  const { isModalOpen } = useSelector((store) => store.helper);
+  const { isModalOpen, user } = useSelector((store) => store.helper);
   const [add, { isLoading: addLoading }] = useAddLocationMutation();
   const [update, { isLoading: updateLoading }] = useUpdateLocationMutation();
   const { data = {}, isLoading, isFetching } = useAllServiceQuery();
@@ -97,7 +98,7 @@ const LocationModal = ({ clientId, locationDetails }) => {
       return;
     }
     data.serviceReq = validServices;
-    console.log(data);
+
     try {
       let res;
 
@@ -110,6 +111,7 @@ const LocationModal = ({ clientId, locationDetails }) => {
       toast.success(res.msg);
       reset();
       dispatch(toggleModal({ name: "location", status: false }));
+      dispatch(toggleModal({ name: "changes", status: false }));
     } catch (error) {
       console.log(error);
       toast.error(error?.data?.msg || error.error);
@@ -122,12 +124,12 @@ const LocationModal = ({ clientId, locationDetails }) => {
       <InputRow label="Floor" id="floor" errors={errors} register={register} />
 
       {/* LOCATION */}
-        <InputRow
-          label="Location"
-          id="location"
-          errors={errors}
-          register={register}
-        />
+      <InputRow
+        label="Location"
+        id="location"
+        errors={errors}
+        register={register}
+      />
 
       {/* SUB LOCATION */}
       <InputRow
@@ -153,7 +155,7 @@ const LocationModal = ({ clientId, locationDetails }) => {
           </button>
         </div>
 
-        <div className="overflow-y-auto max-h-72">
+        <div className="overflow-y-auto max-h-72  bg-gray-100">
           <div className="space-y-1">
             {serviceReq?.map((item, index) => {
               const selectedService = allServices.find(
@@ -168,7 +170,7 @@ const LocationModal = ({ clientId, locationDetails }) => {
                   <div className="grid md:grid-cols-3 gap-3">
                     {/* SERVICE */}
                     <select
-                      className="border border-gray-400 rounded px-1"
+                      className="border bg-white border-gray-400 rounded px-1"
                       value={watch(`serviceReq.${index}.serviceId`) || ""}
                       onChange={(e) => {
                         const service = allServices.find(
@@ -198,7 +200,7 @@ const LocationModal = ({ clientId, locationDetails }) => {
 
                     {/* FREQUENCY */}
                     <select
-                      className="border border-gray-400 text-black rounded p-2 capitalize"
+                      className="border bg-white border-gray-400 text-black rounded p-2 capitalize"
                       value={watch(`serviceReq.${index}.frequency`) || ""}
                       onChange={(e) =>
                         setValue(`serviceReq.${index}.frequency`, e.target.value)
@@ -215,7 +217,7 @@ const LocationModal = ({ clientId, locationDetails }) => {
                     {/* REMOVE */}
                     <button
                       type="button"
-                      className="border  rounded p-2 text-red-500"
+                      className="border bg-red-200 rounded p-2 text-red-500"
                       onClick={() => {
                         const updated = serviceReq.filter((_, i) => i !== index);
 
@@ -335,8 +337,9 @@ const LocationModal = ({ clientId, locationDetails }) => {
                                         placeholder="Calibration"
                                         className="border rounded p-2 disabled:opacity-35"
                                         disabled={!selectedConsumable}
+                                        defaultValue={0}
                                         value={
-                                          selectedConsumable?.calibration || 0
+                                          selectedConsumable?.calibration
                                         }
                                         onChange={(e) => {
                                           const updatedScopes = [
@@ -383,16 +386,25 @@ const LocationModal = ({ clientId, locationDetails }) => {
       </div>
 
       {locationDetails &&
-        <div>
-          <InputRow
-            label={'Please specify Reason'}
-            type="textarea"
-            cls="border-gray-800"
-            placeholder={'what changed & Why?'}
-            error={errors} id={'changes'}
-            required={true}
-            register={register}
-          />
+        <div className="col-span-3 flex m-1 p-2 justify-between items-center">
+          <div>
+            <InputRow
+              label={'Please specify Reason'}
+              type="textarea"
+              cls="border-gray-800"
+              placeholder={'what changed & Why?'}
+              error={errors} id={'changes'}
+              required={true}
+              register={register}
+            />
+          </div>
+          {user.role === "Admin" &&
+            <div>
+              <Button label={"Changes"} onClick={() => dispatch(toggleModal({ name: "changes", status: true }))} />
+
+              {isModalOpen.changes && <History loc={locationDetails} />}
+            </div>
+          }
         </div>
       }
     </div>

@@ -66,6 +66,7 @@ export const adminSlice = apiSlice.injectEndpoints({
       query: () => ({
         url: `/api/admin/clientAdminDashboard`,
       }),
+      providesTags: ["Complaint", "assign", "Casual"],
     }),
     adminDashboard: builder.query({
       query: (id) => ({
@@ -73,6 +74,7 @@ export const adminSlice = apiSlice.injectEndpoints({
           ? `/api/admin/adminDashboard/${id}`
           : `/api/admin/adminDashboard`,
       }),
+      providesTags: ["Complaint", "assign", "Casual"],
     }),
     addFrequency: builder.mutation({
       query: (freq) => ({

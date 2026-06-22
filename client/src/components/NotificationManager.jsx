@@ -85,7 +85,7 @@ function NotificationManager() {
     }
 
     const complaintUpdate = (data) => {
-      if (!isAdmin()) return
+      // if (!isAdmin()) return
       dispatch(apiSlice.util.invalidateTags(["Complaint", "assign"]))
       notificationSound.play().catch(error => { console.warn("Browser blocked autoplay") })
       sendNotification("Update on Complaint", `complaint updated by ${data.user}`)

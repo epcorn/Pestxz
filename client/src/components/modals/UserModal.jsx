@@ -157,7 +157,7 @@ const UserModal = ({ userDetails }) => {
   const formBody = (
     <div className="grid gap-y-1 mb-4 w-sm">
       {/* Type Radio Controls */}
-      <div className="grid grid-cols-2 text-sm mt-1 py-1 border-b border-gray-100 transition-all">
+      <div className="grid grid-cols-2 text-sm mt-1 py-1 px-2 border-b border-gray-100 transition-all">
         <div className="flex items-center gap-2">
           <input
             type="radio"
@@ -296,7 +296,7 @@ const UserModal = ({ userDetails }) => {
           {errors.password && "Password field is required"}
         </p>
       </div>
-      <div>
+      <div className="px-2">
         <Controller
           name="rights"
           control={control}

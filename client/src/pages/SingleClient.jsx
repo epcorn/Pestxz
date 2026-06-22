@@ -61,7 +61,6 @@ const SingleClient = () => {
     }
   };
 
-
   const services = data?.locations?.map(loc => loc.service || []) || []
   const handleBackfill = async () => {
     const res = await triggerBackFill().unwrap()
@@ -76,7 +75,6 @@ const SingleClient = () => {
       throw new Error("download error");
     }
   }
-  
 
   const handleDownloadAll = async () => {
     let qrs;
@@ -140,7 +138,6 @@ const SingleClient = () => {
                   )}
                 </div>
 
-
                 {/* Meta Information Row */}
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-3 mt-1.5 text-sm text-neutral-500">
                   <div>
@@ -188,6 +185,7 @@ const SingleClient = () => {
                   <LocationModal
                     clientId={id}
                     locationDetails={locationDetails}
+                    
                   />
                 )}
               </div>
@@ -227,9 +225,6 @@ const SingleClient = () => {
                   <th className="font-bold text-center border-neutral-500 border-2 w-32 px-3">
                     Services
                   </th>
-                  {/* <th className="font-bold text-center border-neutral-500 border-2 w-32 px-3">
-                    Products
-                  </th> */}
                   <th className="font-bold text-center border-neutral-500 border-2 w-28">
                     QR Codes
                   </th>

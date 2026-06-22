@@ -13,7 +13,7 @@ function OperatorDashboard() {
   const { user } = useSelector(store => store.helper);
   const { data: assignedWork } = useGetAllAssignedWorkQuery();
   const { data: casuals } = useGetCasualsQuery();
-  const { data: unschedule } = useGetUnscheduledReportsQuery("Operator")
+  const { data: unschedule } = useGetUnscheduledReportsQuery("Operator", { pollingInterval: 4000 })
 
   console.log(casuals, unschedule);
 
@@ -55,8 +55,7 @@ function OperatorDashboard() {
         }
         {toggle.name === "Casual" &&
           <>
-            <h3 className='text-lg text-center font-bold m-2 '>Total Casuals Services
-              {casuals?.length}
+            <h3 className='text-lg text-center font-bold m-2 '>Total Casuals Services ({casuals?.length})
             </h3>
             <CasualLists toggle={'Casual'} work={casuals} />
           </>

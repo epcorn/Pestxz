@@ -9,7 +9,7 @@ import { motion } from 'motion/react'
 import { IoLockClosed, IoLockOpen } from "react-icons/io5";
 import { TbProgressAlert } from "react-icons/tb";
 
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { useAdminDashboardQuery, useClientAdminDashboardQuery } from "../../redux/adminSlice";
 import Loading from "../Loading";
 import AlertMessage from "../AlertMessage";
@@ -27,6 +27,7 @@ import { StatCard } from "./AdminDashboard";
 import UnScheduledList from "../single_location/UnScheduledList";
 
 const ClientDashboard = () => {
+  const dispatch = useDispatch();
   const [toggle, setToggle] = useState(sessionStorage.getItem("ClientDashboardToggle") || "Complaint");
   const navigate = useNavigate()
   const [statusFilter, setStatusFilter] = useState("");
@@ -34,17 +35,22 @@ const ClientDashboard = () => {
 
   const { data: adminDash = { latestComplaints: [], complaintData: [] }, isLoading, error } =
     useClientAdminDashboardQuery(user?.client, {
-      skip: !user?.client, refetchOnMountOrArgChange: true, // ✅
-      pollingInterval: 30000,
+      skip: !user?.client, selectFromResult: ({ data, isLoading, isError, error }) => ({
+        data: data ?? { latestComplaints: [], complaintData: [] },
+        isLoading,
+        error
+      }),
+      refetchOnMountOrArgChange: true,
+      pollingInterval: 30000, refetchOnReconnect: true,
     });
 
   const { data: clientDash, isLoading: clgLoading } = useAdminDashboardQuery(user.client, {
-    skip: !user.client
+    skip: !user.client,
   });
 
   const { data: unschedule, isLoading: unscLoading } = useGetUnscheduledReportsQuery({
     refetchOnMountOrArgChange: true, // ✅
-    pollingInterval: 30000,
+    pollingInterval: 50000,
   });
 
   const { data: client } = useGetSingleClientQuery(user?.client, { skip: !user?.client });
@@ -195,7 +201,7 @@ const ClientDashboard = () => {
                         setStatusFilter('');
                         sessionStorage.setItem("ClientDashboardToggle", type);
                       }}
-                      
+
                       className={`relative text-xs font-bold px-3 py-1.5 rounded tracking-wider uppercase transition-colors duration-150 outline-none ${isActive
                         ? "text-white"
                         : "text-slate-600 bg-slate-200 hover:bg-slate-300"

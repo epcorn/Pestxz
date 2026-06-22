@@ -5,7 +5,7 @@ import { removeCredentials } from "./helperSlice";
 const baseQuery = fetchBaseQuery({ baseUrl: "/" });
 const authBaseQuery = async (args, api, extraOption) => {
   const result = await baseQuery(args, api, extraOption);
-  
+
   if (result.error && result.error.status === 401) {
     toast.error("Unauthorized!! logged out");
     api.dispatch(removeCredentials());
@@ -16,6 +16,14 @@ const authBaseQuery = async (args, api, extraOption) => {
 
 export const apiSlice = createApi({
   baseQuery: authBaseQuery,
-  tagTypes: ["User", "Client", "Admin", "Location", "Complaint"],
+  tagTypes: [
+    "User",
+    "Client",
+    "Admin",
+    "assign",
+    "Casual",
+    "Location",
+    "Complaint",
+  ],
   endpoints: (builder) => ({}),
 });

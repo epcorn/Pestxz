@@ -170,7 +170,6 @@ export const unScheduleReport = async (req, res) => {
         imageUrl,
       });
     }
-
     return res.status(400).json({ msg: "Invalid type" });
   } catch (error) {
     console.error("server error: ", error);

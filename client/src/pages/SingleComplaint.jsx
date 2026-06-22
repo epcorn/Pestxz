@@ -60,14 +60,14 @@ const SingleComplaint = () => {
 
   if (!data) return null;
   const details = data.complaintDetails
+  const complaintUpdate = data.complaintUpdate.toReversed()
 
   return (
     <div className={`max-w-7xl mx-auto px-2 sm:px-3 lg:px-8 py-4 space-y-6 ${data.complaintDetails.finalClosed ? "bg-red-200 *:bg-red-50 **:bg-red-50 cursor-not-allowed" : ""}`}>
-      {/* COMPLAINT TOP CARD METADATA */}
+
       <div className="bg-neutral-50 rounded-lg border border-neutral-200 shadow-xs overflow-hidden">
         <div className="p-3 sm:p-4 text-xs">
 
-          {/* Top Header Row: Client & Number */}
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-neutral-200/60 pb-2 mb-2">
             {user.type === "PestEmployee" && (
               <div className="flex items-center gap-1.5">
@@ -98,7 +98,6 @@ const SingleComplaint = () => {
               </>
             )}
 
-            {/* Status */}
             <div>
               <span className="font-bold text-neutral-400 uppercase tracking-wider text-[10px] block mb-0.5">Status</span>
               <span className={`inline-block rounded px-1.5 py-0.5 text-[10px] font-bold ring-1 ring-inset uppercase tracking-wide ${progress(data?.complaintDetails?.status)}`}>
@@ -157,85 +156,6 @@ const SingleComplaint = () => {
         </div>
       </div>
 
-
-      {/* COMPLAINT TIMELINE / LOGS UPDATE */}
-      {data?.complaintUpdate?.length > 0 && (
-        <div className="overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-sm">
-          {/* Desktop Table Header */}
-          <div className="hidden md:flex items-center bg-neutral-100 border-b border-neutral-200 text-xs font-bold uppercase tracking-wider text-neutral-600 py-3 px-4 gap-4 text-center">
-            <div className="w-32 text-left shrink-0">Date</div>
-            <div className="w-24 shrink-0">Image</div>
-            <div className="flex-1 text-left">Operator Comment</div>
-            <div className="w-36 shrink-0">Updated By</div>
-            <div className="w-28 shrink-0">Status</div>
-          </div>
-
-          {/* Timeline Items */}
-          <div className="divide-y divide-neutral-800">
-            {data.complaintUpdate.map((complaint, i) => (
-              <div
-                key={complaint?._id || i}
-                className="flex flex-col md:flex-row md:items-center py-4 px-4 text-sm text-neutral-700 hover:bg-neutral-50/70 transition-colors gap-4"
-              >
-                {/* 1. Date */}
-                <div className="w-full md:w-32 flex justify-between md:block items-center shrink-0">
-                  <span className="md:hidden text-xs font-bold text-neutral-400 uppercase tracking-wider">Date</span>
-                  <span className="text-neutral-600 font-medium md:font-normal">{dateFormat(complaint?.date)}</span>
-                </div>
-
-                {/* 2. Image */}
-                <div className="w-full md:w-24 flex justify-between md:block md:text-center items-center shrink-0">
-                  <span className="md:hidden text-xs font-bold text-neutral-400 uppercase tracking-wider">Image</span>
-                  <div onClick={(e) => e.stopPropagation()}>
-                    {complaint?.image?.length > 0 ? (
-                      <div className="relative inline-block">
-                        <Button
-                          label={`Show (${complaint.image.length})`}
-                          small
-                          height="h-7"
-                          color="bg-green-600 text-xs text-white px-2.5 py-0.5 rounded-md hover:bg-green-700 transition"
-                          onClick={() => dispatch(toggleModal({ name: `PEImages-${i}`, status: true }))}
-                        />
-                        {isModalOpen[`PEImages-${i}`] && (
-                          <ImagesModal image={complaint.image} name={`PEImages-${i}`} />
-                        )}
-                      </div>
-                    ) : (
-                      <span className="text-neutral-300 text-xs">—</span>
-                    )}
-                  </div>
-                </div>
-
-                {/* 3. Operator Comment */}
-                <div className="w-full flex-1 flex flex-col md:block items-start justify-between min-w-0">
-                  <span className="md:hidden text-xs font-bold text-neutral-400 uppercase tracking-wider mb-1">Comment</span>
-                  <p className="break-words text-neutral-800 text-left w-full whitespace-pre-wrap leading-relaxed">{complaint?.comment || "No comment available."}</p>
-                </div>
-
-                {/* 4. Updated By */}
-                <div className="w-full md:w-36 flex justify-between md:block md:text-center items-center shrink-0">
-                  <span className="md:hidden text-xs font-bold text-neutral-400 uppercase tracking-wider">Updated By</span>
-                  <span className="font-medium md:font-normal truncate max-w-[180px] inline-block md:block text-neutral-700">{complaint?.userName || "System"}</span>
-                </div>
-
-                {/* 5. Status Badge */}
-                <div className="w-full md:w-28 flex justify-between md:block md:text-center items-center shrink-0">
-                  <span className="md:hidden text-xs font-bold text-neutral-400 uppercase tracking-wider">Status</span>
-                  <div className="flex items-center justify-end md:justify-center">
-                    <span className={`inline-flex relative items-center rounded-full px-2.5 py-0.5 text-xs font-bold border uppercase tracking-wide leading-normal ${progress(complaint?.status)}`}>
-                      {complaint?.status}
-                      {i === data.complaintUpdate.length - 1 && (
-                        <span className={`absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full animate-ping ${progressBlink(complaint?.status)}`}></span>
-                      )}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
       {/* FOOTER ACTIONS AREA */}
       <div className="flex items-center justify-end gap-3 pt-2">
         {/* Update Form Button Trigger */}
@@ -263,6 +183,89 @@ const SingleComplaint = () => {
             </>
           )}
       </div>
+
+      {/* COMPLAINT TIMELINE / LOGS UPDATE */}
+      {data?.complaintUpdate?.length > 0 && (
+        <div className="overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-sm">
+          {/* Desktop Table Header */}
+          <div className="hidden md:flex items-center bg-neutral-100 border-b border-neutral-200 text-xs font-bold uppercase tracking-wider text-neutral-600 py-3 px-4 gap-4 text-center">
+            <div className="w-32 text-left shrink-0">Date</div>
+            <div className="w-24 shrink-0">Image</div>
+            <div className="flex-1 text-left">Operator Comment</div>
+            <div className="w-36 shrink-0">Updated By</div>
+            <div className="w-28 shrink-0">Status</div>
+          </div>
+
+          {/* Timeline Items */}
+          <div className="divide-y divide-neutral-800">
+            {complaintUpdate.map((complaint, i) => {
+              // const complaint = comp
+              return (
+                <div
+                  key={complaint?._id || i}
+                  className="flex flex-col md:flex-row md:items-center py-4 px-4 text-sm text-neutral-700 hover:bg-neutral-50/70 transition-colors gap-4"
+                >
+                  {/* 1. Date */}
+                  <div className="w-full md:w-32 flex justify-between md:block items-center shrink-0">
+                    <span className="md:hidden text-xs font-bold text-neutral-400 uppercase tracking-wider">Date</span>
+                    <span className="text-neutral-600 font-medium md:font-normal">{dateFormat(complaint?.date)}</span>
+                  </div>
+
+                  {/* 2. Image */}
+                  <div className="w-full md:w-24 flex justify-between md:block md:text-center items-center shrink-0">
+                    <span className="md:hidden text-xs font-bold text-neutral-400 uppercase tracking-wider">Image</span>
+                    <div onClick={(e) => e.stopPropagation()}>
+                      {complaint?.image?.length > 0 ? (
+                        <div className="relative inline-block">
+                          <Button
+                            label={`Show (${complaint.image.length})`}
+                            small
+                            height="h-7"
+                            color="bg-green-600 text-xs text-white px-2.5 py-0.5 rounded-md hover:bg-green-700 transition"
+                            onClick={() => dispatch(toggleModal({ name: `PEImages-${i}`, status: true }))}
+                          />
+                          {isModalOpen[`PEImages-${i}`] && (
+                            <ImagesModal image={complaint.image} name={`PEImages-${i}`} />
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-neutral-300 text-xs">—</span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* 3. Operator Comment */}
+                  <div className="w-full flex-1 flex flex-col md:block items-start justify-between min-w-0">
+                    <span className="md:hidden text-xs font-bold text-neutral-400 uppercase tracking-wider mb-1">Comment</span>
+                    <p className="break-words text-neutral-800 text-left w-full whitespace-pre-wrap leading-relaxed">{complaint?.comment || "No comment available."}</p>
+                  </div>
+
+                  {/* 4. Updated By */}
+                  <div className="w-full md:w-36 flex justify-between md:block md:text-center items-center shrink-0">
+                    <span className="md:hidden text-xs font-bold text-neutral-400 uppercase tracking-wider">Updated By</span>
+                    <span className="font-medium md:font-normal truncate max-w-[180px] inline-block md:block text-neutral-700">{complaint?.userName || "System"}</span>
+                  </div>
+
+                  {/* 5. Status Badge */}
+                  <div className="w-full md:w-28 flex justify-between md:block md:text-center items-center shrink-0">
+                    <span className="md:hidden text-xs font-bold text-neutral-400 uppercase tracking-wider">Status</span>
+                    <div className="flex items-center justify-end md:justify-center">
+                      <span className={`inline-flex relative items-center rounded-full px-2.5 py-0.5 text-xs font-bold border uppercase tracking-wide leading-normal ${progress(complaint?.status)}`}>
+                        {complaint?.status}
+                        {i === data.complaintUpdate.length - 1 && (
+                          <span className={`absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full animate-ping ${progressBlink(complaint?.status)}`}></span>
+                        )}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
+
     </div>
   );
 };
