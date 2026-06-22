@@ -11,6 +11,7 @@ import { useEffect } from "react";
 import Headers from "../components/Headers";
 
 const Users = () => {
+  const [reveal, setReveal] = useState({ id: "", status: false })
   const dispatch = useDispatch();
   const user = useSelector(selectCurrentUser);
   const [userDetails, setUserDetails] = useState(null);
@@ -82,9 +83,10 @@ const Users = () => {
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="bg-gray-300 border-b border-gray-200 text-xs uppercase tracking-wide text-gray-500">
+                  <tr className="bg-gray-300 border-b border-gray-200 text-sm uppercase tracking-wide text-gray-700 ">
                     <th className="px-5 py-3.5 text-left font-semibold">Name</th>
                     <th className="px-5 py-3.5 text-left font-semibold">Email</th>
+                    <th className="px-5 py-3.5 text-left font-semibold whitespace-nowrap">Phone Number</th>
                     <th className="px-5 py-3.5 text-left font-semibold">Role</th>
 
                     {user.role === "Admin" && (
@@ -126,6 +128,7 @@ const Users = () => {
 
                       {/* Email */}
                       <td className="px-5 py-3.5 text-gray-500">{item?.email}</td>
+                      <td className="px-5 py-3.5 text-gray-500" onClick={() => setReveal({ name: item._id, status: true })} >{reveal.name === item._id ? item?.phone ? item?.phone : "No Number" : "**********"}</td>
 
                       {/* Role */}
                       <td className="px-5 py-3.5">

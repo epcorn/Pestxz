@@ -6,74 +6,174 @@ import { uploadFile } from "../utils/helperFunction.js";
 
 export const unScheduleReport = async (req, res) => {
   const data = req.body;
+  console.log(data);
   try {
     let unschedule;
 
-    // update service work
     if (data.type === "update") {
-      unschedule = await Unscheduled.findByIdAndUpdate(
-        data.id,
-        {
-          $set: {
-            "update.comment": data.comment,
-            "update.status": data.status.label,
-            "update.id": req.user.id,
-            "update.user": req.user.name,
-          },
-        },
-        { new: true },
-      );
-      return res.status(200).json({ msg: "Updated successfull" });
-    }
+      const unscheduledId = data.unscheduledId;
+      const unscheduled = await Unscheduled.findById(unscheduledId);
+      if (!unscheduled)
+        return res.status(400).json({ msg: "Unscheduled report not found" });
 
-    // new create or raise
-    if (data.type === "raise") {
-      const location = await Location.findById(data.locationId);
-      const service_data = JSON.parse(data.service);
+      let ser;
+      try {
+        ser =
+          typeof data.service === "string"
+            ? JSON.parse(data.service)
+            : data.service;
+      } catch (e) {
+        return res.status(400).json({ msg: "Invalid service data format" });
+      }
+
+      const parsedUsedCalibration = data.usedCalibration
+        ? JSON.parse(data.usedCalibration)
+        : {};
+      const parsedAction = data.action ? JSON.parse(data.action) : {};
+      const parsedComment = data.comment ? JSON.parse(data.comment) : {};
 
       const imageUrl = [];
       if (req.files?.image) {
         const images = Array.isArray(req.files.image)
           ? req.files.image
           : [req.files.image];
-
         for (const img of images) {
-          const link = await uploadFile({
-            filePath: img.tempFilePath,
-          });
-          if (!link) {
-            res
+          const link = await uploadFile({ filePath: img.tempFilePath });
+          if (!link)
+            return res
               .status(400)
               .json({ msg: "Image upload error. Try again later" });
-            return;
-          }
-          console.log("image upload success ");
           imageUrl.push(link);
         }
       }
 
+      const target = unscheduled.service.find(
+        (s) =>
+          s.serviceId?.toString() === ser.serviceId?.toString() ||
+          s.serviceName === ser.serviceName,
+      );
+      if (!target)
+        return res
+          .status(400)
+          .json({ msg: "Service not found on this report" });
+
+      const scopeReadings = (ser.scopes || []).map((sc) => ({
+        scopeId: sc.scopeId,
+        scopeName: sc.scopeName,
+        consumables: (sc.consumables || []).map((con) => ({
+          consumableId: con.consumableId,
+          consumableName: con.consumableName,
+          calibration: con.calibration || 0,
+          used: parsedUsedCalibration?.[sc.scopeId]?.[con.consumableId] || "",
+          action: parsedAction?.[sc.scopeId]?.[con.consumableId] || "",
+          comment: parsedComment?.[sc.scopeId]?.[con.consumableId] || "",
+        })),
+      }));
+
+      target.scopes = scopeReadings;
+      target.completed = true;
+      target.completedAt = new Date();
+      target.completionImages = imageUrl;
+      target.completedBy = { user: req.user.name, id: req.user._id };
+
+      unscheduled.update = { user: req.user.name, id: req.user._id };
+      await unscheduled.save();
+
+      return res
+        .status(200)
+        .json({ msg: "Unscheduled service updated", imageUrl });
+    }
+
+    if (data.type === "raise") {
+      const location = await Location.findById(data.locationId);
       if (!location) return res.status(400).json({ msg: "location not found" });
-      const service = await Admin.findOne({
-        "service._id": service_data.value,
+
+      let service_array;
+      try {
+        service_array =
+          typeof data.service === "string"
+            ? JSON.parse(data.service)
+            : data.service;
+      } catch (e) {
+        return res.status(400).json({ msg: "Invalid service data format" });
+      }
+      if (!Array.isArray(service_array)) {
+        service_array = service_array ? [service_array] : [];
+      }
+      if (service_array.length === 0) {
+        return res.status(400).json({ msg: "Service details are missing" });
+      }
+
+      const serviceIds = service_array.map((s) => s.value);
+      const adminDocs = await Admin.find({
+        "service._id": { $in: serviceIds },
+      });
+      if (!adminDocs.length)
+        return res.status(400).json({ msg: "Service not found" });
+
+      // flatten every admin doc's service subdocs into one map: serviceId -> subdoc
+      const serviceMap = new Map();
+      adminDocs.forEach((doc) => {
+        doc.service.forEach((s) => serviceMap.set(s._id.toString(), s));
       });
 
-      unschedule = await Unscheduled.create({
+      const parsedServices = service_array.map((selectedService) => {
+        const matched = serviceMap.get(selectedService.value.toString());
+
+        const scopes = (matched?.scopes || []).map((sc) => ({
+          scopeId: sc._id,
+          scopeName: sc.scopeName,
+          consumables: (sc.consumables || []).map((con) => ({
+            consumableId: con._id,
+            consumableName: con.name,
+            calibration: "0",
+          })),
+        }));
+
+        return {
+          serviceName: selectedService.label,
+          serviceId: selectedService.value,
+          scopes,
+        };
+      });
+
+      const imageUrl = [];
+      if (req.files?.image) {
+        const images = Array.isArray(req.files.image)
+          ? req.files.image
+          : [req.files.image];
+        for (const img of images) {
+          const link = await uploadFile({ filePath: img.tempFilePath });
+          if (!link)
+            return res
+              .status(400)
+              .json({ msg: "Image upload error. Try again later" });
+          imageUrl.push(link);
+        }
+      }
+
+      const unschedule = await Unscheduled.create({
         client: location.client,
         location: data.locationId,
         comment: data.comment,
         image: imageUrl,
         raisedBy: { user: req.user.name, id: req.user._id },
-        serviceName: service_data.label,
-        serviceId: service_data.value,
-        scopes: service.service.flatMap((s) => s.scopes),
+        service: parsedServices,
         type: "Unscheduled",
       });
-      return res
-        .status(200)
-        .json({ msg: `Pest reported ${unschedule.serviceName}`, imageUrl });
+
+      const serviceNamesReported = unschedule.service
+        .map((s) => s.serviceName)
+        .join(", ");
+      return res.status(200).json({
+        msg: `Pest reported for ${serviceNamesReported}`,
+        imageUrl,
+      });
     }
+
+    return res.status(400).json({ msg: "Invalid type" });
   } catch (error) {
-    console.error("server error: ", error.message);
+    console.error("server error: ", error);
     return res.status(500).json({ msg: "Server error" });
   }
 };

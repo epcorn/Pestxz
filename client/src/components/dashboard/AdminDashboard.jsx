@@ -36,7 +36,6 @@ function AdminDashboard() {
     setToggle(val);
     sessionStorage.setItem("adminDashboardToggle", val);
   };
-
   const isRegular = toggle === "Regular";
 
   const clientReq = useMemo(
@@ -53,6 +52,7 @@ function AdminDashboard() {
     return acc;
   }, {}) || {};
 
+  console.log(adminDash)
   const finalMergedData = { ...formattedData, ...chartCompData };
 
   return (
@@ -94,13 +94,13 @@ function AdminDashboard() {
       <div className="flex flex-wrap gap-2">
         {adminDash?.complaintData?.map((d, i) => (
           <React.Fragment key={i}>
-            <StatCard title="Open Complaints" value={d.open} color="border-l-red-500" textColor="text-red-500" />
+            <StatCard title="Open Complaints"  value={d.open} color="border-l-red-500" textColor="text-red-500" />
             <StatCard title="In Progress" value={d.inProgress} color="border-l-amber-500" textColor="text-amber-500" />
             <StatCard title="Closed Complaints" value={d.closed} color="border-l-green-500" textColor="text-green-500" />
             <StatCard title="Total Complaints" value={d.total} color="border-l-blue-500" textColor="text-blue-500" />
             {d.serviceCount.map((ser) =>
               ser.label !== "Invalid" && (
-                <StatCard key={ser.label} title={ser.label + " Services"} value={ser.count} color="border-l-fuchsia-600" textColor="text-blue-500" />
+                <StatCard key={ser.label} title={ser.label + " Services"} value={ser.count} color="border-l-fuchsia-600" textColor="text-fuchsia-500" />
               )
             )}
           </React.Fragment>
@@ -289,10 +289,15 @@ function Row({ item, index, isRegular, assignId, assignRef, setAssignId, navigat
 }
 
 
+export function StatCard({ active, title, value, color, textColor, arrkey, onClick = () => { } }) {
 
-export function StatCard({ title, value, color, textColor }) {
+  const isActive = active === arrkey || active === title;
+
   return (
-    <div className={`bg-gray-50 shadow flex-1 border-l-2 ${color} px-3 py-2 md:px-5 md:py-3 rounded-l-xl border border-gray-100 whitespace-nowrap`}>
+    <div
+      className={`bg-gray-50 shadow flex-1 px-3 py-2 md:px-5 md:py-3 rounded-l-xl border border-gray-100 whitespace-nowrap border-l-2 transition-all duration-200 ease-in-out ${color} ${isActive ? "translate-y-1 shadow-md bg-white" : "translate-y-0 cursor-pointer"}`}
+      onClick={() => onClick(arrkey || title)}
+    >
       <p className="text-[9px] md:text-xs uppercase tracking-wide text-gray-400 font-semibold">{title}</p>
       <p className={`text-lg md:text-2xl font-bold leading-tight ${textColor}`}>{value}</p>
     </div>

@@ -12,7 +12,7 @@ function PieChart({ values, line = false }) {
   const keyMapping = {
     "Open": "Open Complaints",
     "open": "Open Complaints",
-    "Done": "Complaints resolved",
+    "Done": "Services Done",
     "Close": "Close Complaints",
     "closed": "Close Complaints",
     "missed": "Missed Services",
@@ -31,18 +31,18 @@ function PieChart({ values, line = false }) {
     labels: newKeys,
     datasets: [{
       label: "Count", data: chartDataValues, backgroundColor: [
-        '#3B82F6', // Open - Trust Blue
-        '#F59E0B', // In Progress - Warm Amber
-        '#6B7280', // Close - Neutral Gray
-        '#8B5CF6', // reopenCount - Purple Alert
-        '#10B981'  // completedServices - Success Green
+        '#B331F1', // Open - Trust Blue
+        '#FF62BB', // In Progress - Warm Amber
+        '#FB2C36', // Close - Neutral Gray
+        '#FE9A00', // reopenCount - Purple Alert
+        '#00C950',  // completedServices - Success Green
       ],
       borderColor: [
-        '#1D4ED8',
-        '#D97706',
-        '#4B5563',
-        '#7C3AED',
-        '#059669'
+        '#B331F1',
+        '#FF62BB',
+        '#FB2C36',
+        '#FE9A00',
+        '#00C950',
       ],
       borderWidth: 1
     }]

@@ -7,26 +7,25 @@ import { saveAs } from "file-saver";
 import { useGetSingleUserQuery } from "../redux/userSlice";
 import { useSelector } from "react-redux";
 import { useGetSingleClientQuery } from "../redux/clientSlice";
+import { RelationshipType } from "exceljs";
 
 const Reports = () => {
-  const [genrate, setGenrate] = useState(false);
-  const [visible, setVisible] = useState(false)
-  const [value, setValue] = useState("all");
+  const [state, setState] = useState({ value: "all", genrate: false, visible: false })
   const { user } = useSelector(store => store.helper);
 
-  const { data: reports, isLoading: reportLoading } = useDailyServiceReportQuery(value, { skip: !genrate });
+  const { data: reports, isLoading: reportLoading } = useDailyServiceReportQuery(state.value, { skip: !state.genrate });
   const { data: client } = useGetSingleClientQuery(user?.client, { skip: !user?.client })
 
+  console.log(reports)
   useEffect(() => {
     if (reports && !reportLoading) {
-      setGenrate(false);
+      setState(prev => ({ ...prev, genrate: false }))
       toast.success("Report generated successfully");
     }
   }, [reports, reportLoading]);
-  console.log(client)
+
   const handleGenerate = () => {
-    setGenrate(true);
-    setVisible(true)
+    setState(prev => ({ ...prev, genrate: true, visible: true }))
   };
 
   const handleDownload = () => {
@@ -34,11 +33,12 @@ const Reports = () => {
 
     reports.files.forEach(({ client, url }) => {
       if (url) {
-        saveAs(url, `${client}_Daily_Report_${value}.xlsx`);
+        saveAs(url, `${client}_Daily_Report_${state.value}.xlsx`);
       }
     });
   };
 
+  console.log(state.genrate)
   return (
     <div className="flex flex-col justify-center items-center h-96">
       <div className="">
@@ -47,8 +47,7 @@ const Reports = () => {
           id="date"
           className="outline selection:ring-0 px-4 py-1 rounded-lg mr-2"
           onChange={(e) => {
-            setValue(e.target.value);
-            setGenrate(false); // ✅ reset when filter changes
+            setState(prev => ({ ...prev, value: e.target.value, genrate: false }))
           }}
         >
           <option value="all">All</option>
@@ -68,13 +67,12 @@ const Reports = () => {
             {reports.msg}
           </div>
 
-          {/* ✅ Show per-client download links if admin (multiple files) */}
-          {reports.files?.length > 1 ? (
+          {reports.files?.length >= 1 ? (
             <div className="flex flex-col items-center gap-2 mt-3">
               {reports.files.map(({ client, url }) => (
                 <button
                   key={client}
-                  onClick={() => url && saveAs(url, `${client}_Daily_Report_${value}.xlsx`)}
+                  onClick={() => url && saveAs(url, `${client}_Daily_Report_${state.value}.xlsx`)}
                   disabled={!url}
                   className="text-blue-600 underline disabled:text-gray-400"
                 >
@@ -83,7 +81,6 @@ const Reports = () => {
               ))}
             </div>
           ) : (
-            // ✅ Single file for ClientAdmin
             <div className="text-center mt-2">
               <Button
                 onClick={handleDownload}
@@ -95,10 +92,10 @@ const Reports = () => {
 
         </>
       )}
-      {!visible && client?.reportURL !== "" &&
+      {!state.visible && client?.reportURL !== "" &&
         <div className="text-center mt-2">
           <Button
-            onClick={() => saveAs(client.reportURL, `${client?.name}_Daily_Report_${value}.xlsx`)}
+            onClick={() => saveAs(client.reportURL, `${client?.name}_Daily_Report_${state.value}.xlsx`)}
             label="Download"
           />
         </div>

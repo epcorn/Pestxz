@@ -128,6 +128,9 @@ export const dailyServiceReport = async (req, res) => {
     todayStart.setUTCHours(0, 0, 0, 0);
     const todayEnd = new Date();
     todayEnd.setUTCHours(23, 59, 59, 999);
+
+    const isPestEmployee = req.user.type === "PestEmployee";
+
     const clientQuery =
       req.user.role === "ClientAdmin" ? { _id: req.user.client } : {};
     const selectFields = req.user.client ? "" : "-adminPass";
@@ -178,14 +181,22 @@ export const dailyServiceReport = async (req, res) => {
         await removeOldQr(client.reportUrl);
         console.log("removed old url");
       }
-      // ✅ Fresh workbook per client so rows don't bleed across clients
+
       const workbook = new exceljs.Workbook();
-      await workbook.xlsx.readFile("./tmp/dailyReport.xlsx");
+
+      if (isPestEmployee) {
+        await workbook.xlsx.readFile("./tmp/dailyReportPestEmp.xlsx");
+        console.log("pest employee")
+      } else {
+        await workbook.xlsx.readFile("./tmp/dailyReport.xlsx");
+        console.log("client employee")
+      }
+      // ✅ Fresh workbook per client so rows don't bleed across clients
+
       const regularWorksheet = workbook.getWorksheet("Regular service");
       const complaintWorksheet = workbook.getWorksheet("Complaints");
       const unschWorksheet = workbook.getWorksheet("Unscheduled-Work");
 
-      // ✅ Row counters reset per client (moved inside loop)
       let currRow = 4;
       let compRow = 4;
       let unschCount = 4;
@@ -195,7 +206,6 @@ export const dailyServiceReport = async (req, res) => {
         (ser) => ser.type === "Complaint",
       );
 
-      // --- Regular Services ---
       const regularData = regulars.map((reg) => {
         const regs = reg.regularService[0];
         const loc = reg.location;
@@ -261,8 +271,10 @@ export const dailyServiceReport = async (req, res) => {
         row.getCell(3).value = dataItem.userName;
         row.getCell(4).value = dataItem.location;
         row.getCell(5).value = dataItem.serviceName;
-        row.getCell(6).value = scopeRichText;
-        row.getCell(6).alignment = { wrapText: true, vertical: "middle" };
+        if (req.type === "PestEmployee") {
+          row.getCell(6).value = scopeRichText;
+          row.getCell(6).alignment = { wrapText: true, vertical: "middle" };
+        }
 
         row.commit();
         currRow++;

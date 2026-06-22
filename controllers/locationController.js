@@ -4,6 +4,7 @@ import Location from "../models/locationModel.js";
 import Service from "../models/serviceModel.js";
 import { Unscheduled } from "../models/unScheduleModel.js";
 import {
+  autoMarkMissed,
   capitalLetter,
   generateSchedule,
   qrCodeGenerator,
@@ -32,7 +33,7 @@ export const qrCounter = async (req, res) => {
       { $inc: { qrCount: 1 } },
       { new: true },
     );
-    console.log("array: ", idArray);
+    
     if (location.matchedCount === 0)
       return res.status(400).json({ msg: "location not found" });
 
@@ -151,6 +152,8 @@ export const addLocation = async (req, res) => {
 
     newLocation.qr = qrLink;
     await newLocation.save();
+
+    autoMarkMissed();
     return res.status(201).json({
       msg: "Location added successfully",
     });
@@ -180,7 +183,9 @@ export const getAllLocations = async (req, res) => {
       }
     }
     // FIND CLIENT
-    const client = await Client.findById(clientId).select("-adminPass -adminName");
+    const client = await Client.findById(clientId).select(
+      "-adminPass -adminName",
+    );
     if (!client) {
       return res.status(404).json({ msg: "Client not found" });
     }
@@ -216,7 +221,6 @@ export const updateLocation = async (req, res) => {
     const contractStart = new Date(client.startDate);
     const contractEnd = client.endDate;
 
-    console.log(contractEnd);
     const validServices = (req.body.serviceReq || []).filter(
       (service) =>
         service.serviceId &&
@@ -432,6 +436,7 @@ export const updateLocation = async (req, res) => {
       { new: true, runValidators: true },
     );
 
+    autoMarkMissed();
     if (!updatedLocation) {
       return res.status(404).json({ msg: "Location not found" });
     }
@@ -563,8 +568,6 @@ export const getLocationDetails = async (req, res) => {
     const casuals = await Casual.find({ location: location._id }).sort({
       updatedAt: -1,
     });
-
-    console.log(unscheduled);
 
     return res.json({
       location,

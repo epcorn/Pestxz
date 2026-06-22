@@ -4,15 +4,27 @@ const unScheduleSchema = new mongoose.Schema(
   {
     type: { type: String, default: "Unscheduled" },
     read: { type: Boolean, default: false },
-    serviceId: { type: String },
-    serviceName: { type: String },
-    serviceDate: { type: String },
-    scopes: [Object],
+
+    service: [
+      {
+        serviceId: { type: String },
+        serviceName: { type: String },
+        scopes: [Object],
+        completed: { type: Boolean, default: false },
+        completedAt: { type: Date },
+        usedCalibration: { type: Object, default: {} },
+        action: { type: Object, default: {} },
+        comment: { type: Object, default: {} },
+        completionImages: { type: [String], default: [] },
+        completedBy: {
+          user: { type: String },
+          id: { type: String },
+        },
+      },
+    ],
     update: {
-      comment: { type: String, default: "" },
-      status: { type: String },
       user: { type: String },
-      id: { type: String },
+      id: { type: mongoose.Schema.Types.ObjectId },
     },
     comment: { type: String },
     image: { type: [String], default: [] },

@@ -35,6 +35,7 @@ const UserModal = ({ userDetails }) => {
       name: "",
       email: "",
       password: "",
+      phone: "",
       role: "",
       type: "PestEmployee",
       department: "",
@@ -74,6 +75,7 @@ const UserModal = ({ userDetails }) => {
         name: userDetails.name || "",
         email: userDetails.email || "",
         password: "",
+        phone: userDetails?.phone || "",
         role: userDetails?.role || "",
         type: userDetails?.type || "PestEmployee",
         department: userDetails?.department || "",
@@ -93,6 +95,7 @@ const UserModal = ({ userDetails }) => {
         email: "",
         password: "",
         role: "",
+        phone: "",
         type: "PestEmployee",
         department: "",
         client: null,
@@ -212,6 +215,20 @@ const UserModal = ({ userDetails }) => {
           {errors.name && "Name is required"}
         </p>
       </div>
+
+      <div>
+        <InputRow
+          label="Phone Number"
+          id="phone"
+          errors={errors}
+          register={register}
+          disabled={addLoading}
+        />
+        <p className="text-xs text-red-500 pl-1 mt-1">
+          {errors.phone && "Phone is required"}
+        </p>
+      </div>
+
       {/* Select Role Dropdown */}
       <div className="flex items-end gap-2">
 
@@ -268,6 +285,7 @@ const UserModal = ({ userDetails }) => {
         <InputRow
           label="Password"
           id="password"
+          placeholder={'*****'}
           errors={errors}
           register={register}
           disabled={addLoading}

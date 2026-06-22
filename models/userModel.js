@@ -7,6 +7,7 @@ const userSchema = new mongoose.Schema(
     email: { type: String, required: true },
     password: { type: String, required: true },
     name: { type: String, required: true },
+    phone: { type: String, required: true },
     type: {
       type: String,
       required: true,
@@ -70,6 +71,7 @@ export const createAdmin = async () => {
     role = "Admin",
     type = "PestEmployee",
     department = "Pest control",
+    phone = "9999999999",
     rights = {
       raise: true,
       close: true,

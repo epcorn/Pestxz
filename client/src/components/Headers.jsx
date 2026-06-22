@@ -1,9 +1,10 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 
 function Headers({ header, user }) {
+  
   return (
     <header className="w-full border-b mb-2 px-6 py-2 sm:px-5">
-      <div className="flex gap-4 items-center justify-between">
+       <div className="flex gap-4 items-center justify-between">
 
         {/* Left Column: Title & Description */}
         <div className="space-y-1">
@@ -23,6 +24,8 @@ function Headers({ header, user }) {
         </div>
 
       </div>
+
+      
     </header>
 
   )

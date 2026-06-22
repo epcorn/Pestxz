@@ -17,7 +17,7 @@ const router = express.Router();
 router.get("/allComplaints", getAllComplaints);
 router.get("/dailyServiceReport/:value", dailyServiceReport);
 
-router.post("/casual/:id", casualServices);
+router.post("/casual/", casualServices);
 router.get("/casual", getCasualServices);
 
 router.post("/clientComplaint/:id", newComplaint);

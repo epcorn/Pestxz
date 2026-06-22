@@ -61,12 +61,18 @@ const ComplaintModal = ({ locationId, mode = "create" }) => {
 
   const selectedLocation = watch("location");
   const watchedClient = watch("client");
-  const locationQueryId = user.type === "PestEmployee" ? watchedClient?.value : user?.type === "ClientEmployee" ? user?.type : locationId
+  const locationQueryId = locationId
+    ? locationId
+    : user.type === "PestEmployee"
+      ? watchedClient?.value
+      : user?.type === "ClientEmployee"
+        ? user?.type
+        : locationId;
 
   const { data: clientLocations } = useAllLocationsQuery(
     { id: locationQueryId },
-    { skip: user.role === "Admin" ? !watchedClient?.value : !user?.type }
   );
+  console.log(locationId, locationQueryId, clientLocations)
   // SET INITIAL FLOOR
   useEffect(() => {
     if (!clientLocations?.floors?.length) return;
@@ -184,21 +190,21 @@ const ComplaintModal = ({ locationId, mode = "create" }) => {
         form.set("status", data.status?.value || data.status);
         form.set("comment", data.comment?.value || data.comment);
         res = await updateComplaint({ id: locationId, form }).unwrap();
-        
+
         socket.emit("complaint-updated", {
           user: user.name,
           status: status.label,
         })
         console.log("complaint emmited")
       }
-      
+
       // REVIEW
       if (isReview) {
         form.set("status", data.status?.value || data.status);
         form.set("comment", data.comment);
         res = await updateComplaint({ id: locationId, form, }).unwrap();
         toast.success(res?.msg || "Success");
-        
+
         socket.emit("complaint-updated", {
           user: user.name
         })
@@ -281,7 +287,7 @@ const ComplaintModal = ({ locationId, mode = "create" }) => {
     <div className="grid grid-cols-2 gap-3 mb-4">
       {DBUser.rights.raise && (
         <>
-          {user.type === "PestEmployee" &&
+          {!locationId && user.type === "PestEmployee" &&
             <div>
               <Controller
                 name="client"

@@ -32,7 +32,6 @@ const ClientDashboard = () => {
   const [statusFilter, setStatusFilter] = useState("");
   const { user } = useSelector((store) => store.helper);
 
-
   const { data: adminDash = { latestComplaints: [], complaintData: [] }, isLoading, error } =
     useClientAdminDashboardQuery(user?.client, {
       skip: !user?.client, refetchOnMountOrArgChange: true, // ✅
@@ -48,7 +47,6 @@ const ClientDashboard = () => {
     pollingInterval: 30000,
   });
 
-  console.log(unschedule)
   const { data: client } = useGetSingleClientQuery(user?.client, { skip: !user?.client });
 
   // Filter data efficiently using useMemo
@@ -60,13 +58,19 @@ const ClientDashboard = () => {
     return clientDash.latestComplaints.filter(lat => lat.type === toggle);
   }, [toggle, clientDash, statusFilter]);
 
+
   const handleCards = (value) => {
     if (["Close", "In Progress", "Open"].includes(value)) {
       setStatusFilter(value)
       setToggle("Complaint")
+      window.scrollTo({ top: 600, behavior: "smooth" })
+    }
+    if (["Done"].includes(value)) {
+      setStatusFilter(value)
+      setToggle("Regular")
+      window.scrollTo({ top: 600, behavior: "smooth" })
     }
   }
-
   const handleChange = (e) => {
     if (e.target.value) {
       setToggle(e.target.value)
@@ -77,6 +81,7 @@ const ClientDashboard = () => {
   const statusCount = Object.assign({}, ...(adminDash?.dashBoardData?.statusCounts?.map(s => ({ [s._id]: s.count })) || []));
 
   const dashData = adminDash?.dashBoardData;
+
 
   return (
     <section className="p-4 md:px-8 bg-slate-50/50 min-h-screen font-sans">
@@ -104,14 +109,53 @@ const ClientDashboard = () => {
 
           {/* Stat Cards */}
           <div className="flex flex-wrap gap-3">
-            <StatCard title={'Open Complaints'} value={dashData.Open} textColor={'text-green-600'} color={'border-l-red-500'} />
-            <StatCard title={'In Progress'} value={dashData['In Progress']} textColor={'text-amber-600'} color={'border-l-amber-500'} />
-            <StatCard title={'Closed Complaints'} value={dashData.Close} textColor={'text-green-600'} color={'border-l-green-500'} />
-            <StatCard title={'Closed Complaints'} value={dashData.allcomplaints} textColor={'text-blue-600'} color={'border-l-blue-500'} />
-            {dashData.statusCounts.map(st => st._id !== "Invalid" &&
-              <StatCard key={st._id} title={st._id} value={st.count} textColor={'text-fuchsia-600'} color={'border-l-fuchsia-500'} />
-            )}
+            <StatCard
+              title={'Open Complaints'}
+              value={dashData?.Open || 0}
+              textColor={'text-green-600'}
+              color={'border-l-red-500'}
+              onClick={handleCards}
+              arrkey={'Open'}
+              active={statusFilter}
+            />
+            <StatCard
+              title={'In Progress'}
+              value={dashData?.['In Progress'] || 0}
+              textColor={'text-amber-600'}
+              color={'border-l-amber-500'}
+              onClick={handleCards}
+              arrkey={'In Progress'}
+              active={statusFilter}
+            />
+            <StatCard
+              title={'Closed Complaints'}
+              value={dashData?.Close || 0}
+              textColor={'text-green-600'}
+              color={'border-l-green-500'}
+              onClick={handleCards}
+              arrkey={'Close'}
+              active={statusFilter}
+            />
+            <StatCard
+              title={'Total Complaints'}
+              value={dashData?.allcomplaints || 0}
+              textColor={'text-blue-600'}
+              color={'border-l-blue-500'}
+            />
+            {dashData?.statusCounts?.map(st => st?._id !== "Invalid" && (
+              <StatCard
+                key={st?._id}
+                title={st?._id}
+                value={st?.count || 0}
+                textColor={'text-fuchsia-600'}
+                color={'border-l-fuchsia-500'}
+                onClick={handleCards}
+                arrkey={st?._id}
+                active={statusFilter}
+              />
+            ))}
           </div>
+
 
           <div className="flex my-2 gap-5 items-stretch w-full p-4 overflow-x-auto snap-x snap-mandatory *:snap-center">
 
@@ -119,14 +163,12 @@ const ClientDashboard = () => {
             <div className="relative flex-1 min-w-[600px] bg-neutral-200 border border-gray-200 p-4 h-full rounded-2xl shadow">
               <h3 className="h4 text-center">Multiline chart</h3>
               <MultiLineChart values={adminDash?.monthlyData} weekly={adminDash.weekly} toggle={"values"} />
-              {/* <select name="" id=""></select> */}
             </div>
 
             {/* Pie Chart Container (Fixed, tight fit) */}
             <div className="relative w-full md:w-[350px] flex items-center justify-center border border-gray-300 p-4 rounded-2xl bg-neutral-200 shadow">
               <PieChart values={{ ...allData, ...statusCount }} />
             </div>
-
           </div>
 
           {/* Table Section */}
@@ -153,17 +195,17 @@ const ClientDashboard = () => {
                         setStatusFilter('');
                         sessionStorage.setItem("ClientDashboardToggle", type);
                       }}
-                      /* 1. Changed absolute bg colors to transparent classes so the indicator can sit behind it */
+                      
                       className={`relative text-xs font-bold px-3 py-1.5 rounded tracking-wider uppercase transition-colors duration-150 outline-none ${isActive
-                          ? "text-white"
-                          : "text-slate-600 bg-slate-200 hover:bg-slate-300"
+                        ? "text-white"
+                        : "text-slate-600 bg-slate-200 hover:bg-slate-300"
                         }`}
                     >
                       {/* 2. The Shared Layout Indicator Layer */}
                       {isActive && (
                         <motion.div
-                          layoutId="activeTabIndicator" // Must be a unique string across this page
-                          className="absolute inset-0 bg-cyan-600 rounded -z-10"
+                          layoutId="activeTabIndicator"
+                          className="absolute inset-0 mix-blend-multiply bg-cyan-700 rounded -z-10"
                           transition={{ type: "spring", stiffness: 380, damping: 30 }}
                         />
                       )}

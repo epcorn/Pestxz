@@ -23,7 +23,7 @@ const ComplaintTable = ({ data, user, toggle }) => {
   }, [toggler.status]);
 
   return (
-    <div className="w-full min-h-96 mt-2 overflow-x-auto border border-gray-200 rounded-lg shadow-sm bg-white">
+    <div className="w-full mt-2 overflow-x-auto border border-gray-200 rounded-lg shadow-sm bg-white">
       <table className="min-w-[1024px] w-full border-collapse" style={{ tableLayout: "fixed" }}>
 
         <thead>
@@ -41,7 +41,7 @@ const ComplaintTable = ({ data, user, toggle }) => {
           </tr>
         </thead>
 
-        <tbody className="divide-y divide-gray-200">
+        <tbody className="divide-y h-full outline overflow-y-auto divide-gray-200">
           {data?.map((complaint, i) => {
             const assignedto = complaint?.complaintDetails?.assignedTo;
             const assignedby = complaint?.complaintDetails?.assignedBy;

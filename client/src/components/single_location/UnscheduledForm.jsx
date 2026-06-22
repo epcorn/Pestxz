@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import FormModal from '../modals/FormModal'
 import { Controller, useForm } from 'react-hook-form'
 import { useDispatch, useSelector } from 'react-redux'
@@ -16,59 +16,59 @@ function UnscheduledForm({ existing, locationId, type, id }) {
   const { isModalOpen, user } = useSelector(store => store.helper)
   const { register, handleSubmit, control, reset, formState: { errors } } = useForm()
   const { data: allServices } = useAllServiceQuery({ skip: !locationId })
-  const [updateUnscheduledReport, { isLoading: unScLoading }] = useUnscheduledReportMutation()
+  const [unscheduledReport, { isLoading: unScLoading }] = useUnscheduledReportMutation()
 
   const flatServices = allServices?.services.flatMap(a => a.service.map(s => ({ label: s.serviceName, value: s._id })));
-
   const serviceList = flatServices?.filter(s => !existing?.includes(s.value));
 
   const labels = [{ label: "Done", value: "Done" }, { label: "Not Done", value: "Not Done" }]
   const switchs = type === "raise" ? serviceList : labels
 
   const submit = async (data) => {
-    const formData = new FormData();
+    if (type !== "raise") {
+      dispatch(toggleModal({ name: "unscheduled", status: false }))
+      return
+    }
 
-    if (type === "raise") {
-      formData.append("type", "raise");
-      formData.append("locationId", locationId);
+    try {
+      const formData = new FormData()
+      formData.append("type", "raise")
+      formData.append("locationId", locationId)
       formData.append("comment", data.comment)
       formData.append("service", JSON.stringify(data.service))
 
       for (let i = 0; i < data.image.length; i++) {
         formData.append("image", data.image[i])
       }
-      for (let [key, value] of formData.entries()) {
-        console.log(key, value);
-      }
 
-      const res = await updateUnscheduledReport(formData).unwrap()
-      data.type = "raise"
-      data.locationId = locationId
-      data.raisedBy = user.name
-      socket.emit("unscheduled-raised", data)
+      const res = await unscheduledReport(formData).unwrap()
+
+      socket.emit("unscheduled-raised", {
+        type: "raise",
+        locationId,
+        comment: data.comment,
+        service: data.service,
+        raisedBy: user.name,
+      })
+
       toast.success(res?.msg || "done")
+      reset()
+      dispatch(toggleModal({ name: "unscheduled", status: false }))
+    } catch (err) {
+      console.log(err)
+      toast.error(err?.data?.msg || "Submission failed")
     }
-    if (type === "update") {
-      data.type = "update"
-      data.id = id
-      const res = await updateUnscheduledReport(data).unwrap()
-      socket.emit("unscheduled-update", { status: data.status })
-      toast.success(res.msg || "done")
-    }
-    dispatch(toggleModal({
-      name: "unscheduled",
-      status: false,
-    }))
   }
 
   const raisebody = (
-    <div>
+    <div className='px-1'>
       <Controller
         name="service"
         control={control}
         rules={{ required: "Please select a service" }}
         render={({ field: { onChange, value } }) => (
           <InputSelect
+            isMulti={true}
             label="Select Service"
             placeholder="choose a service..."
             options={switchs}
@@ -82,11 +82,12 @@ function UnscheduledForm({ existing, locationId, type, id }) {
 
       <div>
         <label className="text-md font-medium leading-6 mr-2 text-gray-900">
-          Images
+          Images<span className='text-red-500'>*</span>
         </label>
         <input
           type="file"
           multiple
+          required
           accept="image/*"
           {...register("image")}
           className="mt-0.5 block w-full text-sm text-slate-500
@@ -102,41 +103,15 @@ function UnscheduledForm({ existing, locationId, type, id }) {
     </div>
   )
 
-  const updatebody = (
-    <div>
-      <Controller
-        name="status"
-        control={control}
-        rules={{ required: "Please select a status" }}
-        render={({ field: { onChange, value } }) => (
-          <InputSelect
-            label="Select status"
-            placeholder="choose a status..."
-            options={switchs}
-            value={value}
-            onChange={onChange}
-            required={true}
-          />
-        )}
-      />
-      {errors.status && <p className="text-red-500 text-sm mt-1">{errors.status.message}</p>}
-
-
-
-      <InputRow register={register} id={'comment'} label={'Comment'} required={true} />
-    </div>
-  )
   return (
-    <FormModal formBody={type === "raise" ? raisebody : updatebody}
+    <FormModal
+      formBody={type === "raise" ? raisebody : ""}
       open={isModalOpen.unscheduled}
       title='Report Un-Scheduled work'
       disabled={unScLoading}
-      submitLabel={type === "raise" ? "Report" : "Update"}
+      submitLabel={type === "raise" ? "Report" : ""}
       onSubmit={handleSubmit(submit)}
-      handleClose={() => dispatch(toggleModal({
-        name: "unscheduled",
-        status: false,
-      }))}
+      handleClose={() => dispatch(toggleModal({ name: "unscheduled", status: false }))}
     />
   )
 }

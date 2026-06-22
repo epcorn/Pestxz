@@ -10,6 +10,8 @@ import { toggleModal } from '../redux/helperSlice';
 import UnscheduledForm from '../components/single_location/UnscheduledForm';
 import { socket } from '../socket';
 import ImagesModal from '../components/modals/ImagesModal';
+import Headers from '../components/Headers';
+import RegularForm from '../components/modals/RegularForm';
 
 function SingleUnschedule() {
   const { id } = useParams();
@@ -22,6 +24,7 @@ function SingleUnschedule() {
 
   const [updateStatus] = useStatusUnscheduleMutation();
   const { data: DBUser } = useGetSingleUserQuery(user._id, { skip: !user?._id })
+
 
   const handleApprove = async () => {
     const data = { id, status: "Approved", req: "approval" }
@@ -39,12 +42,12 @@ function SingleUnschedule() {
   }
   const status = unscheduled?.approval?.status
 
+
+  console.log(unscheduled)
   return (
     <section>
-      <div className=' my-5'>
-        <h2 className='text-2xl font-bold text-center '>Unscheduled Work Report </h2>
-        <p className='text-center text-blue-800 font-bold'>{unscheduled?.client?.name}</p>
-      </div>
+      <Headers header={'Unscheduled Work Report'} user={user} />
+
       <div className='grid grid-cols-2 gap-x-5 bg-white py-5 px-3 rounded-2xl text-sm md:text-base *:block'>
         <p>
           <strong className='underline'>Location: </strong>
@@ -53,9 +56,9 @@ function SingleUnschedule() {
           </span>
         </p>
         <p>
-          <strong className='underline'>Reqsted service </strong>
+          <strong className='underline'>Reqsted services:  </strong>
           <span className='font-bold text-gray-600'>
-            {unscheduled?.serviceName || ""}
+            {unscheduled?.service?.map(s => s?.serviceName).join(", ") || ""}
           </span>
         </p>
         <p>
@@ -81,7 +84,7 @@ function SingleUnschedule() {
           <Button disabled={unscheduled?.image?.length === 0} small={true} label={'Show'}
             onClick={() => dispatch(toggleModal({ name: "unscimage", status: true }))}
           />
-          {isModalOpen.unscimage && <ImagesModal name={'unscimage'} image={unscheduled?.image||""} />}
+          {isModalOpen.unscimage && <ImagesModal name={'unscimage'} image={unscheduled?.image || ""} />}
         </p>
       </div>
 
@@ -95,10 +98,10 @@ function SingleUnschedule() {
       }
 
       <div className='mt-3 text-center capitalize'>
-        <strong>Status: </strong> {status === "Approved" ? <span className='text-green-600 font-bold'>{`Approved by ${unscheduled.approval.name}`}</span> : status === "Rejected" ? <span className='text-red-600 font-bold'>{"Rejected" + unscheduled.approval.name}</span> : "Waiting for approval"}
+        <strong>Status: </strong> {status === "Approved" ? <span className='text-green-600 font-bold'>{`Approved by ${unscheduled?.approval.name}`}</span> : status === "Rejected" ? <span className='text-red-600 font-bold'>{"Rejected" + unscheduled?.approval.name}</span> : "Waiting for approval"}
       </div>
 
-      {status === "Approved" && unscheduled?.update?.comment === "" &&
+      {status === "Approved" && unscheduled?.update?.user === "" &&
         (DBUser?.rights.scan_Unscheduled || user.role === "Operator") && (
           <>
             <Button
@@ -108,11 +111,12 @@ function SingleUnschedule() {
                 status: true,
               }))} />
 
-            {isModalOpen.unscheduled && <UnscheduledForm type={'update'} id={unscheduled?._id} />}
+            {isModalOpen.unscheduled && <RegularForm type={'unscheduled'} id={unscheduled?._id} serviceData={unscheduled?.service} />}
           </>
         )}
 
       <hr className='mt-5 ' />
+
 
       {/* list */}
       <div className="overflow-x-auto w-full">
@@ -121,7 +125,7 @@ function SingleUnschedule() {
             <tr className="bg-gray-100 border-b border-gray-400 *:not-last:border-r">
 
               <th className="pl-3 font-bold text-gray-700">Date</th>
-              <th className="p-3 font-bold text-gray-700">Updated By</th>
+              <th className="p-3 font-bold text-gray-700">Service Update By</th>
               <th className="p-3 font-bold text-gray-700">Comment</th>
               <th className="p-3 font-bold text-gray-700">Status</th>
             </tr>
@@ -133,7 +137,9 @@ function SingleUnschedule() {
                 {new Date(unscheduled?.updatedAt).toLocaleString()}
               </td>
               <td className="p-3 text-gray-900">
-                {unscheduled?.update?.user}
+                {status === "Approved" ? 
+                <p><strong>Approved by:</strong> {unscheduled?.approval?.name}</p> : <p><strong>Rejected by:</strong> {unscheduled?.approval?.name}</p>}
+                <br />{unscheduled?.update?.user}
               </td>
               <td className="p-3 text-gray-900">
                 {unscheduled?.update?.comment}

@@ -20,9 +20,7 @@ import {
 import { createAdmin } from "./models/userModel.js";
 import { createServer } from "http";
 import { Server } from "socket.io";
-// import cron from "node-cron";
 import { autoMarkMissed } from "./utils/helperFunction.js";
-import nodeCron from "node-cron";
 
 dotenv.config();
 const app = express();
@@ -95,6 +93,7 @@ app.use(cookieParser());
 app.use(fileUpload({ useTempFiles: true }));
 if (process.env.NODE_ENV !== "production") app.use(morgan("dev"));
 
+// setup cron job 
 app.post("/api/cron/auto-mark-missed", (req, res) => {
   const authHeader = req.headers["x-cron-auth"];
   if (authHeader !== "my_super_secret_password_123") {

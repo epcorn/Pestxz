@@ -93,7 +93,7 @@ const SingleClient = () => {
     const payload = { qrs: qrs, client: data.clientName }
     await qrCountInc(ids).unwrap();
     const res = await makeQrDOCX(payload).unwrap();
-    saveAs(me.qr, `${data.clientName}-Location.docx`)
+    saveAs(res.qr, `${data.clientName}-Location.docx`)
 
   }
   return (

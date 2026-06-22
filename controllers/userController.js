@@ -34,8 +34,17 @@ export const OldregisterUser = async (req, res) => {
   }
 };
 export const registerUser = async (req, res) => {
-  const { name, email, role, type, password, department, client, rights } =
-    req.body;
+  const {
+    name,
+    email,
+    role,
+    type,
+    phone,
+    password,
+    department,
+    client,
+    rights,
+  } = req.body;
   try {
     if (!name || !password || !email)
       return res.status(400).json({ msg: "Please provide required values" });
@@ -48,7 +57,7 @@ export const registerUser = async (req, res) => {
     const userExists = await User.findOne({ email });
     if (userExists)
       return res.status(400).json({ msg: "Email id already exists" });
-    console.log(type);
+
     let user;
     type === "PestEmployee"
       ? (user = await User.create({
@@ -59,6 +68,7 @@ export const registerUser = async (req, res) => {
           type,
           client,
           rights,
+          phone,
         }))
       : (user = await User.create({
           name: capitalLetter(name),
@@ -69,6 +79,7 @@ export const registerUser = async (req, res) => {
           department: capitalLetter(department),
           client,
           rights,
+          phone,
         }));
 
     return res.status(201).json({ msg: `${user.name} is created` });
@@ -133,7 +144,7 @@ export const getAllUser = async (req, res) => {
 
 export const passwordChange = async (req, res) => {
   const { id } = req.params;
-  const { password, rights } = req.body;
+  const { password, rights, phone } = req.body;
   try {
     if (!id) return res.status(404).json({ msg: "id not available" });
     const user = await User.findById(id);
@@ -153,6 +164,9 @@ export const passwordChange = async (req, res) => {
       }
 
       user.password = password;
+    }
+    if (phone) {
+      user.phone = phone;
     }
     if (
       rights &&

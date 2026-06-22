@@ -401,66 +401,69 @@ export const getAllAssignedWork = async (req, res) => {
 };
 
 export const casualServices = async (req, res) => {
-  const { id } = req.params;
-  const data = req.body;
+  const { service, usedCalibration, action, comment } = req.body;
 
   try {
+    if (!service) {
+      return res.status(400).json({ msg: "Missing services data" });
+    }
+
+    const parsedService = JSON.parse(service);
+    const parsedUsedCalibration = usedCalibration
+      ? JSON.parse(usedCalibration)
+      : {};
+    const parsedAction = action ? JSON.parse(action) : {};
+    const parsedComment = comment ? JSON.parse(comment) : {};
+
+    const { serviceId, serviceName, scopes, locationId } = parsedService;
+    if (!locationId)
+      return res.status(400).json({ msg: "missing location id" });
+
+    const location = await Location.findById(locationId);
+    if (!location)
+      return res.status(400).json({ msg: "location not available" });
+
     const imageUrl = [];
-    let casualService;
-
-    if (id === "create") {
-      if (req.files?.images) {
-        const images = Array.isArray(req.files.images)
-          ? req.files.images
-          : [req.files.images];
-
-        for (const image of images) {
-          const link = await uploadFile({
-            filePath: image.tempFilePath,
-          });
-          if (!link) {
-            return res
-              .status(400)
-              .json({ msg: "Image upload error. Try again later" });
-          }
-          imageUrl.push(link);
+    if (req?.files?.image) {
+      const images = Array?.isArray(req?.files?.image)
+        ? req.files.image
+        : [req.files.image];
+      for (const image of images) {
+        const link = await uploadFile({ filePath: image.tempFilePath });
+        if (!link) {
+          return res.status(400).json({ msg: "Image upload error" });
         }
+        imageUrl.push(link);
       }
-
-      await Casual.create({
-        status: "raise",
-        client: data.client,
-        location: data.location,
-        image: imageUrl,
-        serviceId: data.serviceId,
-        serviceName: data.serviceName,
-        user: { name: req.user.name, id: req.user._id },
-      });
-
-      return res.status(200).json({ msg: `casual service created by ` });
     }
-    if (id.length === 24) {
-      const casual = await Casual.findByIdAndUpdate(id, {
-        client: data.client._id,
-        location: data.location.id,
-        serviceId: data.serviceId,
-        serviceName: data,
-        status: "Done",
-        serviceName,
-        scopes: data.scopes.map((sc) => ({
-          scopeId: sc.scopeId,
-          scopeName: sc.scopeName,
-          consumables: sc.consumables.map((con) => ({
-            consumableId: con.consumableId,
-            consumableName: con.consumableName,
-            calibration: con.calibration,
-            action: con.action,
-            comment: con.comment,
-          })),
-        })),
-      });
-    }
+
+    const scopeReadings = (scopes || []).map((sc) => ({
+      scopeId: sc.scopeId,
+      scopeName: sc.scopeName,
+      consumables: (sc.consumables || []).map((con) => ({
+        consumableId: con.consumableId,
+        consumableName: con.consumableName,
+        calibration: con.calibration || 0,
+        used: parsedUsedCalibration?.[sc.scopeId]?.[con.consumableId] || "",
+        action: parsedAction?.[sc.scopeId]?.[con.consumableId] || "",
+        comment: parsedComment?.[sc.scopeId]?.[con.consumableId] || "",
+      })),
+    }));
+
+    await Casual.create({
+      status: "Done",
+      client: location.client,
+      location: locationId,
+      image: imageUrl,
+      serviceId,
+      serviceName,
+      scopes: scopeReadings,
+      user: { name: req.user.name, id: req.user._id },
+    });
+
+    return res.status(200).json({ msg: `casual service created by ` });
   } catch (error) {
+    console.error(error);
     res.status(500).json(error.message);
   }
 };

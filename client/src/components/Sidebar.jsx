@@ -45,7 +45,7 @@ const navList = [
     icon: <FaBug className="w-6 h-6" />,
     name: "Complaints",
     to: "/complaints",
-    role: ["Admin", "ClientAdmin", "ClientEmployee","TeamLeader"],
+    role: ["Admin", "ClientAdmin", "ClientEmployee", "TeamLeader"],
   },
   {
     icon: <MdLocationOn className="w-6 h-6" />,
@@ -120,9 +120,17 @@ const Sidebar = () => {
             {/* Client Name (Context-aware display) */}
             <div className="flex flex-col lg:pl-16 w-full overflow-hidden">
               {client?.name ? (
-                <strong className="text-xl md:text-2xl text-slate-800 leading-tight">
-                  {client?.name}
-                </strong>
+                <>
+                  <strong className="text-xl md:text-2xl text-slate-800 leading-tight">
+                    {client?.name}
+                  </strong>
+                  <p className="text-sm text-gray-400">
+                    {client.address}
+                  </p>
+                  <div className="w-full pt-1 hidden lg:block">
+                    <TickerTape />
+                  </div>
+                </>
               ) : (
                 // w-full with overflow-hidden gives the marquee container a solid layout boundary
                 <div className="w-full overflow-hidden flex flex-col gap-1.5">
@@ -139,6 +147,7 @@ const Sidebar = () => {
 
                   {/* Marquee Banner Container */}
                   {/* Moving this to its own row prevents layout breaking */}
+                  
                   <div className="w-full pt-1 hidden lg:block">
                     <TickerTape />
                   </div>
@@ -150,9 +159,9 @@ const Sidebar = () => {
           </div>
 
           {/* Right Section: Brand Logo */}
-          <div className="hidden md:flex items-center gap-1 md:gap-3 bg-slate-50 pl-4 pr-3 py-1.5 rounded-xl border border-slate-100">
-            <div className="flex flex-col items-start justify-center order-2">
-              <span className="text-lg md:text-2xl font-extrabold tracking-tight text-slate-900 leading-none">
+          <div className="flex items-center gap-1 md:gap-3 bg-slate-50 pl-4 pr-3 py-1.5 rounded-xl border border-slate-100">
+            <div className="hidden md:flex flex-col items-start justify-center order-2">
+              <span className=" text-lg md:text-2xl font-extrabold tracking-tight text-slate-900 leading-none">
                 PestXZ
               </span>
               <span className="text-[0.5rem] md:text-[0.6rem] font-medium uppercase tracking-wider text-slate-400 mt-1 leading-none">
@@ -175,7 +184,7 @@ const Sidebar = () => {
           }`}
       >
         {/* Added h-full and removed absolute bottom from inside the list */}
-        <div className="h-full flex flex-col j p-4 overflow-y-auto">
+        <div className="h-full flex flex-col j pl-4 overflow-y-auto">
 
           {/* Navigation Links Group */}
           <div className="flex-1">
@@ -185,7 +194,7 @@ const Sidebar = () => {
                   item.role.includes(user?.role) && (
                     <li
                       key={item.name}
-                      className={`hover:bg-slate-700/50 rounded-lg px-2 transition-colors ${active === item.to ? "bg-gray-800" : ""
+                      className={`hover:bg-slate-950/50 rounded-l-lg pl-2 transition-colors ${active === item.to ? "bg-gray-950/50" : ""
                         }`}
                     >
                       <button

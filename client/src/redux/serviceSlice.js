@@ -23,7 +23,7 @@ export const serviceSlice = apiSlice.injectEndpoints({
         method: "PUT",
         body: form,
       }),
-      invalidatesTags: ["Complaint", "Location","assign"],
+      invalidatesTags: ["Complaint", "Location", "assign"],
     }),
     allComplaints: builder.query({
       query: ({ search, page, location, client }) => ({
@@ -55,10 +55,10 @@ export const serviceSlice = apiSlice.injectEndpoints({
       providesTags: ["Complaint", "Location", "assign"],
     }),
     casualService: builder.mutation({
-      query: (data) => ({
-        url: `/api/service/casual/${data.get("id")}`,
+      query: ({ form }) => ({
+        url: `/api/service/casual`,
         method: "POST",
-        body: data,
+        body: form,
       }),
       invalidatesTags: ["Casual", "Location"],
     }),

@@ -45,7 +45,6 @@ function MultiLineChart({ values = [], admin = [], toggle }) {
   // --- 1. VALUES CHART CONFIGURATION ---
   const valuesLabels = values?.map(item => item.month || '');
 
-
   const valuesData = {
     labels: valuesLabels,
     datasets: [
@@ -72,17 +71,16 @@ function MultiLineChart({ values = [], admin = [], toggle }) {
       },
     ],
   };
-
+  
   // --- 2. ADMIN CHART CONFIGURATION ---
   const adminLabels = admin?.map(item => item.month || '');
-
+  
   // Get keys only from the first object to generate charts dynamically
   const adminKeys = admin.length > 0
-    ? Object.keys(admin[0]).filter(key => ['complaints', 'regulars'].includes(key))
-    : [];
-
-
-
+  ? Object.keys(admin[0]).filter(key => ['complaints', 'regulars'].includes(key))
+  : [];
+  
+  
   const adminDatasets = adminKeys.map((key, index) => ({
     label: keyMapping[key] || (key.charAt(0).toUpperCase() + key.slice(1)),
     data: admin.map(item => item[key] ?? 0),
@@ -90,13 +88,12 @@ function MultiLineChart({ values = [], admin = [], toggle }) {
     backgroundColor: getColor(index, 0.2),
     tension: 0.3,
   }));
-
+  
   const adminData = {
     labels: adminLabels,
     datasets: adminDatasets,
   };
-
-  console.log(admin)
+  console.log(adminDatasets)
 
   // --- 3. SHARED OPTIONS CONFIG ---
   const getOptions = (titleText) => ({

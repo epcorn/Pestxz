@@ -101,7 +101,7 @@ export const removeFrequency = async (req, res) => {
 };
 export const addService = async (req, res) => {
   const { serviceName, scopes } = req.body;
-  console.log(serviceName, scopes);
+
   try {
     if (!req.user.rights.addData)
       return res.status(403).json({ msg: "You are not allowed to Add data" });
@@ -155,7 +155,7 @@ export const getAllService = async (req, res) => {
 export const editService = async (req, res) => {
   const { id } = req.params;
   const { type, data } = req.body;
-  console.log(id, type, data);
+
   try {
     if (!req.user.rights.addData)
       return res.status(403).json({ msg: "You are not allowed to edit" });
@@ -439,8 +439,6 @@ export const adminDashboard = async (req, res) => {
         open: 0,
         inProgress: 0,
         closed: 0,
-        missed: 0,
-        completed: onlyRegulars.length,
       },
     );
 
@@ -495,11 +493,13 @@ export const adminDashboard = async (req, res) => {
       .sort(([a], [b]) => a.localeCompare(b)) // chronological order
       .map(([, v]) => v);
 
-    // ── 6. Response ────────────────────────────────────────────────────────
+    const sortedComplaints = [...complaints].sort(
+      (a, b) => new Date(b.createdAt) - new Date(a.createdAt),
+    );
     return res.json({
       complaintData: [{ ...complaintData, serviceCount }],
       all: allComplaints.map(withClientName),
-      latestComplaints: complaints.slice(0, 10).map(withClientName),
+      latestComplaints: sortedComplaints.slice(0, 15).map(withClientName),
       monthlyData,
     });
   } catch (error) {

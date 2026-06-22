@@ -65,96 +65,97 @@ const Complaints = () => {
       ) : (
         error && <AlertMessage>{error?.data?.msg || error.error}</AlertMessage>
       )}
-      <div className="md:flex flex-col justify-around">
-        {/* heading */}
-        <Headers header={'Complaints'} user={user} />
-        {/* search section  */}
-        <div className="">
-          <form onSubmit={handleSearch} className="flex flex-wrap ">
-            <div className="flex items-center px-1 bg-white border max-w-52 rounded border-gray-500 mr-3">
-              <AiOutlineSearch />
-              <input
-                type="text"
-                className="py-1 pl-1 w-full focus:outline-none text-sm rounded text-gray-600 placeholder-gray-500"
-                placeholder="Complaint number"
-                value={tempSearch}
-                onChange={(e) => setTempSearch(e.target.value)}
-              />
-              {tempSearch && (
-                <button type="button" onClick={clearSearch}>
-                  <AiOutlineClose color="red" />
-                </button>
-              )}
-            </div>
-            {/* <label htmlFor="">Select Floors</label> */}
-            {user.type === "PestEmployee" &&
+      <div className="h-[calc(100dvh-6.8rem)] flex flex-col">
+        <div className="md:flex flex-col justify-around">
+          {/* heading */}
+          <Headers header={'Complaints'} user={user} />
+          {/* search section  */}
+          <div className="">
+            <form onSubmit={handleSearch} className="flex flex-wrap ">
+              <div className="flex items-center px-1 bg-white border max-w-52 rounded border-gray-500 mr-3">
+                <AiOutlineSearch />
+                <input
+                  type="text"
+                  className="py-1 pl-1 w-full focus:outline-none text-sm rounded text-gray-600 placeholder-gray-500"
+                  placeholder="Complaint number"
+                  value={tempSearch}
+                  onChange={(e) => setTempSearch(e.target.value)}
+                />
+                {tempSearch && (
+                  <button type="button" onClick={clearSearch}>
+                    <AiOutlineClose color="red" />
+                  </button>
+                )}
+              </div>
+              {/* <label htmlFor="">Select Floors</label> */}
+              {user.type === "PestEmployee" &&
+                <select
+                  value={location?.client}
+                  onChange={(e) => { setLocation(prev => ({ ...prev, client: e.target.value })); setMyClient(e.target.value) }}
+
+                  className="mr-2 mt-0.5 w-40 py-0.5 h-8.5 px-2 border-2 rounded-md outline-none transition border-neutral-300 focus:border-black disabled:bg-slate-100"
+                >
+                  <option value="">Client Name</option>
+                  {clients?.map((client, index) => (
+                    <option key={client._id} value={client._id}>
+                      {client.name}
+                    </option>
+                  ))}
+                </select>
+              }
               <select
-                value={location?.client}
-                onChange={(e) => { setLocation(prev => ({ ...prev, client: e.target.value })); setMyClient(e.target.value) }}
+                value={location.floor}
+                onChange={(e) => setLocation(prev => ({ ...prev, floor: e.target.value }))}
 
                 className="mr-2 mt-0.5 w-40 py-0.5 h-8.5 px-2 border-2 rounded-md outline-none transition border-neutral-300 focus:border-black disabled:bg-slate-100"
               >
-                <option value="">Client Name</option>
-                {clients?.map((client, index) => (
-                  <option key={client._id} value={client._id}>
-                    {client.name}
+                <option value="">Location</option>
+                {clientLocations?.floors.map((item, index) => (
+                  <option key={index} value={item}>
+                    {item}
                   </option>
                 ))}
               </select>
-            }
-            <select
-              value={location.floor}
-              onChange={(e) => setLocation(prev => ({ ...prev, floor: e.target.value }))}
-
-              className="mr-2 mt-0.5 w-40 py-0.5 h-8.5 px-2 border-2 rounded-md outline-none transition border-neutral-300 focus:border-black disabled:bg-slate-100"
-            >
-              <option value="">Location</option>
-              {clientLocations?.floors.map((item, index) => (
-                <option key={index} value={item}>
-                  {item}
-                </option>
-              ))}
-            </select>
 
 
-            <Button type="submit" label="Search" color="bg-black" height="h-8" />
-            {DBuser && DBuser.rights.raise &&
-              <button
-                className="px-4 py-2 w-fit ml-auto bg-blue-800 text-white rounded-lg"
-                onClick={() =>
-                  dispatch(toggleModal({ name: "complaint", status: true }))
-                }
-              >New Complaint</button>
-            }
-          </form>
-          {/* new complaint button  */}
+              <Button type="submit" label="Search" color="bg-black" height="h-8" />
+              {DBuser && DBuser.rights.raise &&
+                <button
+                  className="px-4 py-2 w-fit ml-auto bg-blue-800 text-white rounded-lg"
+                  onClick={() =>
+                    dispatch(toggleModal({ name: "complaint", status: true }))
+                  }
+                >New Complaint</button>
+              }
+            </form>
+            {/* new complaint button  */}
+          </div >
         </div >
-      </div >
-      {isModalOpen.complaint && <ComplaintModal mode={"create"} />}
-      {data && (
-        <>
-          <ComplaintTable data={complaints} user={user} />
+        {isModalOpen.complaint && <ComplaintModal mode={"create"} />}
+        {data && (
+          <>
+            <ComplaintTable data={complaints} user={user} />
 
-          {pages.length > 0 && (
-            <nav className="mb-4">
-              <ul className="list-style-none flex justify-center mt-2">
-                {pages.map((item) => (
-                  <li className="pr-1" key={item}>
-                    <button
-                      className={`relative block rounded px-3 py-1.5 text-sm transition-all duration-30  ${page === item ? "bg-blue-400" : "bg-neutral-700"
-                        } text-white hover:bg-blue-400`}
-                      onClick={() => setPage(item)}
-                    >
-                      {item}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </nav>
-          )}
-        </>
-      )
-      }
+            {pages.length > 0 && (
+              <nav className="mb-1">
+                <ul className="list-style-none flex justify-center mt-2">
+                  {pages.map((item) => (
+                    <li className="pr-1" key={item}>
+                      <button
+                        className={`relative block rounded px-3 py-1.5 text-sm transition-all duration-30  ${page === item ? "bg-blue-400" : "bg-neutral-700"
+                          } text-white hover:bg-blue-400`}
+                        onClick={() => setPage(item)}
+                      >
+                        {item}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </nav>
+            )}
+          </>
+        )}
+      </div >
     </>
   );
 };

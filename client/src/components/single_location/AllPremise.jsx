@@ -14,7 +14,7 @@ function AllPremise() {
 
   // console.log(dates)
   return (
-    <section className="bg-white rounded-md overflow-hidden">
+    <section className="bg-white rounded-md overflow-hidden select-none">
       <table className="w-full  border-collapse text-left text-sm text-slate-700">
         <thead>
           <tr className="border-b bg-gray-200 font-semibold text-slate-900 *:not-last:border-r ">

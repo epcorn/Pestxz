@@ -31,11 +31,21 @@ import Headers from "../components/Headers";
 
 const SingleLocation = () => {
   const { id } = useParams();
-
   const { user, isModalOpen } = useSelector((store) => store.helper);
   const [regular, setRegular] = useState(false);
   const [toggleLists, setToggleLists] = useState("")
   const dispatch = useDispatch();
+  const [show, setShow] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 50) {
+        setShow(true)
+      } else { setShow(false) }
+    }
+    window.addEventListener("scroll", handleScroll)
+    return () => window.removeEventListener("scroll", handleScroll)
+  }, [])
 
   const { data: DBUser } = useGetSingleUserQuery(user._id, { skip: !user?._id })
   const { data, isLoading, error } = useSingleLocationDetailsQuery(id);
@@ -49,6 +59,7 @@ const SingleLocation = () => {
 
   const servicesIds = data?.location?.service?.map(s => s.serviceId);
 
+  console.log(data?.location?.service)
   return (
     <>
       {isLoading ? (
@@ -58,30 +69,48 @@ const SingleLocation = () => {
       )}
       {data && (
         <div>
-          <Headers header={'Location'} user={DBUser} />
-          <div className="py-1 border-b border-neutral-200">
-            {/* Location Details */}
-            <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm text-neutral-700">
-              {user.type === "PestEmployee" && <div>
-                <span className="font-bold text-neutral-900">Client Name:</span>{" "}
-                {data.client}
-              </div>}
-              <div>
-                <span className="font-bold text-neutral-900">Floor:</span>{" "}
-                {data.location.floor}
-              </div>
-              <div>
-                <span className="font-bold text-neutral-900">Location:</span>{" "}
-                {data.location.location}
-              </div>
-              <div className="">
-                <span className="font-bold text-neutral-900">
-                  Sub Location:
-                </span>{" "}
-                {data.location.subLocation}
+          <div className="bg-white z-10 shadow-md px-5 mb-5">
+            <Headers header={'Location'} user={DBUser} />
+            <div className="py-1 border-b border-neutral-200">
+              {/* Location Details */}
+              <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm text-neutral-700">
+                {user.type === "PestEmployee" && <div>
+                  <span className="font-bold text-neutral-900">Client Name:</span>{" "}
+                  {data.client}
+                </div>}
+                <div>
+                  <span className="font-bold text-neutral-900">Floor:</span>{" "}
+                  {data.location.floor}
+                </div>
+                <div>
+                  <span className="font-bold text-neutral-900">Location:</span>{" "}
+                  {data.location.location}
+                </div>
+                <div className="">
+                  <span className="font-bold text-neutral-900">
+                    Sub Location:
+                  </span>{" "}
+                  {data.location.subLocation}
+                </div>
               </div>
             </div>
           </div>
+          {/* {show && */}
+          <div
+            className={`bg-slate-700 z-[5] w-[calc(100dvw-1rem)] md:w-[calc(100dvw-2rem)] lg:w-[calc(100dvw-18.5rem)] fixed top-24 md:top-26 lg:top-22 left-1/2 -translate-x-1/2 lg:left-auto lg:right-4 lg:translate-x-0 flex items-center gap-5 p-2 shadow-lg rounded-b-lg transition-all duration-500 origin-top ${show
+              ? "opacity-100 scale-100 translate-y-0 pointer-events-auto"
+              : "opacity-0 scale-95 -translate-y-4 pointer-events-none"
+              }`}
+
+          >{data.client &&
+            <p className="px-2 bg-white text-slate-800 rounded "><strong>Client:</strong> {data?.client}</p>}
+            <p className="px-2 bg-white text-slate-800 rounded">
+              <strong>Location: </strong>
+              {`${data.location.floor}, ${data.location.location}, ${data.location.subLocation}`}
+            </p>
+          </div>
+
+          {/* } */}
 
           {/* TABLE */}
           <div>
@@ -128,7 +157,8 @@ const SingleLocation = () => {
                     status: true,
                   }))} />
 
-                {isModalOpen?.casual && <CasualForm mode="create" name={"casual"} client={data?.location?.client} />}
+                {/* {isModalOpen?.casual && <CasualForm mode="create" name={"casual"} client={data?.location?.client} />} */}
+                {isModalOpen?.casual && <RegularForm serviceData={data.location.service} id={data?.location?._id} locationName={data?.location?.floor} type={'casual'} setRegular={isModalOpen?.casual} />}
               </>
             )}
 
@@ -148,12 +178,12 @@ const SingleLocation = () => {
           {/* divider */}
           <hr className="h-px my-4 border-0 bg-gray-700" />
           {toggleLists === "allComp" &&
-            data.complaints?.length > 0 && (
-              <div className="bg-red-100 p-px mt-5 rounded-t-2xl">
-                <h2 className="text-xl font-bold px-5 my-2 flex justify-between items-center"
-                >
-                  <span>All Complaints ({data.complaints?.length})</span> <IoIosArrowDown className={`${isModalOpen?.allComp ? "rotate-180" : ""} transition-all`} />
-                </h2>
+            <div className="bg-red-100 p-px mt-5 rounded-t-2xl">
+              <h2 className="text-xl font-bold px-5 my-2 flex justify-between items-center"
+              >
+                <span>All Complaints ({data.complaints?.length})</span> <IoIosArrowDown className={`${isModalOpen?.allComp ? "rotate-180" : ""} transition-all`} />
+              </h2>
+              {data.complaints?.length > 0 ? (
                 <div className="mb-1 overflow-hidden rounded-lg border border-neutral-200 bg-white shadow-sm ">
                   {/* DESKTOP HEADER (Hidden on Mobile) */}
                   <div className="hidden md:grid grid-cols-12 bg-neutral-100 border-b border-neutral-200 text-sm font-bold uppercase tracking-wider text-neutral-600 py-3 px-4 text-center">
@@ -214,9 +244,11 @@ const SingleLocation = () => {
                       </Link>
                     ))}
                   </div>
-                </div>
-              </div>
-            )}
+                </div>)
+                : <p className="top-20 text-center">No Complaints found...</p>
+              }
+            </div>
+          }
 
           {/* all regular services */}
           {toggleLists === "allReg" &&
@@ -256,7 +288,7 @@ const SingleLocation = () => {
               {/* Form / Button Action Container */}
               <div className="flex justify-center items-center mt-5 pt-2">
                 <div className="w-full bg-neutral-50 rounded-xl border border-neutral-200 shadow-inner">
-                  <RegularForm serviceData={data.location.service} id={data?.location?._id} locationName={data?.location?.floor} setRegular={setRegular} />
+                  <RegularForm serviceData={data.location.service} id={data?.location?._id} locationName={data?.location?.floor} type={'regular'} setRegular={setRegular} />
                 </div>
               </div>
               {/* all premise service */}
