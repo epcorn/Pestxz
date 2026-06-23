@@ -37,7 +37,7 @@ const ComplaintTable = ({ data, user, toggle }) => {
   }, [toggler.status]);
 
   return (
-    <div className="w-full mt-2 overflow-x-auto border border-gray-200 rounded-lg shadow-sm bg-white">
+    <div className="w-full mt-2 overflow-x-auto scrollbar-hide border border-gray-200 rounded-lg shadow-sm bg-white">
       {/* 1. Added flex flex-col to table layout */}
       <table className="min-w-[1024px] w-full flex flex-col border-collapse">
 
@@ -61,7 +61,7 @@ const ComplaintTable = ({ data, user, toggle }) => {
         </thead>
 
         {/* 5. Added max-h and overflow-y-auto to tbody along with flex utilities */}
-        <tbody className="flex flex-col w-full max-h-[450px] overflow-y-auto divide-y outline">
+        <tbody className="flex flex-col w-full max-h-[450px] overflow-y-auto scrollbar-hide divide-y outline">
           {data?.map((complaint, i) => {
             const assignedto = complaint?.complaintDetails?.assignedTo;
             const assignedby = complaint?.complaintDetails?.assignedBy;

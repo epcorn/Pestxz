@@ -76,27 +76,11 @@ export const adminSlice = apiSlice.injectEndpoints({
       }),
       providesTags: ["Complaint", "assign", "Casual"],
     }),
-    addFrequency: builder.mutation({
-      query: (freq) => ({
-        method: "POST",
-        url: `/api/admin/freq`,
-        body: freq,
-      }),
-      invalidatesTags: ["Frequency"],
-    }),
-    getFrequency: builder.query({
-      query: () => ({
-        url: `/api/admin/freq`,
-      }),
-      providesTags: ["Frequency"],
-    }),
-    removeFrequency: builder.mutation({
-      query: (id) => ({
-        method: "DELETE",
-        url: `/api/admin/freq/${id}`,
-      }),
-      invalidatesTags: ["Frequency"],
-    }),
+    addProducts:builder.mutation({
+      query:()=>({
+        url:`/api/admin`
+      })
+    })    
   }),
 });
 
@@ -111,7 +95,4 @@ export const {
   useDeleteUserMutation,
   useClientAdminDashboardQuery,
   useAdminDashboardQuery,
-  useGetFrequencyQuery,
-  useAddFrequencyMutation,
-  useRemoveFrequencyMutation,
 } = adminSlice;

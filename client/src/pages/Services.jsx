@@ -12,8 +12,6 @@ import {
   useAddServiceMutation,
   useAllServiceQuery,
   useDeleteServiceMutation,
-  useGetFrequencyQuery,
-  useRemoveFrequencyMutation,
   useUpdateServiceMutation,
 } from "../redux/adminSlice";
 import { FaEdit } from "react-icons/fa";
@@ -26,6 +24,7 @@ import ServiceList from "../components/modals/ServiceList";
 import Frequency from "../components/Frequency";
 import { useGetSingleUserQuery, userSlice } from "../redux/userSlice";
 import Headers from "../components/Headers";
+import ProductModal from "../components/modals/ProductModal";
 
 
 const Services = () => {
@@ -81,10 +80,17 @@ const Services = () => {
 
         {/* heading  */}
         <div>
-          <Headers header={'Services'} user={user}/>
+          <Headers header={'Services'} user={user} />
         </div>
-        <div >
-          <ServiceFormModal addService={addService} />
+        <div className="flex gap-5">
+          <div >
+            <Button color={'bg-green-600'} label={'Add Services'} onClick={() => dispatch(toggleModal({ name: "services", status: true }))} />
+            {isModalOpen.services && <ServiceFormModal addService={addService} />}
+          </div>
+          <div >
+            <Button color={'bg-blue-600'} label={'Add Products'} onClick={() => dispatch(toggleModal({ name: "products", status: true }))} />
+            {isModalOpen.products && <ProductModal />}
+          </div>
         </div>
         <div className="outline grid outline-gray-400 p-4 bg-white rounded-lg space-y-4">
           <h3 className="text-2xl font-semibold text-center">Services</h3>

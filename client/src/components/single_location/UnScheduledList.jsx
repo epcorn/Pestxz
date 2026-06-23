@@ -21,9 +21,10 @@ function UnScheduledList({ work = [] }) {
   if (work.length === 0) {
     return <div className="p-4 text-gray-500 text-center">No unscheduled work found.</div>;
   }
+  console.log(work)
   return (
     <div className="text-xs md:text-sm overflow-x-auto w-full">
-      
+
       <table className="min-w-full text-left border border-gray-400">
         <thead>
           <tr className="bg-gray-700 text-white border-b border-gray-400 *:not-last:border-r">
@@ -46,7 +47,7 @@ function UnScheduledList({ work = [] }) {
               <td className="p-3">
                 {w.raisedBy?.user || 'N/A'}
               </td>
-              <td className="p-3">{w.serviceName}</td>
+              <td className="p-3">{w?.service?.map(s => (s.serviceName)).join(", ")}</td>
               <td className="p-3 ">{w.comment}</td>
               <td className="p-3">{w?.approval?.status}</td>
             </tr>
