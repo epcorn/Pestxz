@@ -264,7 +264,7 @@ export const generateSchedule = (start, end, frequency) => {
   const freq = (frequency || "").toLowerCase().trim();
 
   let current = new Date(start);
-  current = today > current ? current : today;
+  current = today < current ? current : today;
   while (current <= end) {
     schedule.push({
       date: current.toISOString().split("T")[0],

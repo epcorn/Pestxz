@@ -13,7 +13,7 @@ function OperatorDashboard() {
   const { user } = useSelector(store => store.helper);
   const { data: assignedWork } = useGetAllAssignedWorkQuery();
   const { data: casuals } = useGetCasualsQuery();
-  const { data: unschedule } = useGetUnscheduledReportsQuery("Operator", { pollingInterval: 4000 })
+  const { data: unschedule } = useGetUnscheduledReportsQuery("Operator", { refetchOnReconnect: true })
 
   console.log(casuals, unschedule);
 

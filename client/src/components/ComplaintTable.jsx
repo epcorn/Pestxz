@@ -4,6 +4,20 @@ import { useGetSingleUserQuery } from "../redux/userSlice";
 import { useState, useEffect, useRef } from "react";
 import { AssignWork } from "../pages/Complaints";
 
+const bgStyle = {
+  Open: "bg-red-100",
+  "In Progress": "bg-amber-100",
+  Close: "bg-green-100",
+  "Close Req": "bg-gray-100",
+  "Reopen": "bg-blue-100"
+};
+const statusStyle = {
+  Open: "bg-red-50 text-red-700 ring-red-600/10",
+  "In Progress": "bg-amber-50 text-amber-800 ring-amber-600/10",
+  Close: "bg-green-50 text-green-700 ring-green-600/10",
+  "Close Req": "bg-gray-100",
+};
+
 const ComplaintTable = ({ data, user, toggle }) => {
   const [toggler, setToggler] = useState({ id: "", status: false });
   const { data: DBUser } = useGetSingleUserQuery(user?._id, { skip: !user?._id });
@@ -24,34 +38,44 @@ const ComplaintTable = ({ data, user, toggle }) => {
 
   return (
     <div className="w-full mt-2 overflow-x-auto border border-gray-200 rounded-lg shadow-sm bg-white">
-      <table className="min-w-[1024px] w-full border-collapse" style={{ tableLayout: "fixed" }}>
+      {/* 1. Added flex flex-col to table layout */}
+      <table className="min-w-[1024px] w-full flex flex-col border-collapse">
 
-        <thead>
-          <tr className="bg-neutral-600 text-white text-sm font-bold uppercase tracking-wider">
-            <th className="pl-2 py-3 text-center">Number</th>
-            {!isRegular && <th className="pl-2 py-3 text-left">Assigned To</th>}
-            <th className="pl-2 py-3 text-left">Date</th>
-            <th className="pl-2 py-3 text-left">
+        {/* 2. Added flex flex-col to thead */}
+        <thead className="flex flex-col w-full sticky top-0 z-10">
+          {/* 3. Added flex and w-full to tr */}
+          <tr className="bg-neutral-600 text-white text-sm font-bold uppercase tracking-wider flex w-full">
+            {/* 4. Defined explicit width allocations via flexbox layout widths */}
+            <th className="pl-2 py-3 text-center w-20 flex-shrink-0">Sr. No</th>
+            <th className="pl-2 py-3 text-center flex-1">Number</th>
+            {!isRegular && <th className="pl-2 py-3 text-left flex-1">Assigned To</th>}
+            <th className="pl-2 py-3 text-left flex-1">Date</th>
+            <th className="pl-2 py-3 text-left flex-1">
               {isRegular ? "Location" : user?.type === "PestEmployee" ? "Client" : "Raised By"}
             </th>
-            <th className="pl-2 py-3">Service</th>
-            <th className="pl-2 py-3 text-center">
+            <th className="pl-2 py-3 flex-1 text-center">Service</th>
+            <th className="pl-2 py-3 text-center flex-1">
               {isRegular ? "Serviced By" : "Status"}
             </th>
           </tr>
         </thead>
 
-        <tbody className="divide-y h-full outline overflow-y-auto divide-gray-200">
+        {/* 5. Added max-h and overflow-y-auto to tbody along with flex utilities */}
+        <tbody className="flex flex-col w-full max-h-[450px] overflow-y-auto divide-y outline">
           {data?.map((complaint, i) => {
             const assignedto = complaint?.complaintDetails?.assignedTo;
             const assignedby = complaint?.complaintDetails?.assignedBy;
-            const rowLink = isRegular ? `/location/${complaint.location?._id}` : `/complaint/${complaint._id}`;
+            const rowLink = isRegular ? `/location/${complaint?.location?._id}` : `/complaint/${complaint._id}`;
 
             return (
-              <tr key={complaint._id} className="bg-white hover:bg-neutral-50 transition-colors divide-y *:not-last:border-r *:border-gray-400 text-xs md:text-sm">
+              /* 6. Changed tr to use flex layout matching the thead dimensions */
+              <tr key={complaint?._id} className={`flex w-full hover:bg-neutral-50 transition-colors divide-x divide-gray-400 items-center text-xs md:text-sm ${bgStyle[complaint?.complaintDetails?.status]}`}>
 
+                <td className="px-2 text-center w-20 flex-shrink-0">
+                  {i + 1}
+                </td>
                 {/* Complaint Number */}
-                <td className="pl-2 py-4 text-center">
+                <td className="pl-2 py-4 text-center flex-1">
                   <Link to={rowLink} className="font-bold text-blue-600 hover:text-blue-800 transition-colors">
                     {complaint.complaintDetails?.number || (i + 2)}
                   </Link>
@@ -60,7 +84,7 @@ const ComplaintTable = ({ data, user, toggle }) => {
                 {/* Assigned To */}
                 {!isRegular && (
                   <td
-                    className="pl-2 py-4 relative cursor-pointer select-none"
+                    className="pl-2 py-4 relative cursor-pointer select-none flex-1"
                     onClick={(e) => {
                       e.stopPropagation();
                       setToggler({ id: complaint._id, status: !toggler.status });
@@ -100,14 +124,14 @@ const ComplaintTable = ({ data, user, toggle }) => {
                 )}
 
                 {/* Date */}
-                <td className="pl-2 py-4">
+                <td className="pl-2 py-4 flex-1">
                   <Link to={rowLink} className="text-sm text-gray-600 hover:text-gray-900">
                     {dateFormat(complaint.createdAt)}
                   </Link>
                 </td>
 
                 {/* Location / Client / Raised By */}
-                <td className="pl-2 py-4">
+                <td className="pl-2 py-4 flex-1">
                   <Link to={rowLink} className="text-sm font-medium hover:opacity-85">
                     {!isRegular ? (
                       user?.type === "PestEmployee" ? (
@@ -124,7 +148,7 @@ const ComplaintTable = ({ data, user, toggle }) => {
                 </td>
 
                 {/* Service */}
-                <td className="pl-2 py-4 text-sm text-gray-800 text-center">
+                <td className="pl-2 py-4 text-sm text-gray-800 text-center flex-1">
                   {isRegular ? (
                     <span>{complaint.regularService?.[0]?.serviceName}</span>
                   ) : (
@@ -133,26 +157,25 @@ const ComplaintTable = ({ data, user, toggle }) => {
                 </td>
 
                 {/* Status / Serviced By */}
-                <td className="pl-2 py-4 text-center outline outline-gray-300">
+                <td className="pl-2 py-4 text-center flex-1">
                   {isRegular ? (
-                    <span className="whitespace-nowrap text-xs font-semibold border border-gray-300 px-2 py-1 rounded-lg text-gray-600 bg-gray-50">
+                    <Link to={rowLink} className="whitespace-nowrap text-xs font-semibold border border-gray-300 px-2 py-1 rounded-lg text-gray-600 bg-gray-50">
                       {complaint.regularService?.[0]?.userName}
-                    </span>
+                    </Link>
                   ) : (
-                    <span className={`px-2 py-1 text-xs font-bold rounded-lg uppercase tracking-wide status-pill ${complaint?.complaintDetails?.status?.toLowerCase().replace(/\s+/g, "")}`}>
+                    <Link to={rowLink} className={`px-2 py-1 text-xs font-bold rounded-lg uppercase tracking-wide status-pill ${statusStyle[complaint.complaintDetails.status]} `}>
                       {complaint?.complaintDetails?.status}
-                    </span>
+                    </Link>
                   )}
                 </td>
 
               </tr>
             );
           })}
-
           {data?.length === 0 && (
-            <tr>
-              <td colSpan={isRegular ? 5 : 6} className="p-10 text-center text-lg text-red-500 font-bold italic">
-                No complaints available to display.
+            <tr className="flex w-full">
+              <td className="p-10 text-center text-lg text-red-500 font-bold italic w-full">
+                Its Lonely here.
               </td>
             </tr>
           )}

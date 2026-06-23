@@ -265,7 +265,7 @@ const SingleLocation = () => {
             <div className="bg-blue-200 p-px rounded-t-2xl">
               <h2 className="text-base md:text-xl font-bold px-5 my-2 flex justify-between items-center"
               >
-                <span>All Un-Scheduled Services Done({data?.unscheduled.length || 0})</span>
+                <span>All Un-Scheduled Services({data?.unscheduled.length || 0})</span>
                 <IoIosArrowDown className={`${isModalOpen?.allReg ? "rotate-180" : ""} transition-all`} />
               </h2>
               {!isLoading && <UnScheduledList work={data?.unscheduled || []} />}
@@ -275,7 +275,7 @@ const SingleLocation = () => {
             <div className="bg-blue-200 p-px rounded-t-2xl">
               <h2 className="text-base md:text-xl font-bold px-5 my-2 flex justify-between items-center"
               >
-                <span>All Casual Services Done({data?.casuals?.length || 0})</span>
+                <span>All Casual Services({data?.casuals?.length || 0})</span>
                 <IoIosArrowDown className={`${isModalOpen?.allCasual ? "rotate-180" : ""} transition-all`} />
               </h2>
               <CasualLists work={data?.casuals || []} />

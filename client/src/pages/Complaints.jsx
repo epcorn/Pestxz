@@ -32,7 +32,7 @@ const Complaints = () => {
     useAllLocationsQuery({
       id: user.type === "ClientEmployee" ? user.client : myClient
     },
-      { skip: user.type === "ClientEmployee" ? !user?.client : !myClient }
+      { skip: user.type === "ClientEmployee" ? !user?.client : !myClient, refetchOnFocus: true, }
     );
 
   const { data, isLoading, isFetching, error } = useAllComplaintsQuery({
@@ -40,9 +40,8 @@ const Complaints = () => {
     page,
     client: location.client || "",
     location: location?.floor || "All",
-  }, { refetchOnMountOrArgChange: true, pollingInterval: 30000, });
+  }, { refetchOnMountOrArgChange: true, refetchOnReconnect: true, refetchOnFocus: true, });
 
-  console.log(data, error, isFetching)
   const pages = Array.from({ length: data?.pages }, (_, index) => index + 1);
 
   const handleSearch = (e) => {
@@ -55,7 +54,7 @@ const Complaints = () => {
     setSearch("");
     setLocation({ client: "", floor: "" });
   };
-
+  console.log(data)
   const complaints = data?.complaints?.filter(d => d?.type !== "Regular") ?? []
 
   return (
@@ -93,7 +92,7 @@ const Complaints = () => {
                   value={location?.client}
                   onChange={(e) => { setLocation(prev => ({ ...prev, client: e.target.value })); setMyClient(e.target.value) }}
 
-                  className="mr-2 mt-0.5 w-40 py-0.5 h-8.5 px-2 border-2 rounded-md outline-none transition border-neutral-300 focus:border-black disabled:bg-slate-100"
+                  className="mr-2 mt-0.5 w-40 py-0.5 h-8.5 px-2 border-2 rounded-md outline-none transition border-neutral-300 focus:border-black disabled:bg-slate-100 bg-white"
                 >
                   <option value="">Client Name</option>
                   {clients?.map((client, index) => (
@@ -107,7 +106,7 @@ const Complaints = () => {
                 value={location.floor}
                 onChange={(e) => setLocation(prev => ({ ...prev, floor: e.target.value }))}
 
-                className="mr-2 mt-0.5 w-40 py-0.5 h-8.5 px-2 border-2 rounded-md outline-none transition border-neutral-300 focus:border-black disabled:bg-slate-100"
+                className="mr-2 mt-0.5 w-40 py-0.5 h-8.5 px-2 border-2 rounded-md outline-none transition border-neutral-300 focus:border-black disabled:bg-slate-100 bg-white"
               >
                 <option value="">Location</option>
                 {clientLocations?.floors.map((item, index) => (
@@ -136,7 +135,7 @@ const Complaints = () => {
           <>
             <ComplaintTable data={complaints} user={user} />
 
-            {pages.length > 0 && (
+            {pages?.length > 0 && (
               <nav className="mb-1">
                 <ul className="list-style-none flex justify-center mt-2">
                   {pages.map((item) => (

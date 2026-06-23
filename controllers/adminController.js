@@ -494,8 +494,9 @@ export const adminDashboard = async (req, res) => {
       .map(([, v]) => v);
 
     const sortedComplaints = [...complaints].sort(
-      (a, b) => new Date(b.createdAt) - new Date(a.createdAt),
+      (a, b) => new Date(b.updatedAt) - new Date(a.updatedAt),
     );
+    // return res.json({ complaints, allComplaints });
     return res.json({
       complaintData: [{ ...complaintData, serviceCount }],
       all: allComplaints.map(withClientName),

@@ -22,6 +22,7 @@ function AdminDashboard() {
     selectedClient?._id || "select",
     { skip: user?.role !== "Admin" }
   );
+  console.log(adminDash)
 
   useEffect(() => {
     if (!assignId) return;
@@ -52,7 +53,6 @@ function AdminDashboard() {
     return acc;
   }, {}) || {};
 
-  console.log(adminDash)
   const finalMergedData = { ...formattedData, ...chartCompData };
 
   return (
@@ -94,7 +94,7 @@ function AdminDashboard() {
       <div className="flex flex-wrap gap-2">
         {adminDash?.complaintData?.map((d, i) => (
           <React.Fragment key={i}>
-            <StatCard title="Open Complaints"  value={d.open} color="border-l-red-500" textColor="text-red-500" />
+            <StatCard title="Open Complaints" value={d.open} color="border-l-red-500" textColor="text-red-500" />
             <StatCard title="In Progress" value={d.inProgress} color="border-l-amber-500" textColor="text-amber-500" />
             <StatCard title="Closed Complaints" value={d.closed} color="border-l-green-500" textColor="text-green-500" />
             <StatCard title="Total Complaints" value={d.total} color="border-l-blue-500" textColor="text-blue-500" />

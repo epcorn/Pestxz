@@ -251,7 +251,7 @@ export const getAllComplaints = async (req, res) => {
         path: "location client",
         select: "floor subLocation location name",
       })
-      .sort("-createdAt")
+      .sort("-updatedAt")
       .skip(limit * (pageNumber - 1))
       .limit(limit);
 
