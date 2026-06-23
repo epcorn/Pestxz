@@ -46,8 +46,8 @@ function UnscheduledForm({ existing, locationId, type, id }) {
       socket.emit("unscheduled-raised", {
         type: "raise",
         locationId,
+        name: "Unscheduled work",
         comment: data.comment,
-        service: data.service,
         raisedBy: user.name,
       })
 
@@ -109,7 +109,7 @@ function UnscheduledForm({ existing, locationId, type, id }) {
       open={isModalOpen.unscheduled}
       title='Report Un-Scheduled work'
       disabled={unScLoading}
-      submitLabel={type === "raise" ? "Report" : ""}
+      submitLabel={type === "raise" ? "Report" : unScLoading ? "Reporting..." : ""}
       onSubmit={handleSubmit(submit)}
       handleClose={() => dispatch(toggleModal({ name: "unscheduled", status: false }))}
     />

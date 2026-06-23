@@ -19,10 +19,9 @@ function CasualLists({ work = [] }) {
   }
 
   const handleRowClick = (id) => {
-    // If clicking already open row, close it. Otherwise, open the new one.
     setExpandedRowId(prevId => prevId === id ? null : id);
   };
-  
+
   return (
     <div className="text-xs md:text-sm overflow-x-auto w-full">
       <table className="min-w-[800px] w-full border-collapse text-left border border-gray-400">
@@ -83,19 +82,15 @@ function CasualLists({ work = [] }) {
 export default CasualLists;
 
 function Expand({ data, user, isModalOpen, dispatch, toggleModal }) {
+  console.log(data)
   return (
     <div className="text-gray-700">
       <p className="font-semibold mb-0 text-center">Details View:</p>
-      {user.role === "Operator"
-        ?
-        <div>
-          <Button label={"Update Work"} onClick={() => dispatch(toggleModal({ name: "updatecasualForm", status: true }))} />
-          {isModalOpen.casualForm &&
-            <CasualForm mode={'update'} name={'updatecasualForm'} client={data.client} casualId={data._id} />}
-        </div>
-        : <p className="text-xs mt-2 text-gray-500 text-center">No work update</p>
-      }
+      <div>
+        <p className="text-xs mt-2 text-gray-500 text-center">No work update</p>
 
+
+      </div>
     </div>
   );
 }

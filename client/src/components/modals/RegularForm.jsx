@@ -114,7 +114,7 @@ function RegularForm({ serviceData, id, type, locationName, setRegular }) {
 
       const files = values?.image?.[ser.serviceName];
       if (files) {
-        Array.from(files).slice(0, 2).forEach((file) => form.append("image", file));
+        Array.from(files)?.slice(0, 2).forEach((file) => form.append("image", file));
       }
 
       const res = isUnschedule
@@ -124,7 +124,7 @@ function RegularForm({ serviceData, id, type, locationName, setRegular }) {
       toast.success(res.msg || "Service Submitted 🎉");
 
       const saved = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
-      ["usedCalibration", "action", "comment"].forEach((field) => {
+      ["usedCalibration", "action", "comment"]?.forEach((field) => {
         if (saved[field]?.[ser.serviceName]) delete saved[field][ser.serviceName];
       });
       localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
@@ -140,7 +140,7 @@ function RegularForm({ serviceData, id, type, locationName, setRegular }) {
 
   // only services that have today as a pending schedule date
   const servicesForToday = isRegular ? serviceData?.filter((ser) =>
-    ser.schedule?.some((s) => formatShortDate(s.date) === today && !s.completed)) : serviceData;
+    ser?.schedule?.some((s) => formatShortDate(s.date) === today && !s.completed)) : serviceData;
 
   if (isRegular && !servicesForToday?.length) {
     return (
@@ -148,8 +148,8 @@ function RegularForm({ serviceData, id, type, locationName, setRegular }) {
         <p>
           {/* No services scheduled for today ({today}) */}
           Next Schedule Date is
-          {upComing?.map(u => (
-            <strong key={u[0].date}> ({formatShortDate(u[0].date)}) </strong>
+          {upComing?.map((u, i) => (
+            <strong key={u[0]?.date + i}> ({formatShortDate(u[0]?.date)}) </strong>
           ))}
           .</p>
       </div>
@@ -166,7 +166,7 @@ function RegularForm({ serviceData, id, type, locationName, setRegular }) {
 
           <form className="space-y-6 bg-green-200">
             {servicesForToday?.map((ser) => {
-              const todaySchedule = isRegular ? ser.schedule.find(
+              const todaySchedule = isRegular ? ser.schedule?.find(
                 (s) => formatShortDate(s.date) === today && !s.completed) : null;
               return (
                 <div
@@ -175,17 +175,17 @@ function RegularForm({ serviceData, id, type, locationName, setRegular }) {
                 >
                   <div className="flex justify-between mb-4">
                     <div className="flex gap-x-4 gap-y-2 items-center flex-wrap">
-                      <p className="text-sm md:text-lg font-semibold outline px-2 py-1 rounded outline-gray-400">
+                      <p className="text-sm md:text-lg bg-white font-semibold outline px-2 py-1 rounded outline-gray-400">
                         Service:{" "}
                         <span className="text-base text-gray-500">{ser.serviceName}</span>
                       </p>
                       {(isRegular) &&
                         <>
-                          <p className="text-sm md:text-lg font-semibold outline px-2 py-1 rounded outline-gray-400">
+                          <p className="text-sm md:text-lg bg-white font-semibold outline px-2 py-1 rounded outline-gray-400">
                             Frequency:{" "}
                             <span className="text-base text-gray-500">{ser.frequency}</span>
                           </p>
-                          <p className="text-sm md:text-lg font-semibold outline px-2 py-1 rounded outline-gray-400">
+                          <p className="text-sm md:text-lg bg-white font-semibold outline px-2 py-1 rounded outline-gray-400">
                             Date:{" "}
                             <span className="text-base text-blue-600">{todaySchedule?.date}</span>
                           </p>
@@ -208,7 +208,7 @@ function RegularForm({ serviceData, id, type, locationName, setRegular }) {
                     {ser.scopes?.map((sc) => (
                       <div
                         key={sc.scopeName}
-                        className="mt-2 outline outline-gray-400 p-3 rounded "
+                        className="mt-2 outline outline-gray-400 p-3 rounded bg-white"
                       >
                         <h4 className="font-bold mb-3 ">Scope: {sc.scopeName}</h4>
                         {sc.consumables?.map((con, i) => {

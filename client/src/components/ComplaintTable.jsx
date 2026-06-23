@@ -168,7 +168,6 @@ const ComplaintTable = ({ data, user, toggle }) => {
                     </Link>
                   )}
                 </td>
-
               </tr>
             );
           })}

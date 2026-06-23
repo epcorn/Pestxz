@@ -4,7 +4,9 @@ import { formatShortDate, getWorkStatus } from "../../utils/helperFunctions";
 function ServiceShow({ services }) {
 
   const [expandedServiceId, setExpandedServiceId] = useState(null);
-  const missed = services?.[0]?.schedule.filter(sc => sc.status === "Missed")
+  // const missed = services?.[0]?.schedule?.filter(sc => sc?.status === "Missed")
+
+  // console.log(services)
   return (
     <div className="w-full overflow-auto border border-gray-800 rounded-lg bg-white">
       <div className="min-w-[768px]">
@@ -22,9 +24,9 @@ function ServiceShow({ services }) {
           {/* BODY */}
           {services?.map((s, index) => {
             const schedules = s.schedule || [];
-            const completedService = schedules
-              .filter((sc) => sc.completed === true)
-              .at(-1);
+            const completedService = schedules?.filter((sc) => sc.completed === true)?.at(-1);
+            const missed = schedules?.filter(f => ["Missed"].includes(f.status))
+            console.log(missed);
 
             const nextServices = schedules.filter((sc) => {
               if (sc.completed) return false;

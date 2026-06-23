@@ -264,8 +264,10 @@ export const generateSchedule = (start, end, frequency) => {
   const freq = (frequency || "").toLowerCase().trim();
 
   let current = new Date(start);
+  let endDate = new Date(end);
   current = today < current ? current : today;
-  while (current <= end) {
+  
+  while (current <= endDate) {
     schedule.push({
       date: current.toISOString().split("T")[0],
       status: "Pending",
@@ -391,8 +393,8 @@ export const autoMarkMissed = async () => {
           let locCreatedAt = loc.createdAt.toISOString().split("T")[0];
           const isBeforeCreation = sch.date < locCreatedAt;
           const isBetweenCreationAndToday =
-          sch.date >= locCreatedAt && sch.date < today;
-          
+            sch.date >= locCreatedAt && sch.date < today;
+
           if (isBeforeCreation && sch.status !== "Invalid") {
             sch.status = "Invalid";
             isModified = true;
@@ -406,7 +408,7 @@ export const autoMarkMissed = async () => {
           }
         });
       });
-      
+
       if (isModified) {
         loc.markModified("service");
         await loc.save();
@@ -423,6 +425,5 @@ export const autoMarkMissed = async () => {
     );
   }
 };
-
 
 // autoMarkMissed();

@@ -53,7 +53,7 @@ function NotificationManager() {
 
       notificationSound.play().catch(error => { console.warn("Browser blocked autoplay") })
 
-      sendNotification("New Unscheduled Report", `${data.raisedBy} raised a report — ${data.service?.label || data.service}`)
+      sendNotification("New Unscheduled Report", `${data.raisedBy} raised a ${data.name} report — `)
 
       toast.info(`🔔 New unscheduled report by ${data.raisedBy}`)
     }

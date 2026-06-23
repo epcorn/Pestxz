@@ -2,22 +2,16 @@ import mongoose from "mongoose";
 
 const casualSchema = new mongoose.Schema(
   {
-    serviceId: { type: String },
-    serviceName: { type: String },
-    scopes: [
+    service: [
       {
-        scopeId: { type: String },
-        scopeName: { type: String },
-        consumables: [
-          {
-            consumableId: String,
-            consumableName: String,
-            calibration: String,
-            usedCalibration: String,
-            action: String,
-            comment: String,
-          },
-        ],
+        serviceId: { type: String },
+        serviceName: { type: String },
+        scopes: [Object],
+        completed: { type: Boolean, default: false },
+        completedAt: { type: Date },
+        usedCalibration: { type: Object, default: {} },
+        action: { type: Object, default: {} },
+        comment: { type: Object, default: {} },
       },
     ],
     image: { type: [String], default: [] },

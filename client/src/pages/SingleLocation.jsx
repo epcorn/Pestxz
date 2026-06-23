@@ -59,7 +59,6 @@ const SingleLocation = () => {
 
   const servicesIds = data?.location?.service?.map(s => s.serviceId);
 
-  console.log(data?.location?.service)
   return (
     <>
       {isLoading ? (
@@ -148,7 +147,7 @@ const SingleLocation = () => {
               </>
             )}
           {
-            (["PestEmployee"].includes(user.type)) && (
+            (["PestEmployee"].includes(user?.type)) && (
               <>
                 <Button
                   label="Casual Service"
@@ -158,7 +157,8 @@ const SingleLocation = () => {
                   }))} />
 
                 {/* {isModalOpen?.casual && <CasualForm mode="create" name={"casual"} client={data?.location?.client} />} */}
-                {isModalOpen?.casual && <RegularForm serviceData={data.location.service} id={data?.location?._id} locationName={data?.location?.floor} type={'casual'} setRegular={isModalOpen?.casual} />}
+                {isModalOpen?.casual &&
+                  <RegularForm serviceData={data.location.service} id={data?.location?._id} locationName={data?.location?.floor} type={'casual'} setRegular={isModalOpen?.casual} />}
               </>
             )}
 
@@ -283,12 +283,12 @@ const SingleLocation = () => {
           }
 
           {/* last regular service */}
-          {DBUser && DBUser.rights.scan_Scheduled && (
+          {DBUser && DBUser?.rights?.scan_Scheduled && (
             <div>
               {/* Form / Button Action Container */}
               <div className="flex justify-center items-center mt-5 pt-2">
                 <div className="w-full bg-neutral-50 rounded-xl border border-neutral-200 shadow-inner">
-                  <RegularForm serviceData={data.location.service} id={data?.location?._id} locationName={data?.location?.floor} type={'regular'} setRegular={setRegular} />
+                  <RegularForm serviceData={data?.location.service} id={data?.location?._id} locationName={data?.location?.floor} type={'regular'} setRegular={setRegular} />
                 </div>
               </div>
               {/* all premise service */}

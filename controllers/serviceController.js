@@ -455,9 +455,11 @@ export const casualServices = async (req, res) => {
       client: location.client,
       location: locationId,
       image: imageUrl,
-      serviceId,
-      serviceName,
-      scopes: scopeReadings,
+      service:[{
+        serviceId,
+        serviceName,
+        scopes: scopeReadings,
+      }],
       user: { name: req.user.name, id: req.user._id },
     });
 

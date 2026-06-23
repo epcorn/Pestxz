@@ -1,9 +1,10 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
+
 const rowStyle = (approval, update) => {
-  if (approval.status === "Approved") {
-    return update.status
+  if (approval?.status === "Approved") {
+    return update?.status
       ? "outline-l-4 outline-l-green-500 bg-green-950/30"
       : "outline-l-4 outline-l-yellow-500 bg-yellow-950/30"
   }
@@ -15,12 +16,14 @@ const rowStyle = (approval, update) => {
 
 function UnScheduledList({ work = [] }) {
   const navigate = useNavigate();
+
   // Check if the array is empty
   if (work.length === 0) {
     return <div className="p-4 text-gray-500 text-center">No unscheduled work found.</div>;
   }
   return (
     <div className="text-xs md:text-sm overflow-x-auto w-full">
+      
       <table className="min-w-full text-left border border-gray-400">
         <thead>
           <tr className="bg-gray-700 text-white border-b border-gray-400 *:not-last:border-r">

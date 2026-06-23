@@ -22,6 +22,7 @@ export const apiSlice = createApi({
     "Admin",
     "assign",
     "Casual",
+    "unscheduled",
     "Location",
     "Complaint",
   ],
