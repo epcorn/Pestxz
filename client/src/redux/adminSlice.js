@@ -76,11 +76,17 @@ export const adminSlice = apiSlice.injectEndpoints({
       }),
       providesTags: ["Complaint", "assign", "Casual"],
     }),
-    addProducts:builder.mutation({
-      query:()=>({
-        url:`/api/admin`
-      })
-    })    
+    addProducts: builder.mutation({
+      query: () => ({
+        url: `/api/admin`,
+      }),
+    }),
+    runnerData: builder.query({
+      query: ({ lat, lon }) => ({
+        url: `/api/admin/runner`,
+        params: { lat, lon },
+      }),
+    }),
   }),
 });
 
@@ -95,4 +101,5 @@ export const {
   useDeleteUserMutation,
   useClientAdminDashboardQuery,
   useAdminDashboardQuery,
+  useRunnerDataQuery,
 } = adminSlice;

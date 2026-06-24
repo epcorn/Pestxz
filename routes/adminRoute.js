@@ -8,6 +8,7 @@ import {
   editService,
   getFrequency,
   removeFrequency,
+  runnerData,
 } from "../controllers/adminController.js";
 import {
   deleteUser,
@@ -15,7 +16,6 @@ import {
   passwordChange,
   registerUser,
 } from "../controllers/userController.js";
-
 
 const router = express.Router();
 
@@ -28,5 +28,7 @@ router.get("/adminDashboard/:id?", adminDashboard);
 
 router.route("/singleService/:id").put(editService).delete(deleteService);
 router.route("/singleUser/:id").put(passwordChange).delete(deleteUser);
+
+router.get("/runner", runnerData);
 
 export default router;

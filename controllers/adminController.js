@@ -508,3 +508,29 @@ export const adminDashboard = async (req, res) => {
     res.status(500).json({ msg: "Server error, try again later" });
   }
 };
+
+export const runnerData = async (req, res) => {
+  const { lat, lon } = req.query;
+  const appId = process.env.OPENWEATHER_APIKEY;
+  try {
+    console.log(lat, lon, appId);
+    if (!lat || !lon || !appId)
+      return res.status(400).json({ msg: "information not provided" });
+
+    const resp = await fetch(
+      `https://pestindex.vercel.app/pestxz?appid=${appId}&lat=${lat}&lon=${lon}`,
+    );
+
+    if (!resp.ok) {
+      return res
+        .status(resp.status)
+        .json({ msg: "failed fetching internal server error" });
+    }
+    const data = await resp.json();
+    
+    res.status(200).json(data);
+  } catch (error) {
+    console.log(error.message);
+    res.status(500).json({ msg: "Server error", error });
+  }
+};

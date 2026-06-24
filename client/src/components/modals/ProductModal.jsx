@@ -10,9 +10,7 @@ function ProductModal() {
   const [add, setAdd] = useState({ cal: "", status: false, count: 1 })
   const { control, formState: { errors }, register, reset, handleSubmit, watch } = useForm();
 
-
   return (
-
     <div className='fixed inset-0 w-full h-full bg-black/60 content-center'>
       <form action="" className='bg-white p-2 max-w-xl mx-auto'>
         <div className="bg-white flex justify-between items-center border-b pb-2 p-2">
