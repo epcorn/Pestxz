@@ -12,7 +12,7 @@ function AllPremise() {
 
   const dates = locations?.locations?.flatMap(loc => loc.service)
 
-  // console.log(dates)
+  console.log(allPremiseSchedules)
   return (
     <section className="bg-white rounded-md overflow-hidden select-none">
       <table className="w-full  border-collapse text-left text-sm text-slate-700">
@@ -27,8 +27,14 @@ function AllPremise() {
         <tbody className="divide-y divide-slate-300 ">
           {allPremiseSchedules?.map((p, index) => {
             const completed = p.service.some(ser => ser.schedule.some(sc => sc.date === today && sc.completed))
+            const total = p.service.flatMap(ser => ser.schedule.filter(sc => sc.date === today))
+            const totalCompleted = p.service.flatMap(ser => ser.schedule.filter(sc => sc.date === today && sc.completed))
+
+
+            const alldone = totalCompleted.length - total.length === 0
+
             return (
-              <tr key={index} className={`*:not-last:border-r ${completed ? "bg-green-400" : ""}`}>
+              <tr key={index} className={`${alldone ? "bg-green-400/60" : alldone > 0 < totalCompleted.length ? "bg-yellow-400/50" : ""} *:not-last:border-r`}>
 
                 <td className="py-3 px-2 text-center">
                   {index + 1}
@@ -40,7 +46,12 @@ function AllPremise() {
                   {p.service.map(s => s.serviceName).join(", ")}
                 </td>
                 <td className="py-3 px-2">
-                  {completed ? "Completed" : "Pending"}
+                  <p>
+                    {completed ? "Completed" : "Pending"}
+                  </p>
+                  <p>
+                    {totalCompleted.length}/{total.length}
+                  </p>
                 </td>
               </tr>
             )

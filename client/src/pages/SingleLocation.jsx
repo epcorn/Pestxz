@@ -96,15 +96,15 @@ const SingleLocation = () => {
           </div>
           {/* {show && */}
           <div
-            className={`bg-slate-700 z-[5] w-[calc(100dvw-1rem)] md:w-[calc(100dvw-2rem)] lg:w-[calc(100dvw-18.5rem)] fixed top-24 md:top-26 lg:top-22 left-1/2 -translate-x-1/2 lg:left-auto lg:right-4 lg:translate-x-0 flex items-center gap-5 p-2 shadow-lg rounded-b-lg transition-all duration-500 origin-top ${show
+            className={`bg-slate-700 z-[5] w-[calc(100dvw-1rem)] md:w-[calc(100dvw-2rem)] lg:w-[calc(100dvw-18.5rem)] fixed top-22 md:top-22 lg:top-22 left-1/2 -translate-x-1/2 lg:left-auto lg:right-4 lg:translate-x-0 flex items-center gap-5 p-2 shadow-lg rounded-b-lg transition-all duration-500 origin-top ${show
               ? "opacity-100 scale-100 translate-y-0 pointer-events-auto"
               : "opacity-0 scale-95 -translate-y-4 pointer-events-none"
               }`}
 
           >{data.client &&
-            <p className="px-2 bg-white text-slate-800 rounded "><strong>Client:</strong> {data?.client}</p>}
+            <p className="px-2 bg-white text-slate-800 rounded "><strong></strong> {data?.client}</p>}
             <p className="px-2 bg-white text-slate-800 rounded">
-              <strong>Location: </strong>
+              <strong> </strong>
               {`${data.location.floor}, ${data.location.location}, ${data.location.subLocation}`}
             </p>
           </div>
@@ -296,7 +296,7 @@ const SingleLocation = () => {
                 <h2 className="font-bold text-lg px-2">
                   All Premise Services
                 </h2>
-                <AllPremise data={data} />
+                <AllPremise />
               </div>
             </div>
           )}

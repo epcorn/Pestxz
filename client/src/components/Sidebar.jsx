@@ -148,7 +148,7 @@ const Sidebar = () => {
                   {/* Marquee Banner Container */}
                   {/* Moving this to its own row prevents layout breaking */}
 
-                  <div className="w-full absolute top-16 pt-1 hidden lg:block">
+                  <div className="w-full pt-1  hidden lg:block">
                     <TickerTape />
                   </div>
 
@@ -160,7 +160,7 @@ const Sidebar = () => {
 
           {/* Right Section: Brand Logo */}
           <div className="flex items-center gap-1 md:gap-3 bg-slate-50 pl-4 pr-3 py-1.5 rounded-xl border border-slate-100">
-            <div className="hidden md:flex lg:flex flex-col items-start justify-center order-2">
+            <div className="hidden md:flex flex-col items-start justify-center order-2">
               <span className=" text-lg md:text-2xl font-extrabold tracking-tight text-slate-900 leading-none">
                 PestXZ
               </span>
@@ -172,19 +172,19 @@ const Sidebar = () => {
           </div>
 
         </div>
-        <div className="block lg:hidden absolute left-0 right-0 top-[4rem] px-3 z-40">
+        <div className="block lg:hidden absolute  left-0 right-0 top-[4rem] px-3 z-40">
           <TickerTape />
         </div>
       </nav>
 
       <aside
-        className={`fixed top-[4.5rem] md:top-[4.5rem] lg:top-0 left-0 w-60 z-50 h-[calc(100dvh-4.5rem)] md:h-[calc(100dvh-4.5rem)] lg:h-dvh transition-transform duration-300 border-r-2 bg-slate-800 border-gray-500 ${show
+        className={`fixed top-[4.5rem] md:top-[4.9rem] lg:top-0 left-0 w-60 z-50 h-[calc(100dvh-4.5rem)] md:h-[calc(100dvh-4.9rem)] lg:h-dvh transition-transform duration-300 border-r-2 bg-slate-800 border-gray-500 ${show
           ? "translate-x-0"
           : "-translate-x-full lg:translate-x-0"
           }`}
       >
         {/* Added h-full and removed absolute bottom from inside the list */}
-        <div className="h-full flex flex-col j pl-4 overflow-y-auto">
+        <div className="h-full flex flex-col pl-4 overflow-y-auto">
 
           {/* Navigation Links Group */}
           <div className="flex-1">
@@ -212,7 +212,7 @@ const Sidebar = () => {
           </div>
 
           {/* Footer Group (Logout + Branding) stays pinned at the bottom */}
-          <div className="space-y-6 pt-4 border-t border-slate-700/50">
+          <div className="space-y-3 pt-4 border-t border-slate-700/50">
             {/* Moved logout outside the main list */}
             <button
               onClick={handleLogout}
