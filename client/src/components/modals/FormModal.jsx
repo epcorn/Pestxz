@@ -8,6 +8,7 @@ const FormModal = ({ title, formBody, submitLabel, onSubmit, handleClose, disabl
   useEffect(() => {
     if (open) {
       setMounted(true);
+      window.focus();
       setTimeout(() => setVisible(true), 10);
     } else {
       setVisible(false);

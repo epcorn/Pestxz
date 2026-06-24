@@ -186,10 +186,8 @@ export const dailyServiceReport = async (req, res) => {
 
       if (isPestEmployee) {
         await workbook.xlsx.readFile("./tmp/dailyReportPestEmp.xlsx");
-        console.log("pest employee")
       } else {
         await workbook.xlsx.readFile("./tmp/dailyReport.xlsx");
-        console.log("client employee")
       }
       // ✅ Fresh workbook per client so rows don't bleed across clients
 
@@ -332,6 +330,11 @@ export const dailyServiceReport = async (req, res) => {
       const clientName = client.name.replace(/\s+/g, "_"); // sanitize spaces
       const fileName = `${clientName}_Daily_Service_Report-${sufix}.xlsx`;
       const filePath = `./tmp/reports/${fileName}`;
+
+      const dir = "./tmp/reports";
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+      }
       await workbook.xlsx.writeFile(filePath);
 
       await removeOldQr(filePath); //removes old sheet
