@@ -2,11 +2,13 @@ import React, { useState } from 'react'
 import InputRow from '../InputRow'
 import { useForm } from 'react-hook-form'
 import Button from '../Button'
+import { useDispatch } from 'react-redux'
+import { toggleModal } from '../../redux/helperSlice'
 
 function ProductModal() {
+  const dispatch = useDispatch();
   const [add, setAdd] = useState({ cal: "", status: false, count: 1 })
   const { control, formState: { errors }, register, reset, handleSubmit, watch } = useForm();
-
 
 
   return (

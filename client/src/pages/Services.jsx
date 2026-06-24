@@ -46,10 +46,6 @@ const Services = () => {
   const [deleteService, { isLoading: deleteLoading }] =
     useDeleteServiceMutation();
 
-  // // frequencies  
-  // const { data: frequencies, isLoading: freqLoading } = useGetFrequencyQuery();
-  // const [removeFreq] = useRemoveFrequencyMutation()
-
   const services = data?.services || [];
 
   useEffect(() => {
@@ -77,7 +73,6 @@ const Services = () => {
   return (
     <>
       <section className="w-full space-y-5 p-1">
-
         {/* heading  */}
         <div>
           <Headers header={'Services'} user={user} />
