@@ -10,6 +10,7 @@ import fileUpload from "express-fileupload";
 import userRoute from "./routes/userRoute.js";
 import clientRoute from "./routes/clientRoute.js";
 import adminRoute from "./routes/adminRoute.js";
+import productRoute from "./routes/productRoutes.js";
 import locationRoute from "./routes/locationRoute.js";
 import serviceRoute from "./routes/serviceRoute.js";
 import { notFound } from "./middleware/notFound.js";
@@ -93,7 +94,7 @@ app.use(cookieParser());
 app.use(fileUpload({ useTempFiles: true }));
 if (process.env.NODE_ENV !== "production") app.use(morgan("dev"));
 
-// setup cron job 
+// setup cron job
 app.post("/api/cron/auto-mark-missed", (req, res) => {
   const authHeader = req.headers["x-cron-auth"];
   if (authHeader !== "my_super_secret_password_123") {
@@ -110,6 +111,7 @@ app.post("/api/cron/auto-mark-missed", (req, res) => {
 });
 
 app.use("/api/user", userRoute);
+app.use("/api/products", productRoute);
 app.use(
   "/api/client",
   authenticateUser,

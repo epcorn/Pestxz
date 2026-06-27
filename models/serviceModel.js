@@ -39,6 +39,7 @@ const serviceSchema = new mongoose.Schema(
           default: null,
         },
         userName: { type: String, default: null },
+        date: { type: Date, default: Date.now },
       },
     },
     complaintUpdate: [

@@ -33,6 +33,20 @@ export const adminSlice = apiSlice.injectEndpoints({
       }),
       invalidatesTags: ["Admin"],
     }),
+    addProducts: builder.mutation({ //product add
+      query: (data) => ({
+        url: `/api/products/product`,
+        method: "POST",
+        body: data,
+      }),
+      invalidatesTags: ["Admin"],
+    }),
+    getProducts: builder.query({
+      query: () => ({
+        url: `/api/products/product`,
+      }),
+      providesTags: ["Admin"],
+    }),
     registerUser: builder.mutation({
       query: (data) => ({
         url: `/api/admin/user`,
@@ -76,11 +90,6 @@ export const adminSlice = apiSlice.injectEndpoints({
       }),
       providesTags: ["Complaint", "assign", "Casual"],
     }),
-    addProducts: builder.mutation({
-      query: () => ({
-        url: `/api/admin`,
-      }),
-    }),
     runnerData: builder.query({
       query: ({ lat, lon }) => ({
         url: `/api/admin/runner`,
@@ -95,6 +104,8 @@ export const {
   useAllServiceQuery,
   useUpdateServiceMutation,
   useDeleteServiceMutation,
+  useAddProductsMutation,
+  useGetProductsQuery,
   useRegisterUserMutation,
   useAllUserQuery,
   useChangePasswordMutation,

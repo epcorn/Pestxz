@@ -9,7 +9,8 @@ const Button = ({
   color,
   height,
   isLoading,
-  width
+  width,
+  text
 }) => {
   return (
     <button
@@ -25,7 +26,8 @@ const Button = ({
         hover:opacity-80
         transition
         m-1 w-fit
-        text-white
+        shadow
+        ${text ? text : "text-white"}
         ${width && width}
         ${height ? height : "h-8"}
         ${color ? color : "bg-blue-500"}

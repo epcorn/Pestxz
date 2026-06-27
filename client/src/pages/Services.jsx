@@ -12,6 +12,7 @@ import {
   useAddServiceMutation,
   useAllServiceQuery,
   useDeleteServiceMutation,
+  useGetProductsQuery,
   useUpdateServiceMutation,
 } from "../redux/adminSlice";
 import { FaEdit } from "react-icons/fa";
@@ -25,6 +26,7 @@ import Frequency from "../components/Frequency";
 import { useGetSingleUserQuery, userSlice } from "../redux/userSlice";
 import Headers from "../components/Headers";
 import ProductModal from "../components/modals/ProductModal";
+import ProductList from "../components/modals/ProductList";
 
 
 const Services = () => {
@@ -35,10 +37,13 @@ const Services = () => {
     status: false,
     id: "",
   });
+  const [selectedProduct, setSelectedProduct] = useState({ id: "", name: "" })
   const { isModalOpen, user } = useSelector((store) => store.helper);
   const dispatch = useDispatch();
 
   const { data: me } = useGetSingleUserQuery(user?._id, { skip: !user?.id })
+
+  const { data: products } = useGetProductsQuery();
   const { data, isLoading, isFetching, error } = useAllServiceQuery();
   const [addService, { isLoading: addLoading }] = useAddServiceMutation();
   const [updateService, { isLoading: updateLoading }] =
@@ -84,7 +89,7 @@ const Services = () => {
           </div>
           <div >
             <Button color={'bg-blue-600'} label={'Add Products'} onClick={() => dispatch(toggleModal({ name: "products", status: true }))} />
-            {isModalOpen.products && <ProductModal />}
+            {isModalOpen.products && <ProductModal modalKey="products" mode="create" />}
           </div>
         </div>
         <div className="outline grid outline-gray-400 p-4 bg-white rounded-lg space-y-4">
@@ -168,6 +173,19 @@ const Services = () => {
             />
           )}
         </div>
+        <section className="outline grid outline-gray-400 p-4 bg-white rounded-lg space-y-4">
+          <h3 className="text-2xl font-semibold text-center">Products</h3>
+          <div className="hidden  grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-3">
+            {products?.map(pr => (
+              <div key={pr._id} className="outline px-3 py-2 rounded-sm "
+              //  onClick={()=> }
+              >
+                {pr.name}
+              </div>
+            ))}
+          </div>
+          <ProductList selected={selectedProduct} />
+        </section>
       </section>
     </>
   );

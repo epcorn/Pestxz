@@ -3,6 +3,7 @@ import { toast } from "react-toastify";
 import React, { useEffect } from "react";
 import {
   useAllServiceQuery,
+  useGetProductsQuery,
 } from "../../redux/adminSlice";
 import {
   useAddLocationMutation,
@@ -28,6 +29,9 @@ const LocationModal = ({ clientId, locationDetails }) => {
   const { isModalOpen, user } = useSelector((store) => store.helper);
   const [add, { isLoading: addLoading }] = useAddLocationMutation();
   const [update, { isLoading: updateLoading }] = useUpdateLocationMutation();
+
+  const { data: products, isLoading: prLoading } = useGetProductsQuery()
+
   const { data = {}, isLoading, isFetching } = useAllServiceQuery();
   const allServices = data?.services?.flatMap((ser) => ser.service) || [];
 
@@ -140,6 +144,16 @@ const LocationModal = ({ clientId, locationDetails }) => {
         required={false}
       />
 
+      {/* products */}
+      <div className="col-span-3 outline outline-gray-400 rounded m-1 p-1 ">
+        <div className=" flex justify-between items-center">
+          <h3> Products </h3>
+          <Button label={'Add Products'} color={'bg-white'} text={'text-black'}  />
+        </div>
+        <div>
+          
+        </div>
+      </div>
       {/* SERVICES */}
       <div className="col-span-3 mt-2">
         <div className="flex items-center justify-between mb-1">

@@ -59,7 +59,8 @@ function ServiceList({
     <div className="fixed inset-0 w-full h-full grid place-items-center bg-black/70 z-50 p-3">
       <div className="bg-white p-2 grid grid-cols-1 md:grid-cols-2 rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         {/* CLOSE BUTTON */}
-        <div className="col-span-full ml-auto mb-2">
+        <div className="col-span-full ml-auto mb-2 flex justify-between w-full ">
+          <h3 className="text-2xl font-bold">Service Name: {selectedService?.serviceName}</h3>
           <button
             className="outline h-6 w-6 grid place-items-center aspect-square rounded-full text-red-500 cursor-pointer"
             onClick={() => {
@@ -77,7 +78,7 @@ function ServiceList({
           <div className="rounded p-3 bg-white">
             <h2 className="font-semibold mb-3 capitalize flex items-center gap-3 justify-between">
               <span>
-                {selectedService.serviceName} → Scopes
+                Scopes
               </span>
 
               <button
@@ -105,7 +106,7 @@ function ServiceList({
                 />
               )}
 
-              {selectedService.scopes.map((scope) => (
+              {selectedService?.scopes?.map((scope) => (
                 <div
                   key={scope._id}
                   onClick={() => {
@@ -116,7 +117,7 @@ function ServiceList({
                       prev === scope._id ? null : scope._id
                     );
                   }}
-                  className="relative border rounded px-3 py-2 cursor-pointer transition hover:bg-gray-50"
+                  className={`relative border rounded px-3 py-2 cursor-pointer transition ${selectedScope?._id === scope?._id ? "bg-gray-400" : ""}`}
                 >
                   {scope.scopeName}
 

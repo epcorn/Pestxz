@@ -5,55 +5,8 @@ import Frequency from "../models/frequencyModal.js";
 import Location from "../models/locationModel.js";
 import Service from "../models/serviceModel.js";
 import { capitalLetter } from "../utils/helperFunction.js";
+import Product from "../models/productModel.js";
 
-// export const OldaddService = async (req, res) => {
-//   // const { serviceName, serviceType } = req.body;
-//   const { services } = req.body;
-//   try {
-//     if (!serviceName || !consumeable)
-//       return res.status(400).json({ msg: "Please provide required values" });
-
-//     const service = await Admin.findOne({ serviceName });
-//     if (service)
-//       return res.status(400).json({ msg: `${serviceName} already exists` });
-
-//     const servName = capitalLetter(serviceName);
-
-//     await Admin.create({
-//       serviceType: "",
-//       serviceName: "",
-//       services: { label: servName, value: consumeable },
-//     });
-
-//     res.status(201).json({ msg: `${serviceName} successfully added` });
-//   } catch (error) {
-//     console.log(error);
-//     res.status(500).json({ msg: "Server error, try again later" });
-//   }
-// };
-
-//old admin service
-// export const OldgetAllService = async (req, res) => {
-//   try {
-//     const allServices = await Admin.find();
-
-//     const services = [];
-
-//     // allServices.map(
-//     //   (item) =>
-//     //     (item.serviceType.label === "Product" &&
-//     //       products.push(item.serviceName)) ||
-//     //     (item.serviceType.label === "Service" &&
-//     //       services.push(item.serviceName)),
-//     // );
-//     allServices.map((service) => services.push(service));
-
-//     return res.json({ allServices, services });
-//   } catch (error) {
-//     console.log(error);
-//     res.status(500).json({ msg: "Server error, try again later" });
-//   }
-// };
 export const addFrequency = async (req, res) => {
   const { freq } = req.body;
   try {
@@ -140,7 +93,6 @@ export const addService = async (req, res) => {
     res.status(500).json({ msg: "Server error, try again later" });
   }
 };
-
 export const getAllService = async (req, res) => {
   try {
     const services = await Admin.find();
@@ -151,6 +103,7 @@ export const getAllService = async (req, res) => {
     res.status(500).json({ msg: "Server error, try again later" });
   }
 };
+
 
 export const editService = async (req, res) => {
   const { id } = req.params;
@@ -527,7 +480,7 @@ export const runnerData = async (req, res) => {
         .json({ msg: "failed fetching internal server error" });
     }
     const data = await resp.json();
-    
+
     res.status(200).json(data);
   } catch (error) {
     console.log(error.message);
