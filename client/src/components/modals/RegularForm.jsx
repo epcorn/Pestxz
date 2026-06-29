@@ -165,12 +165,12 @@ function RegularForm({ serviceData, id, type, locationName, setRegular }) {
           </div>
 
           <form className="space-y-6 bg-green-200">
-            {servicesForToday?.map((ser) => {
+            {servicesForToday?.map((ser,i) => {
               const todaySchedule = isRegular ? ser.schedule?.find(
                 (s) => formatShortDate(s.date) === today && !s.completed) : null;
               return (
                 <div
-                  key={ser.serviceName}
+                  key={i}
                   className="outline outline-gray-400 rounded p-2 bg-white/70 shadow text-xs md:textbase"
                 >
                   <div className="flex justify-between mb-4">

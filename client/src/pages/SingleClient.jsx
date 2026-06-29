@@ -94,6 +94,7 @@ const SingleClient = () => {
     saveAs(res?.qr, `${data.clientName}-Location.docx`)
 
   }
+
   return (
     <>
       {isLoading || isFetching ? (
@@ -185,7 +186,6 @@ const SingleClient = () => {
                   <LocationModal
                     clientId={id}
                     locationDetails={locationDetails}
-                    
                   />
                 )}
               </div>
@@ -213,7 +213,10 @@ const SingleClient = () => {
             <table className="w-full border whitespace-nowrap border-neutral-500 bg-text">
               <thead>
                 <tr className="h-10 w-full text-md md:text-lg leading-none">
-                  <th className="font-bold text-center border-neutral-500 border-2 px-3 min-w-26" onClick={() => setSelectedQr([])}>
+                  <th className="font-bold text-center border-neutral-500 border-2 px-3 min-w-26" onClick={() => {
+                    if (selectedQr.length === 0) return;
+                    setSelectedQr([])
+                  }}>
                     {selectedQr.length > 0 ? "Deselect" : "Select"}
                   </th>
                   <th className="font-bold text-center border-neutral-500 border-2 px-3">
@@ -245,11 +248,12 @@ const SingleClient = () => {
                         name={location.floor}
                         id={location.floor}
                         checked={selectedQr.some(item => item.id === location._id)}
-                        onChange={() => setSelectedQr(prev =>
-                          prev.some(item => item.id === location._id)
-                            ? prev.filter(item => item.id !== location._id)
-                            : [...prev, { qr: location.qr, id: location._id }]
-                        )}
+                        onChange={() =>
+                          setSelectedQr(prev =>
+                            prev.some(item => item.id === location._id)
+                              ? prev.filter(item => item.id !== location._id)
+                              : [...prev, { qr: location.qr, id: location._id }]
+                          )}
                       />
                     </td>
                     <td className="px-3 border-r font-normal border-neutral-500">

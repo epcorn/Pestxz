@@ -16,6 +16,16 @@ const FormModal = ({ title, formBody, submitLabel, onSubmit, handleClose, disabl
     }
   }, [open]);
 
+  useEffect(() => {
+    if (mounted) {
+      document.body.classList.add("overflow-y-hidden")
+    } else {
+      document.body.classList.remove("overflow-y-hidden")
+    }
+
+    return()=> document.body.classList.remove("overflow-y-hidden")
+  }, [mounted])
+
   if (!mounted) return null;
 
   return (

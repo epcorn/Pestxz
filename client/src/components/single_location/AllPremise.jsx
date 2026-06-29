@@ -12,7 +12,6 @@ function AllPremise() {
 
   const dates = locations?.locations?.flatMap(loc => loc.service)
 
-  console.log(allPremiseSchedules)
   return (
     <section className="bg-white rounded-md overflow-hidden select-none">
       <table className="w-full  border-collapse text-left text-sm text-slate-700">

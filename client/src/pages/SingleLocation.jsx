@@ -27,6 +27,7 @@ import UnscheduledForm from "../components/single_location/UnscheduledForm";
 import CasualLists from "../components/single_location/casual/CasualLists";
 import CasualForm from "../components/single_location/casual/CasualForm";
 import Headers from "../components/Headers";
+import ProductShow from "../components/single_location/ProductShow";
 
 
 const SingleLocation = () => {
@@ -112,9 +113,16 @@ const SingleLocation = () => {
           {/* } */}
 
           {/* TABLE */}
-          <div>
-            <ServiceShow services={data?.location?.service} />
-          </div>
+          {data?.location?.service?.length > 0 &&
+            <div>
+              <ServiceShow services={data?.location?.service} />
+            </div>
+          }
+          {data?.location?.product?.length > 0 &&
+            <div>
+              <ProductShow products={data?.location?.product} />
+            </div>
+          }
           {
             DBUser?.rights.raise && id && (
               <>

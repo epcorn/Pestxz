@@ -49,84 +49,135 @@ export const qrCounter = async (req, res) => {
     });
   }
 };
-
 export const addLocation = async (req, res) => {
-  const { floor, subLocation, location, clientId, serviceReq } = req.body;
+  const {
+    floor,
+    subLocation,
+    location,
+    clientId,
+    serviceReq,
+    productReq,
+    type,
+  } = req.body;
 
   try {
-    const client = await Client.findByIdSafe(clientId);
+    const client = await Client.findById(clientId);
+    if (!client) return res.status(404).json({ msg: "Client not found" });
 
-    if (!client) {
-      return res.status(404).json({
-        msg: "Client not found",
-      });
-    }
     const locationExist = await Location.findOne({
       client: clientId,
       floor: { $regex: `^${floor}$`, $options: "i" },
-      subLocation: {
-        $regex: `^${subLocation || ""}$`,
-        $options: "i",
-      },
+      subLocation: { $regex: `^${subLocation || ""}$`, $options: "i" },
       location: { $regex: `^${location}$`, $options: "i" },
     });
-    if (locationExist) {
-      return res.status(400).json({
-        msg: "Location already exist",
-      });
-    }
-    const validServices = (serviceReq || []).filter(
-      (service) =>
-        service.serviceId &&
-        service.serviceName &&
-        Array.isArray(service.scopes) &&
-        service.scopes.length > 0,
-    );
-    if (validServices.length < 1) {
-      return res.status(400).json({
-        msg: "Please add at least one valid service",
-      });
-    }
+    if (locationExist)
+      return res.status(400).json({ msg: "Location already exists" });
+
     const contractStart = new Date(client.startDate);
     const contractEnd = new Date(client.endDate);
 
-    const formattedServices = validServices.map((service) => {
-      const generatedDates = generateSchedule(
+    // ── build service array ──────────────────────────────────────────
+    let formattedServices = [];
+    if (type.includes("service") && serviceReq?.length) {
+      const validServices = serviceReq.filter(
+        (s) =>
+          s.serviceId &&
+          s.serviceName &&
+          Array.isArray(s.scopes) &&
+          s.scopes.length > 0,
+      );
+      if (validServices.length < 1)
+        return res
+          .status(400)
+          .json({ msg: "Please add at least one valid service" });
+
+      formattedServices = validServices.map((service) => {
+        const schedule = generateSchedule(
+          contractStart,
+          contractEnd,
+          service.frequency,
+        ).map((date) => ({
+          date: date.date,
+          completed: date.completed,
+          status: date.status,
+          completedAt: null,
+          completedBy: "",
+        }));
+
+        return {
+          serviceId: service.serviceId,
+          serviceName: service.serviceName,
+          frequency: service.frequency,
+          schedule,
+          scopes: service.scopes.map((scope) => ({
+            scopeId: scope.scopeId,
+            scopeName: scope.scopeName,
+            consumables: (scope.consumables || []).map((con) => ({
+              consumableId: con.consumableId,
+              consumableName: con.consumableName,
+              calibration: con.calibration,
+            })),
+          })),
+        };
+      });
+    }
+
+    // ── build product ────────────────────────────────────────────────
+    let formattedProduct = null;
+    if (type.includes("product") && productReq) {
+      const {
+        productId,
+        productName,
+        versionId,
+        versionName,
+        frequency,
+        code,
+        specification,
+        calibrations,
+      } = productReq;
+
+      if (!productId || !versionId || !frequency)
+        return res.status(400).json({ msg: "Please fill all product fields" });
+
+      const schedule = generateSchedule(
         contractStart,
         contractEnd,
-        service.frequency,
-      );
-      const schedule = generatedDates.map((date) => ({
+        frequency,
+      ).map((date) => ({
         date: date.date,
         completed: date.completed,
         status: date.status,
         completedAt: null,
         completedBy: "",
       }));
-      return {
-        serviceId: service.serviceId,
-        serviceName: service.serviceName,
-        frequency: service.frequency,
+
+      formattedProduct = {
+        productId,
+        productName,
+        versionId,
+        versionName,
+        frequency,
+        code,
+        specification,
+        calibrations: calibrations ?? [],
         schedule,
-        scopes: service.scopes.map((scope) => ({
-          scopeId: scope.scopeId,
-          scopeName: scope.scopeName,
-          consumables: (scope.consumables || []).map((consumable) => ({
-            consumableId: consumable.consumableId,
-            consumableName: consumable.consumableName,
-            calibration: consumable.calibration,
-          })),
-        })),
       };
-    });
+    }
+
+    if (!formattedServices.length && !formattedProduct)
+      return res
+        .status(400)
+        .json({ msg: "Please add at least one service or product" });
 
     const newLocation = await Location.create({
       floor: capitalLetter(floor),
       subLocation: capitalLetter(subLocation || ""),
       location: capitalLetter(location),
       service: formattedServices,
+      product: formattedProduct ? [formattedProduct] : [],
       client: client._id,
     });
+
     const locationId = newLocation._id;
     const qrData = await qrCodeGenerator({
       link: `https://pestxz.onrender.com/location/${locationId}`,
@@ -135,33 +186,26 @@ export const addLocation = async (req, res) => {
     });
     if (!qrData) {
       await Location.findByIdAndDelete(locationId);
-      return res.status(400).json({
-        msg: "QR generation error. Try again later",
-      });
+      return res
+        .status(400)
+        .json({ msg: "QR generation error. Try again later" });
     }
+
     fs.writeFileSync("./tmp/qr.jpeg", qrData);
-    const qrLink = await uploadFile({
-      filePath: "./tmp/qr.jpeg",
-    });
+    const qrLink = await uploadFile({ filePath: "./tmp/qr.jpeg" });
     if (!qrLink) {
       await Location.findByIdAndDelete(locationId);
-      return res.status(400).json({
-        msg: "QR upload error. Try again later",
-      });
+      return res.status(400).json({ msg: "QR upload error. Try again later" });
     }
 
     newLocation.qr = qrLink;
     await newLocation.save();
-
     autoMarkMissed();
-    return res.status(201).json({
-      msg: "Location added successfully",
-    });
+
+    return res.status(201).json({ msg: "Location added successfully" });
   } catch (error) {
     console.log(error);
-    return res.status(500).json({
-      msg: "Server error, try again later",
-    });
+    return res.status(500).json({ msg: "Server error, try again later" });
   }
 };
 
@@ -207,197 +251,299 @@ export const getAllLocations = async (req, res) => {
 
 export const updateLocation = async (req, res) => {
   const { id } = req.params;
+  const {
+    floor,
+    subLocation,
+    location,
+    serviceReq,
+    productReq,
+    type,
+    changes,
+  } = req.body;
 
   try {
-    const location = await Location.findById(id);
-
-    if (!location) {
+    const existingLocation = await Location.findById(id);
+    if (!existingLocation)
       return res.status(404).json({ msg: "Location not found" });
+
+    await removeOldQr(existingLocation.qr);
+
+    const client = await Client.findById(existingLocation.client);
+    const contractStart = new Date(client.startDate);
+    const contractEnd = new Date(client.endDate);
+
+    // ── build service array ──────────────────────────────────────────
+    let formattedServices = [];
+    if (type.includes("service") && serviceReq?.length) {
+      const validServices = serviceReq.filter(
+        (s) =>
+          s.serviceId &&
+          s.serviceName &&
+          Array.isArray(s.scopes) &&
+          s.scopes.length > 0,
+      );
+      if (validServices.length < 1)
+        return res
+          .status(400)
+          .json({ msg: "Please add at least one valid service" });
+
+      formattedServices = validServices.map((service) => {
+        const existingService = existingLocation.service.find(
+          (s) => s.serviceId?.toString() === service.serviceId?.toString(),
+        );
+        let schedule = existingService?.schedule || [];
+
+        if (
+          !schedule.length ||
+          existingService?.frequency !== service.frequency
+        ) {
+          schedule = generateSchedule(
+            contractStart,
+            contractEnd,
+            service.frequency,
+          ).map((date) => ({
+            date: date.date,
+            completed: date.completed,
+            status: date.status,
+            completedAt: null,
+            completedBy: "",
+          }));
+        }
+
+        return {
+          serviceId: service.serviceId,
+          serviceName: service.serviceName,
+          frequency: service.frequency,
+          schedule,
+          scopes: service.scopes.map((scope) => ({
+            scopeId: scope.scopeId,
+            scopeName: scope.scopeName,
+            consumables: (scope.consumables || []).map((con) => ({
+              consumableId: con.consumableId,
+              consumableName: con.consumableName,
+              calibration: con.calibration,
+            })),
+          })),
+        };
+      });
     }
 
-    await removeOldQr(location.qr);
+    // ── build product ────────────────────────────────────────────────
+    let formattedProduct = null;
+    if (type.includes("product") && productReq) {
+      const {
+        productId,
+        productName,
+        versionId,
+        versionName,
+        frequency,
+        code,
+        specification,
+        calibrations,
+      } = productReq;
 
-    const client = await Client.findByIdSafe(location.client);
-    const contractStart = new Date(client.startDate);
-    const contractEnd = client.endDate;
+      if (!productId || !versionId || !frequency)
+        return res.status(400).json({ msg: "Please fill all product fields" });
 
-    const validServices = (req.body.serviceReq || []).filter(
-      (service) =>
-        service.serviceId &&
-        service.serviceName &&
-        Array.isArray(service.scopes) &&
-        service.scopes.length > 0,
-    );
-
-    const formattedServices = validServices.map((service) => {
-      const existingService = location.service.find(
-        (s) => s.serviceId?.toString() === service.serviceId?.toString(),
-      );
-
-      let schedule = existingService?.schedule || [];
+      const existingProduct = existingLocation.product?.[0];
+      let schedule = existingProduct?.schedule || [];
 
       if (
         !schedule.length ||
-        existingService?.frequency !== service.frequency
+        existingProduct?.productId?.toString() !== productId ||
+        existingProduct?.versionId?.toString() !== versionId ||
+        existingProduct?.frequency !== frequency
       ) {
-        const generatedDates = generateSchedule(
-          contractStart,
-          contractEnd,
-          service.frequency,
+        schedule = generateSchedule(contractStart, contractEnd, frequency).map(
+          (date) => ({
+            date: date.date,
+            completed: date.completed,
+            status: date.status,
+            completedAt: null,
+            completedBy: "",
+          }),
         );
-        schedule = generatedDates.map((date) => ({
-          date: date.date,
-          completed: date.completed,
-          status: date.status,
-          completedAt: null,
-          completedBy: "",
-        }));
       }
 
-      return {
-        serviceId: service.serviceId,
-        serviceName: service.serviceName,
-        frequency: service.frequency,
+      formattedProduct = {
+        productId,
+        productName,
+        versionId,
+        versionName,
+        frequency,
+        code,
+        specification,
+        calibrations: calibrations ?? [],
         schedule,
-        scopes: service.scopes.map((scope) => ({
-          scopeId: scope.scopeId,
-          scopeName: scope.scopeName,
-          consumables: (scope.consumables || []).map((consumable) => ({
-            consumableId: consumable.consumableId,
-            consumableName: consumable.consumableName,
-            calibration: consumable.calibration,
-          })),
-        })),
       };
-    });
+    }
 
-    // --- Build diff of what changed ---
+    if (!formattedServices.length && !formattedProduct)
+      return res
+        .status(400)
+        .json({ msg: "Please add at least one service or product" });
+
+    // ── build diff ───────────────────────────────────────────────────
     const diff = {};
 
-    if (req.body.floor !== location.floor) {
-      diff.floor = { from: location.floor, to: req.body.floor };
-    }
-    if (req.body.location !== location.location) {
-      diff.location = { from: location.location, to: req.body.location };
-    }
-    if (req.body.subLocation !== location.subLocation) {
+    if (floor !== existingLocation.floor)
+      diff.floor = { from: existingLocation.floor, to: floor };
+    if (location !== existingLocation.location)
+      diff.location = { from: existingLocation.location, to: location };
+    if (subLocation !== existingLocation.subLocation)
       diff.subLocation = {
-        from: location.subLocation,
-        to: req.body.subLocation,
-      };
-    }
-
-    // Services diff
-    const oldServiceNames = location.service.map((s) => s.serviceName);
-    const newServiceNames = formattedServices.map((s) => s.serviceName);
-
-    const addedServices = newServiceNames.filter(
-      (s) => !oldServiceNames.includes(s),
-    );
-    const removedServices = oldServiceNames.filter(
-      (s) => !newServiceNames.includes(s),
-    );
-
-    const frequencyChanges = formattedServices
-      .filter((newSvc) => {
-        const old = location.service.find(
-          (s) => s.serviceId?.toString() === newSvc.serviceId?.toString(),
-        );
-        return old && old.frequency !== newSvc.frequency;
-      })
-      .map((newSvc) => {
-        const old = location.service.find(
-          (s) => s.serviceId?.toString() === newSvc.serviceId?.toString(),
-        );
-        return {
-          service: newSvc.serviceName,
-          from: old.frequency,
-          to: newSvc.frequency,
-        };
-      });
-
-    // Scopes diff
-    const oldScopesName = location?.service?.flatMap((s) =>
-      s?.scopes?.map((sc) => sc?.scopeName),
-    );
-    const newScopesName = formattedServices?.flatMap((s) =>
-      s?.scopes.map((sc) => sc?.scopeName),
-    );
-
-    const addedScopes = newScopesName.filter((s) => !oldScopesName.includes(s));
-    const removedScopes = oldScopesName.filter(
-      (s) => !newScopesName.includes(s),
-    );
-
-    // Consumables diff
-    const oldConsumables = location?.service?.flatMap((s) =>
-      s?.scopes?.flatMap((sc) =>
-        sc?.consumables?.map((con) => ({
-          consumableName: con.consumableName,
-          calibration: con.calibration,
-        })),
-      ),
-    );
-    const newConsumables = formattedServices?.flatMap((s) =>
-      s?.scopes?.flatMap((sc) =>
-        sc?.consumables?.map((con) => ({
-          consumableName: con.consumableName,
-          calibration: con.calibration,
-        })),
-      ),
-    );
-
-    const addedConsumables = newConsumables
-      .filter(
-        (n) =>
-          !oldConsumables?.find((o) => o?.consumableName === n?.consumableName),
-      )
-      ?.map((c) => c?.consumableName);
-
-    const removedConsumables = oldConsumables
-      .filter(
-        (o) =>
-          !newConsumables?.find((n) => n?.consumableName === o?.consumableName),
-      )
-      ?.map((c) => c?.consumableName);
-
-    // Calibration changes on existing consumables
-    const calibrationChanges = newConsumables
-      .filter((n) => {
-        const old = oldConsumables?.find(
-          (o) => o?.consumableName === n.consumableName,
-        );
-        return old && old.calibration !== n.calibration;
-      })
-      .map((n) => {
-        const old = oldConsumables.find(
-          (o) => o?.consumableName === n.consumableName,
-        );
-        return {
-          consumable: n.consumableName,
-          from: old.calibration,
-          to: n.calibration,
-        };
-      });
-
-    if (req.body.floor !== location.floor)
-      diff.floor = { from: location.floor, to: req.body.floor };
-    if (req.body.location !== location.location)
-      diff.location = { from: location.location, to: req.body.location };
-    if (req.body.subLocation !== location.subLocation)
-      diff.subLocation = {
-        from: location.subLocation,
-        to: req.body.subLocation,
+        from: existingLocation.subLocation,
+        to: subLocation,
       };
 
-    if (addedServices.length) diff.servicesAdded = addedServices;
-    if (removedServices.length) diff.servicesRemoved = removedServices;
-    if (frequencyChanges.length) diff.frequencyChanges = frequencyChanges;
-    if (addedScopes.length) diff.scopesAdded = addedScopes;
-    if (removedScopes.length) diff.scopesRemoved = removedScopes;
-    if (addedConsumables.length) diff.consumablesAdded = addedConsumables;
-    if (removedConsumables.length) diff.consumablesRemoved = removedConsumables;
-    if (calibrationChanges.length) diff.calibrationChanges = calibrationChanges;
+    // service diff — only when service is in the active types
+    if (type.includes("service")) {
+      const oldServiceNames = existingLocation.service.map(
+        (s) => s.serviceName,
+      );
+      const newServiceNames = formattedServices.map((s) => s.serviceName);
+
+      const addedServices = newServiceNames.filter(
+        (s) => !oldServiceNames.includes(s),
+      );
+      const removedServices = oldServiceNames.filter(
+        (s) => !newServiceNames.includes(s),
+      );
+
+      const frequencyChanges = formattedServices
+        .filter((newSvc) => {
+          const old = existingLocation.service.find(
+            (s) => s.serviceId?.toString() === newSvc.serviceId?.toString(),
+          );
+          return old && old.frequency !== newSvc.frequency;
+        })
+        .map((newSvc) => {
+          const old = existingLocation.service.find(
+            (s) => s.serviceId?.toString() === newSvc.serviceId?.toString(),
+          );
+          return {
+            service: newSvc.serviceName,
+            from: old.frequency,
+            to: newSvc.frequency,
+          };
+        });
+
+      const oldScopes = existingLocation.service.flatMap((s) =>
+        s.scopes?.map((sc) => sc.scopeName),
+      );
+      const newScopes = formattedServices.flatMap((s) =>
+        s.scopes.map((sc) => sc.scopeName),
+      );
+
+      const oldConsumables = existingLocation.service.flatMap((s) =>
+        s.scopes?.flatMap((sc) =>
+          sc.consumables?.map((con) => ({
+            consumableName: con.consumableName,
+            calibration: con.calibration,
+          })),
+        ),
+      );
+      const newConsumables = formattedServices.flatMap((s) =>
+        s.scopes?.flatMap((sc) =>
+          sc.consumables?.map((con) => ({
+            consumableName: con.consumableName,
+            calibration: con.calibration,
+          })),
+        ),
+      );
+
+      const addedConsumables = newConsumables
+        .filter(
+          (n) =>
+            !oldConsumables.find(
+              (o) => o?.consumableName === n?.consumableName,
+            ),
+        )
+        .map((c) => c.consumableName);
+      const removedConsumables = oldConsumables
+        .filter(
+          (o) =>
+            !newConsumables.find(
+              (n) => n?.consumableName === o?.consumableName,
+            ),
+        )
+        .map((c) => c.consumableName);
+      const calibrationChanges = newConsumables
+        .filter((n) => {
+          const old = oldConsumables.find(
+            (o) => o?.consumableName === n.consumableName,
+          );
+          return old && old.calibration !== n.calibration;
+        })
+        .map((n) => {
+          const old = oldConsumables.find(
+            (o) => o?.consumableName === n.consumableName,
+          );
+          return {
+            consumable: n.consumableName,
+            from: old.calibration,
+            to: n.calibration,
+          };
+        });
+
+      if (addedServices.length) diff.servicesAdded = addedServices;
+      if (removedServices.length) diff.servicesRemoved = removedServices;
+      if (frequencyChanges.length) diff.frequencyChanges = frequencyChanges;
+      if (newScopes.filter((s) => !oldScopes.includes(s)).length)
+        diff.scopesAdded = newScopes.filter((s) => !oldScopes.includes(s));
+      if (oldScopes.filter((s) => !newScopes.includes(s)).length)
+        diff.scopesRemoved = oldScopes.filter((s) => !newScopes.includes(s));
+      if (addedConsumables.length) diff.consumablesAdded = addedConsumables;
+      if (removedConsumables.length)
+        diff.consumablesRemoved = removedConsumables;
+      if (calibrationChanges.length)
+        diff.calibrationChanges = calibrationChanges;
+    }
+
+    // product diff — only when product is in the active types
+    if (type.includes("product")) {
+      const oldProduct = existingLocation.product?.[0];
+      if (oldProduct) {
+        if (oldProduct.productId?.toString() !== formattedProduct.productId)
+          diff.product = {
+            from: oldProduct.productName,
+            to: formattedProduct.productName,
+          };
+        if (oldProduct.versionId?.toString() !== formattedProduct.versionId)
+          diff.version = {
+            from: oldProduct.versionName,
+            to: formattedProduct.versionName,
+          };
+        if (oldProduct.frequency !== formattedProduct.frequency)
+          diff.productFrequency = {
+            from: oldProduct.frequency,
+            to: formattedProduct.frequency,
+          };
+
+        const addedCalibrations = formattedProduct.calibrations.filter(
+          (c) => !oldProduct.calibrations?.includes(c),
+        );
+        const removedCalibrations = (oldProduct.calibrations || []).filter(
+          (c) => !formattedProduct.calibrations.includes(c),
+        );
+        if (addedCalibrations.length)
+          diff.calibrationsAdded = addedCalibrations;
+        if (removedCalibrations.length)
+          diff.calibrationsRemoved = removedCalibrations;
+      } else {
+        diff.productAdded = formattedProduct.productName;
+      }
+    }
+
+    // track when service is newly added or removed on update
+    if (type.includes("service") && !existingLocation.service?.length)
+      diff.serviceAdded = formattedServices.map((s) => s.serviceName);
+    if (!type.includes("service") && existingLocation.service?.length)
+      diff.serviceRemoved = existingLocation.service.map((s) => s.serviceName);
+
+    // track when product is removed on update
+    if (!type.includes("product") && existingLocation.product?.length)
+      diff.productRemoved = existingLocation.product[0].productName;
 
     const changeEntry =
       Object.keys(diff).length > 0
@@ -405,43 +551,41 @@ export const updateLocation = async (req, res) => {
             changedAt: new Date(),
             changedBy_id: req.user?.id || null,
             changedBy_user: req.user?.name || null,
-            reason: req?.body?.changes,
+            reason: changes,
             diff,
           }
         : null;
 
     const qrData = await qrCodeGenerator({
       link: `https://pestxz.onrender.com/location/${id}`,
-      floor: req.body.floor,
-      location: `${req.body.location}, ${req.body.subLocation}`,
+      floor,
+      location: `${location}, ${subLocation}`,
     });
-
     fs.writeFileSync("./tmp/qr.jpeg", qrData);
-    const qrLink = await uploadFile({
-      filePath: "./tmp/qr.jpeg",
-    });
+    const qrLink = await uploadFile({ filePath: "./tmp/qr.jpeg" });
 
     const updatedLocation = await Location.findByIdAndUpdate(
       id,
       {
         $set: {
-          floor: req.body.floor,
-          subLocation: req.body.subLocation,
-          location: req.body.location,
-          service: formattedServices,
+          floor,
+          subLocation,
+          location,
           qr: qrLink,
-          product: Array.isArray(req.body.product) ? req.body.product : [],
+          // only overwrite each array if that type is active
+          // if unchecked, clear that array so stale data doesn't linger
+          service: type.includes("service") ? formattedServices : [],
+          product: type.includes("product") ? [formattedProduct] : [],
         },
         ...(changeEntry && { $push: { changes: changeEntry } }),
       },
       { new: true, runValidators: true },
     );
 
-    autoMarkMissed();
-    if (!updatedLocation) {
+    if (!updatedLocation)
       return res.status(404).json({ msg: "Location not found" });
-    }
 
+    autoMarkMissed();
     return res.json({ msg: "Updated successfully" });
   } catch (error) {
     console.log(error);
@@ -482,10 +626,10 @@ export const getLocationDetails = async (req, res) => {
     if (!isInternalUser && !isSameClient)
       return res.status(401).json({ msg: "You are not authorized" });
 
-    location.service = [
-      ...(location.service || []),
-      ...(location.product || []),
-    ];
+    // location.service = [
+    //   ...(location.service || []),
+    //   ...(location.product || []),
+    // ];
 
     const complaints = await Service.find({
       type: "Complaint",
