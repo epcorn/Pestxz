@@ -1,8 +1,9 @@
 import React, { useState } from 'react'
+import { formatShortDate } from '../../utils/helperFunctions'
 
 function ProductShow({ products }) {
   const [show, setShow] = useState(false)
-
+  console.log(products)
   return (
     <section className="">
       <div className="mt-3 ">
@@ -22,21 +23,21 @@ function ProductShow({ products }) {
             </tr>
           </thead>
           <tbody className="whitespace-nowrap bg-white text-sm">
-            {products?.map(pr => {
+            {products?.map((pr, i) => {
               const schedules = pr?.schedule
               const slicedSchedules = show ? schedules : pr.schedule.slice(0, 5)
               return (
-                <tr key={pr.productId} className="border-b border-black last:border-b-0 *:px-2">
+                <tr key={pr.productId + i} className="border-b border-black last:border-b-0 *:px-2">
                   <td className="border-r border-black">{pr.productName}</td>
                   <td className="border-r border-black">{pr.versionName}</td>
                   <td className="border-r border-black">{pr.code}</td>
-                  <td className="border-r border-black">{pr.code}</td>
+                  <td className="border-r border-black">{pr?.serialNo}</td>
                   <td className="border-r border-black">{pr.frequency}</td>
                   <td className=''>
-                    <div className="flex flex-wrap *:flex-1 gap-2 min-w-[200px] p-1 max-h-20 text-xs font-semibold overflow-auto">
+                    <div className="flex flex-wrap gap-2 min-w-[200px] p-1 max-h-20 text-xs font-semibold overflow-auto">
                       {slicedSchedules?.map(sc => (
                         <span key={sc.date} className="outline-1 rounded outline-black px-1.5 py-0.5">
-                          {sc.date}
+                          {formatShortDate(sc.date)}
                         </span>
                       ))}
 

@@ -226,7 +226,7 @@ const SingleClient = () => {
                     Location
                   </th>
                   <th className="font-bold text-center border-neutral-500 border-2 w-32 px-3">
-                    Services
+                    Services/ [Products]
                   </th>
                   <th className="font-bold text-center border-neutral-500 border-2 w-28">
                     QR Codes
@@ -264,8 +264,12 @@ const SingleClient = () => {
                     <td className="px-3 border-r font-normal border-neutral-500">
                       {location.location}, {location.subLocation}
                     </td>
-                    <td className="px-3 border-r font-normal text-center border-neutral-500">
-                      {location.service?.map((item) => item.serviceName).join(", ")}
+                    <td className="px-3 border-r font-normal text-center leading-tight border-neutral-500">
+                      <span>{location.service?.map((item) => item.serviceName).join(", ")}</span> <br />
+
+                      {location.product.length !== 0 ?
+                        <span>[{location.product?.map((item) => item.productName).join(", ")}]</span> : ""}
+
                     </td>
                     <td className="border-r font-normal text-center border-neutral-500">
                       <Button

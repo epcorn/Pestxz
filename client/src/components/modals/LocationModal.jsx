@@ -11,6 +11,7 @@ import { frequencies } from "../../utils/helperFunctions";
 import History from "../History";
 import ProductSection from "./ProductSection";
 import ServiceSection from "./ServiceSection";
+import { version } from "mongoose";
 
 const defaultService = {
   serviceId: "",
@@ -18,6 +19,7 @@ const defaultService = {
   frequency: "",
   scopes: [],
 };
+
 
 const LocationModal = ({ clientId, locationDetails }) => {
   const dispatch = useDispatch();
@@ -48,47 +50,18 @@ const LocationModal = ({ clientId, locationDetails }) => {
       code: "",
       specification: "",
       calibrations: [],
+      products: [
+        { product: null, version: null, code: '', frequency: null, specification: "", calibration: [] }
+      ]
     },
   });
 
   const serviceReq = watch("serviceReq");
-  const selectedProduct = watch("product");
-  const selectedVersion = watch("version");
 
-  const versions = useMemo(() => {
-    if (!selectedProduct?.value || !products) return [];
-    return products
-      .filter((p) => p?._id === selectedProduct.value)
-      .flatMap((p) => p.version?.map((ver) => ({ label: ver.name, value: ver._id })) || []);
-  }, [selectedProduct?.value, products]);
-
-  const prFrequency = useMemo(
-    () => frequencies.map((fr) => ({ label: fr, value: fr })),
-    []
-  );
-
-  const allProducts = useMemo(
-    () => products?.map((p) => ({ label: p.name, value: p._id })) ?? [],
-    [products]
-  );
-
-  const productinfo = useMemo(() => {
-    if (!selectedProduct?.value || !selectedVersion?.value || !products) return null;
-    const activeProduct = products.find((p) => p._id === selectedProduct.value);
-    const activeVersion = activeProduct?.version?.find((ver) => ver._id === selectedVersion.value);
-    return {
-      code: activeVersion?.code,
-      specification: activeProduct?.specification,
-      calibrations: activeProduct?.calibration,
-    };
-  }, [selectedProduct?.value, selectedVersion?.value, products]);
-
-  // auto-fill code & specification when product+version selected
-  useEffect(() => {
-    if (!productinfo) return;
-    setValue("code", productinfo.code ?? "");
-    setValue("specification", productinfo.specification ?? "");
-  }, [productinfo, setValue]);
+  const allProducts = products?.map(pr => ({
+    label: pr.name, value: pr._id
+  }))
+  const prFrequency = frequencies.map(f => ({ label: f, value: f }))
 
   // populate form when editing an existing location
   useEffect(() => {
@@ -121,16 +94,15 @@ const LocationModal = ({ clientId, locationDetails }) => {
       location: locationDetails.location || "",
       subLocation: locationDetails.subLocation || "",
 
-      // Controller fields need {label, value} shape for react-select to show pre-selected
-      ...(hasProduct && {
-        product: { label: pr.productName, value: pr.productId },
-        version: { label: pr.versionName, value: pr.versionId },
-        frequency: { label: pr.frequency, value: pr.frequency },
-        code: pr.code || "",
-        specification: pr.specification || "",
-        calibrations: pr.calibrations ?? [],
-      }),
-
+      products: hasProduct ?
+        locationDetails.product?.map((pr) => ({
+          product: { label: pr?.productName, value: pr?.productId },
+          version: { label: pr?.versionName, value: pr?.versionId },
+          frequency: { label: pr?.frequency, value: pr?.frequency },
+          code: pr?.code || '',
+          specification: pr?.specification || "",
+          calibrations: pr?.calibrations ?? [],
+        })) : [{ product: null, version: null, code: '', frequency: null, specification: '', calibration: [] }],
       serviceReq: hasService
         ? locationDetails.service.map((ser) => ({
           serviceId: ser.serviceId || "",
@@ -171,21 +143,20 @@ const LocationModal = ({ clientId, locationDetails }) => {
     }
 
     if (type.includes("product")) {
-      if (!data.product?.value || !data.version?.value || !data.frequency?.value) {
-        toast.warning("Please fill all product fields");
-        return;
-      }
-      data.productReq = {
-        productId: data.product.value,
-        productName: data.product.label,
-        versionId: data.version.value,
-        versionName: data.version.label,
-        frequency: data.frequency.value,
-        code: data.code,
-        specification: data.specification,
-        calibrations: data.calibrations ?? [],
-      };
+      const validProducts = data?.products?.filter((p) => p.product.value && p.version.value && p.version.label && p.frequency.value);
+      console.log(validProducts)
+      data.productReq = validProducts?.map(p => ({
+        productId: p.product.value,
+        productName: p.product.label,
+        versionId: p.version.value,
+        versionName: p?.version?.label,
+        frequency: p.frequency.value,
+        code: p.code,
+        specification: p.specification,
+        calibrations: p.calibrations ?? [],
+      }));
     }
+    console.log(data.productReq)
 
     if (locationDetails && !data.changes?.trim()) {
       toast.warning("Please specify what changed and why");
@@ -256,9 +227,9 @@ const LocationModal = ({ clientId, locationDetails }) => {
           control={control}
           errors={errors}
           prFrequency={prFrequency}
-          productinfo={productinfo}
+          products={products}
           register={register}
-          versions={versions}
+          setValue={setValue}
         />
       )}
 

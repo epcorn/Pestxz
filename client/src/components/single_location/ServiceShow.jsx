@@ -43,7 +43,7 @@ function ServiceShow({ services }) {
                 className="grid grid-cols-7 text-xs md:text-sm border-b border-gray-200 hover:bg-gray-50 transition *:not-last:border-r *:not-last:border-gray-600"
               >
                 {/* SERVICE NAME */}
-                <div className="px-3 py-3 wrap-break-word">
+                <div className="px-3 py-3 ">
                   {s.serviceName || "-"}
                 </div>
 
