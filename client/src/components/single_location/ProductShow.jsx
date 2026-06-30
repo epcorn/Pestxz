@@ -3,7 +3,7 @@ import { formatShortDate } from '../../utils/helperFunctions'
 
 function ProductShow({ products }) {
   const [show, setShow] = useState(false)
-  console.log(products)
+  
   return (
     <section className="">
       <div className="mt-3 ">

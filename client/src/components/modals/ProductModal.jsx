@@ -46,7 +46,7 @@ function ProductModal({ mode = 'create', productData = {}, modalKey = "" }) {
         version: [{ name: "", code: "" }]
       })
     }
-  }, [mode, productData, reset])
+  }, [mode, productData?._id, reset])
 
   const submit = async (data) => {
     data.mode = mode;

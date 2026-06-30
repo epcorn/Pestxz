@@ -28,6 +28,7 @@ import CasualLists from "../components/single_location/casual/CasualLists";
 import CasualForm from "../components/single_location/casual/CasualForm";
 import Headers from "../components/Headers";
 import ProductShow from "../components/single_location/ProductShow";
+import ProductService from "../components/modals/ProductService";
 
 
 const SingleLocation = () => {
@@ -59,7 +60,7 @@ const SingleLocation = () => {
   };
 
   const servicesIds = data?.location?.service?.map(s => s.serviceId);
-
+  
   return (
     <>
       {isLoading ? (
@@ -290,13 +291,15 @@ const SingleLocation = () => {
             </div>
           }
 
+          {/* product service form  */}
+          <ProductService products={data?.location?.product} />
           {/* last regular service */}
           {DBUser && DBUser?.rights?.scan_Scheduled && (
             <div>
               {/* Form / Button Action Container */}
               <div className="flex justify-center items-center mt-5 pt-2">
                 <div className="w-full bg-neutral-50 rounded-xl border border-neutral-200 shadow-inner">
-                  <RegularForm serviceData={data?.location.service} id={data?.location?._id} locationName={data?.location?.floor} type={'regular'} setRegular={setRegular} />
+                  <RegularForm serviceData={data?.location?.service} id={data?.location?._id} locationName={data?.location?.floor} type={'regular'} setRegular={setRegular} />
                 </div>
               </div>
               {/* all premise service */}
