@@ -80,6 +80,7 @@ export const qrCounter = async (req, res) => {
     });
   }
 };
+
 export const addLocation = async (req, res) => {
   const {
     floor,
@@ -153,11 +154,17 @@ export const addLocation = async (req, res) => {
       });
     }
 
-    // ── build product ────────────────────────────────────────────────
+    // ── build product array ────────────────────────────────────────────
     let formattedProduct = [];
     if (type.includes("product") && productReq?.length) {
+      const validProductReq = productReq.filter(
+        (pr) => pr.productId && pr.versionId && pr.frequency,
+      );
+      if (validProductReq.length < 1)
+        return res.status(400).json({ msg: "Please fill all product fields" });
+
       formattedProduct = await Promise.all(
-        productReq.map(async (pr) => {
+        validProductReq.map(async (pr) => {
           const {
             productId,
             productName,
@@ -166,51 +173,38 @@ export const addLocation = async (req, res) => {
             frequency,
             code,
             specification,
-            calibration,
+            calibrations,
           } = pr;
+
+          const schedule = generateSchedule(
+            contractStart,
+            contractEnd,
+            frequency,
+          ).map((date) => ({
+            date: date.date,
+            completed: date.completed,
+            status: date.status,
+            completedAt: null,
+            completedBy: "",
+          }));
+
+          return {
+            productId,
+            productName,
+            versionId,
+            versionName,
+            frequency,
+            code,
+            serialNo: await productCounter(code),
+            specification,
+            calibrations: calibrations ?? [],
+            schedule,
+          };
         }),
       );
-      // const {
-      //   productId,
-      //   productName,
-      //   versionId,
-      //   versionName,
-      //   frequency,
-      //   code,
-      //   specification,
-      //   calibrations,
-      // } = productReq;
-
-      if (!productId || !versionId || !frequency)
-        return res.status(400).json({ msg: "Please fill all product fields" });
-
-      const schedule = generateSchedule(
-        contractStart,
-        contractEnd,
-        frequency,
-      ).map((date) => ({
-        date: date.date,
-        completed: date.completed,
-        status: date.status,
-        completedAt: null,
-        completedBy: "",
-      }));
-
-      return {
-        productId,
-        productName,
-        versionId,
-        versionName,
-        frequency,
-        code,
-        serialNo: await productCounter(code),
-        specification,
-        calibrations: calibrations ?? [],
-        schedule,
-      };
     }
 
-    if (!formattedServices.length && !formattedProduct)
+    if (!formattedServices.length && !formattedProduct.length)
       return res
         .status(400)
         .json({ msg: "Please add at least one service or product" });
@@ -220,7 +214,7 @@ export const addLocation = async (req, res) => {
       subLocation: capitalLetter(subLocation || ""),
       location: capitalLetter(location),
       service: formattedServices,
-      product: formattedProduct.length ? formattedProduct : [],
+      product: formattedProduct,
       client: client._id,
     });
 
@@ -395,7 +389,7 @@ export const updateLocation = async (req, res) => {
             specification,
             calibrations,
           } = pr;
-          
+
           console.log("versionName: ", pr);
           const existingProduct = existingLocation.product.find(
             (p) => p.productId?.toString() === productId,
@@ -678,8 +672,12 @@ export const updateLocation = async (req, res) => {
           subLocation,
           location,
           qr: qrLink,
-          service: type.includes("service") ? formattedServices : [],
-          product: type.includes("product") ? formattedProduct : [],
+          service: type.includes("service")
+            ? formattedServices
+            : existingLocation.service || [],
+          product: type.includes("product")
+            ? formattedProduct
+            : existingLocation.product || [],
         },
         ...(changeEntry && { $push: { changes: changeEntry } }),
       },

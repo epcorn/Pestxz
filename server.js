@@ -111,7 +111,7 @@ app.post("/api/cron/auto-mark-missed", (req, res) => {
 });
 
 app.use("/api/user", userRoute);
-app.use("/api/products", productRoute);
+app.use("/api/products", authenticateUser, productRoute);
 app.use(
   "/api/client",
   authenticateUser,

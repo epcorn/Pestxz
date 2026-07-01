@@ -67,7 +67,7 @@ const Landing = () => {
     <section className="bg-gray-700 bg-opacity-60 bg-[url('https://res.cloudinary.com/djc8opvcg/image/upload/v1701669902/samples/Caravela_Beach_Resort_eukgag.jpg')] bg-cover bg-center bg-no-repeat bg-blend-multiply">
       <div className="mx-auto flex flex-col items-center justify-center px-6 py-8 h-screen">
 
-        <div className="w-[350px] rounded-lg shadow bg-gray-700 sm:max-w-md xl:p-0">
+        <div className="w-sm rounded-lg shadow bg-black/10 sm:max-w-md xl:p-0 backdrop-blur-xs outline outline-white/20">
           <div className="space-y-4 p-6 sm:p-8">
             {/* Logo */}
             <div className="flex justify-center">
@@ -83,7 +83,7 @@ const Landing = () => {
                   Email
                 </label>
                 <input
-                  className="w-full py-1 px-2 border rounded-md outline-none focus:border-black"
+                  className="w-full py-1 px-2 border rounded-md outline-none text-white placeholder:text-white/30 focus:border-white"
                   placeholder="jon@doe.com"
                   type="email"
                   required
@@ -102,7 +102,7 @@ const Landing = () => {
                   Password
                 </label>
                 <input
-                  className="w-full py-1 px-2 border rounded-md outline-none focus:border-black"
+                  className="w-full py-1 px-2 border rounded-md outline-none text-white placeholder:text-white/30 focus:border-white"
                   placeholder="••••••••"
                   type="password"
                   required

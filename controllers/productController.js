@@ -3,17 +3,22 @@ import Product from "../models/productModel.js";
 export const addProducts = async (req, res) => {
   const data = req.body;
   try {
+    if (!req.user.rights.addData)
+      return res.status(403).json({ msg: "You are not allowed to Add data" });
+
     const mappedData = {
       name: data.name,
-      version: data.version.map((v) => ({
-        name: v.name,
-        code: v.code,
-      })),
+      version: data.version,
+      code: data.code,
       specification: data.specification,
       calibration: data.calibration.map((c) => c.value),
     };
     if (data.mode === "create") {
-      const product = await Product.findOne({ name: data?.name });
+      const product = await Product.findOne({
+        name: data?.name,
+        version: data?.version,
+        code: data?.code,
+      });
       if (product) {
         res.status(400).json({ msg: "Product already exists" });
         return;

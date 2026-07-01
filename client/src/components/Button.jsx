@@ -12,6 +12,7 @@ const Button = ({
   width,
   text
 }) => {
+
   return (
     <button
       type={type}
@@ -28,7 +29,7 @@ const Button = ({
         m-1 w-fit
         shadow
         ${text ? text : "text-white"}
-        ${width && width}
+        ${width ? width : ""}
         ${height ? height : "h-8"}
         ${color ? color : "bg-blue-500"}
         ${small ? "text-sm" : "text-md"}

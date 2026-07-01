@@ -95,7 +95,7 @@ const Services = () => {
         <div className="outline grid outline-gray-400 p-4 bg-white rounded-lg space-y-4">
           <h3 className="text-2xl font-semibold text-center">Services</h3>
           {/* SERVICES */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-2">
             {services?.flatMap((item) =>
               item.service.map((service) => (
                 <div
@@ -107,7 +107,7 @@ const Services = () => {
                     setSelectedScope(null);
                     dispatch(toggleModal({ name: "service", status: true }))
                   }}
-                  className={`capitalize flex items-center justify-between  border border-gray-500 rounded p-2 cursor-pointer transition ${selectedService?._id === service._id ? "bg-green-100 border-green-500" : "hover:bg-gray-50"
+                  className={`capitalize flex items-center max-h-10 justify-between  border border-gray-500 rounded p-2 cursor-pointer transition ${selectedService?._id === service._id ? "bg-green-100 border-green-500" : "hover:bg-gray-50"
                     }`}
                 >
                   {update.id === service._id ? (

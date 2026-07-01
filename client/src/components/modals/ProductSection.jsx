@@ -16,12 +16,12 @@ const emptyProduct = {
 function ProductRow({ control, register, errors, setValue, index, products, allProducts, prFrequency, onRemove, canRemove }) {
   const selectedProduct = useWatch({ control, name: `products.${index}.product` })
   const selectedVersion = useWatch({ control, name: `products.${index}.version` })
-  
+
   const versions = React.useMemo(() => {
     if (!selectedProduct?.value || !products) return []
     return products
       .filter((p) => p?._id === selectedProduct.value)
-      .flatMap((p) => p.version?.map((ver) => ({ label: ver.name, value: ver._id })) || [])
+      .flatMap((p) => p.selectedProduct?.map((ver) => ({ label: ver.version, value: ver.version })) || [])
   }, [selectedProduct?.value, products])
 
   const productinfo = React.useMemo(() => {

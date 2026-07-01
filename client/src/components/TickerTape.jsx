@@ -54,7 +54,7 @@ function TickerTape() {
             {pestData.map((p, index) => (
               <span key={`p1-${index}`} className="flex items-center lowercase">
                 <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold border ${getAlertStyle(p.score)}`}>
-                  {p.name}: {p.score} - {p.level}
+                  <span className='capitalize'>{p.name}</span>: {p.score} - {p.level}
                 </span>
                 <span className="mx-3 text-slate-700 font-bold">•</span>
               </span>
@@ -64,7 +64,7 @@ function TickerTape() {
             {pestData.map((p, index) => (
               <span key={`p2-${index}`} className="flex items-center lowercase">
                 <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold border ${getAlertStyle(p.score)}`}>
-                  {p.name}: {p.score} - {p.level}
+                  <span className='capitalize'>{p.name}</span>: {p.score} - {p.level}
                 </span>
                 <span className="mx-3 text-slate-700 font-bold">•</span>
               </span>

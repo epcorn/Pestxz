@@ -143,13 +143,12 @@ const LocationModal = ({ clientId, locationDetails }) => {
     }
 
     if (type.includes("product")) {
-      const validProducts = data?.products?.filter((p) => p.product.value && p.version.value && p.version.label && p.frequency.value);
+      const validProducts = data?.products?.filter((p) => p.product.value && p.code && p.frequency.value);
       console.log(validProducts)
       data.productReq = validProducts?.map(p => ({
         productId: p.product.value,
         productName: p.product.label,
-        versionId: p.version.value,
-        versionName: p?.version?.label,
+        version: p?.version?.label,
         frequency: p.frequency.value,
         code: p.code,
         specification: p.specification,

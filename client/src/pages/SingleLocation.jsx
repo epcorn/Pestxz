@@ -28,7 +28,7 @@ import CasualLists from "../components/single_location/casual/CasualLists";
 import CasualForm from "../components/single_location/casual/CasualForm";
 import Headers from "../components/Headers";
 import ProductShow from "../components/single_location/ProductShow";
-import ProductService from "../components/modals/ProductService";
+import ProductServiceForm from "../components/modals/ProductServiceForm";
 
 
 const SingleLocation = () => {
@@ -60,7 +60,7 @@ const SingleLocation = () => {
   };
 
   const servicesIds = data?.location?.service?.map(s => s.serviceId);
-  
+
   return (
     <>
       {isLoading ? (
@@ -292,7 +292,7 @@ const SingleLocation = () => {
           }
 
           {/* product service form  */}
-          <ProductService products={data?.location?.product} />
+          <ProductServiceForm products={data?.location?.product} />
           {/* last regular service */}
           {DBUser && DBUser?.rights?.scan_Scheduled && (
             <div>
