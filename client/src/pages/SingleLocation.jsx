@@ -60,7 +60,7 @@ const SingleLocation = () => {
   };
 
   const servicesIds = data?.location?.service?.map(s => s.serviceId);
-
+  console.log(data?.location?.product?.length)
   return (
     <>
       {isLoading ? (
@@ -292,7 +292,9 @@ const SingleLocation = () => {
           }
 
           {/* product service form  */}
-          <ProductServiceForm products={data?.location?.product} />
+          {data?.location?.product?.length > 0 &&
+            <ProductServiceForm products={data?.location?.product} />
+          }
           {/* last regular service */}
           {DBUser && DBUser?.rights?.scan_Scheduled && (
             <div>

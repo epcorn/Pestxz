@@ -28,7 +28,7 @@ function ProductList({ selected = {} }) {
 
         <table className='w-full min-w-[1200px] text-left border-collapse text-sm'>
           <thead>
-            <tr className='border-b border-gray-800 font-semibold bg-gray-300'>
+            <tr className='border-b border-gray-800 font-semibold bg-gray-50 bg-gray-300'>
               <th className='p-2 border-r border-gray-00 w-16 text-center'>Sr. No.</th>
               <th className='p-2 border-r border-gray-800'>Product Name</th>
               <th className='p-2 border-r border-gray-800'>Product Versions</th>
@@ -39,33 +39,38 @@ function ProductList({ selected = {} }) {
             </tr>
           </thead>
           <tbody>
-            {products?.map((pr, i) => (
-              <tr key={`${pr._id}`} className='border-b border-gray-800 hover:bg-gray-50/50'>
+            {products?.flatMap((pr) =>
+              pr.version?.map((v, index) => {
 
-                <td className='p-2 border-r border-gray-800 text-center font-medium'>{i + 1}</td>
-                <td className='p-2 border-r border-gray-800'>
-                  {pr.name}</td>
-                <td className='p-2 border-r border-gray-800'>
-                  {pr.version}</td>
-                <td className='p-2 border-r border-gray-800'>
-                  {pr.code}</td>
-                <td className='p-2 border-r border-gray-800'>
-                  {pr.specification}</td>
-                <td className='p-2 border-r border-gray-800'>
-                  {pr?.calibration ? pr.calibration.join(", ") : ""}</td>
-                <td className='p-2'>
-                  <div className='flex justify-center gap-5 text-base'>
-                    <div className='text-blue-700 cursor-pointer' onClick={() => handleEditClick(pr)} >
-                      <FaEdit />
-                    </div>
-                    <div className='text-red-600 cursor-pointer'>
-                      <FaDeleteLeft />
-                    </div>
-                  </div>
-                </td>
-              </tr>
-            )
+                globalIndex++;
 
+                return (
+                  <tr key={`${pr._id}_${index}`} className='border-b border-gray-800 hover:bg-gray-50/50'>
+
+                    <td className='p-2 border-r border-gray-800 text-center font-medium'>{globalIndex}</td>
+                    <td className='p-2 border-r border-gray-800'>
+                      {pr.name}</td>
+                    <td className='p-2 border-r border-gray-800'>
+                      {v.name}</td>
+                    <td className='p-2 border-r border-gray-800'>
+                      {v.code}</td>
+                    <td className='p-2 border-r border-gray-800'>
+                      {pr.specification}</td>
+                    <td className='p-2 border-r border-gray-800'>
+                      {v.calibration ? v.calibration.join(", ") : ""}</td>
+                    <td className='p-2'>
+                      <div className='flex justify-center gap-5 text-base'>
+                        <div className='text-blue-700 cursor-pointer' onClick={() => handleEditClick(pr)} >
+                          <FaEdit />
+                        </div>
+                        <div className='text-red-600 cursor-pointer'>
+                          <FaDeleteLeft />
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })
             )}
           </tbody>
         </table>

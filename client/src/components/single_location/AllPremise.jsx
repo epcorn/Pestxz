@@ -24,7 +24,11 @@ function AllPremise() {
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-300 ">
-          {allPremiseSchedules?.map((p, index) => {
+          {allPremiseSchedules?.length === 0 ? <tr>
+            <td colSpan="4" className="py-10 text-center">
+              No Service Due for today
+            </td>
+          </tr> : allPremiseSchedules?.map((p, index) => {
             const completed = p.service.some(ser => ser.schedule.some(sc => sc.date === today && sc.completed))
             const total = p.service.flatMap(ser => ser.schedule.filter(sc => sc.date === today))
             const totalCompleted = p.service.flatMap(ser => ser.schedule.filter(sc => sc.date === today && sc.completed))

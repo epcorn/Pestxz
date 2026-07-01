@@ -40,7 +40,7 @@ const Complaints = () => {
     page,
     client: location.client || "",
     location: location?.floor || "All",
-  }, { refetchOnMountOrArgChange: true, refetchOnReconnect: true, refetchOnFocus: true, });
+  }, { refetchOnReconnect: true, refetchOnFocus: true, });
 
   const pages = Array.from({ length: data?.pages }, (_, index) => index + 1);
 

@@ -79,6 +79,8 @@ const LocationModal = ({ clientId, locationDetails }) => {
       return;
     }
 
+    console.log(locationDetails)
+    
     const hasProduct = locationDetails.product?.length > 0;
     const hasService = locationDetails.service?.length > 0;
     const pr = locationDetails.product?.[0];
@@ -143,12 +145,13 @@ const LocationModal = ({ clientId, locationDetails }) => {
     }
 
     if (type.includes("product")) {
-      const validProducts = data?.products?.filter((p) => p.product.value && p.code && p.frequency.value);
+      const validProducts = data?.products?.filter((p) => p.product.value && p.version.value && p.version.label && p.frequency.value);
       console.log(validProducts)
       data.productReq = validProducts?.map(p => ({
         productId: p.product.value,
         productName: p.product.label,
-        version: p?.version?.label,
+        versionId: p.version.value,
+        versionName: p?.version?.label,
         frequency: p.frequency.value,
         code: p.code,
         specification: p.specification,

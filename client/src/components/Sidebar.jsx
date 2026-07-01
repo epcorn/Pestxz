@@ -132,7 +132,7 @@ const Sidebar = () => {
                   </div>
                 </>
               ) : (
-                // w-full with overflow-hidden gives the marquee container a solid layout boundary
+
                 <div className="w-full overflow-hidden flex flex-col gap-1.5">
 
                   {/* Brand Header Stack */}
@@ -144,9 +144,6 @@ const Sidebar = () => {
                       Pest Management Division
                     </span>
                   </div>
-
-                  {/* Marquee Banner Container */}
-                  {/* Moving this to its own row prevents layout breaking */}
 
                   <div className="w-full pt-1  hidden lg:block">
                     <TickerTape />
@@ -178,7 +175,7 @@ const Sidebar = () => {
       </nav>
 
       <aside
-        className={`fixed top-[4.5rem] md:top-[4.9rem] lg:top-0 left-0 w-60 z-50 h-[calc(100dvh-4.5rem)] md:h-[calc(100dvh-4.9rem)] lg:h-dvh transition-transform duration-300 border-r-2 bg-slate-800 border-gray-500 ${show
+        className={`fixed top-[4rem] md:top-[4rem] lg:top-0 left-0 w-60 z-50 h-[calc(100dvh-4rem)] md:h-[calc(100dvh-4rem)] lg:h-dvh transition-transform pb-2 duration-300 border-r-2 bg-slate-800 border-gray-500 ${show
           ? "translate-x-0"
           : "-translate-x-full lg:translate-x-0"
           }`}
@@ -238,7 +235,6 @@ const Sidebar = () => {
 
         </div>
       </aside>
-
     </aside>
   );
 };
