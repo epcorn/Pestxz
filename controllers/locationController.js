@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import Casual from "../models/casualServiceModel.js";
 import Client from "../models/clientModel.js";
 import Counter from "../models/counterModel.js";
@@ -380,6 +381,7 @@ export const updateLocation = async (req, res) => {
       formattedProduct = await Promise.all(
         validProductReq.map(async (pr) => {
           const {
+            _id,
             productId,
             productName,
             versionId,
@@ -390,10 +392,14 @@ export const updateLocation = async (req, res) => {
             calibrations,
           } = pr;
 
-          console.log("versionName: ", pr);
-          const existingProduct = existingLocation.product.find(
-            (p) => p.productId?.toString() === productId,
-          );
+          const existingProduct = _id
+            ? existingLocation.product.find((p) => p._id?.toString() === _id)
+            : null;
+          // const existingProduct = existingLocation.product.find(
+          //   (p) => p.productId?.toString() === productId,
+          // );
+
+          console.log(existingProduct);
 
           const productChanged =
             !existingProduct ||
@@ -427,6 +433,7 @@ export const updateLocation = async (req, res) => {
           }
 
           return {
+            _id: existingProduct?._id || new mongoose.Types.ObjectId(),
             productId,
             productName,
             versionId,
@@ -612,7 +619,7 @@ export const updateLocation = async (req, res) => {
             to: p.frequency,
           });
 
-        const added = p.calibrations.filter(
+        const added = p?.calibrations?.filter(
           (c) => !old.calibrations?.includes(c),
         );
         const removed = (old.calibrations || []).filter(

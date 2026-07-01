@@ -42,6 +42,7 @@ const SingleClient = () => {
     setLocationDetails(location);
     dispatch(toggleModal({ name: "location", status: true }));
   };
+  console.log(data)
   // add new model
   const handleNewModal = () => {
     setLocationDetails(null);

@@ -70,9 +70,9 @@ const SingleLocation = () => {
       )}
       {data && (
         <div>
-          <div className="bg-white z-10 shadow-md px-5 mb-5">
+          <div className="bg-white z-10 shadow-md px-5 pb-3 mb-5">
             <Headers header={'Location'} user={DBUser} />
-            <div className="py-1 border-b border-neutral-200">
+            <div className="py-1 border-neutral-200">
               {/* Location Details */}
               <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm text-neutral-700">
                 {user.type === "PestEmployee" && <div>
