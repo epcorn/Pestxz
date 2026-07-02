@@ -221,7 +221,7 @@ export const addLocation = async (req, res) => {
 
     const locationId = newLocation._id;
     const qrData = await qrCodeGenerator({
-      link: `https://pestxz.onrender.com/location/${locationId}`,
+      link: `https://pestxz.com/location/${locationId}`,
       floor: newLocation.floor,
       location: `${newLocation.location}, ${newLocation.subLocation}`,
     });
@@ -622,7 +622,7 @@ export const updateLocation = async (req, res) => {
         const added = p?.calibrations?.filter(
           (c) => !old.calibrations?.includes(c),
         );
-        const removed = (old.calibrations || []).filter(
+        const removed = (old?.calibrations || [])?.filter(
           (c) => !p.calibrations.includes(c),
         );
         if (added.length)
@@ -664,7 +664,7 @@ export const updateLocation = async (req, res) => {
         : null;
 
     const qrData = await qrCodeGenerator({
-      link: `https://pestxz.onrender.com/location/${id}`,
+      link: `https://pestxz.com/location/${id}`,
       floor,
       location: `${location}, ${subLocation}`,
     });

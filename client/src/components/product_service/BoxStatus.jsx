@@ -1,8 +1,15 @@
 import React, { useId } from 'react'
 
+const productsMap = [
+  { rodent: "Quality of Box", status: "Ok", status1: "Need Repair" },
+  { Snapper: "Quality of Machine", status: "Ok", status1: "Need Repair" },
+  { "Anti Crawler": "Quality of Machine" },
+]
+
 function BoxStatus({ handleStatusChange, id, currentStatus, currentQuality }) {
   const qualityId = useId()
   const statusId = useId()
+  
   return (
     <div className='flex justify-between flex-wrap gap-2'>
       {/* Status Fieldset Group */}
@@ -33,7 +40,7 @@ function BoxStatus({ handleStatusChange, id, currentStatus, currentQuality }) {
       </div>
       {/* Box Quality Fieldset Group */}
       {currentStatus === "found" &&
-        <div className={`flex gap-5 items-center outline p-2 rounded ${currentQuality==="ok"?"bg-blue-100":"bg-cyan-100"}`}>
+        <div className={`flex gap-5 items-center outline p-2 rounded ${currentQuality === "ok" ? "bg-blue-100" : "bg-cyan-100"}`}>
           <strong>Box Quality: </strong>
           <div className='flex items-center gap-1 rounded outline px-2 py-0.5'>
             <input
@@ -55,7 +62,7 @@ function BoxStatus({ handleStatusChange, id, currentStatus, currentQuality }) {
               id={`${qualityId}-notok`}
               onChange={(e) => handleStatusChange(id, 'quality', e.target.value)}
             />
-            <label htmlFor={`${qualityId}-notok`}>Needs Replacement</label>
+            <label htmlFor={`${qualityId}-notok`}>Needs Repair</label>
           </div>
         </div>
       }

@@ -3,6 +3,7 @@ import { formatShortDate } from '../../utils/helperFunctions'
 import BoxStatus from '../product_service/BoxStatus'
 import { useForm } from 'react-hook-form'
 import Button from '../Button'
+import InputRow from '../InputRow'
 
 function ProductServiceForm({ products }) {
   const [formState, setFormState] = useState({})
@@ -22,9 +23,9 @@ function ProductServiceForm({ products }) {
     console.log(data)
   }
   return (
-    <div className='bg-white p-2 md:p-5'>
+    <div className='bg-slate-300 max-w-2xl border-2 rounded-lg mx-auto p-2 md:p-5'>
       <div>
-        <h3 className='font-semibold text-lg'>Product Service form</h3>
+        <h3 className='font-semibold text-lg mb-3'>Product Service form</h3>
       </div>
       <div className='flex hidden items-center gap-2 my-3'>
         <strong> Next Product Service Dates: </strong>
@@ -33,15 +34,15 @@ function ProductServiceForm({ products }) {
         ))}
       </div>
 
-      <div className='space-y-2'>
+      <div className='space-y-2 outline rounded bg-white p-1 max-h-80 overflow-y-auto'>
         {products?.map(pr => {
           // Read local flat state keys cleanly with default values
           const currentStatus = formState[`${pr.productId}-status`] || 'missing'
           const currentQuality = formState[`${pr.productId}-quality`] || 'ok'
 
           return (
-            <div key={pr.productId} className='outline p-2 rounded'>
-              <div className='flex flex-col text-lg mb-3'>
+            <div key={pr.productId} className='outline outline-gray-400 p-2 rounded'>
+              <div className='grid grid-cols-2 text-lg mb-3'>
                 <p>Product Name: <strong>{pr.productName}</strong></p>
                 <p>Version: <strong>{pr.versionName}</strong></p>
                 <p>Frequency: <strong>{pr.frequency}</strong></p>
@@ -57,7 +58,7 @@ function ProductServiceForm({ products }) {
               {/* Dynamic check conditionally rendered based on status and quality */}
               <form onSubmit={handleSubmit(submit)}>
                 {currentStatus === "found" && currentQuality !== "ok" && (
-                  <ul className='list-disc list-inside m-2'>
+                  <ul className='m-2'>
                     <h3 className='text-lg font-semibold'>Update Service Records:</h3>
                     {pr.calibrations?.map((c, index) => {
 
@@ -73,6 +74,9 @@ function ProductServiceForm({ products }) {
                         </li>
                       )
                     })}
+                    <li className='max-w-1/2'>
+                      <InputRow register={register} id={'comment'} label={'Comment'} />
+                    </li>
                   </ul>
                 )}
                 <div className='text-right mt-5'>
