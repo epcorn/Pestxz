@@ -40,8 +40,7 @@ const ClientDashboard = () => {
         isLoading,
         error
       }),
-      refetchOnMountOrArgChange: true,
-      pollingInterval: 30000, refetchOnReconnect: true,
+      refetchOnReconnect: true,
     });
 
   const { data: clientDash, isLoading: clgLoading } = useAdminDashboardQuery(user.client, {

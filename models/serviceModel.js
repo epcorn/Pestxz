@@ -1,5 +1,4 @@
 import mongoose from "mongoose";
-import { type } from "os";
 
 const serviceSchema = new mongoose.Schema(
   {
@@ -83,6 +82,7 @@ const serviceSchema = new mongoose.Schema(
         },
       },
     ],
+
     client: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Client",
@@ -96,6 +96,15 @@ const serviceSchema = new mongoose.Schema(
   },
   { timestamps: true },
 );
+
+serviceSchema.index({ location: 1, createdAt: -1 });
+serviceSchema.index({ client: 1, createdAt: -1 });
+serviceSchema.index({ type: 1, createdAt: -1 });
+serviceSchema.index({
+  "complaintDetails.assignedTo.userId": 1,
+  "complaintDetails.status": -1,
+});
+serviceSchema.index({ "complaintDetails.status": 1 });
 
 serviceSchema.pre("save", function (next) {
   if (this.type === "Regular") {

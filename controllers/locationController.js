@@ -9,9 +9,14 @@ import { Unscheduled } from "../models/unScheduleModel.js";
 import {
   autoMarkMissed,
   capitalLetter,
+  diffProducts,
+  diffServices,
+  formatProducts,
+  formatServices,
   generateSchedule,
   qrCodeGenerator,
   qrCodeGeneratorSVG,
+  releaseProductCounter,
   removeOldQr,
   uploadFile,
 } from "../utils/helperFunction.js";
@@ -221,7 +226,7 @@ export const addLocation = async (req, res) => {
 
     const locationId = newLocation._id;
     const qrData = await qrCodeGenerator({
-      link: `https://pestxz.com/location/${locationId}`,
+      link: `https://pestxz.onrender.com/location/${locationId}`,
       floor: newLocation.floor,
       location: `${newLocation.location}, ${newLocation.subLocation}`,
     });
@@ -233,7 +238,9 @@ export const addLocation = async (req, res) => {
     }
 
     fs.writeFileSync("./tmp/qr.jpeg", qrData);
+
     const qrLink = await uploadFile({ filePath: "./tmp/qr.jpeg" });
+  
     if (!qrLink) {
       await Location.findByIdAndDelete(locationId);
       return res.status(400).json({ msg: "QR upload error. Try again later" });
@@ -307,146 +314,32 @@ export const updateLocation = async (req, res) => {
     if (!existingLocation)
       return res.status(404).json({ msg: "Location not found" });
 
-    await removeOldQr(existingLocation.qr);
-
     const client = await Client.findById(existingLocation.client);
     const contractStart = new Date(client.startDate);
     const contractEnd = new Date(client.endDate);
 
-    // ── build service array ──────────────────────────────────────────
     let formattedServices = [];
     if (type.includes("service") && serviceReq?.length) {
-      const validServices = serviceReq.filter(
-        (s) =>
-          s.serviceId &&
-          s.serviceName &&
-          Array.isArray(s.scopes) &&
-          s.scopes.length > 0,
+      const { formatted, error } = formatServices(
+        serviceReq,
+        existingLocation.service,
+        contractStart,
+        contractEnd,
       );
-      if (validServices.length < 1)
-        return res
-          .status(400)
-          .json({ msg: "Please add at least one valid service" });
-
-      formattedServices = validServices.map((service) => {
-        const existingService = existingLocation.service.find(
-          (s) => s.serviceId?.toString() === service.serviceId?.toString(),
-        );
-        let schedule = existingService?.schedule || [];
-
-        if (
-          !schedule.length ||
-          existingService?.frequency !== service.frequency
-        ) {
-          schedule = generateSchedule(
-            contractStart,
-            contractEnd,
-            service.frequency,
-          ).map((date) => ({
-            date: date.date,
-            completed: date.completed,
-            status: date.status,
-            completedAt: null,
-            completedBy: "",
-          }));
-        }
-
-        return {
-          serviceId: service.serviceId,
-          serviceName: service.serviceName,
-          frequency: service.frequency,
-          schedule,
-          scopes: service.scopes.map((scope) => ({
-            scopeId: scope.scopeId,
-            scopeName: scope.scopeName,
-            consumables: (scope.consumables || []).map((con) => ({
-              consumableId: con.consumableId,
-              consumableName: con.consumableName,
-              calibration: con.calibration,
-            })),
-          })),
-        };
-      });
+      if (error) return res.status(400).json({ msg: error });
+      formattedServices = formatted;
     }
 
-    // ── build product array ────────────────────────────────────────────
     let formattedProduct = [];
     if (type.includes("product") && productReq?.length) {
-      const validProductReq = productReq.filter(
-        (pr) => pr.productId && pr.versionId && pr.frequency,
+      const { formatted, error } = await formatProducts(
+        productReq,
+        existingLocation.product,
+        contractStart,
+        contractEnd,
       );
-      if (validProductReq.length < 1)
-        return res.status(400).json({ msg: "Please fill all product fields" });
-
-      formattedProduct = await Promise.all(
-        validProductReq.map(async (pr) => {
-          const {
-            _id,
-            productId,
-            productName,
-            versionId,
-            versionName,
-            frequency,
-            code,
-            specification,
-            calibrations,
-          } = pr;
-
-          const existingProduct = _id
-            ? existingLocation.product.find((p) => p._id?.toString() === _id)
-            : null;
-          // const existingProduct = existingLocation.product.find(
-          //   (p) => p.productId?.toString() === productId,
-          // );
-
-          console.log(existingProduct);
-
-          const productChanged =
-            !existingProduct ||
-            existingProduct.productId?.toString() !== productId ||
-            existingProduct.versionId?.toString() !== versionId;
-
-          const serialNo = productChanged
-            ? await productCounter(code)
-            : existingProduct.serialNo;
-
-          let schedule = existingProduct?.schedule || [];
-
-          if (
-            !schedule.length ||
-            existingProduct?.productId?.toString() !== productId ||
-            existingProduct?.versionId?.toString() !== versionId ||
-            existingProduct?.versionName?.toString() !== versionName ||
-            existingProduct?.frequency !== frequency
-          ) {
-            schedule = generateSchedule(
-              contractStart,
-              contractEnd,
-              frequency,
-            ).map((date) => ({
-              date: date.date,
-              completed: date.completed,
-              status: date.status,
-              completedAt: null,
-              completedBy: "",
-            }));
-          }
-
-          return {
-            _id: existingProduct?._id || new mongoose.Types.ObjectId(),
-            productId,
-            productName,
-            versionId,
-            versionName,
-            frequency,
-            code,
-            serialNo,
-            specification,
-            calibrations: calibrations ?? [],
-            schedule,
-          };
-        }),
-      );
+      if (error) return res.status(400).json({ msg: error });
+      formattedProduct = formatted;
     }
 
     if (!formattedServices.length && !formattedProduct.length)
@@ -454,9 +347,8 @@ export const updateLocation = async (req, res) => {
         .status(400)
         .json({ msg: "Please add at least one service or product" });
 
-    // ── build diff ───────────────────────────────────────────────────
+    // ── diff ──────────────────────────────────────────────
     const diff = {};
-
     if (floor !== existingLocation.floor)
       diff.floor = { from: existingLocation.floor, to: floor };
     if (location !== existingLocation.location)
@@ -467,210 +359,70 @@ export const updateLocation = async (req, res) => {
         to: subLocation,
       };
 
-    // service diff — only when service is in the active types
-    if (type.includes("service")) {
-      const oldServiceNames = existingLocation.service.map(
-        (s) => s.serviceName,
+    if (type.includes("service"))
+      Object.assign(
+        diff,
+        diffServices(existingLocation.service, formattedServices),
       );
-      const newServiceNames = formattedServices.map((s) => s.serviceName);
-
-      const addedServices = newServiceNames.filter(
-        (s) => !oldServiceNames.includes(s),
-      );
-      const removedServices = oldServiceNames.filter(
-        (s) => !newServiceNames.includes(s),
+    if (type.includes("product"))
+      Object.assign(
+        diff,
+        await diffProducts(existingLocation.product, formattedProduct),
       );
 
-      const frequencyChanges = formattedServices
-        .filter((newSvc) => {
-          const old = existingLocation.service.find(
-            (s) => s.serviceId?.toString() === newSvc.serviceId?.toString(),
-          );
-          return old && old.frequency !== newSvc.frequency;
-        })
-        .map((newSvc) => {
-          const old = existingLocation.service.find(
-            (s) => s.serviceId?.toString() === newSvc.serviceId?.toString(),
-          );
-          return {
-            service: newSvc.serviceName,
-            from: old.frequency,
-            to: newSvc.frequency,
-          };
-        });
-
-      const oldScopes = existingLocation.service.flatMap((s) =>
-        s.scopes?.map((sc) => sc.scopeName),
-      );
-      const newScopes = formattedServices.flatMap((s) =>
-        s.scopes.map((sc) => sc.scopeName),
-      );
-
-      const oldConsumables = existingLocation.service.flatMap((s) =>
-        s.scopes?.flatMap((sc) =>
-          sc.consumables?.map((con) => ({
-            consumableName: con.consumableName,
-            calibration: con.calibration,
-          })),
-        ),
-      );
-      const newConsumables = formattedServices.flatMap((s) =>
-        s.scopes?.flatMap((sc) =>
-          sc.consumables?.map((con) => ({
-            consumableName: con.consumableName,
-            calibration: con.calibration,
-          })),
-        ),
-      );
-
-      const addedConsumables = newConsumables
-        .filter(
-          (n) =>
-            !oldConsumables.find(
-              (o) => o?.consumableName === n?.consumableName,
-            ),
-        )
-        .map((c) => c.consumableName);
-      const removedConsumables = oldConsumables
-        .filter(
-          (o) =>
-            !newConsumables.find(
-              (n) => n?.consumableName === o?.consumableName,
-            ),
-        )
-        .map((c) => c.consumableName);
-      const calibrationChanges = newConsumables
-        .filter((n) => {
-          const old = oldConsumables.find(
-            (o) => o?.consumableName === n.consumableName,
-          );
-          return old && old.calibration !== n.calibration;
-        })
-        .map((n) => {
-          const old = oldConsumables.find(
-            (o) => o?.consumableName === n.consumableName,
-          );
-          return {
-            consumable: n.consumableName,
-            from: old.calibration,
-            to: n.calibration,
-          };
-        });
-
-      if (addedServices.length) diff.servicesAdded = addedServices;
-      if (removedServices.length) diff.servicesRemoved = removedServices;
-      if (frequencyChanges.length) diff.frequencyChanges = frequencyChanges;
-      if (newScopes.filter((s) => !oldScopes.includes(s)).length)
-        diff.scopesAdded = newScopes.filter((s) => !oldScopes.includes(s));
-      if (oldScopes.filter((s) => !newScopes.includes(s)).length)
-        diff.scopesRemoved = oldScopes.filter((s) => !newScopes.includes(s));
-      if (addedConsumables.length) diff.consumablesAdded = addedConsumables;
-      if (removedConsumables.length)
-        diff.consumablesRemoved = removedConsumables;
-      if (calibrationChanges.length)
-        diff.calibrationChanges = calibrationChanges;
-    }
-
-    // product diff — now compares arrays, matched by productId
-    if (type.includes("product")) {
-      const oldProducts = existingLocation.product || [];
-
-      const oldProductNames = oldProducts.map((p) => p.productName);
-      const newProductNames = formattedProduct.map((p) => p.productName);
-
-      const addedProducts = formattedProduct
-        .filter(
-          (p) =>
-            !oldProducts.find((op) => op.productId?.toString() === p.productId),
-        )
-        .map((p) => p.productName);
-
-      const removedProducts = oldProducts
-        .filter(
-          (op) =>
-            !formattedProduct.find(
-              (p) => p.productId === op.productId?.toString(),
-            ),
-        )
-        .map((op) => op.productName);
-
-      const versionChanges = [];
-      const frequencyChanges2 = [];
-      const calibrationsAdded = [];
-      const calibrationsRemoved = [];
-
-      formattedProduct.forEach((p) => {
-        const old = oldProducts.find(
-          (op) => op.productId?.toString() === p.productId,
-        );
-        if (!old) return;
-
-        if (old.versionId?.toString() !== p.versionId)
-          versionChanges.push({
-            product: p.productName,
-            from: old.versionName,
-            to: p.versionName,
-          });
-
-        if (old.frequency !== p.frequency)
-          frequencyChanges2.push({
-            product: p.productName,
-            from: old.frequency,
-            to: p.frequency,
-          });
-
-        const added = p?.calibrations?.filter(
-          (c) => !old.calibrations?.includes(c),
-        );
-        const removed = (old?.calibrations || [])?.filter(
-          (c) => !p.calibrations.includes(c),
-        );
-        if (added.length)
-          calibrationsAdded.push({ product: p.productName, added });
-        if (removed.length)
-          calibrationsRemoved.push({ product: p.productName, removed });
-      });
-
-      if (addedProducts.length) diff.productsAdded = addedProducts;
-      if (removedProducts.length) diff.productsRemoved = removedProducts;
-      if (versionChanges.length) diff.versionChanges = versionChanges;
-      if (frequencyChanges2.length)
-        diff.productFrequencyChanges = frequencyChanges2;
-      if (calibrationsAdded.length)
-        diff.productCalibrationsAdded = calibrationsAdded;
-      if (calibrationsRemoved.length)
-        diff.productCalibrationsRemoved = calibrationsRemoved;
-    }
-
-    // track when service is newly added or removed on update
     if (type.includes("service") && !existingLocation.service?.length)
       diff.serviceAdded = formattedServices.map((s) => s.serviceName);
     if (!type.includes("service") && existingLocation.service?.length)
       diff.serviceRemoved = existingLocation.service.map((s) => s.serviceName);
 
-    // track when product type is removed entirely on update
-    if (!type.includes("product") && existingLocation.product?.length)
+    if (!type.includes("product") && existingLocation.product?.length) {
       diff.productRemoved = existingLocation.product.map((p) => p.productName);
+      await Promise.all(
+        existingLocation.product.map((p) =>
+          releaseProductCounter(p.code, p.serialNo),
+        ),
+      );
+    }
 
-    const changeEntry =
-      Object.keys(diff).length > 0
-        ? {
-            changedAt: new Date(),
-            changedBy_id: req.user?.id || null,
-            changedBy_user: req.user?.name || null,
-            reason: changes,
-            diff,
-          }
-        : null;
+    const changeEntry = Object.keys(diff).length
+      ? {
+          changedAt: new Date(),
+          changedBy_id: req.user?.id || null,
+          changedBy_user: req.user?.name || null,
+          reason: changes,
+          diff,
+        }
+      : null;
 
-    const qrData = await qrCodeGenerator({
-      link: `https://pestxz.com/location/${id}`,
-      floor,
-      location: `${location}, ${subLocation}`,
-    });
-    fs.writeFileSync("./tmp/qr.jpeg", qrData);
-    const qrLink = await uploadFile({ filePath: "./tmp/qr.jpeg" });
+    // ── QR (only regenerate if location fields actually changed) ──
+    const locationFieldsChanged =
+      floor !== existingLocation.floor ||
+      location !== existingLocation.location ||
+      subLocation !== existingLocation.subLocation;
 
+    let qrLink = existingLocation.qr;
+
+    if (locationFieldsChanged) {
+      const qrData = await qrCodeGenerator({
+        link: `https://pestxz.onrender.com/location/${id}`,
+        floor,
+        location: `${location}, ${subLocation}`,
+      });
+      fs.writeFileSync("./tmp/qr.jpeg", qrData);
+
+      const uploadedLink = await uploadFile({ filePath: "./tmp/qr.jpeg" });
+
+      if (!uploadedLink) {
+        return res
+          .status(502)
+          .json({ msg: "Failed to generate QR code, please try again" });
+      }
+
+      await removeOldQr(existingLocation.qr);
+      qrLink = uploadedLink;
+    }
+
+    // ── persist ─────────────────────────────────────────────
     const updatedLocation = await Location.findByIdAndUpdate(
       id,
       {

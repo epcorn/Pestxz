@@ -47,5 +47,8 @@ const locationSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
+locationSchema.index({ client: 1 });
+locationSchema.index({ "product.productId": 1 });
+
 const Location = mongoose.model("Location", locationSchema);
 export default Location;

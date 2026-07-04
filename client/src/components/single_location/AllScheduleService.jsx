@@ -13,7 +13,7 @@ function AllScheduleService({ data }) {
 
   return (
     <div>
-      {data?.length > 0 && (
+      {data?.length > 0 ? (
         <div className="mb-1">
           <div className="overflow-hidden rounded-lg border border-neutral-200 bg-white shadow-sm">
             {/* DESKTOP HEADER */}
@@ -199,7 +199,8 @@ function AllScheduleService({ data }) {
             </div>
           </div>
         </div>
-      )}
+      ):
+      <p className="m-4 text-center text-gray-600">No schedule Works Found...</p> }
     </div>
 
   );

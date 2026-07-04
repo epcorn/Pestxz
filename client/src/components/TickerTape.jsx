@@ -16,7 +16,7 @@ function TickerTape() {
 
   const { data: runnerData, isLoading: runnerLoading } = useRunnerDataQuery(
     { lon: stats.lon, lat: stats.lat },
-    { skip: !stats.lon || !stats.lat }
+    { skip: !stats.lon || !stats.lat,refetchOnReconnect:true }
   );
 
   const temp = runnerData?.data?.environment?.temp;

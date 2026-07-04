@@ -4,8 +4,24 @@ import Client from "../models/clientModel.js";
 import Frequency from "../models/frequencyModal.js";
 import Location from "../models/locationModel.js";
 import Service from "../models/serviceModel.js";
-import { capitalLetter } from "../utils/helperFunction.js";
+import { capitalLetter, uploadFile } from "../utils/helperFunction.js";
 import Product from "../models/productModel.js";
+
+export const imageUploader = async (req, res) => {
+  // try {
+  //   if (!req.files || !req.files.image)
+  //     return res.status(400).json({ msg: "No images provided" });
+
+  //   const url = await uploadFile({ filePath: req.files.image.tempFilePath });
+  //   if (!url) return res.status(502).json({ msg: "Image upload failed" });
+  //   res.status(200).json({ msg: "Image Uploaded", url });
+  // } catch (error) {
+  //   console.log("Image upload error: ", error);
+  //   res
+  //     .status(500)
+  //     .json({ msg: "Image Uploaded failed", error: error.message });
+  // }
+};
 
 export const addFrequency = async (req, res) => {
   const { freq } = req.body;
@@ -103,7 +119,6 @@ export const getAllService = async (req, res) => {
     res.status(500).json({ msg: "Server error, try again later" });
   }
 };
-
 
 export const editService = async (req, res) => {
   const { id } = req.params;

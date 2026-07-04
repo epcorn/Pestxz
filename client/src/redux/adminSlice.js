@@ -33,7 +33,8 @@ export const adminSlice = apiSlice.injectEndpoints({
       }),
       invalidatesTags: ["Admin"],
     }),
-    addProducts: builder.mutation({ //product add
+    addProducts: builder.mutation({
+      //product add
       query: (data) => ({
         url: `/api/products/product`,
         method: "POST",
@@ -96,6 +97,13 @@ export const adminSlice = apiSlice.injectEndpoints({
         params: { lat, lon },
       }),
     }),
+    imgUploader: builder.mutation({
+      query: (formData) => ({
+        url: `/api/admin/upload`,
+        method: "POST",
+        body: formData,
+      }),
+    }),
   }),
 });
 
@@ -113,4 +121,5 @@ export const {
   useClientAdminDashboardQuery,
   useAdminDashboardQuery,
   useRunnerDataQuery,
+  useImgUploaderMutation,
 } = adminSlice;

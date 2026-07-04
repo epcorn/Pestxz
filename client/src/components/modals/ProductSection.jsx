@@ -16,19 +16,28 @@ const emptyProduct = {
 function ProductRow({ control, register, errors, setValue, index, products, allProducts, prFrequency, onRemove, canRemove }) {
   const selectedProduct = useWatch({ control, name: `products.${index}.product` })
   const selectedVersion = useWatch({ control, name: `products.${index}.version` })
-  
+
   const versions = React.useMemo(() => {
+    if (!selectedProduct?.value) return selectedVersion ? [selectedVersion] : []
     if (!selectedProduct?.value || !products) return []
-    return products
-      .filter((p) => p?._id === selectedProduct.value)
+
+
+    const opts = products
+      .filter((p) => String(p?._id) === String(selectedProduct.value))
       .flatMap((p) => p.version?.map((ver) => ({ label: ver.name, value: ver._id })) || [])
+
+    if (selectedVersion?.value && !opts.some(o => String(o.value) === String(selectedVersion.value))) { opts.push(selectedVersion) }
+
+    return opts
+
   }, [selectedProduct?.value, products])
 
   const productinfo = React.useMemo(() => {
     if (!selectedProduct?.value || !selectedVersion?.value || !products) return null
     const activeProduct = products.find((p) => p._id === selectedProduct.value)
     const activeVersion = activeProduct?.version?.find((ver) => ver._id === selectedVersion.value)
-    console.log(activeVersion)
+
+
     return {
       code: activeVersion?.code,
       specification: activeProduct?.specification,
@@ -60,7 +69,7 @@ function ProductRow({ control, register, errors, setValue, index, products, allP
         )}
       </div>
       <div className="grid grid-cols-3 gap-x-2">
-
+<input type="hidden" {...register(`products.${index}._id`)} />
         <div>
           <Controller
             name={`products.${index}.product`}
@@ -146,7 +155,7 @@ function ProductRow({ control, register, errors, setValue, index, products, allP
           />
         </div>
 
-        <div className="col-span-3 grid grid-cols-3 outline outline-gray-400 px-2 rounded mt-2">
+        <div className=" col-span-3 grid grid-cols-3 outline outline-gray-400 px-2 rounded mt-2 hidden">
           <h3 className='col-span-3 font-semibold '>Calibrations<span className='text-red-600'>*</span></h3>
           {productinfo?.calibrations?.map((cal, i) => (
             <div key={`calibration.${index}.${i}`} className="flex items-center gap-2">
@@ -154,6 +163,7 @@ function ProductRow({ control, register, errors, setValue, index, products, allP
                 type="checkbox"
                 id={`calibration.${index}.${i}`}
                 value={cal}
+                defaultChecked
                 {...register(`products.${index}.calibrations`)}
               />
               <label htmlFor={`calibration.${index}.${i}`}>{cal}</label>

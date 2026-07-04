@@ -82,7 +82,7 @@ const Locations = () => {
                     Location
                   </th>
                   <th className="font-bold text-center border-neutral-500 border-2 w-32 px-3">
-                    Services
+                    Services/[Products]
                   </th>
                   {/* <th className="font-bold text-center border-neutral-500 border-2 w-32 px-3">
                     Products
@@ -124,7 +124,15 @@ const Locations = () => {
                         {location.location}, {location.subLocation}
                       </td>
                       <td className="px-3 border-r font-normal text-center border-neutral-500">
-                        {location.service?.map((item) => item.serviceName).join(", ")}
+                        <p>
+                          {location.service?.map((item) => item.serviceName).join(", ")}
+                        </p>
+                        {location.product.length > 0 &&
+                          <p>
+                            [{location.product.map(p => p.productName).join(", ")}]
+                          </p>
+                        }
+
                       </td>
                       <td className="px-3 border-r font-normal text-center border-neutral-500 hidden">
                         <select name="" id="" className="text-center">

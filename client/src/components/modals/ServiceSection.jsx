@@ -199,9 +199,9 @@ function ServiceSection({ serviceReq, defaultService, allServices, setValue, wat
                                       placeholder="Calibration"
                                       className="border rounded p-2 disabled:opacity-35"
                                       disabled={!selectedConsumable}
-                                      defaultValue={0}
+                                     
                                       value={
-                                        selectedConsumable?.calibration
+                                        selectedConsumable?.calibration ?? ''
                                       }
                                       onChange={(e) => {
                                         const updatedScopes = [

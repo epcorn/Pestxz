@@ -51,7 +51,7 @@ const LocationModal = ({ clientId, locationDetails }) => {
       specification: "",
       calibrations: [],
       products: [
-        { product: null, version: null, code: '', frequency: null, specification: "", calibration: [] }
+        { _id: null, product: null, version: null, code: '', frequency: null, specification: "", calibration: [] }
       ]
     },
   });
@@ -79,8 +79,6 @@ const LocationModal = ({ clientId, locationDetails }) => {
       return;
     }
 
-    console.log(locationDetails)
-    
     const hasProduct = locationDetails.product?.length > 0;
     const hasService = locationDetails.service?.length > 0;
     const pr = locationDetails.product?.[0];
@@ -98,13 +96,15 @@ const LocationModal = ({ clientId, locationDetails }) => {
 
       products: hasProduct ?
         locationDetails.product?.map((pr) => ({
+          _id: pr._id || null,
           product: { label: pr?.productName, value: pr?.productId },
           version: { label: pr?.versionName, value: pr?.versionId },
           frequency: { label: pr?.frequency, value: pr?.frequency },
           code: pr?.code || '',
           specification: pr?.specification || "",
           calibrations: pr?.calibrations ?? [],
-        })) : [{ product: null, version: null, code: '', frequency: null, specification: '', calibration: [] }],
+        })) : [{ _id: null, product: null, version: [], code: '', frequency: null, specification: '', calibration: [] }],
+
       serviceReq: hasService
         ? locationDetails.service.map((ser) => ({
           serviceId: ser.serviceId || "",
@@ -148,6 +148,7 @@ const LocationModal = ({ clientId, locationDetails }) => {
       const validProducts = data?.products?.filter((p) => p.product.value && p.version.value && p.version.label && p.frequency.value);
       console.log(validProducts)
       data.productReq = validProducts?.map(p => ({
+        _id: p._id || undefined,
         productId: p.product.value,
         productName: p.product.label,
         versionId: p.version.value,

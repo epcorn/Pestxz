@@ -8,6 +8,7 @@ import {
   getSingleComplaint,
   newComplaint,
   newRegularService,
+  addProductService,
   updateComplaint,
 } from "../controllers/serviceController.js";
 import { dailyServiceReport } from "../controllers/dailyReports.js";
@@ -27,6 +28,8 @@ router
   .route("/singleComplaint/:id")
   .get(getSingleComplaint)
   .put(updateComplaint);
+
+router.route("/product").post(addProductService)
 
 router.put("/assign-work", assignWork);
 router.get("/assign-work", getAllAssignedWork);

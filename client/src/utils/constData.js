@@ -68,3 +68,21 @@ export const timeList = [
   { value: "Night", label: "Night" },
   { value: "Anytime", label: "Anytime" },
 ];
+
+export const productCalibrationMapping = {
+  "Glue Board": "Replaced",
+  "GlueBoard": "Replaced",
+  Bait: "Refilled",
+  "Bait-1": "Refilled",
+  "Dead Rat Found": "Found",
+  "Liquid Refill": "Refilled",
+  "Spray Refill": "Refilled",
+  Tubelight: "Need Replacement",
+  TubeLight: "Need Replacement",
+  CFL: "Need Replacement",
+  "Snapper Sheet": "Need Replacement",
+  "Vaporiser Bag": "Need Replacement",
+  "Battery Replace": "Need Replacement",
+  "Bettary Replace": "Need Replacement",
+  "Bettery Replace": "Need Replacement",
+};

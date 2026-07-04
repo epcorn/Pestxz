@@ -156,7 +156,7 @@ function CalibrationFields({ control, register, errors, nestIndex }) {
           <div className='w-full'>
             <InputRow
               id={`version.${nestIndex}.calibration.${i}.value`}
-              register={register}
+              register={register} required={false}
               label={`Calibration ${i + 1}`}
             />
             {errors?.version?.[nestIndex]?.calibration?.[i]?.value && (

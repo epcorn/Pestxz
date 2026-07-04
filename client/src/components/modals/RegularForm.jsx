@@ -26,6 +26,7 @@ function RegularForm({ serviceData, id, type, locationName, setRegular }) {
   const [rerender, setRerender] = useState([]);
 
 
+  console.log(type, locationName,serviceData)
   const [regularService, { isLoading }] = useRegularServiceMutation();
   const [casualService, { isLoading: submitLoading }] = useCasualServiceMutation();
   const [updateUnscheduled, { isLoading: unScLoading }] = useUnscheduledReportMutation()
@@ -33,6 +34,7 @@ function RegularForm({ serviceData, id, type, locationName, setRegular }) {
   const { register, reset, setValue, getValues, watch } = useForm();
   const STORAGE_KEY = getStorageKey(id, locationName);
   const today = todayShort();
+  
 
   const upComing = isRegular ? serviceData.map(s =>
     s.schedule.filter(sc => sc.status === "Pending") || []

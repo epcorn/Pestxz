@@ -41,6 +41,8 @@ cloudinary.config({
   api_key: process.env.CLOUD_KEY,
   api_secret: process.env.CLOUD_SECRET,
 });
+
+
 io.on("connection", (socket) => {
   socket.on("join-admin", (role) => {
     if (
@@ -91,7 +93,14 @@ io.on("connection", (socket) => {
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
-app.use(fileUpload({ useTempFiles: true }));
+app.use(
+  fileUpload({
+    useTempFiles: true,
+    tempFileDir: "/tmp/",
+    limits: { fileSize: 10 * 1024 * 1024 },
+    abortOnLimit: true,
+  }),
+);
 if (process.env.NODE_ENV !== "production") app.use(morgan("dev"));
 
 // setup cron job

@@ -20,7 +20,7 @@ function AdminDashboard() {
   const { data: clients = [] } = useAllClientsQuery();
   const { data: adminDash, isLoading } = useAdminDashboardQuery(
     selectedClient?._id || "select",
-    { skip: user?.role !== "Admin" }
+    { skip: user?.role !== "Admin", refetchOnReconnect: true }
   );
   console.log(adminDash)
 

@@ -5,6 +5,8 @@ import moment from "moment";
 import exceljs from "exceljs";
 import { sendEmail, uploadFile } from "../utils/helperFunction.js";
 import Casual from "../models/casualServiceModel.js";
+import ProductService from "../models/productService.js";
+import mongoose from "mongoose";
 
 export const newComplaint = async (req, res) => {
   const { id } = req.params;
@@ -455,11 +457,13 @@ export const casualServices = async (req, res) => {
       client: location.client,
       location: locationId,
       image: imageUrl,
-      service:[{
-        serviceId,
-        serviceName,
-        scopes: scopeReadings,
-      }],
+      service: [
+        {
+          serviceId,
+          serviceName,
+          scopes: scopeReadings,
+        },
+      ],
       user: { name: req.user.name, id: req.user._id },
     });
 
@@ -479,5 +483,80 @@ export const getCasualServices = async (req, res) => {
     res.status(200).json(casuals);
   } catch (error) {
     res.status(500).json({ msg: "server error" });
+  }
+};
+
+export const addProductService = async (req, res) => {
+  const {
+    locationId,
+    quality,
+    calibration,
+    code,
+    product,
+    serialNo,
+    version,
+    serviceDate,
+  } = req.body;
+  
+  try {
+    const location = await Location.findById(locationId);
+    if (!location) return res.status(404).json({ msg: "Location not found" });
+
+    const locationProduct = location.product.find(
+      (p) =>
+        p.serialNo?.toString().trim() === serialNo?.toString().trim() &&
+        p.productId?.toString() === product.id?.toString(),
+    );
+
+    console.log(serviceDate, product, locationId)
+    if (!locationProduct) {
+      return res
+        .status(404)
+        .json({ msg: "Product not found for this location" });
+    }
+
+    // if (Array.isArray(locationProduct.schedule)) {
+    //   const target = serviceDate
+    //     ? locationProduct.schedule.find((s) => s.date === serviceDate)
+    //     : locationProduct.schedule.find((s) => !s.completed);
+
+    //   if (target) {
+    //     target.completed = true;
+    //     target.status = "Done";
+    //     target.completedAt = new Date();
+    //     target.completedBy = req.user.name;
+    //   }
+    // }
+
+    // location.markModified("product");
+    // await location.save();
+
+    // await ProductService.create({
+    //   quality: { status: quality.status, image: quality.image },
+    //   product: { name: product.name, id: product.id },
+    //   code,
+    //   serialNo,
+    //   version: { name: version.name, id: version.id },
+    //   calibration: calibration.map((cal) => ({
+    //     name: cal.name,
+    //     status: cal.status,
+    //     image: cal.image,
+    //   })),
+    //   servicedBy: {
+    //     name: req.user.name,
+    //     id: req.user._id,
+    //     date: new Date(),
+    //   },
+    //   location: locationId,
+    //   client: location.client,
+    //   success: true,
+    // });
+
+    return res.status(201).json({
+      msg: `Product service added successfully for ${product.name}`,
+    });
+  } catch (error) {
+    console.error("error occurred: ", error);
+    return res.status(500).json({ msg: "Internal server error" });
   }
 };

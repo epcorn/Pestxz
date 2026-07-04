@@ -6,7 +6,7 @@ const productSchema = new mongoose.Schema({
     {
       name: { type: String, default: "" },
       code: { type: String, default: "" },
-      calibration: [{ type: String }],
+      calibration: [{ type: String, default: "" }],
     },
   ],
   specification: { type: String },

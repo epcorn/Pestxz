@@ -74,6 +74,13 @@ export const serviceSlice = apiSlice.injectEndpoints({
         url: `/api/service/dailyServiceReport/${value}`,
       }),
     }),
+    addProductService: builder.mutation({
+      query: (data) => ({
+        url: `/api/service/product`,
+        method: "POST",
+        body: data,
+      }),
+    }),
   }),
 });
 
@@ -85,6 +92,7 @@ export const {
   useRegularServiceMutation,
   useAssignWorkMutation,
   useCasualServiceMutation,
+  useAddProductServiceMutation,
   useGetCasualsQuery,
   useGetAllAssignedWorkQuery,
 

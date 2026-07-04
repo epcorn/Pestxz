@@ -7,6 +7,9 @@ import { v2 as cloudinary } from "cloudinary";
 import brevo from "@getbrevo/brevo";
 import Location from "../models/locationModel.js";
 import Client from "../models/clientModel.js";
+import { productCounter } from "../controllers/locationController.js";
+import mongoose from "mongoose";
+import Counter from "../models/counterModel.js";
 
 export const capitalLetter = (name) => {
   return name
@@ -28,43 +31,6 @@ export const generateToken = (res, userId) => {
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
   });
 };
-
-//using canvas
-// export const qrCodeGenerator = async ({ link, floor, location }) => {
-//   let loc = location.substring(0, 25);
-//   let subLoc = location.substring(25);
-//   try {
-//     let height = 360,
-//       width = 340,
-//       margin = 6;
-
-//     const qrCode = await QRCode.toDataURL(link, { width, height, margin });
-
-//     // Load the QR code image into a canvas
-//     const canvas = createCanvas(width, height + 95);
-//     const ctx = canvas.getContext("2d");
-//     const qrCodeImg = await loadImage(qrCode);
-//     ctx.drawImage(qrCodeImg, 0, 40);
-
-//     // Add the bottom text to the canvas
-//     ctx.fillStyle = "rgb(255,255,255)";
-//     ctx.font = "20px Arial";
-//     ctx.textAlign = "start";
-//     ctx.fillText(`Floor: ${floor}`, 2, height + 42);
-//     ctx.fillText(`Location: ${loc}`, 2, height + 64);
-//     ctx.fillText(subLoc, 2, height + 86);
-//     ctx.fillStyle = "rgb(32, 125, 192)";
-//     ctx.textAlign = "center";
-//     ctx.font = "italic bold 33px Arial";
-//     ctx.fillText(`Powered By PestXZ`, width / 2, 30);
-
-//     const buf = canvas.toBuffer("image/jpeg");
-//     return buf;
-//   } catch (error) {
-//     console.log("QR Error", error);
-//     return false;
-//   }
-// };
 
 //using sharp
 export const qrCodeGenerator = async ({ link, floor, location }) => {
@@ -266,7 +232,7 @@ export const generateSchedule = (start, end, frequency) => {
   let current = new Date(start);
   let endDate = new Date(end);
   current = today < current ? current : today;
-  
+
   while (current <= endDate) {
     schedule.push({
       date: current.toISOString().split("T")[0],
@@ -364,6 +330,254 @@ export const generateSchedule = (start, end, frequency) => {
   }
 
   return schedule;
+};
+
+export const toArray = (val) => {
+  if (Array.isArray(val)) return val;
+  if (val === undefined || val === null || val === "") return [];
+  return [val];
+};
+
+export const buildSchedule = (contractStart, contractEnd, frequency) =>
+  generateSchedule(contractStart, contractEnd, frequency).map((d) => ({
+    date: d.date,
+    completed: d.completed,
+    status: d.status,
+    completedAt: null,
+    completedBy: "",
+  }));
+
+export const releaseProductCounter = async (code, serialNo) => {
+  if (!code || !serialNo) return;
+
+  const released = await Counter.findOneAndUpdate(
+    { productCode: code },
+    { $inc: { seq: -1 } },
+  );
+  console.log(released);
+  return released;
+};
+
+// ── formatting ─────────────────────────────────────────────
+export const formatServices = (
+  serviceReq,
+  existingServices,
+  contractStart,
+  contractEnd,
+) => {
+  const valid = serviceReq.filter(
+    (s) => s.serviceId && s.serviceName && s.scopes?.length > 0,
+  );
+  if (!valid.length) return { error: "Please add at least one valid service" };
+
+  const formatted = valid.map((service) => {
+    const old = existingServices.find(
+      (s) => s.serviceId?.toString() === service.serviceId?.toString(),
+    );
+    const schedule =
+      old?.schedule?.length && old.frequency === service.frequency
+        ? old.schedule
+        : buildSchedule(contractStart, contractEnd, service.frequency);
+
+    return {
+      serviceId: service.serviceId,
+      serviceName: service.serviceName,
+      frequency: service.frequency,
+      schedule,
+      scopes: service.scopes.map((sc) => ({
+        scopeId: sc.scopeId,
+        scopeName: sc.scopeName,
+        consumables: (sc.consumables || []).map((c) => ({
+          consumableId: c.consumableId,
+          consumableName: c.consumableName,
+          calibration: c.calibration,
+        })),
+      })),
+    };
+  });
+
+  return { formatted };
+};
+
+export const formatProducts = async (
+  productReq,
+  existingProducts,
+  contractStart,
+  contractEnd,
+) => {
+  const valid = productReq.filter(
+    (p) => p.productId && p.versionId && p.frequency,
+  );
+  if (!valid.length) return { error: "Please fill all product fields" };
+
+  const formatted = await Promise.all(
+    valid.map(async (pr) => {
+      const old = pr._id
+        ? existingProducts.find((p) => p._id?.toString() === pr._id?.toString())
+        : null;
+
+      const changed =
+        !old ||
+        old.productId?.toString() !== pr.productId ||
+        old.versionId?.toString() !== pr.versionId;
+
+      const serialNo = changed ? await productCounter(pr.code) : old.serialNo;
+
+      const schedule =
+        !changed && old?.schedule?.length && old.frequency === pr.frequency
+          ? old.schedule
+          : buildSchedule(contractStart, contractEnd, pr.frequency);
+
+      return {
+        _id: old?._id || new mongoose.Types.ObjectId(),
+        productId: pr.productId,
+        productName: pr.productName,
+        versionId: pr.versionId,
+        versionName: pr.versionName,
+        frequency: pr.frequency,
+        code: pr.code,
+        serialNo,
+        specification: pr.specification,
+        calibrations: toArray(pr.calibrations),
+        schedule,
+      };
+    }),
+  );
+
+  return { formatted };
+};
+
+// ── diffing ────────────────────────────────────────────────
+export const diffServices = (oldServices, newServices) => {
+  const diff = {};
+  const oldNames = oldServices.map((s) => s.serviceName);
+  const newNames = newServices.map((s) => s.serviceName);
+
+  const added = newNames.filter((n) => !oldNames.includes(n));
+  const removed = oldNames.filter((n) => !newNames.includes(n));
+  if (added.length) diff.servicesAdded = added;
+  if (removed.length) diff.servicesRemoved = removed;
+
+  const freqChanges = newServices
+    .map((s) => {
+      const old = oldServices.find(
+        (o) => o.serviceId?.toString() === s.serviceId?.toString(),
+      );
+      return old && old.frequency !== s.frequency
+        ? { service: s.serviceName, from: old.frequency, to: s.frequency }
+        : null;
+    })
+    .filter(Boolean);
+  if (freqChanges.length) diff.frequencyChanges = freqChanges;
+
+  const oldScopes = oldServices.flatMap(
+    (s) => s.scopes?.map((sc) => sc.scopeName) || [],
+  );
+  const newScopes = newServices.flatMap((s) =>
+    s.scopes.map((sc) => sc.scopeName),
+  );
+  const scopesAdded = newScopes.filter((s) => !oldScopes.includes(s));
+  const scopesRemoved = oldScopes.filter((s) => !newScopes.includes(s));
+  if (scopesAdded.length) diff.scopesAdded = scopesAdded;
+  if (scopesRemoved.length) diff.scopesRemoved = scopesRemoved;
+
+  const flattenConsumables = (services) =>
+    services.flatMap(
+      (s) =>
+        s.scopes?.flatMap(
+          (sc) =>
+            sc.consumables?.map((c) => ({
+              consumableName: c.consumableName,
+              calibration: c.calibration,
+            })) || [],
+        ) || [],
+    );
+  const oldConsumables = flattenConsumables(oldServices);
+  const newConsumables = flattenConsumables(newServices);
+
+  const consumablesAdded = newConsumables
+    .filter(
+      (n) => !oldConsumables.find((o) => o.consumableName === n.consumableName),
+    )
+    .map((c) => c.consumableName);
+  const consumablesRemoved = oldConsumables
+    .filter(
+      (o) => !newConsumables.find((n) => n.consumableName === o.consumableName),
+    )
+    .map((c) => c.consumableName);
+  if (consumablesAdded.length) diff.consumablesAdded = consumablesAdded;
+  if (consumablesRemoved.length) diff.consumablesRemoved = consumablesRemoved;
+
+  const calibrationChanges = newConsumables
+    .map((n) => {
+      const old = oldConsumables.find(
+        (o) => o.consumableName === n.consumableName,
+      );
+      return old && old.calibration !== n.calibration
+        ? {
+            consumable: n.consumableName,
+            from: old.calibration,
+            to: n.calibration,
+          }
+        : null;
+    })
+    .filter(Boolean);
+  if (calibrationChanges.length) diff.calibrationChanges = calibrationChanges;
+
+  return diff;
+};
+
+export const diffProducts = async (oldProducts, newProducts) => {
+  const diff = {};
+  const matchById = (list, id) =>
+    list.find((p) => p._id?.toString() === id?.toString());
+
+  const addedProducts = newProducts
+    .filter((p) => !matchById(oldProducts, p._id))
+    .map((p) => p.productName);
+  const removedRows = oldProducts.filter((p) => !matchById(newProducts, p._id));
+  if (addedProducts.length) diff.productsAdded = addedProducts;
+  if (removedRows.length)
+    diff.productsRemoved = removedRows.map((p) => p.productName);
+
+  await Promise.all(
+    removedRows.map((p) => releaseProductCounter(p.code, p.serialNo)),
+  );
+
+  const versionChanges = [],
+    freqChanges = [],
+    calAdded = [],
+    calRemoved = [];
+  newProducts.forEach((p) => {
+    const old = matchById(oldProducts, p._id);
+    if (!old) return;
+    if (old.versionId?.toString() !== p.versionId)
+      versionChanges.push({
+        product: p.productName,
+        from: old.versionName,
+        to: p.versionName,
+      });
+    if (old.frequency !== p.frequency)
+      freqChanges.push({
+        product: p.productName,
+        from: old.frequency,
+        to: p.frequency,
+      });
+
+    const newCal = toArray(p.calibrations),
+      oldCal = toArray(old.calibrations);
+    const added = newCal.filter((c) => !oldCal.includes(c));
+    const removed = oldCal.filter((c) => !newCal.includes(c));
+    if (added.length) calAdded.push({ product: p.productName, added });
+    if (removed.length) calRemoved.push({ product: p.productName, removed });
+  });
+
+  if (versionChanges.length) diff.versionChanges = versionChanges;
+  if (freqChanges.length) diff.productFrequencyChanges = freqChanges;
+  if (calAdded.length) diff.productCalibrationsAdded = calAdded;
+  if (calRemoved.length) diff.productCalibrationsRemoved = calRemoved;
+
+  return diff;
 };
 
 export const autoMarkMissed = async () => {

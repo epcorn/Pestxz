@@ -1,73 +1,41 @@
-import React, { useId } from 'react'
+import React, { useId, useState } from 'react';
 
-const productsMap = [
-  { rodent: "Quality of Box", status: "Ok", status1: "Need Repair" },
-  { Snapper: "Quality of Machine", status: "Ok", status1: "Need Repair" },
-  { "Anti Crawler": "Quality of Machine" },
-]
+function BoxStatus() {
+  const id = useId();
+  const [status, setStatus] = useState('');
 
-function BoxStatus({ handleStatusChange, id, currentStatus, currentQuality }) {
-  const qualityId = useId()
-  const statusId = useId()
-  
   return (
-    <div className='flex justify-between flex-wrap gap-2'>
-      {/* Status Fieldset Group */}
-      <div className={`flex gap-2 items-center outline p-2 ${currentStatus === "missing" ? "bg-red-100" : "bg-green-100"}`}>
-        <strong>Product Status: </strong>
-        <div className='flex items-center gap-1 rounded outline px-2 py-0.5'>
+    <div className='outline px-2 py-1 pb-2 rounded-md'>
+      <h3 className='text-lg font-semibold'>Equipment Status<span className='text-red-600'>*</span></h3>
+      <div className='grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-3 items-center space-x-1 ml-5'>
+        <div>
           <input
-            value='found'
             type="radio"
-            id={`${statusId}-found`}
-            name={`status-${id}`} // Unique per product item row
-            checked={currentStatus === 'found'}
-            onChange={(e) => handleStatusChange(id, 'status', e.target.value)}
+            name="equipmentstatus"
+            id={`${id}-ok`}
+            value="ok"
+            checked={status === 'ok'}
+            onChange={(e) => setStatus(e.target.value)}
           />
-          <label htmlFor={`${statusId}-found`}>Found</label>
+          <label htmlFor={`${id}-ok`} className='ml-1'>Ok</label>
         </div>
-        <div className='flex items-center gap-1 rounded outline px-2 py-0.5'>
+        <div>
           <input
-            value='missing'
             type="radio"
-            id={`${statusId}-missing`}
-            name={`status-${id}`}
-            checked={currentStatus === 'missing'}
-            onChange={(e) => handleStatusChange(id, 'status', e.target.value)}
+            name="equipmentstatus"
+            id={`${id}-notok`}
+            value="notok"
+            checked={status === 'notok'}
+            onChange={(e) => setStatus(e.target.value)}
           />
-          <label htmlFor={`${statusId}-missing`}>Missing</label>
+          <label htmlFor={`${id}-notok`} className='ml-1'>Need Repair/ Replace</label>
+        </div>
+        <div className='*:block'>
+          <input type="file" name="" id="" className='file:bg-gray-500 file:px-1 outline rounded ' />
         </div>
       </div>
-      {/* Box Quality Fieldset Group */}
-      {currentStatus === "found" &&
-        <div className={`flex gap-5 items-center outline p-2 rounded ${currentQuality === "ok" ? "bg-blue-100" : "bg-cyan-100"}`}>
-          <strong>Box Quality: </strong>
-          <div className='flex items-center gap-1 rounded outline px-2 py-0.5'>
-            <input
-              type="radio"
-              value='ok'
-              name={`quality-${id}`} // Fixed: Scoped per product ID
-              checked={currentQuality === 'ok'}
-              id={`${qualityId}-ok`}
-              onChange={(e) => handleStatusChange(id, 'quality', e.target.value)}
-            />
-            <label htmlFor={`${qualityId}-ok`}>Ok</label>
-          </div>
-          <div className='flex items-center gap-1 rounded outline px-2 py-0.5'>
-            <input
-              type="radio"
-              value='notok'
-              name={`quality-${id}`} // Fixed: Scoped per product ID
-              checked={currentQuality === 'notok'}
-              id={`${qualityId}-notok`}
-              onChange={(e) => handleStatusChange(id, 'quality', e.target.value)}
-            />
-            <label htmlFor={`${qualityId}-notok`}>Needs Repair</label>
-          </div>
-        </div>
-      }
     </div>
-  )
+  );
 }
 
-export default BoxStatus
+export default BoxStatus;
