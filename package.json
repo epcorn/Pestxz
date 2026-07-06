@@ -1,9 +1,12 @@
 {
-  "name": "hotel-crm",
+  "name": "PestXZ",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "type": "module",
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "scripts": {
     "start": "nodemon server.js",
     "setup-production": "npm run install-client && npm run build-client && npm install",

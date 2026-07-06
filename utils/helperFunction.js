@@ -2,7 +2,6 @@ import jwt from "jsonwebtoken";
 import QRCode from "qrcode";
 import fs from "fs";
 import sharp from "sharp";
-// import { createCanvas, loadImage } from "canvas";
 import { v2 as cloudinary } from "cloudinary";
 import brevo from "@getbrevo/brevo";
 import Location from "../models/locationModel.js";
