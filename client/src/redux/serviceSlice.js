@@ -80,7 +80,7 @@ export const serviceSlice = apiSlice.injectEndpoints({
         method: "POST",
         body: data,
       }),
-      invalidatesTags: ["product"],
+      invalidatesTags: ["product", "Location"],
     }),
   }),
 });

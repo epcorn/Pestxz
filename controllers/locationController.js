@@ -3,7 +3,6 @@ import Casual from "../models/casualServiceModel.js";
 import Client from "../models/clientModel.js";
 import Counter from "../models/counterModel.js";
 import Location from "../models/locationModel.js";
-import Product from "../models/productModel.js";
 import Service from "../models/serviceModel.js";
 import { Unscheduled } from "../models/unScheduleModel.js";
 import {
@@ -21,6 +20,7 @@ import {
   uploadFile,
 } from "../utils/helperFunction.js";
 import fs from "fs";
+import ProductService from "../models/productService.js";
 
 let locationId = null;
 const internalRoles = [
@@ -254,7 +254,6 @@ export const addLocation = async (req, res) => {
     return res.status(500).json({ msg: "Server error, try again later" });
   }
 };
-
 
 export const getAllLocations = async (req, res) => {
   const { id } = req.params;
@@ -574,6 +573,8 @@ export const getLocationDetails = async (req, res) => {
       updatedAt: -1,
     });
 
+    const productsService = await ProductService.find({ location: location._id }).sort({ updatedAt: -1 });
+
     return res.json({
       location,
       client: client?.name || "",
@@ -582,6 +583,7 @@ export const getLocationDetails = async (req, res) => {
       regularService,
       unscheduled: unscheduled || [],
       casuals: casuals || [],
+      productsService,
     });
   } catch (error) {
     console.log(error);
@@ -605,6 +607,7 @@ export const getSingleLocation = async (req, res) => {
     res.status(500).json({ msg: "Server error, try again later" });
   }
 };
+
 export const assignLocation = async (req, res) => {
   const { id, userId } = req.body.data;
   const clientAdmin = req.user.role === "ClientAdmin" && req.user.role;
@@ -619,6 +622,7 @@ export const assignLocation = async (req, res) => {
     res.status(500).json({ msg: "server error" });
   }
 };
+
 export const backfillSchedules = async (req, res) => {
   try {
     const locations = await Location.find().populate("client");

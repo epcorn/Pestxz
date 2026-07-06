@@ -36,7 +36,7 @@ function ProductServiceForm({ products, currentUser }) {
           <h3 className="font-semibold text-2xl mb-3">Product Service form</h3>
         }
       </div>
-      <div className="shadow-[inset_0_3px_10px_rgba(0,0,0,0.1)] shadow-black outline max-h-72 overflow-y-auto">
+      <div className="shadow-[inset_0_3px_10px_rgba(0,0,0,0.1)] shadow-black outline max-h-96 overflow-y-auto">
         {queue?.length > 0 ? (
           queue.map(product => (
             <ProductServiceCard
@@ -147,8 +147,8 @@ function ProductServiceCard({ product, currentUser, onSubmitted, id }) {
         }
       }),
     }
+    console.log(payload)
     try {
-
       const res = await addProducts(payload).unwrap()
       onSubmitted(pid)
       console.log(res)
@@ -172,7 +172,7 @@ function ProductServiceCard({ product, currentUser, onSubmitted, id }) {
         <p><strong>Specification:</strong> <span>{product.specification}</span></p>
       </div>
 
-      <div>
+      <div className='outline rounded p-2 mt-2'>
         <h3 className="text-lg font-semibold mb-2">1. Equipment Quality</h3>
         <div className="flex flex-col md:flex-row md:justify-evenly ml-3 gap-3 md:items-center ">
           <InputRadio
@@ -213,7 +213,7 @@ function ProductServiceCard({ product, currentUser, onSubmitted, id }) {
 
       <div>
         {hasRodentChoice && (
-          <div className="mb-4 p-3 border-2 border-amber-300 rounded bg-amber-50">
+          <div className="mb-4 p-3 border-2 border-amber-300 rounded bg-amber-50 ">
             <h3 className="text-lg font-semibold mb-2">Method Used</h3>
             <div className="flex gap-6 ml-3">
               <label className="flex items-center gap-2 cursor-pointer">
@@ -248,7 +248,7 @@ function ProductServiceCard({ product, currentUser, onSubmitted, id }) {
           if (isBaitOrGlue && cal !== rodentMethod) return null
 
           return (
-            <div key={`${pid}-${cal}-${i}`} className="mb-4">
+            <div key={`${pid}-${cal}-${i}`} className="my-2 p-3 rounded  outline">
               <h3 className="text-lg font-semibold capitalize mb-1">{cal}</h3>
               <div className="flex flex-col ml-5 md:flex-row md:justify-evenly gap-4 md:items-center ">
                 <InputRadio
@@ -312,10 +312,8 @@ function ImageUpload({ name, id, onchange, isUploading, isUploaded, required = f
 function PreviousServices({ product }) {
   const date = new Date(new Date().setUTCHours(0, 0, 0, 0)).toISOString()
   const sortPrevious = product?.schedule?.filter(sc => sc.date < date || "")
-  console.log(sortPrevious)
 
   return (
-
 
     <div className='relative outline bg-white w-fit'>
       <div className='bg-gray-300 px-2 w-fit whitespace-nowrap '>

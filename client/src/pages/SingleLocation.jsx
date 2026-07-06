@@ -29,6 +29,7 @@ import CasualForm from "../components/single_location/casual/CasualForm";
 import Headers from "../components/Headers";
 import ProductShow from "../components/single_location/ProductShow";
 import ProductServiceForm from "../components/modals/ProductServiceForm";
+import ProductLists from "../components/ProductLists";
 
 
 const SingleLocation = () => {
@@ -64,6 +65,7 @@ const SingleLocation = () => {
   const tabs = [
     { key: "allComp", label: "Complaints" },
     { key: "allReg", label: "Scheduled" },
+    { key: "allProducts", label: "Products" },
     { key: "allUnsch", label: "Un-Scheduled" },
     { key: "allCasual", label: "Casual" },
   ];
@@ -138,7 +140,7 @@ const SingleLocation = () => {
             )}
 
             {/* ===== ACTION BUTTONS ===== */}
-            <div className="flex flex-wrap gap-3 bg-white fixed right-0 opacity-25 hover:opacity-100 transition-all duration-200 z-99 bottom-0">
+            <div className="flex flex-wrap gap-3 bg-white fixed right-0 opacity-25 hover:opacity-100 transition-all duration-200 z-50 bottom-0">
               {DBUser?.rights?.raise && id && (
                 <Button
                   small={true}
@@ -264,6 +266,18 @@ const SingleLocation = () => {
                     ) : (
                       <p className="text-center text-neutral-500 py-6">No Complaints found...</p>
                     )}
+                  </div>
+                )}
+
+                {toggleLists === "allProducts" && (
+                  <div className="bg-white rounded-2xl border border-blue-100 overflow-hidden shadow-sm">
+                    <h2 className="text-lg font-bold px-5 py-3 bg-blue-50 flex justify-between items-center">
+                      <span>All Porducts Services Done ({data?.productsService?.length || 0})</span>
+                      <IoIosArrowDown className={`${isModalOpen?.allReg ? "rotate-180" : ""} transition-all`} />
+                    </h2>
+                    <div className="p-2">
+                      <ProductLists data={data?.productsService} />
+                    </div>
                   </div>
                 )}
 
