@@ -15,6 +15,7 @@ import { toast } from "react-toastify";
 import Select from "react-select";
 import Headers from "../components/Headers";
 import { useGetSingleUserQuery } from "../redux/userSlice";
+import { socket } from "../socket";
 
 const Complaints = () => {
   const [page, setPage] = useState(1);
@@ -183,9 +184,12 @@ export function AssignWork({ complaintId, currentAssgndVal = null, show }) {
       };
       await assignWork(data).unwrap();
       show({ id: "", status: false });
+      socket.emit("complaint-assigned", {
+        user: user.name,
+        status: status.label,
+      })
       toast.success("Successfully assigned operator!");
     } catch (error) {
-      console.log(error);
       show({ id: "", status: false });
       if (error.status === 403) return toast.warn(error.data.msg);
       toast.error("Failed to assign operator");

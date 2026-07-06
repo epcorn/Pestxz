@@ -515,42 +515,42 @@ export const addProductService = async (req, res) => {
         .json({ msg: "Product not found for this location" });
     }
 
-    // if (Array.isArray(locationProduct.schedule)) {
-    //   const target = serviceDate
-    //     ? locationProduct.schedule.find((s) => s.date === serviceDate)
-    //     : locationProduct.schedule.find((s) => !s.completed);
+    if (Array.isArray(locationProduct.schedule)) {
+      const target = serviceDate
+        ? locationProduct.schedule.find((s) => s.date === serviceDate)
+        : locationProduct.schedule.find((s) => !s.completed);
 
-    //   if (target) {
-    //     target.completed = true;
-    //     target.status = "Done";
-    //     target.completedAt = new Date();
-    //     target.completedBy = req.user.name;
-    //   }
-    // }
+      if (target) {
+        target.completed = true;
+        target.status = "Done";
+        target.completedAt = new Date();
+        target.completedBy = req.user.name;
+      }
+    }
 
-    // location.markModified("product");
-    // await location.save();
+    location.markModified("product");
+    await location.save();
 
-    // await ProductService.create({
-    //   quality: { status: quality.status, image: quality.image },
-    //   product: { name: product.name, id: product.id },
-    //   code,
-    //   serialNo,
-    //   version: { name: version.name, id: version.id },
-    //   calibration: calibration.map((cal) => ({
-    //     name: cal.name,
-    //     status: cal.status,
-    //     image: cal.image,
-    //   })),
-    //   servicedBy: {
-    //     name: req.user.name,
-    //     id: req.user._id,
-    //     date: new Date(),
-    //   },
-    //   location: locationId,
-    //   client: location.client,
-    //   success: true,
-    // });
+    await ProductService.create({
+      quality: { status: quality.status, image: quality.image },
+      product: { name: product.name, id: product.id },
+      code,
+      serialNo,
+      version: { name: version.name, id: version.id },
+      calibration: calibration.map((cal) => ({
+        name: cal.name,
+        status: cal.status,
+        image: cal.image,
+      })),
+      servicedBy: {
+        name: req.user.name,
+        id: req.user._id,
+        date: new Date(),
+      },
+      location: locationId,
+      client: location.client,
+      success: true,
+    });
 
     return res.status(201).json({
       msg: `Product service added successfully for ${product.name}`,

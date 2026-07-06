@@ -8,19 +8,19 @@ import { capitalLetter, uploadFile } from "../utils/helperFunction.js";
 import Product from "../models/productModel.js";
 
 export const imageUploader = async (req, res) => {
-  // try {
-  //   if (!req.files || !req.files.image)
-  //     return res.status(400).json({ msg: "No images provided" });
+  try {
+    if (!req.files || !req.files.image)
+      return res.status(400).json({ msg: "No images provided" });
 
-  //   const url = await uploadFile({ filePath: req.files.image.tempFilePath });
-  //   if (!url) return res.status(502).json({ msg: "Image upload failed" });
-  //   res.status(200).json({ msg: "Image Uploaded", url });
-  // } catch (error) {
-  //   console.log("Image upload error: ", error);
-  //   res
-  //     .status(500)
-  //     .json({ msg: "Image Uploaded failed", error: error.message });
-  // }
+    const url = await uploadFile({ filePath: req.files.image.tempFilePath });
+    if (!url) return res.status(502).json({ msg: "Image upload failed" });
+    res.status(200).json({ msg: "Image Uploaded", url });
+  } catch (error) {
+    console.log("Image upload error: ", error);
+    res
+      .status(500)
+      .json({ msg: "Image Uploaded failed", error: error.message });
+  }
 };
 
 export const addFrequency = async (req, res) => {

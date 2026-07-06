@@ -62,6 +62,37 @@ export function decodeBase64Svg(base64String) {
   }
 }
 
+export function compareDates(schedules) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const sortedSchedules = [...schedules].sort(
+    (a, b) => new Date(a.date) - new Date(b.date)
+  );
+
+  const nextDate = sortedSchedules.find((f) => {
+    const scheduleDate = new Date(f.date);
+    scheduleDate.setHours(0, 0, 0, 0);
+    return scheduleDate > today;
+  });
+
+  const todaysStatus = schedules.find((f) => {
+    const scheduleDate = new Date(f.date);
+    scheduleDate.setHours(0, 0, 0, 0);
+    return scheduleDate.getTime() === today.getTime() && f.completed;
+  });
+
+  const todaysDate = schedules.find((f) => {
+    const scheduleDate = new Date(f.date);
+    scheduleDate.setHours(0, 0, 0, 0);
+    // Fixed: Changed from .getDate() to .getTime() to match full date context
+    return scheduleDate.getTime() === today.getTime() && !f.completed;
+  });
+
+  return { todaysStatus, nextDate, todaysDate };
+}
+
+
 // DATE FORMAT → 01-Jun
 export const formatShortDate = (date) => {
   const d = new Date(date);

@@ -40,13 +40,13 @@ export const adminSlice = apiSlice.injectEndpoints({
         method: "POST",
         body: data,
       }),
-      invalidatesTags: ["Admin"],
+      invalidatesTags: ["Admin", "product"],
     }),
     getProducts: builder.query({
       query: () => ({
         url: `/api/products/product`,
       }),
-      providesTags: ["Admin"],
+      providesTags: ["Admin", "product"],
     }),
     registerUser: builder.mutation({
       query: (data) => ({
@@ -103,6 +103,7 @@ export const adminSlice = apiSlice.injectEndpoints({
         method: "POST",
         body: formData,
       }),
+      invalidatesTags: ["product"],
     }),
   }),
 });

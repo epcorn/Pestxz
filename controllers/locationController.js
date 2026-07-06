@@ -226,7 +226,7 @@ export const addLocation = async (req, res) => {
 
     const locationId = newLocation._id;
     const qrData = await qrCodeGenerator({
-      link: `https://pestxz.onrender.com/location/${locationId}`,
+      link: `https://pestxz.com/location/${locationId}`,
       floor: newLocation.floor,
       location: `${newLocation.location}, ${newLocation.subLocation}`,
     });
@@ -238,9 +238,7 @@ export const addLocation = async (req, res) => {
     }
 
     fs.writeFileSync("./tmp/qr.jpeg", qrData);
-
     const qrLink = await uploadFile({ filePath: "./tmp/qr.jpeg" });
-  
     if (!qrLink) {
       await Location.findByIdAndDelete(locationId);
       return res.status(400).json({ msg: "QR upload error. Try again later" });
@@ -256,6 +254,7 @@ export const addLocation = async (req, res) => {
     return res.status(500).json({ msg: "Server error, try again later" });
   }
 };
+
 
 export const getAllLocations = async (req, res) => {
   const { id } = req.params;

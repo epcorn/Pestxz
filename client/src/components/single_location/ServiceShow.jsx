@@ -1,121 +1,121 @@
 import React, { useState } from "react";
-import { formatShortDate, getWorkStatus } from "../../utils/helperFunctions";
+import { formatShortDate } from "../../utils/helperFunctions";
 
 function ServiceShow({ services }) {
-
   const [expandedServiceId, setExpandedServiceId] = useState(null);
 
   return (
-    <div className="w-full overflow-auto border border-gray-800 rounded-lg bg-white">
-      <div className="min-w-[768px]">
-        <div>
-          {/* HEADER */}
-          <div className="grid grid-cols-7 bg-gray-300 text-xs md:text-sm font-bold text-gray-700 border-b *:not-last:border-r *:not-last:border-gray-600 border-gray-300">
-            <div className="px-3 py-3 whitespace-nowrap">Services</div>
-            <div className="px-3 py-3 whitespace-nowrap  col-span-3">Upcoming Dates</div>
-            <div className="px-3 py-3 whitespace-nowrap">Frequency</div>
-            <div className="px-3 py-3 whitespace-nowrap">Last Serviced</div>
-            <div className="px-3 py-3 whitespace-nowrap">Last Missed</div>
-            {/* FIX 1: Explicitly span 3 columns to match body layout */}
-          </div>
+    <section className="">
+      <div className="w-full overflow-x-auto">
+        <table className="w-full text-left m-0.5 rounded-md table-auto outline-1 outline-black min-w-[900px]">
+          <thead className="bg-gray-300 text-sm">
+            <tr className="border-b border-black whitespace-nowrap *:px-4 *:py-2">
+              <th className="border-r border-black">Services</th>
+              <th className="border-r border-black">Upcoming Dates</th>
+              <th className="border-r border-black">Frequency</th>
+              <th className="border-r border-black">Last Serviced</th>
+              <th>Last Missed</th>
+            </tr>
+          </thead>
+          <tbody className="whitespace-nowrap bg-white text-sm">
+            {services?.map((s, index) => {
+              const schedules = s.schedule || [];
+              const completedService = schedules.filter((sc) => sc.completed).at(-1);
+              const missedSchedules = schedules.filter((sc) => sc.status === "Missed");
 
-          {/* BODY */}
-          {services?.map((s, index) => {
-            const schedules = s.schedule || [];
-            const completedService = schedules?.filter((sc) => sc.completed === true)?.at(-1);
-            const missed = schedules?.filter(f => ["Missed"].includes(f.status))
+              const nextServices = schedules.filter((sc) => {
+                if (sc.completed) return false;
+                const d = new Date(sc.date);
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                return d >= today;
+              });
 
-            const nextServices = schedules.filter((sc) => {
-              if (sc.completed) return false;
-              const d = new Date(sc.date);
-              const today = new Date();
-              today.setHours(0, 0, 0, 0);
-              return d >= today;
-            });
-            const allSchedules = s?.schedule || [];
+              const isExpanded = expandedServiceId === index;
+              const visibleSchedules = isExpanded ? schedules : nextServices.slice(0, 5);
 
-            const isExpanded = expandedServiceId === index;
-            const nextVisibleServices = isExpanded ? allSchedules : nextServices.slice(0, 5);
+              return (
+                <tr key={index} className="border-b border-black last:border-b-0 *:px-2 py-2">
+                  {/* SERVICE NAME */}
+                  <td className="border-r border-black font-medium">{s.serviceName || "-"}</td>
 
-            return (
-              <div
-                key={index}
-                className="grid grid-cols-7 text-xs md:text-sm border-b border-gray-200 hover:bg-gray-50 transition *:not-last:border-r *:not-last:border-gray-600"
-              >
-                {/* SERVICE NAME */}
-                <div className="px-3 py-2 ">
-                  {s.serviceName || "-"}
-                </div>
+                  {/* UPCOMING DATES */}
+                  <td className="border-r border-black">
+                    <div className="flex flex-wrap gap-2 min-w-[200px] p-1 max-h-20 text-xs font-semibold overflow-auto items-center">
+                      {schedules.length > 0 ? (
+                        <>
+                          {visibleSchedules.map((n, i) => {
+                            const today = new Date().toISOString().split("T")[0];
+                            const isToday = n?.date === today;
+                            const isMissed = n?.status === "Missed";
+                            const isDone = n?.completed;
+                            const isInvalid = n?.status === "Invalid";
 
-                {/* UPCOMING DATES */}
-                <div className="col-span-3 max-h-20 overflow-y-auto px-3 py-3 flex flex-wrap gap-1 items-center">
-                  {nextServices?.length > 0 ? (
-                    <>
-                      {nextVisibleServices.map((n, i) => {
-                        const today = new Date().toISOString().split("T")[0];
-                        return (
-                          <span
-                            key={i}
-                            className={`outline font-bold 
-                              ${n?.date === today
-                                ? "text-cyan-700 outline-cyan-700 bg-cyan-200 animate-pulse " : "outline-gray-300"} 
-                              ${n?.status === "Invalid" ? "text-gray-700 outline-gray-700 bg-gray-200 opacity-55 cursor-not-allowed" : ""}
-                              ${n?.status === "Missed" ? "text-red-700 outline-red-700 bg-red-200" : ""}
-                              ${n.completed ? "text-green-700 outline-green-700 bg-green-200" : ""}
-                              px-2 py-1 rounded text-[11px]`}
-                          >
-                            {formatShortDate(n?.date)}
-                          </span>
-                        );
-                      })}
+                            return (
+                              <span
+                                key={i}
+                                className={`outline-1 rounded px-1.5 py-0.5 
+                                  ${isToday ? "bg-green-200 text-green-700 animate-pulse" : ""} 
+                                  ${isInvalid ? "bg-gray-200 text-gray-500 opacity-60" : ""}
+                                  ${isMissed ? "bg-red-200 text-red-700" : ""}
+                                  ${isDone ? "bg-blue-200 text-blue-700" : ""}
+                                  ${!isToday && !isInvalid && !isMissed && !isDone ? "outline-gray-300" : ""}
+                                `}
+                              >
+                                {formatShortDate(n?.date)}
+                              </span>
+                            );
+                          })}
 
-                      {/* FIX 3: Fixed button context loop variable and conditional text */}
-                      {nextServices?.length > 5 && (
-                        <button
-                          type="button"
-                          onClick={() => setExpandedServiceId(isExpanded ? null : index)}
-                          className="ml-1 text-[11px] text-blue-600 hover:text-blue-800 font-semibold underline cursor-pointer"
-                        >
-                          {isExpanded ? "Show Less" : ` Show All`}
-                        </button>
+                          {nextServices.length > 5 && (
+                            <span
+                              onClick={() => setExpandedServiceId(isExpanded ? null : index)}
+                              className="underline text-cyan-700 cursor-pointer select-none ml-1"
+                            >
+                              {isExpanded ? "Show less" : "Show All"}
+                            </span>
+                          )}
+                        </>
+                      ) : (
+                        <span className="text-gray-400">-</span>
                       )}
-                    </>
-                  ) : (
-                    <span className="text-gray-400">-</span>
-                  )}
-                </div>
+                    </div>
+                  </td>
 
-                {/* FREQUENCY */}
-                <div className="px-3 py-3 capitalize whitespace-nowrap">
-                  {s.frequency || "-"}
-                </div>
+                  {/* FREQUENCY */}
+                  <td className="border-r border-black capitalize">{s.frequency || "-"}</td>
 
-                {/* LAST COMPLETED */}
-                <div className="px-3 py-3 whitespace-nowrap">
-                  {completedService?.date ? <span className="text-sm text-green-700 font-semibold "> {formatShortDate(completedService.date)} ✓ </span> : "Not yet"}
-                </div>
-
-                {/* MISSED */}
-                <div className="px-3 py-3">
-                  {missed?.length > 0 ? (
-                    <span className="bg-red-100 text-red-600 px-2 py-0.5 rounded text-[11px] font-semibold flex flex-col items-center">
-                      <span>{missed.length} missed</span>
-                      <span>
-                        {formatShortDate(missed?.at(-1).date)}
+                  {/* LAST COMPLETED */}
+                  <td className="border-r border-black">
+                    {completedService?.date ? (
+                      <span className="text-green-500 font-semibold">
+                        {formatShortDate(completedService.date)} ✓
                       </span>
-                    </span>
-                  ) : (
-                    <span className="text-green-600 text-[11px] font-medium">✓ None</span>
-                  )}
-                </div>
+                    ) : (
+                      <span className="text-gray-400">Not yet</span>
+                    )}
+                  </td>
 
-
-              </div>
-            );
-          })}
-        </div>
+                  {/* MISSED */}
+                  <td>
+                    {missedSchedules.length > 0 ? (
+                      <div className="flex flex-col text-xs font-semibold text-red-500">
+                        <span>{missedSchedules.length} missed</span>
+                        <span className="text-[11px] text-gray-400 font-normal">
+                          Last: {formatShortDate(missedSchedules.at(-1).date)}
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="text-green-500 font-semibold">✓ None</span>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
       </div>
-    </div>
+    </section>
   );
 }
 

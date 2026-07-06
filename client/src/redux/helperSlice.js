@@ -12,6 +12,7 @@ const initialState = {
     complaint: false,
   },
   locationId: "",
+  dates: "",
 };
 
 const helperSlice = createSlice({
@@ -33,11 +34,21 @@ const helperSlice = createSlice({
     setLocation: (state, { payload }) => {
       state.locationId = payload.id;
     },
+    dateTransfer: (state, action) => {
+      state.dates = action.payload;
+    },
   },
 });
 
-export const { setCredentials, removeCredentials, toggleModal, setLocation } =
-  helperSlice.actions;
+export const {
+  setCredentials,
+  dateTransfer,
+  removeCredentials,
+  toggleModal,
+  setLocation,
+} = helperSlice.actions;
+
 export const selectCurrentUser = (state) => state.helper.user;
+export const selectDates = (state) => state.helper.dates;
 
 export default helperSlice.reducer;

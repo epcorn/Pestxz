@@ -6,26 +6,38 @@ import InputRadio from '../InputRadio'
 import { useImgUploaderMutation } from '../../redux/adminSlice'
 import { useParams } from 'react-router-dom'
 import { useAddProductServiceMutation } from '../../redux/serviceSlice'
+import { useSelector } from 'react-redux'
+import { selectDates } from '../../redux/helperSlice'
+import { toast } from 'react-toastify'
 
 function ProductServiceForm({ products, currentUser }) {
   const { id } = useParams()
   const [submittedIds, setSubmittedIds] = React.useState([])
+  const dates = useSelector(selectDates)
 
-  const queue = products?.filter(p => !submittedIds.includes(p._id)).filter(f => f.schedule.find(sc => new Date(sc.date).toISOString().split("T")[0] === new Date().toISOString().split("T")[0]))
+  const todayLocal = new Date().toLocaleDateString('sv-SE');
+  const queue = products?.filter(p => {
+    if (submittedIds.includes(p._id)) return false;
+    return p.schedule?.some(sc => {
+      if (!sc.date) return false;
+      const scheduleLocalDate = new Date(sc.date).toLocaleDateString('sv-SE');
+      return scheduleLocalDate === todayLocal && !sc.completed;
+    });
+  }) || [];
 
-  console.log(products)
   const handleSubmitted = (pid) => {
     setSubmittedIds(prev => [...prev, pid])
-
   }
 
   return (
     <div className="bg-slate-300 max-w-3xl border-2 rounded-lg mx-auto p-2 md:p-5">
       <div>
-        <h3 className="font-semibold text-2xl mb-3">Product Service form</h3>
+        {queue.length > 0 &&
+          <h3 className="font-semibold text-2xl mb-3">Product Service form</h3>
+        }
       </div>
       <div className="shadow-[inset_0_3px_10px_rgba(0,0,0,0.1)] shadow-black outline max-h-72 overflow-y-auto">
-        {queue?.length ? (
+        {queue?.length > 0 ? (
           queue.map(product => (
             <ProductServiceCard
               key={product._id}
@@ -36,7 +48,15 @@ function ProductServiceForm({ products, currentUser }) {
             />
           ))
         ) : (
-          <p className="p-4 text-center text-gray-500">All products serviced ✅</p>
+          <div className='p-5 space-y-2'>
+            {dates?.date ? (
+              <p className='text-center text-gray-700 font-medium'>
+                Next Service Due Date: <span className="font-semibold">{new Date(dates.date).toISOString().split("T")[0]}</span>
+              </p>
+            ) : (
+              <p className="text-center text-gray-500">All products serviced ✅</p>
+            )}
+          </div>
         )}
       </div>
     </div>
@@ -61,6 +81,14 @@ function ProductServiceCard({ product, currentUser, onSubmitted, id }) {
 
   const [addProducts, { isLoading: prodLoading }] = useAddProductServiceMutation();
 
+  // ── Bait / GlueBoard are mutually exclusive for Rodein ──
+  const isRodent = product.productName === "Rodein"
+  const hasBait = product.calibrations?.includes('Bait')
+  const hasGlue = product.calibrations?.includes('GlueBoard')
+  const hasRodentChoice = isRodent && hasBait && hasGlue
+
+  const [rodentMethod, setRodentMethod] = React.useState(null) // 'Bait' | 'GlueBoard' | null
+  const [rodentError, setRodentError] = React.useState('')
 
   const handleImageChange = (path) => async (e) => {
     const file = e.target.files[0]
@@ -85,6 +113,12 @@ function ProductServiceCard({ product, currentUser, onSubmitted, id }) {
   }
 
   const submit = async (data) => {
+    if (hasRodentChoice && !rodentMethod) {
+      setRodentError('Please select whether Bait or GlueBoard was used')
+      return
+    }
+    setRodentError('')
+
     const payload = {
       locationId: id,
       quality: {
@@ -101,26 +135,34 @@ function ProductServiceCard({ product, currentUser, onSubmitted, id }) {
       },
       code: product.code,
       serialNo: product.serialNo,
-      calibration: (product.calibrations || []).map((cal, i) => ({
-        name: cal,
-        status: data.calibration?.[i]?.status || 'ok',
-        image: data.calibration?.[i]?.image || '',
-      })),
+      calibration: (product.calibrations || []).map((cal, i) => {
+        // the unused rodent method is marked Not Applicable instead of the stale 'ok' default
+        if (hasRodentChoice && (cal === 'Bait' || cal === 'GlueBoard') && cal !== rodentMethod) {
+          return { name: cal, status: 'N/A', image: '' }
+        }
+        return {
+          name: cal,
+          status: data.calibration?.[i]?.status || 'ok',
+          image: data.calibration?.[i]?.image || '',
+        }
+      }),
     }
-
     try {
-      // console.log(payload)
-      onSubmitted(pid)
+
       const res = await addProducts(payload).unwrap()
+      onSubmitted(pid)
       console.log(res)
+      toast.success(res.msg || "Product service successfull")
     } catch (error) {
       console.error('error saving product service', error)
-
+      toast.error(error.msg || "Product service error, try again")
     }
   }
 
   return (
-    <form onSubmit={handleSubmit(submit)} className="bg-white p-1 pb-4 border-b">
+    <form onSubmit={handleSubmit(submit)} className="bg-white p-1 pb-4 border-b w-full">
+
+      <PreviousServices product={product} />
       <div className="grid grid-cols-3">
         <p><strong>Product Name:</strong> <span>{product.productName}</span></p>
         <p><strong>Serial No:</strong> <span>{product.serialNo}</span></p>
@@ -161,6 +203,7 @@ function ProductServiceCard({ product, currentUser, onSubmitted, id }) {
           <ImageUpload
             name={`${pid}-quality-image`}
             id={`${pid}-quality-image`}
+            required={true}
             onchange={handleImageChange('quality.image')}
             isUploading={uploadingField === 'quality.image'}
             isUploaded={!!uploadedFields['quality.image']}
@@ -169,10 +212,40 @@ function ProductServiceCard({ product, currentUser, onSubmitted, id }) {
       </div>
 
       <div>
+        {hasRodentChoice && (
+          <div className="mb-4 p-3 border-2 border-amber-300 rounded bg-amber-50">
+            <h3 className="text-lg font-semibold mb-2">Method Used</h3>
+            <div className="flex gap-6 ml-3">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name={`${pid}-rodent-method`}
+                  checked={rodentMethod === 'Bait'}
+                  onChange={() => { setRodentMethod('Bait'); setRodentError('') }}
+                />
+                Bait
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name={`${pid}-rodent-method`}
+                  checked={rodentMethod === 'GlueBoard'}
+                  onChange={() => { setRodentMethod('GlueBoard'); setRodentError('') }}
+                />
+                GlueBoard
+              </label>
+            </div>
+            {rodentError && <p className="text-red-500 text-sm mt-1">{rodentError}</p>}
+          </div>
+        )}
+
         {product?.calibrations?.map((cal, i) => {
           const fallbackValue = productCalibrationMapping[cal] || 'Need Repair/Replace'
+          const isBaitOrGlue = hasRodentChoice && (cal === 'Bait' || cal === 'GlueBoard')
 
-          // const isRodent = product.
+          // hide bait/glueboard detail fields until a method is chosen,
+          // and once chosen, hide the one that wasn't
+          if (isBaitOrGlue && cal !== rodentMethod) return null
 
           return (
             <div key={`${pid}-${cal}-${i}`} className="mb-4">
@@ -216,7 +289,7 @@ function ProductServiceCard({ product, currentUser, onSubmitted, id }) {
   )
 }
 
-function ImageUpload({ name, id, onchange, isUploading, isUploaded }) {
+function ImageUpload({ name, id, onchange, isUploading, isUploaded, required = false }) {
   return (
     <div className="flex flex-col">
       <input
@@ -224,6 +297,7 @@ function ImageUpload({ name, id, onchange, isUploading, isUploaded }) {
         name={name}
         accept="image/*"
         id={id}
+        required={required}
         onChange={onchange}
         disabled={isUploading}
         className="text-sm file:bg-gray-400 w-fit file:px-3 file:py-1 outline"
@@ -231,6 +305,36 @@ function ImageUpload({ name, id, onchange, isUploading, isUploaded }) {
       <label htmlFor={id}>
         {isUploading ? 'Uploading...' : isUploaded ? 'Uploaded ✅' : 'Upload Image ☑️'}
       </label>
+    </div>
+  )
+}
+
+function PreviousServices({ product }) {
+  const date = new Date(new Date().setUTCHours(0, 0, 0, 0)).toISOString()
+  const sortPrevious = product?.schedule?.filter(sc => sc.date < date || "")
+  console.log(sortPrevious)
+
+  return (
+
+
+    <div className='relative outline bg-white w-fit'>
+      <div className='bg-gray-300 px-2 w-fit whitespace-nowrap '>
+        show previous records
+      </div>
+      <div className='translate-x-96 hidden'>
+
+        {sortPrevious.length > 0 ? sortPrevious.map((sp, i) => (
+          <div key={i}>
+            <ul>
+              {product.schedule.map(sc => (
+                <li>
+                  <p>date: {new Date(sc.date).toLocaleDateString()}</p>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )) : <p>No Previous service record found </p>}
+      </div>
     </div>
   )
 }

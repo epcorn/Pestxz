@@ -42,7 +42,6 @@ cloudinary.config({
   api_secret: process.env.CLOUD_SECRET,
 });
 
-
 io.on("connection", (socket) => {
   socket.on("join-admin", (role) => {
     if (
@@ -87,6 +86,9 @@ io.on("connection", (socket) => {
 
   socket.on("complaint-updated", (data) => {
     io.to("admin-room").emit("complaint-updated", data);
+  });
+  socket.on("complaint-assigned", (data) => {
+    io.to("admin-room").emit("complaint-assigned", data);
   });
 });
 
@@ -168,7 +170,7 @@ export const MONGOURL =
 const connectDB = async () => {
   try {
     await mongoose.connect(MONGOURL);
-    httpServer.listen(port, () => console.log("server is listening"));
+    httpServer.listen(port, () => console.log("server is listening", port));
   } catch (error) {
     console.error(`Error: ${error.message}`);
     process.exit(1);

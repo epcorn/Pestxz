@@ -25,7 +25,9 @@ export const userSlice = apiSlice.injectEndpoints({
         url: `/api/user/clientuser/${id}`,
       }),
     }),
+    
   }),
+
 });
 
 export const {

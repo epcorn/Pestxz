@@ -421,6 +421,13 @@ export const formatProducts = async (
         old.productId?.toString() !== pr.productId ||
         old.versionId?.toString() !== pr.versionId;
 
+      console.log(
+        "_id of products: " + pr.productName,
+        pr._id,
+        "Old: ",
+        old,
+        changed ? true : false,
+      );
       const serialNo = changed ? await productCounter(pr.code) : old.serialNo;
 
       const schedule =
@@ -582,55 +589,67 @@ export const diffProducts = async (oldProducts, newProducts) => {
 
 export const autoMarkMissed = async () => {
   try {
-    const today = new Date().toISOString().split("T")[0];
+    // 1. Prepare today as a native Date object (for product array)
+    const todayiso = new Date(new Date().setUTCHours(0, 0, 0, 0)).toISOString();
+    const todayDateObj = new Date(todayiso);
 
-    // Fetch only the locations that actually need updates
-    const locations = await Location.find({
-      "service.schedule": {
-        $elemMatch: {
-          date: { $lt: today },
-          status: "Pending",
-          completed: false,
+    // 2. Prepare today as a YYYY-MM-DD String (for service array)
+    const todayString = todayiso.split("T")[0];
+
+    const updated = await Location.collection.updateMany(
+      {
+        // Match documents where EITHER array contains an outdated pending item
+        $or: [
+          {
+            "product.schedule": {
+              $elemMatch: {
+                date: { $lt: todayDateObj },
+                completed: false,
+                status: "Pending",
+              },
+            },
+          },
+          {
+            "service.schedule": {
+              $elemMatch: {
+                date: { $lt: todayString },
+                completed: false,
+                status: "Pending",
+              },
+            },
+          },
+        ],
+      },
+      {
+        $set: {
+          "product.$[prodElem].schedule.$[prodSchedElem].status": "Missed",
+          "service.$[servElem].schedule.$[servSchedElem].status": "Missed",
         },
       },
-    }).select("service createdAt");
+      {
+        arrayFilters: [
+          // Identifiers for outer arrays
+          { "prodElem.schedule": { $exists: true } },
+          { "servElem.schedule": { $exists: true } },
 
-    let updatedCount = 0;
+          // Target array matching for products (using Date Object)
+          {
+            "prodSchedElem.date": { $lt: todayDateObj },
+            "prodSchedElem.completed": false,
+            "prodSchedElem.status": "Pending",
+          },
+          // Target array matching for services (using YYYY-MM-DD String)
+          {
+            "servSchedElem.date": { $lt: todayString },
+            "servSchedElem.completed": false,
+            "servSchedElem.status": "Pending",
+          },
+        ],
+      },
+    );
 
-    for (const loc of locations) {
-      let isModified = false;
-
-      loc.service.forEach((ser) => {
-        ser.schedule.forEach((sch) => {
-          // Fix logic bug: JavaScript evaluated "loc.createdAt > sch.date < today" incorrectly.
-          // Separated into explicit conditions:
-          let locCreatedAt = loc.createdAt.toISOString().split("T")[0];
-          const isBeforeCreation = sch.date < locCreatedAt;
-          const isBetweenCreationAndToday =
-            sch.date >= locCreatedAt && sch.date < today;
-
-          if (isBeforeCreation && sch.status !== "Invalid") {
-            sch.status = "Invalid";
-            isModified = true;
-          } else if (
-            isBetweenCreationAndToday &&
-            sch.status === "Pending" &&
-            !sch.completed
-          ) {
-            sch.status = "Missed";
-            isModified = true;
-          }
-        });
-      });
-
-      if (isModified) {
-        loc.markModified("service");
-        await loc.save();
-        updatedCount++;
-      }
-    }
     console.log(
-      `[Cron Success] Checked ${locations.length} locations. Updated ${updatedCount}.`,
+      `[Cron Success] Acknowledged: ${updated.acknowledged}. Modified: ${updated.modifiedCount}`,
     );
   } catch (error) {
     console.error(
@@ -639,5 +658,4 @@ export const autoMarkMissed = async () => {
     );
   }
 };
-
 // autoMarkMissed();

@@ -25,8 +25,6 @@ function RegularForm({ serviceData, id, type, locationName, setRegular }) {
   const isUnschedule = type === "unscheduled";
   const [rerender, setRerender] = useState([]);
 
-
-  console.log(type, locationName,serviceData)
   const [regularService, { isLoading }] = useRegularServiceMutation();
   const [casualService, { isLoading: submitLoading }] = useCasualServiceMutation();
   const [updateUnscheduled, { isLoading: unScLoading }] = useUnscheduledReportMutation()
@@ -34,7 +32,7 @@ function RegularForm({ serviceData, id, type, locationName, setRegular }) {
   const { register, reset, setValue, getValues, watch } = useForm();
   const STORAGE_KEY = getStorageKey(id, locationName);
   const today = todayShort();
-  
+
 
   const upComing = isRegular ? serviceData.map(s =>
     s.schedule.filter(sc => sc.status === "Pending") || []
@@ -140,23 +138,30 @@ function RegularForm({ serviceData, id, type, locationName, setRegular }) {
     }
   };
 
-  // only services that have today as a pending schedule date
   const servicesForToday = isRegular ? serviceData?.filter((ser) =>
     ser?.schedule?.some((s) => formatShortDate(s.date) === today && !s.completed)) : serviceData;
 
   if (isRegular && !servicesForToday?.length) {
+    const allDates = upComing?.map(u => u[0]?.date).filter(Boolean) || [];
+
+    //if no services on location show nothings
+    if (serviceData.length === 0) return;
+
+    const uniqueDates = [...new Set(allDates)];
+
     return (
-      <div className="w-full p-6 outline outline-gray-400 rounded-2xl text-center text-xl text-gray-500">
+      <div className="w-full p-6 outline outline-gray-400 rounded-2xl text-center text-xl bg-gray-200 text-gray-500">
         <p>
-          {/* No services scheduled for today ({today}) */}
           Next Schedule Date is
-          {upComing?.map((u, i) => (
-            <strong key={u[0]?.date + i}> ({formatShortDate(u[0]?.date)}) </strong>
+          {uniqueDates?.map((dateStr, i) => (
+            <strong key={dateStr + i}> ({formatShortDate(dateStr)}) </strong>
           ))}
-          .</p>
+          .
+        </p>
       </div>
     );
   }
+  
 
   return (
     <div className={`${isRegular ? "" : "fixed inset-0 z-90 w-full h-dvh grid place-items-center bg-black/50"}`}>
@@ -167,7 +172,7 @@ function RegularForm({ serviceData, id, type, locationName, setRegular }) {
           </div>
 
           <form className="space-y-6 bg-green-200">
-            {servicesForToday?.map((ser,i) => {
+            {servicesForToday?.map((ser, i) => {
               const todaySchedule = isRegular ? ser.schedule?.find(
                 (s) => formatShortDate(s.date) === today && !s.completed) : null;
               return (
