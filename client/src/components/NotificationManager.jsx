@@ -3,12 +3,14 @@ import { useDispatch, useSelector } from 'react-redux'
 import { socket } from '../socket'
 import { apiSlice } from '../redux/apiSlice'
 import { toast } from 'react-toastify'
+import { useNavigate } from 'react-router-dom'
 
 const ADMIN_ROLES = ["Admin", "Operator", "TeamLeader", "ClientAdmin", "BranchAdmin"]
 
 function NotificationManager() {
   const { user } = useSelector(store => store.helper)
   const dispatch = useDispatch()
+  const navigate = useNavigate()
 
   const notificationSound = new Audio("/notification.wav")
 
@@ -20,11 +22,27 @@ function NotificationManager() {
   }, [user?.role])
 
   useEffect(() => {
+    if (user?.client) {
+      socket.emit("join-client", user.client)
+    }
+  }, [user?.client])
+
+  useEffect(() => {
+    const rejoin = () => {
+      if (user?.role) socket.emit("join-admin", user.role)
+      if (user?.client) socket.emit("join-client", user.client)
+    }
+    socket.on("connect", rejoin)
+    return () => socket.off("connect", rejoin)
+  }, [user?.role, user?.client])
+
+  useEffect(() => {
     if ("Notification" in window && Notification.permission === "default") {
       Notification.requestPermission()
     }
 
-    const sendNotification = async (title, body) => {
+    const sendNotification = async (title, body, url = '/') => {
+      console.log(url)
       if ("Notification" in window && Notification.permission === "granted") {
         if ("serviceWorker" in navigator) {
           try {
@@ -32,7 +50,8 @@ function NotificationManager() {
             registration.showNotification(title, {
               body,
               vibrate: [200],
-              tag: title.replace(/\s+/g, '-').toLowerCase()
+              tag: title.replace(/\s+/g, '-').toLowerCase(),
+              data: { url },
             })
             return;
           } catch (error) {
@@ -40,7 +59,10 @@ function NotificationManager() {
           }
         }
         const notif = new Notification(title, { body, icon: "/logo.png" })
-        notif.onclick = () => window.focus()
+        notif.onclick = () => {
+          window.focus();
+          navigate(url)
+        }
       }
     }
 
@@ -81,7 +103,7 @@ function NotificationManager() {
       if (!isAdmin()) return
       notificationSound.play().catch(error => { console.warn("Browser blocked autoplay") })
       dispatch(apiSlice.util.invalidateTags(["Complaint"]))
-      sendNotification("New Complaint Raised", `${data.user} raised a complaint`)
+      sendNotification("New Complaint Raised", `${data.user} raised a complaint`, data.url)
     }
 
     const complaintUpdate = (data) => {
@@ -91,16 +113,37 @@ function NotificationManager() {
       sendNotification("Update on Complaint", `complaint updated by ${data.user}`)
     }
 
+    const servicesUpdates = (data) => {
+      // if (!isAdmin()) return
+
+      dispatch(apiSlice.util.invalidateTags(["Location", "product"]))
+      if (user?.client === data?.client) {
+        notificationSound.play().catch(error => { console.warn("Browser blocked autoplay") })
+
+        sendNotification("Update on Services", `${data.msg} by ${data.user}`, data.url);
+      }
+    }
+
+    const onComplaintAssign = (data) => {
+      if (!isAdmin()) return;
+      dispatch(apiSlice.util.invalidateTags(['assign', 'Complaint', "Location"]))
+      notificationSound.play().catch(err => console.warn("Browser blocked autoplay"))
+      sendNotification("Complaint Assigned", `${data.user} assigned to ${data.status}`, data.url)
+    }
 
 
+    socket.on("complaint-assigned", onComplaintAssign)
     socket.on("complaint-updated", complaintUpdate)
     socket.on("new-unscheduled-work", onNewWork)
     socket.on("work-status-changed", onStatusChanged)
     socket.on("work-status-approved", onApproved)
     socket.on("work-status-rejected", onRejected)
     socket.on("new-complaint", onNewComplaint)
+    socket.on("services", servicesUpdates)
 
     return () => {
+      socket.off("complaint-assigned", onComplaintAssign)
+      socket.off("services", servicesUpdates)
       socket.off("new-unscheduled-work", onNewWork)
       socket.off("work-status-changed", onStatusChanged)
       socket.off("work-status-approved", onApproved)

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { formatShortDate } from "../../utils/helperFunctions";
+import { compareDates, formatShortDate } from "../../utils/helperFunctions";
 
 function ServiceShow({ services }) {
   const [expandedServiceId, setExpandedServiceId] = useState(null);
@@ -33,6 +33,7 @@ function ServiceShow({ services }) {
 
               const isExpanded = expandedServiceId === index;
               const visibleSchedules = isExpanded ? schedules : nextServices.slice(0, 5);
+              const { nextDate, todaysDate, todaysStatus } = compareDates(schedules)
 
               return (
                 <tr key={index} className="border-b border-black last:border-b-0 *:px-2 py-2">
@@ -45,12 +46,12 @@ function ServiceShow({ services }) {
                       {schedules.length > 0 ? (
                         <>
                           {visibleSchedules.map((n, i) => {
-                            const today = new Date().toISOString().split("T")[0];
-                            const isToday = n?.date === today;
+
+                            const isToday = n?.date === todaysDate?.date;
                             const isMissed = n?.status === "Missed";
                             const isDone = n?.completed;
                             const isInvalid = n?.status === "Invalid";
-                          
+
                             return (
                               <span
                                 key={i}
@@ -60,7 +61,7 @@ function ServiceShow({ services }) {
                                   ${isMissed ? "bg-red-200 text-red-700" : ""}
                                   ${isDone ? "bg-blue-200 text-blue-700" : ""}
                                   ${!isToday && !isInvalid && !isMissed && !isDone ? "outline-gray-300" : ""}
-                                  
+                                  ${nextDate?.date === n?.date ? "bg-yellow-200 outline-yellow-600 text-yellow-600" : ""}
                                 `}
                               >
                                 {formatShortDate(n?.date)}

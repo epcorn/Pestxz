@@ -69,7 +69,7 @@ function ProductShow({ products }) {
                         <span className='text-emerald-600 font-semibold animate-pulse'>Pending Today</span>
                       ) : ("")}
 
-                      {nextDate?.date && (
+                      {todaysStatus && nextDate?.date && (
                         <span className="text-xs font-bold text-yellow-700">
                           Next: {formatShortDate(nextDate.date)}
                         </span>

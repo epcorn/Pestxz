@@ -7,6 +7,7 @@ import Button from "../Button";
 import { useDispatch, useSelector } from "react-redux";
 import { toggleModal } from "../../redux/helperSlice";
 import { useUnscheduledReportMutation } from "../../redux/locationSlice";
+import { socket } from "../../socket";
 
 const getStorageKey = (id, name) => `pestxz_saved_services_${id}_${name}`;
 
@@ -121,6 +122,8 @@ function RegularForm({ serviceData, id, type, locationName, setRegular }) {
         ? await updateUnscheduled(form).unwrap()
         : await (isRegular ? regularService : casualService)({ id, form }).unwrap();
 
+      console.log(res)
+      socket.emit("services", { ...res, url: `/location/${id}` })
       toast.success(res.msg || "Service Submitted 🎉");
 
       const saved = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};

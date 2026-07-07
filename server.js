@@ -36,6 +36,10 @@ const io = new Server(httpServer, {
         : "http://localhost:3000",
     credentials: true,
   },
+  connectionStateRecovery: {           // ADD THIS BLOCK
+    maxDisconnectionDuration: 2 * 60 * 1000,
+    skipMiddlewares: true,
+  },
 });
 
 cloudinary.config({
@@ -60,8 +64,18 @@ io.on("connection", (socket) => {
       console.log(`${role} joined Pestxz-room`); // helpful for debugging
     }
   });
+  //join client
+  socket.on("join-client", (clientId) => {
+    if (clientId) {
+      socket.join(`client-${clientId}`);
+      console.log(`socket joined client-${clientId}`);
+    }
+  });
 
-  // raised — only admins need to know
+  // services
+  socket.on("services", (data) => {
+    io.to("admin-room").to(`client-${data.client}`).emit("services", data); // 👈 was broadcast.emit
+  });
   socket.on("unscheduled-raised", (data) => {
     io.to("admin-room").emit("new-unscheduled-work", data); // 👈 was broadcast.emit
   });

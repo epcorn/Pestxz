@@ -102,8 +102,10 @@ export const newComplaint = async (req, res) => {
       client: clientId,
       location: id,
     });
+    console.log("compliant id: ", complaint._id);
     return res.status(201).json({
       msg: `Your complaint number is ${complaint.complaintDetails.number}`,
+      url: `/complaint/${complaint._id}`,
     });
   } catch (error) {
     return res.status(500).json({
@@ -346,7 +348,11 @@ export const newRegularService = async (req, res) => {
       location: id,
     });
 
-    return res.status(201).json({ msg: "Service updated successfully" });
+    return res.status(201).json({
+      msg: `Service Done on ${location.floor}`,
+      client: location.client,
+      user: req.user.name,
+    });
   } catch (error) {
     return res.status(500).json({ msg: "Server error, try again later" });
   }
@@ -497,7 +503,7 @@ export const addProductService = async (req, res) => {
     version,
     serviceDate,
   } = req.body;
-  
+
   try {
     const location = await Location.findById(locationId);
     if (!location) return res.status(404).json({ msg: "Location not found" });
@@ -508,7 +514,6 @@ export const addProductService = async (req, res) => {
         p.productId?.toString() === product.id?.toString(),
     );
 
-    console.log(serviceDate, product, locationId)
     if (!locationProduct) {
       return res
         .status(404)
@@ -553,7 +558,9 @@ export const addProductService = async (req, res) => {
     });
 
     return res.status(201).json({
-      msg: `Product service added successfully for ${product.name}`,
+      msg: `Product service ${product.name}`,
+      client: location.client,
+      user: req.user.name,
     });
   } catch (error) {
     console.error("error occurred: ", error);

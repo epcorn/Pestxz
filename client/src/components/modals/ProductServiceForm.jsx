@@ -11,6 +11,7 @@ import { selectDates, toggleModal } from '../../redux/helperSlice'
 import { toast } from 'react-toastify'
 import { ExpandedProductLists } from '../ProductLists'
 import { useSingleLocationDetailsQuery } from '../../redux/locationSlice'
+import { socket } from '../../socket'
 
 function ProductServiceForm({ products, currentUser }) {
 
@@ -152,11 +153,11 @@ function ProductServiceCard({ product, currentUser, onSubmitted, id }) {
         }
       }),
     }
-    console.log(payload)
     try {
       const res = await addProducts(payload).unwrap()
       onSubmitted(pid)
       console.log(res)
+      socket.emit("services", { ...res, url: `/location/${id}` })
       toast.success(res.msg || "Product service successfull")
     } catch (error) {
       console.error('error saving product service', error)

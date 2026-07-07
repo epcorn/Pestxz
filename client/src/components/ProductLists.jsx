@@ -15,10 +15,7 @@ function ProductLists({ data }) {
 
   console.log(data)
   return (
-    <section className="p-4 max-w-7xl mx-auto">
-      <header className="mb-4">
-        <h3 className="text-xl font-semibold text-gray-800">Lists Products</h3>
-      </header>
+    <section className="">
 
       {/* Overflow container to keep the table responsive */}
       <div className="overflow-x-auto border border-gray-200 rounded-lg shadow-sm">
@@ -30,7 +27,7 @@ function ProductLists({ data }) {
               <th className="px-4 py-3 border-r border-gray-200">Product Name</th>
               <th className="px-4 py-3 border-r border-gray-200">Version</th>
               <th className="px-4 py-3 border-r border-gray-200">Code</th>
-              <th className="px-4 py-3 border-r border-gray-200">Quality</th>
+              <th className="px-4 py-3 border-r border-gray-200">Equipment</th>
               <th className="px-4 py-3 border-r border-gray-200">Serviced By</th>
               <th className="px-4 py-3">Calibration used</th>
             </tr>
@@ -125,7 +122,7 @@ function ProductLists({ data }) {
 export default ProductLists
 
 
-export function ExpandedProductLists({ productData, isModalOpen, dispatch, toggleModal, maxh,w }) {
+export function ExpandedProductLists({ productData, isModalOpen, dispatch, toggleModal, maxh, w }) {
 
   return (
     <div className={`bg-gray-200 p-4 rounded-lg border border-gray-200 shadow-inner ${w ? w : "w-fit"}`}>

@@ -176,14 +176,14 @@ const ComplaintModal = ({ locationId, mode = "create" }) => {
           toast.error("Location is required");
           return;
         }
-        console.log(locationToUse, [...form])
-        res = await addComplaint({ id: locationToUse, form }).unwrap();
 
+        res = await addComplaint({ id: locationToUse, form }).unwrap();
+        console.log(res);
         socket.emit("complaint-raised", {
           user: user.name,
-          comment: data.comment
+          comment: data.comment,
+          url: res.url,
         })
-        console.log("complaint emmited")
       }
       // UPDATE
       if (isUpdate) {

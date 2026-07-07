@@ -186,7 +186,7 @@ export function AssignWork({ complaintId, currentAssgndVal = null, show }) {
       show({ id: "", status: false });
       socket.emit("complaint-assigned", {
         user: user.name,
-        status: status.label,
+        status: selectedOption.value,
       })
       toast.success("Successfully assigned operator!");
     } catch (error) {

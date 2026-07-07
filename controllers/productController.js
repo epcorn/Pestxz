@@ -16,7 +16,7 @@ export const addProducts = async (req, res) => {
       specification: data.specification,
     };
     if (data.mode === "create") {
-      const product = await Product.findOne({ name: data?.name });
+      const product = await Product.findOne({ name: data?.name,  });
       if (product) {
         res.status(400).json({ msg: "Product already exists" });
         return;

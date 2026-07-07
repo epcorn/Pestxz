@@ -71,13 +71,14 @@ export const timeList = [
 
 export const productCalibrationMapping = {
   "Glue Board": "Replaced",
-  "GlueBoard": "Replaced",
+  GlueBoard: "Replaced",
   Bait: "Refilled",
   "Bait-1": "Refilled",
   "Dead Rat Found": "Found",
   "Liquid Refill": "Refilled",
   "Spray Refill": "Refilled",
   Tubelight: "Need Replacement",
+  "LED Box": "Need Replacement",
   TubeLight: "Need Replacement",
   CFL: "Need Replacement",
   "Snapper Sheet": "Need Replacement",
@@ -85,4 +86,5 @@ export const productCalibrationMapping = {
   "Battery Replace": "Need Replacement",
   "Bettary Replace": "Need Replacement",
   "Bettery Replace": "Need Replacement",
+  TrapSheet: "Need Replacement",
 };
