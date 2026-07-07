@@ -3,10 +3,17 @@ import ImagesModal from './modals/ImagesModal'
 import { useDispatch, useSelector } from 'react-redux'
 import { toggleModal } from '../redux/helperSlice';
 
+function serviceDate(date) {
+  return (new Date(date).toLocaleString())
+}
+
 function ProductLists({ data }) {
   const dispatch = useDispatch();
   const { isModalOpen } = useSelector(store => store.helper)
 
+  // const products = data.flatMap(d => d.productservices)
+
+  console.log(data)
   return (
     <section className="p-4 max-w-7xl mx-auto">
       <header className="mb-4">
@@ -30,8 +37,8 @@ function ProductLists({ data }) {
           </thead>
 
           <tbody className="bg-white divide-y divide-gray-200 text-gray-600">
-            {data && data.length > 0 ? (
-              data.map((d) => {
+            {data && data?.length > 0 ? (
+              data?.map((d) => {
                 const expandKey = `${d._id}-expand`;
                 const isExpanded = !!isModalOpen?.[expandKey];
 
@@ -40,7 +47,7 @@ function ProductLists({ data }) {
                     {/* Primary Row */}
                     <tr className={`hover:bg-gray-50 transition-colors ${isExpanded ? 'bg-blue-50/30' : ''}`}>
                       <td className="px-4 py-3 border-r border-gray-200 font-medium text-gray-900">
-                        {new Date(d.servicedBy?.date).toLocaleString()}
+                        {serviceDate(d.servicedBy?.date)}
                       </td>
                       <td
                         className="px-4 py-3 border-r border-gray-200 font-medium text-blue-600 cursor-pointer hover:underline"
@@ -94,7 +101,7 @@ function ProductLists({ data }) {
                     {isExpanded && (
                       <tr className="bg-gray-50/50">
                         <td colSpan="8" className="px-6 py-4 border-b border-gray-200 whitespace-normal">
-                          <ExpandedProductLists productData={d} />
+                          <ExpandedProductLists dispatch={dispatch} isModalOpen={isModalOpen} toggleModal={toggleModal} productData={data.filter(da => da.code === d.code)} />
                         </td>
                       </tr>
                     )}
@@ -118,23 +125,56 @@ function ProductLists({ data }) {
 export default ProductLists
 
 
-function ExpandedProductLists({ productData }) {
+export function ExpandedProductLists({ productData, isModalOpen, dispatch, toggleModal, maxh,w }) {
+
   return (
-    <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-inner">
-      <h4 className="text-sm font-semibold text-gray-700 mb-2">Extended Specifications & Logs</h4>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs text-gray-600">
-        <div>
-          <span className="font-medium text-gray-400 block">Product ID</span>
-          <span className="font-mono">{productData._id}</span>
-        </div>
-        <div>
-          <span className="font-medium text-gray-400 block">Status Code</span>
-          <span>{productData.quality?.status || 'N/A'}</span>
-        </div>
-        <div>
-          <span className="font-medium text-gray-400 block">Calibration Count</span>
-          <span>{productData.calibration?.length || 0} items tracked</span>
-        </div>
+    <div className={`bg-gray-200 p-4 rounded-lg border border-gray-200 shadow-inner ${w ? w : "w-fit"}`}>
+      <h4 className=" font-semibold text-gray-700 mb-2">Previous Work log</h4>
+      <div className={`${maxh ? maxh : "max-h-72"} overflow-y-auto bg-white p-2 space-y-2`}>
+        {productData?.length === 0 ?
+          <p className='p-5 text-2xl font-semibold text-center '>No previous records found</p>
+          : productData?.map(pr => (
+            <div key={pr._id} className="grid grid-cols-3 gap-4  bg-gray-50 outline rounded p-2 ">
+              <div>
+                <span className="font-bold block">Service Date</span>
+                <span className="font-mono wrap-break-word">{serviceDate(pr.servicedBy.date)}</span>
+              </div>
+              <div className='text-center'>
+                <span className="font-bold  block">Serviced By</span>
+                <span>{pr.servicedBy.name}</span>
+              </div>
+              <div>
+                <span className="font-bold block">Product Quality</span>
+                <span className="font-mono underline text-blue-600 font-bold"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    dispatch(toggleModal({ name: `${pr._id}-quality`, status: true }))
+                  }}>
+                  {pr.quality.status}
+                </span>
+                {isModalOpen?.[`${pr._id}-quality`] && <ImagesModal name={`${pr._id}-quality`} image={pr.quality.image} />}
+              </div>
+
+              <div className='col-span-full grid grid-rows-2 gap-y-2'>
+                <span className="font-bold block col-span-full ">Calibration Count</span>
+                <div className='flex flex-wrap gap-2'>
+                  {pr?.calibration.map(cal => (
+                    <React.Fragment key={cal._id}>
+                      <p className='px-2 outline cursor-pointer '
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          dispatch(toggleModal({ name: `${cal._id}-cal`, status: true }))
+                        }}>
+                        <span>{cal.name}: </span>
+                        <strong>{cal.status}</strong>
+                      </p>
+                      {isModalOpen?.[`${cal._id}-cal`] && <ImagesModal name={`${cal._id}-cal`} image={cal.image} />}
+                    </React.Fragment>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ))}
       </div>
     </div>
   )

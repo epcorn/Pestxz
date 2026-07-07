@@ -55,7 +55,7 @@ function ProductShow({ products }) {
 
               const isExpanded = show.id === pr.productId && show.status;
               const slicedSchedules = isExpanded ? schedules : schedules.filter(f => f.status !== "Missed" && f.status !== "Done").slice(0, 5);
-
+              console.log(todaysStatus)
               return (
                 <tr key={pr.productId + i} className="border-b border-black last:border-b-0 *:px-2 py-2">
                   <td className="border-r border-black">{pr.productName}</td>
@@ -67,12 +67,10 @@ function ProductShow({ products }) {
                         <span className='text-green-500 font-semibold'>Done</span>
                       ) : todaysDate ? (
                         <span className='text-emerald-600 font-semibold animate-pulse'>Pending Today</span>
-                      ) : (
-                        <span className='text-yellow-500 font-semibold'>Pending</span>
-                      )}
+                      ) : ("")}
 
                       {nextDate?.date && (
-                        <span className="text-xs text-gray-400">
+                        <span className="text-xs font-bold text-yellow-700">
                           Next: {formatShortDate(nextDate.date)}
                         </span>
                       )}

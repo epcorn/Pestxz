@@ -50,7 +50,7 @@ function ServiceShow({ services }) {
                             const isMissed = n?.status === "Missed";
                             const isDone = n?.completed;
                             const isInvalid = n?.status === "Invalid";
-
+                          
                             return (
                               <span
                                 key={i}
@@ -60,6 +60,7 @@ function ServiceShow({ services }) {
                                   ${isMissed ? "bg-red-200 text-red-700" : ""}
                                   ${isDone ? "bg-blue-200 text-blue-700" : ""}
                                   ${!isToday && !isInvalid && !isMissed && !isDone ? "outline-gray-300" : ""}
+                                  
                                 `}
                               >
                                 {formatShortDate(n?.date)}

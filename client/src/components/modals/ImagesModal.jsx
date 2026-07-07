@@ -13,9 +13,9 @@ function ImagesModal({ image, name }) {
   return (
     <div className="w-full h-dvh fixed inset-0 bg-black/80 z-50 flex flex-col items-center justify-center p-4 backdrop-blur-sm">
       {/* Backdrop Click Closer */}
-      <div 
-        className="absolute inset-0 z-0 cursor-zoom-out" 
-        onClick={() => dispatch(toggleModal({ name: name, status: false }))}
+      <div
+        className="absolute inset-0 z-0 cursor-zoom-out"
+        onClick={(e) => { e.stopPropagation(); dispatch(toggleModal({ name: name, status: false })) }}
       />
 
       {/* Close Button Trigger Area */}
@@ -27,7 +27,7 @@ function ImagesModal({ image, name }) {
       </button>
 
       {/* Image Viewport Wrapper */}
-      <div 
+      <div
         className={`w-full max-w-4xl h-3/4 flex z-10 gap-4 overflow-y-hidden select-none
           ${imageList.length > 1 ? 'overflow-x-auto snap-x snap-mandatory scrollbar-thin' : 'overflow-x-hidden justify-center items-center'}`}
       >

@@ -138,14 +138,14 @@ function RegularForm({ serviceData, id, type, locationName, setRegular }) {
     }
   };
 
+
+
   const servicesForToday = isRegular ? serviceData?.filter((ser) =>
     ser?.schedule?.some((s) => formatShortDate(s.date) === today && !s.completed)) : serviceData;
 
   if (isRegular && !servicesForToday?.length) {
     const allDates = upComing?.map(u => u[0]?.date).filter(Boolean) || [];
 
-    //if no services on location show nothings
-    if (serviceData.length === 0) return;
 
     const uniqueDates = [...new Set(allDates)];
 
@@ -161,17 +161,18 @@ function RegularForm({ serviceData, id, type, locationName, setRegular }) {
       </div>
     );
   }
-  
+
 
   return (
     <div className={`${isRegular ? "" : "fixed inset-0 z-90 w-full h-dvh grid place-items-center bg-black/50"}`}>
-      <div className={`w-full max-h-[80dvh] bg-white overflow-auto outline-4 outline-gray-800 rounded-lg ${isRegular ? "w-full" : "max-w-3xl"}`}>
+      <div className={`w-full max-h-[80dvh] bg-gray-200 overflow-auto outline-4 outline-gray-800 rounded-lg ${isRegular ? "w-full" : "max-w-3xl"}`}>
         <div className="">
           <div className="flex sticky top-0 bg-white border-b-2 justify-between items-center p-3">
             <h2 className="text-lg md:text-xl font-bold">{isRegular ? "Regular Service Form" : isUnschedule ? "Unscheduled Service" : "Casual Service Form"}</h2>
+            <p className="leading-none outline-2 text-red-600 rounded-full cursor-pointer w-6 h-6 text-center content-center font-bold " onClick={() => dispatch(toggleModal({ name: type, status: false }))}>X</p>
           </div>
 
-          <form className="space-y-6 bg-green-200">
+          {serviceData.length === 0 ? <div className="text-center font-semibold my-5 bg-gray-200 ">No Services Found on Location</div> : <form className="space-y-6 bg-green-200">
             {servicesForToday?.map((ser, i) => {
               const todaySchedule = isRegular ? ser.schedule?.find(
                 (s) => formatShortDate(s.date) === today && !s.completed) : null;
@@ -287,7 +288,7 @@ function RegularForm({ serviceData, id, type, locationName, setRegular }) {
                 </div>
               );
             })}
-          </form>
+          </form>}
         </div>
       </div>
     </div>

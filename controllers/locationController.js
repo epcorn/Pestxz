@@ -574,6 +574,15 @@ export const getLocationDetails = async (req, res) => {
     });
 
     const productsService = await ProductService.find({ location: location._id }).sort({ updatedAt: -1 });
+    // const productsService = await ProductService.aggregate([
+    //   { $sort: { createdAt: -1 } },
+    //   {
+    //     $group: {
+    //       _id: "$code",
+    //       productservices: { $push: "$$ROOT" },
+    //     },
+    //   },
+    // ]);
 
     return res.json({
       location,
@@ -623,6 +632,7 @@ export const assignLocation = async (req, res) => {
   }
 };
 
+//do not run
 export const backfillSchedules = async (req, res) => {
   try {
     const locations = await Location.find().populate("client");

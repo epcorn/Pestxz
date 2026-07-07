@@ -6,11 +6,14 @@ import InputRadio from '../InputRadio'
 import { useImgUploaderMutation } from '../../redux/adminSlice'
 import { useParams } from 'react-router-dom'
 import { useAddProductServiceMutation } from '../../redux/serviceSlice'
-import { useSelector } from 'react-redux'
-import { selectDates } from '../../redux/helperSlice'
+import { useDispatch, useSelector } from 'react-redux'
+import { selectDates, toggleModal } from '../../redux/helperSlice'
 import { toast } from 'react-toastify'
+import { ExpandedProductLists } from '../ProductLists'
+import { useSingleLocationDetailsQuery } from '../../redux/locationSlice'
 
 function ProductServiceForm({ products, currentUser }) {
+
   const { id } = useParams()
   const [submittedIds, setSubmittedIds] = React.useState([])
   const dates = useSelector(selectDates)
@@ -25,12 +28,13 @@ function ProductServiceForm({ products, currentUser }) {
     });
   }) || [];
 
+
   const handleSubmitted = (pid) => {
     setSubmittedIds(prev => [...prev, pid])
   }
 
   return (
-    <div className="bg-slate-300 max-w-3xl border-2 rounded-lg mx-auto p-2 md:p-5">
+    <div className="bg-slate-300 max-w-4xl border-2 rounded-lg mx-auto p-2 md:p-5">
       <div>
         {queue.length > 0 &&
           <h3 className="font-semibold text-2xl mb-3">Product Service form</h3>
@@ -38,7 +42,7 @@ function ProductServiceForm({ products, currentUser }) {
       </div>
       <div className="shadow-[inset_0_3px_10px_rgba(0,0,0,0.1)] shadow-black outline max-h-96 overflow-y-auto">
         {queue?.length > 0 ? (
-          queue.map(product => (
+          queue?.map(product => (
             <ProductServiceCard
               key={product._id}
               id={id}
@@ -66,7 +70,8 @@ function ProductServiceForm({ products, currentUser }) {
 export default ProductServiceForm
 
 function ProductServiceCard({ product, currentUser, onSubmitted, id }) {
-
+  const dispatch = useDispatch()
+  const { isModalOpen } = useSelector(store => store.helper)
   const pid = product._id
   const [upload] = useImgUploaderMutation()
   const { handleSubmit, register, setValue, formState: { isSubmitting, isSubmitSuccessful } } = useForm({
@@ -136,7 +141,7 @@ function ProductServiceCard({ product, currentUser, onSubmitted, id }) {
       code: product.code,
       serialNo: product.serialNo,
       calibration: (product.calibrations || []).map((cal, i) => {
-        // the unused rodent method is marked Not Applicable instead of the stale 'ok' default
+
         if (hasRodentChoice && (cal === 'Bait' || cal === 'GlueBoard') && cal !== rodentMethod) {
           return { name: cal, status: 'N/A', image: '' }
         }
@@ -159,10 +164,45 @@ function ProductServiceCard({ product, currentUser, onSubmitted, id }) {
     }
   }
 
-  return (
-    <form onSubmit={handleSubmit(submit)} className="bg-white p-1 pb-4 border-b w-full">
 
-      <PreviousServices product={product} />
+  return (
+    <form onSubmit={handleSubmit(submit)} className="bg-white p-1 pb-4 border-b w-full overflow-hidden">
+      <div
+        className='bg-gray-300 px-2 w-fit outline rounded whitespace-nowrap cursor-pointer'
+        onClick={() => { dispatch(toggleModal({ name: `${product._id}-prevRecords`, status: true })) }}
+      >
+        show previous records
+      </div>
+
+      <div
+        className={`
+      fixed bg-black/30 z-50 inset-0 content-center h-full overflow-y-auto
+      transform transition-transform duration-300 ease-in-out
+      ${isModalOpen?.[`${product._id}-prevRecords`]
+            ? "opacity-100 block"
+            : "opacity-0 hidden pointer-events-none"
+          }
+    `}
+      >
+        <div className='flex flex-col'>
+          <button
+            onClick={() =>
+              dispatch(toggleModal({ name: `${product._id}-prevRecords`, status: false }))
+            }
+            className="px-2 mr-3 my-2 py-1 rounded ml-auto bg-red-500 text-white"
+          >
+            ✕
+          </button>
+
+          <PreviousServices
+            product={product}
+            dispatch={dispatch}
+            isModalOpen={isModalOpen}
+            toggleModal={toggleModal}
+          />
+        </div>
+      </div>
+
       <div className="grid grid-cols-3">
         <p><strong>Product Name:</strong> <span>{product.productName}</span></p>
         <p><strong>Serial No:</strong> <span>{product.serialNo}</span></p>
@@ -309,30 +349,30 @@ function ImageUpload({ name, id, onchange, isUploading, isUploaded, required = f
   )
 }
 
-function PreviousServices({ product }) {
-  const date = new Date(new Date().setUTCHours(0, 0, 0, 0)).toISOString()
-  const sortPrevious = product?.schedule?.filter(sc => sc.date < date || "")
+
+function PreviousServices({ product, dispatch, isModalOpen, toggleModal }) {
+  const { id } = useParams();
+  const { data } = useSingleLocationDetailsQuery(id);
+
+  const sorted =
+    data?.productsService?.filter(pr => pr.code === product.code) || [];
 
   return (
+    <div className="bg-white border shadow-lg">
 
-    <div className='relative outline bg-white w-fit'>
-      <div className='bg-gray-300 px-2 w-fit whitespace-nowrap '>
-        show previous records
-      </div>
-      <div className='translate-x-96 hidden'>
 
-        {sortPrevious.length > 0 ? sortPrevious.map((sp, i) => (
-          <div key={i}>
-            <ul>
-              {product.schedule.map(sc => (
-                <li>
-                  <p>date: {new Date(sc.date).toLocaleDateString()}</p>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )) : <p>No Previous service record found </p>}
-      </div>
+      {sorted.length ? (
+        <ExpandedProductLists
+          maxh="max-h-72"
+          w="w-full"
+          dispatch={dispatch}
+          isModalOpen={isModalOpen}
+          toggleModal={toggleModal}
+          productData={sorted}
+        />
+      ) : (
+        <p className='p-5 text-2xl font-semibold text-center'>No Previous service record found.</p>
+      )}
     </div>
-  )
+  );
 }

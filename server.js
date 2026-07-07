@@ -22,6 +22,8 @@ import { createAdmin } from "./models/userModel.js";
 import { createServer } from "http";
 import { Server } from "socket.io";
 import { autoMarkMissed } from "./utils/helperFunction.js";
+import Location from "./models/locationModel.js";
+import Counter from "./models/counterModel.js";
 
 dotenv.config();
 const app = express();
@@ -169,7 +171,10 @@ export const MONGOURL =
 // addAdminsjson()   // do not run this if not required
 const connectDB = async () => {
   try {
-    await mongoose.connect(MONGOURL);
+    await mongoose
+      .connect(MONGOURL)
+      .then((conn) => console.log(conn.connection.host));
+
     httpServer.listen(port, () => console.log("server is listening", port));
   } catch (error) {
     console.error(`Error: ${error.message}`);
