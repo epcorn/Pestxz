@@ -6,6 +6,7 @@ import Location from "../models/locationModel.js";
 import Service from "../models/serviceModel.js";
 import { capitalLetter, uploadFile } from "../utils/helperFunction.js";
 import Product from "../models/productModel.js";
+import ProductService from "../models/productService.js";
 
 export const imageUploader = async (req, res) => {
   try {
@@ -366,11 +367,15 @@ export const adminDashboard = async (req, res) => {
   const clientFilter = id && id !== "select" ? { client: id } : {};
 
   try {
-    // ── 1. Fetch complaints ────────────────────────────────────────────────
+    // ── 1. Fetch complaints & products
+    // ────────────────────────────────────────────────
+    const products = await ProductService.find();
+    
     const populateOpts = [
       { path: "location", select: "floor subLocation location" },
       { path: "client", select: "name -_id" },
     ];
+
 
     const [complaints, allComplaints] = await Promise.all([
       Service.find(clientFilter).sort("-updatedAt").populate(populateOpts),
@@ -464,18 +469,22 @@ export const adminDashboard = async (req, res) => {
     const sortedComplaints = [...complaints].sort(
       (a, b) => new Date(b.updatedAt) - new Date(a.updatedAt),
     );
-    // return res.json({ complaints, allComplaints });
+    
+    
     return res.json({
       complaintData: [{ ...complaintData, serviceCount }],
       all: allComplaints.map(withClientName),
       latestComplaints: sortedComplaints.slice(0, 15).map(withClientName),
       monthlyData,
+      products,
     });
   } catch (error) {
     console.error(error);
     res.status(500).json({ msg: "Server error, try again later" });
   }
 };
+
+
 
 export const runnerData = async (req, res) => {
   const { lat, lon } = req.query;

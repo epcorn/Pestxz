@@ -151,6 +151,7 @@ export const updateComplaint = async (req, res) => {
     if (complaint.complaintDetails.finalClosed) {
       return res.status(400).json({
         msg: "Complaint is permanently closed",
+        url: `/complaint/${complaint._id}`,
       });
     }
     // IMAGE UPLOAD
@@ -213,6 +214,7 @@ export const updateComplaint = async (req, res) => {
     await complaint.save();
     return res.json({
       msg: "Updated successfully",
+      url: `/complaint/${complaint._id}`,
     });
   } catch (error) {
     console.log(error);

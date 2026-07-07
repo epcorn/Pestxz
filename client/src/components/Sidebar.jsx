@@ -145,7 +145,7 @@ const Sidebar = () => {
                     </span>
                   </div>
 
-                  <div className="w-full pt-1  hidden lg:block">
+                  <div className="absolute top-14 max-w-[80dvw] pt-1 hidden lg:block">
                     <TickerTape />
                   </div>
 

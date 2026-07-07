@@ -182,11 +182,12 @@ export function AssignWork({ complaintId, currentAssgndVal = null, show }) {
         label: selectedOption.label,
         complaintId: complaintId
       };
-      await assignWork(data).unwrap();
+      const res = await assignWork(data).unwrap();
       show({ id: "", status: false });
       socket.emit("complaint-assigned", {
         user: user.name,
         status: selectedOption.value,
+        url: res.url,
       })
       toast.success("Successfully assigned operator!");
     } catch (error) {

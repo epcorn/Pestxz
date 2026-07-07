@@ -194,6 +194,7 @@ const ComplaintModal = ({ locationId, mode = "create" }) => {
         socket.emit("complaint-updated", {
           user: user.name,
           status: status.label,
+          url: res.url,
         })
         console.log("complaint emmited")
       }
@@ -206,7 +207,8 @@ const ComplaintModal = ({ locationId, mode = "create" }) => {
         toast.success(res?.msg || "Success");
 
         socket.emit("complaint-updated", {
-          user: user.name
+          user: user.name,
+          url: res.url,
         })
         console.log("complaint emmited")
       }
