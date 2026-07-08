@@ -69,7 +69,10 @@ export const timeList = [
   { value: "Anytime", label: "Anytime" },
 ];
 
-export const productCalibrationMapping = {
+export const productCalibrationVal1 = {
+  "Dead Rat Found": "Not-Found",
+};
+export const productCalibrationVal2 = {
   "Glue Board": "Replaced",
   GlueBoard: "Replaced",
   Bait: "Refilled",
@@ -77,14 +80,16 @@ export const productCalibrationMapping = {
   "Dead Rat Found": "Found",
   "Liquid Refill": "Refilled",
   "Spray Refill": "Refilled",
-  Tubelight: "Need Replacement",
-  "LED Box": "Need Replacement",
-  TubeLight: "Need Replacement",
-  CFL: "Need Replacement",
-  "Snapper Sheet": "Need Replacement",
-  "Vaporiser Bag": "Need Replacement",
-  "Battery Replace": "Need Replacement",
-  "Bettary Replace": "Need Replacement",
-  "Bettery Replace": "Need Replacement",
-  TrapSheet: "Need Replacement",
+  Tubelight: "Replaced",
+  "LED Box": "Replaced",
+  TubeLight: "Replaced",
+  CFL: "Replaced",
+  "Snapper Sheet": "Replaced",
+  "Vaporiser Bag": "Replaced",
+  "Battery Replace": "Replaced",
+  "Bettary Replace": "Replaced",
+  "Bettery Replace": "Replaced",
+  TrapSheet: "Replaced",
+  size: "Replaced",
+  Size: "Replaced",
 };

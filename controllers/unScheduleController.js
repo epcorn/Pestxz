@@ -111,7 +111,6 @@ export const unScheduleReport = async (req, res) => {
       if (!adminDocs.length)
         return res.status(400).json({ msg: "Service not found" });
 
-      // flatten every admin doc's service subdocs into one map: serviceId -> subdoc
       const serviceMap = new Map();
       adminDocs.forEach((doc) => {
         doc.service.forEach((s) => serviceMap.set(s._id.toString(), s));
@@ -210,6 +209,7 @@ export const statusUnscheduled = async (req, res) => {
   const data = req.body;
   try {
     const unschedule = await Unscheduled.findById(id);
+    const location = await Location.findById(unschedule.location);
 
     if (data?.read) {
       unschedule.read = true;
@@ -223,7 +223,12 @@ export const statusUnscheduled = async (req, res) => {
     }
 
     await unschedule.save();
-    res.status(200).json({ msg: "status changed" });
+    res
+      .status(200)
+      .json({
+        msg: `Unschedule work for ${location.floor} has been ${data.status}`,
+        url: `/unschedule/${id}`,
+      });
   } catch (error) {
     res.status(500).json({ msg: "server error" });
   }

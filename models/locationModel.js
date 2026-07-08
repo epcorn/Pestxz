@@ -23,6 +23,32 @@ const productEntrySchema = new mongoose.Schema({
   schedule: [scheduleItemSchema],
 });
 
+const scopeConsumableSchema = new mongoose.Schema(
+  {
+    consumableId: { type: mongoose.Schema.Types.ObjectId },
+    consumableName: { type: String },
+    calibration: { type: String },
+  },
+  { _id: false },
+);
+
+const scopeSchema = new mongoose.Schema(
+  {
+    scopeId: { type: mongoose.Schema.Types.ObjectId },
+    scopeName: { type: String },
+    consumables: [scopeConsumableSchema],
+  },
+  { _id: false },
+);
+
+const serviceEntrySchema = new mongoose.Schema({
+  serviceId: { type: mongoose.Schema.Types.ObjectId, ref: "Service" }, // adjust ref as needed
+  serviceName: { type: String },
+  frequency: { type: String },
+  schedule: [scheduleItemSchema],
+  scopes: [scopeSchema],
+});
+
 const locationSchema = new mongoose.Schema(
   {
     floor: { type: String, required: true },
@@ -30,7 +56,7 @@ const locationSchema = new mongoose.Schema(
     location: { type: String, required: true },
     qr: { type: String },
     qrCount: { type: Number, default: 0 }, //added for show count
-    service: { type: [Object], default: [] },
+    service: [serviceEntrySchema],
     product: [productEntrySchema],
     changes: [Object],
     client: {

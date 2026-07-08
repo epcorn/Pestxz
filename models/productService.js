@@ -8,15 +8,15 @@ const productServiceSchema = mongoose.Schema(
     },
     product: {
       name: { type: String, default: "" },
-      id: { type: mongoose.Schema.Types.ObjectId },
+      id: { type: mongoose.Schema.Types.ObjectId, ref: "Product" },
     },
     serialNo: { type: String, required: true, unique: true },
     version: {
       name: { type: String, default: "" },
-      id: { type: mongoose.Schema.Types.ObjectId },
+      id: { type: mongoose.Schema.Types.ObjectId, ref: "Product" },
     },
     code: { type: String, default: "" },
-    calibration: [{ name: String, status: String, image: String }],
+    calibration: [mongoose.Schema.Types.Mixed],
     servicedBy: {
       name: { type: String, required: true },
       id: { type: mongoose.Schema.Types.ObjectId },

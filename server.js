@@ -36,7 +36,8 @@ const io = new Server(httpServer, {
         : "http://localhost:3000",
     credentials: true,
   },
-  connectionStateRecovery: {           // ADD THIS BLOCK
+  connectionStateRecovery: {
+    // ADD THIS BLOCK
     maxDisconnectionDuration: 2 * 60 * 1000,
     skipMiddlewares: true,
   },
@@ -177,12 +178,13 @@ app.use(notFound);
 
 const port = process.env.PORT || 5000;
 export const MONGOURL =
-  process.env.NODE_ENV === "production"
+  process.env.NODE_ENV !== "production"
     ? process.env.MONGO_URI
     : process.env.MONGO_LOCAL;
 
 // createAdmin();
 // addAdminsjson()   // do not run this if not required
+// autoMarkMissed()
 const connectDB = async () => {
   try {
     await mongoose

@@ -104,10 +104,10 @@ const Sidebar = () => {
   return (
     <aside className="antialiased">
       <nav className="fixed top-0 left-0 right-0 max-h-20 lg:left-40 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200 py-3 md:px-6 px-3 transition-all duration-300">
-        <div className="flex items-start justify-between w-full max-w-7xl mx-auto">
+        <div className="flex items-start justify-between w-full mx-auto">
 
           {/* Left Section: Mobile Menu & Client Context */}
-          <div className="flex items-center gap-4">
+          <div className="flex gap-4">
             {/* Side menu button */}
             <button
               onClick={() => setShow(!show)}

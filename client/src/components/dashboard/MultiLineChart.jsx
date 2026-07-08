@@ -37,14 +37,16 @@ const getColor = (index, alpha = 1) => {
 const keyMapping = {
   "complaints": "Total Complaints",
   "regulars": "Total Services",
+  "productCompleted": "Total Product Service Done"
 
 }
 
-function MultiLineChart({ values = [], admin = [], toggle }) {
+function MultiLineChart({ values = [], selectedMonth, admin = [], toggle }) {
 
   // --- 1. VALUES CHART CONFIGURATION ---
   const valuesLabels = values?.map(item => item.month || '');
 
+  // console.log(values,admin,toggle,valuesLabels);
   const valuesData = {
     labels: valuesLabels,
     datasets: [
@@ -71,30 +73,27 @@ function MultiLineChart({ values = [], admin = [], toggle }) {
       },
     ],
   };
-  
+
   // --- 2. ADMIN CHART CONFIGURATION ---
   const adminLabels = admin?.map(item => item.month || '');
-  
-  // Get keys only from the first object to generate charts dynamically
-  const adminKeys = admin.length > 0
-  ? Object.keys(admin[0]).filter(key => ['complaints', 'regulars'].includes(key))
-  : [];
-  
-  
-  const adminDatasets = adminKeys.map((key, index) => ({
-    label: keyMapping[key] || (key.charAt(0).toUpperCase() + key.slice(1)),
-    data: admin.map(item => item[key] ?? 0),
+
+  const selectedData = admin?.[selectedMonth] ?? {}
+
+  const adminKeys = Object?.keys(selectedData)?.filter(key => ['complaints', 'regulars', 'productCompleted']?.includes(key));
+
+  const adminDatasets = adminKeys?.map((key, index) => ({
+    label: keyMapping?.[key] || (key.charAt(0)?.toUpperCase() + key?.slice(1)),
+    data: admin.map(item => item?.[key] ?? 0),
     borderColor: getColor(index, 1),
     backgroundColor: getColor(index, 0.2),
     tension: 0.3,
   }));
-  
+
   const adminData = {
     labels: adminLabels,
     datasets: adminDatasets,
   };
-  console.log(adminDatasets)
-
+  console.log(adminData)
   // --- 3. SHARED OPTIONS CONFIG ---
   const getOptions = (titleText) => ({
     responsive: true,
@@ -122,7 +121,6 @@ function MultiLineChart({ values = [], admin = [], toggle }) {
 
   return (
     <>
-
       {/* Values Data Chart */}
       {toggle === "values" &&
         <div style={{ position: 'relative', width: '100%', height: '300px' }}>
@@ -136,7 +134,6 @@ function MultiLineChart({ values = [], admin = [], toggle }) {
           <Line data={adminData} options={getOptions('Admin Metrics Overview')} />
         </div>
       }
-
     </ >
   );
 }

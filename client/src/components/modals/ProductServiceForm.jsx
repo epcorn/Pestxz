@@ -1,7 +1,7 @@
 import React from 'react'
 import { useForm } from 'react-hook-form'
 import Button from '../Button'
-import { productCalibrationMapping } from '../../utils/constData'
+import { productCalibrationVal1, productCalibrationVal2 } from '../../utils/constData'
 import InputRadio from '../InputRadio'
 import { useImgUploaderMutation } from '../../redux/adminSlice'
 import { useParams } from 'react-router-dom'
@@ -12,6 +12,7 @@ import { toast } from 'react-toastify'
 import { ExpandedProductLists } from '../ProductLists'
 import { useSingleLocationDetailsQuery } from '../../redux/locationSlice'
 import { socket } from '../../socket'
+import InputRow from '../InputRow'
 
 function ProductServiceForm({ products, currentUser }) {
 
@@ -73,12 +74,12 @@ export default ProductServiceForm
 function ProductServiceCard({ product, currentUser, onSubmitted, id }) {
   const dispatch = useDispatch()
   const { isModalOpen } = useSelector(store => store.helper)
-  const pid = product._id
-  const [upload] = useImgUploaderMutation()
-  const { handleSubmit, register, setValue, formState: { isSubmitting, isSubmitSuccessful } } = useForm({
+  const pid = product._id;
+  const [upload] = useImgUploaderMutation();
+  const { handleSubmit, register, setValue, watch, formState: { isSubmitting, isSubmitSuccessful } } = useForm({
     defaultValues: {
       quality: { status: 'ok', image: '' },
-      calibration: (product.calibrations || []).map(cal => ({ status: 'ok', image: '' })),
+      calibration: (product.calibrations || []).map(cal => ({ status: 'ok', image: '', size: "" })),
     },
   })
 
@@ -150,13 +151,14 @@ function ProductServiceCard({ product, currentUser, onSubmitted, id }) {
           name: cal,
           status: data.calibration?.[i]?.status || 'ok',
           image: data.calibration?.[i]?.image || '',
+          size: data.calibration?.[i].size || "",
         }
       }),
     }
+    console.log(data, payload)
     try {
       const res = await addProducts(payload).unwrap()
       onSubmitted(pid)
-      console.log(res)
       socket.emit("services", { ...res, url: `/location/${id}` })
       toast.success(res.msg || "Product service successfull")
     } catch (error) {
@@ -213,7 +215,7 @@ function ProductServiceCard({ product, currentUser, onSubmitted, id }) {
         <p><strong>Specification:</strong> <span>{product.specification}</span></p>
       </div>
 
-      <div className='outline rounded p-2 mt-2'>
+      <div className='outline rounded p-2 mt-2 bg-blue-100'>
         <h3 className="text-lg font-semibold mb-2">1. Equipment Quality</h3>
         <div className="flex flex-col md:flex-row md:justify-evenly ml-3 gap-3 md:items-center ">
           <InputRadio
@@ -228,7 +230,7 @@ function ProductServiceCard({ product, currentUser, onSubmitted, id }) {
             register={register}
             name="quality.status"
             id={`${pid}-quality-repair`}
-            value="repair"
+            value="Need Repair"
             label="Need Repair"
             block={false}
           />
@@ -236,7 +238,7 @@ function ProductServiceCard({ product, currentUser, onSubmitted, id }) {
             register={register}
             name="quality.status"
             id={`${pid}-quality-replace`}
-            value="replace"
+            value="Need Replacement"
             label="Need Replacement"
             block={false}
           />
@@ -244,7 +246,7 @@ function ProductServiceCard({ product, currentUser, onSubmitted, id }) {
           <ImageUpload
             name={`${pid}-quality-image`}
             id={`${pid}-quality-image`}
-            required={true}
+            // required={true}
             onchange={handleImageChange('quality.image')}
             isUploading={uploadingField === 'quality.image'}
             isUploaded={!!uploadedFields['quality.image']}
@@ -281,33 +283,39 @@ function ProductServiceCard({ product, currentUser, onSubmitted, id }) {
         )}
 
         {product?.calibrations?.map((cal, i) => {
-          const fallbackValue = productCalibrationMapping[cal] || 'Need Repair/Replace'
+          const fallbackValue1 = productCalibrationVal1?.[cal] || "ok"
+
+          const fallbackValue2 = productCalibrationVal2[cal] || 'Need Repair/Replace'
           const isBaitOrGlue = hasRodentChoice && (cal === 'Bait' || cal === 'GlueBoard')
 
-          // hide bait/glueboard detail fields until a method is chosen,
-          // and once chosen, hide the one that wasn't
           if (isBaitOrGlue && cal !== rodentMethod) return null
 
           return (
-            <div key={`${pid}-${cal}-${i}`} className="my-2 p-3 rounded  outline">
+            <div key={`${pid}-${cal}-${i}`} className="my-2 p-3 rounded  outline bg-cyan-100">
               <h3 className="text-lg font-semibold capitalize mb-1">{cal}</h3>
               <div className="flex flex-col ml-5 md:flex-row md:justify-evenly gap-4 md:items-center ">
-                <InputRadio
-                  register={register}
-                  name={`calibration.${i}.status`}
-                  id={`${pid}-${cal}-ok`}
-                  value="ok"
-                  label="Ok"
-                  block={false}
-                />
-                <InputRadio
-                  register={register}
-                  name={`calibration.${i}.status`}
-                  id={`${pid}-${cal}-action`}
-                  value={fallbackValue}
-                  label={fallbackValue}
-                  block={false}
-                />
+                <div className='grid grid-cols-2'>
+                  <InputRadio
+                    register={register}
+                    name={`calibration.${i}.status`}
+                    id={`${pid}-${cal}-ok`}
+                    value={fallbackValue1}
+                    label={fallbackValue1}
+                    block={false}
+                  />
+                  <InputRadio
+                    register={register}
+                    name={`calibration.${i}.status`}
+                    id={`${pid}-${cal}-action`}
+                    value={fallbackValue2}
+                    label={fallbackValue2}
+                    block={false}
+                  />
+                  {cal === "size" ?
+                    <InputRow label={'Define size'} placeholder={'sqft/inch'} id={`calibration.${i}.size`} register={register} required={watch(`calibration.${i}.status`) !== "ok"} />
+                    : ""
+                  }
+                </div>
                 <ImageUpload
                   name={`${pid}-${cal}-image`}
                   id={`${pid}-${cal}-image`}
@@ -333,6 +341,8 @@ function ProductServiceCard({ product, currentUser, onSubmitted, id }) {
 function ImageUpload({ name, id, onchange, isUploading, isUploaded, required = false }) {
   return (
     <div className="flex flex-col">
+      <label htmlFor={id}><span className={`${required ? "text-red-600" : ""} font-bold`}>*</span> {isUploading ? 'Uploading...' : isUploaded ? 'Uploaded ✅' : 'Upload Image ☑️'}
+      </label>
       <input
         type="file"
         name={name}
@@ -343,9 +353,6 @@ function ImageUpload({ name, id, onchange, isUploading, isUploaded, required = f
         disabled={isUploading}
         className="text-sm file:bg-gray-400 w-fit file:px-3 file:py-1 outline"
       />
-      <label htmlFor={id}>
-        {isUploading ? 'Uploading...' : isUploaded ? 'Uploaded ✅' : 'Upload Image ☑️'}
-      </label>
     </div>
   )
 }

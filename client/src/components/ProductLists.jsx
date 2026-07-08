@@ -83,6 +83,7 @@ function ProductLists({ data }) {
                                 >
                                   <span className="text-gray-500">{c.name}:</span>
                                   <strong className="font-semibold text-gray-900">{c.status}</strong>
+                                  {c?.size ? <span> - {c.size}</span> : ""}
                                 </div>
                                 {isModalOpen?.[modalKey] && (
                                   <ImagesModal name={modalKey} image={c?.image} />

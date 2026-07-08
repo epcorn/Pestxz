@@ -657,4 +657,3 @@ export const autoMarkMissed = async () => {
     );
   }
 };
-autoMarkMissed();

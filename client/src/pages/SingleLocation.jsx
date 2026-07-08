@@ -110,20 +110,18 @@ const SingleLocation = () => {
 
           {/* ===== FLOATING STICKY SUMMARY BAR (unchanged behavior) ===== */}
           <div
-            className={`bg-slate-700 z-[5] w-[calc(100dvw-2.5rem)] md:w-[calc(100dvw-2.5rem)] lg:w-[calc(100dvw-17.5rem)] fixed top-22 md:top-22 lg:top-22 left-1/2 -translate-x-1/2 lg:left-auto lg:right-0 lg:translate-x-0 flex items-center gap-3 p-2 shadow-lg rounded-b-lg transition-all duration-500 origin-top ${show
-              ? "opacity-100 scale-100 translate-y-0 pointer-events-auto"
-              : "opacity-0 scale-95 -translate-y-4 pointer-events-none"
-              }`}
+            className={`fixed z-[5] top-22 left-4 md:left-4 lg:left-60 w-[95dvw] md:w-[95dvw] lg:w-[79dvw] flex items-center gap-3 p-2 bg-slate-700 shadow-lg rounded-b-lg transition-all duration-500 origin-top ${show ? "opacity-100 scale-100 translate-y-0 pointer-events-auto" : "opacity-0 scale-95 -translate-y-4 pointer-events-none"}`}
           >
             {data.client && (
-              <p className="px-3 py-1 bg-white text-slate-800 rounded-md text-sm font-medium">
+              <p className="px-3 py-1 bg-white text-slate-800 rounded-md text-sm font-medium whitespace-nowrap">
                 {data?.client}
               </p>
             )}
-            <p className="px-3 py-1 bg-white text-slate-800 rounded-md text-sm">
+            <p className="px-3 py-1 bg-white text-slate-800 rounded-md text-sm truncate">
               {`${data.location.floor}, ${data.location.location}, ${data.location.subLocation}`}
             </p>
           </div>
+
 
           <div className="px-0 space-y-6">
 
@@ -188,12 +186,12 @@ const SingleLocation = () => {
 
             {/* ===== TABS ===== */}
             <div>
-              <div className="flex flex-wrap gap-2 text-xs md:text-sm font-semibold border-b border-neutral-200 pb-3">
+              <div className="flex flex-wrap gap-2 text-xs md:text-sm font-semibold border-b border-neutral-400 pb-3">
                 {tabs.map(({ key, label }) => (
                   <span
                     key={key}
                     onClick={() => setToggleLists(toggleLists === key ? "" : key)}
-                    className={`px-4 py-1.5 rounded-full cursor-pointer transition-all ${toggleLists === key
+                    className={`px-4 py-1.5 rounded-full cursor-pointer transition-all outline ${toggleLists === key
                       ? "bg-blue-600 text-white shadow-sm"
                       : "bg-blue-100 text-neutral-600 hover:bg-blue-200"
                       }`}
@@ -230,31 +228,31 @@ const SingleLocation = () => {
                               to={`/complaint/${complaint._id}`}
                             >
                               <div className="col-span-1 md:col-span-2 flex justify-between md:block items-center">
-                                <span className="md:hidden text-xs font-semibold text-neutral-400 uppercase">No:</span>
+                                <span className="md:hidden text-xs font-bold uppercase">No:</span>
                                 <span className="text-blue-600 font-medium hover:underline">
                                   {complaint.complaintDetails.number}
                                 </span>
                               </div>
 
                               <div className="col-span-1 md:col-span-2 flex justify-between md:block md:text-center items-center">
-                                <span className="md:hidden text-xs font-semibold text-neutral-400 uppercase">Date:</span>
+                                <span className="md:hidden text-xs font-bold uppercase">Date:</span>
                                 <span className="text-neutral-500 md:text-neutral-700">{dateFormat(complaint.createdAt)}</span>
                               </div>
 
                               <div className="col-span-1 md:col-span-4 flex justify-between md:block items-center">
-                                <span className="md:hidden text-xs font-semibold text-neutral-400 uppercase">Service:</span>
+                                <span className="md:hidden text-xs font-bold uppercase">Service:</span>
                                 <span className="truncate max-w-[200px] md:max-w-none text-right md:text-left">
                                   {complaint.complaintDetails.service?.join(", ")}
                                 </span>
                               </div>
 
                               <div className="col-span-1 md:col-span-2 flex justify-between md:block md:text-center items-center">
-                                <span className="md:hidden text-xs font-semibold text-neutral-400 uppercase">By:</span>
+                                <span className="md:hidden text-xs font-bold uppercase">Raised By:</span>
                                 <span>{complaint?.complaintDetails?.userName}</span>
                               </div>
 
                               <div className="col-span-1 md:col-span-2 flex justify-between md:block md:text-center items-center mt-1 md:mt-0">
-                                <span className="md:hidden text-xs font-semibold text-neutral-400 uppercase">Status:</span>
+                                <span className="md:hidden text-xs font-bold uppercase">Status:</span>
                                 <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium border ${progress(complaint.complaintDetails.status)}`}>
                                   {complaint.complaintDetails.status}
                                 </span>

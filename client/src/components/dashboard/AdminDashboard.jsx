@@ -7,11 +7,13 @@ import { AssignWork } from "../../pages/Complaints";
 import PieChart from "./PieChart";
 import MultiLineChart from "./MultiLineChart";
 
+
 function AdminDashboard() {
   const [assignId, setAssignId] = useState(null);
   const [toggle, setToggle] = useState(
     () => sessionStorage.getItem("adminDashboardToggle") || "Complaint"
   );
+  const [selectedMonth, setSelectedMonth] = useState(0)
   const [selectedClient, setSelectedClient] = useState(null);
   const assignRef = useRef(null);
   const navigate = useNavigate();
@@ -22,7 +24,7 @@ function AdminDashboard() {
     selectedClient?._id || "select",
     { skip: user?.role !== "Admin", refetchOnReconnect: true }
   );
-  console.log(adminDash)
+  // console.log(adminDash)
 
   useEffect(() => {
     if (!assignId) return;
@@ -44,6 +46,7 @@ function AdminDashboard() {
     [adminDash, toggle]
   );
 
+  // const productData=Object.fromEntries(adminDash.productData.scheduleCount.map(i=> ))
   const chartCompDataArray = adminDash?.complaintData.map(({ serviceCount, ...rest }) => rest);
   const chartCompData = chartCompDataArray?.[0] || {};
 
@@ -54,7 +57,7 @@ function AdminDashboard() {
   }, {}) || {};
 
   const finalMergedData = { ...formattedData, ...chartCompData };
-
+  console.log(selectedMonth)
   return (
     <section className="p-2 md:p-6 bg-gray-50 min-h-screen space-y-6">
 
@@ -89,28 +92,46 @@ function AdminDashboard() {
           </div>
         )}
       </div>
+      {/* open ,inProgress,closed,total*/}
 
       {/* Stat cards */}
       <div className="flex flex-wrap gap-2">
-        {adminDash?.complaintData?.map((d, i) => (
+        {adminDash?.complaintData?.map((d, i) => {
+          const { open, inProgress, closed, total, serviceCount } = d;
+          return (
+            <React.Fragment key={i}>
+              <StatCard title="Open Complaints" value={open} color="border-l-red-500" textColor="text-red-500" />
+              <StatCard title="In Progress" value={inProgress} color="border-l-amber-500" textColor="text-amber-500" />
+              <StatCard title="Closed Complaints" value={closed} color="border-l-green-500" textColor="text-green-500" />
+              <StatCard title="Total Complaints" value={total} color="border-l-blue-500" textColor="text-blue-500" />
+              {serviceCount?.map((ser) =>
+                ser?.label == "Done" && (
+                  <StatCard key={ser.label} title={"Regular Services " + ser.label} value={ser.count} color="border-l-fuchsia-600" textColor="text-fuchsia-500" />
+                )
+              )}
+            </React.Fragment>
+          )
+        })}
+        {adminDash?.productData?.scheduleCount?.map(({ label, count }, i) => label === "Done" && (
           <React.Fragment key={i}>
-            <StatCard title="Open Complaints" value={d.open} color="border-l-red-500" textColor="text-red-500" />
-            <StatCard title="In Progress" value={d.inProgress} color="border-l-amber-500" textColor="text-amber-500" />
-            <StatCard title="Closed Complaints" value={d.closed} color="border-l-green-500" textColor="text-green-500" />
-            <StatCard title="Total Complaints" value={d.total} color="border-l-blue-500" textColor="text-blue-500" />
-            {d.serviceCount.map((ser) =>
-              ser.label !== "Invalid" && (
-                <StatCard key={ser.label} title={ser.label + " Services"} value={ser.count} color="border-l-fuchsia-600" textColor="text-fuchsia-500" />
-              )
-            )}
+            <StatCard title={'Product Services Done'} value={count} />
           </React.Fragment>
         ))}
+      </div>
+      {/* monthly sort */}
+      <div className="ml-auto bg-white outline outline-gray-600 rounded w-fit px-2">
+        <select className="px-2 py-1 focus:outline-0" value={selectedMonth} onChange={(e) => setSelectedMonth(Number(e.target.value))}>
+          {adminDash?.monthlyData?.map(({ month }, i) => (
+            <option key={month + i} value={i}>{month}</option>
+          ))}
+        </select>
       </div>
 
       {/* charts  */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 flex gap-4 overflow-x-auto">
+
         <div className="min-w-[400px] flex-1">
-          <MultiLineChart admin={adminDash?.monthlyData} toggle={"admin"} />
+          <MultiLineChart admin={adminDash?.monthlyData} selectedMonth={selectedMonth} toggle={"admin"} />
         </div>
         <div className="w-px bg-gray-100 shrink-0" />
         <div className="min-w-[250px] flex items-center justify-center">

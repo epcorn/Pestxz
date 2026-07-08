@@ -27,7 +27,7 @@ const InputRow = ({
         id={id}
         disabled={disabled}
         min={min}
-        className="mt-0.5 w-full py-0.5 px-2 border-2 rounded-md outline-none transition border-neutral-300 focus:border-black disabled:bg-slate-100"
+        className="mt-0.5 w-full py-0.5 px-2 border-2 rounded-md outline-none transition border-neutral-400 focus:border-black disabled:bg-slate-100"
         placeholder={placeholder}
         {...register(id, { required: required, onChange: onchange })}
       />

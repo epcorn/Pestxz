@@ -15,18 +15,18 @@ function AllScheduleService({ data }) {
     <div>
       {data?.length > 0 ? (
         <div className="mb-1">
-          <div className="overflow-hidden rounded-lg border border-neutral-200 bg-white shadow-sm">
+          <div className="overflow-hidden rounded-lg border border-neutral-300 bg-white shadow-sm">
             {/* DESKTOP HEADER */}
-            <div className="hidden md:grid grid-cols-[120px_120px_150px_1fr_150px] bg-zinc-300/40 border-b border-neutral-200 text-sm font-bold uppercase tracking-wider text-neutral-700">
-              <div className="p-3 border-r border-neutral-200">Type</div>
-              <div className="p-3 border-r border-neutral-200">Images</div>
-              <div className="p-3 border-r border-neutral-200">Date</div>
-              <div className="p-3 border-r border-neutral-200">Service</div>
+            <div className="hidden md:grid grid-cols-[120px_120px_150px_1fr_150px] bg-neutral-100 border-b border-neutral-300 text-xs font-bold uppercase tracking-wider text-neutral-800">
+              <div className="p-3 border-r border-neutral-300">Type</div>
+              <div className="p-3 border-r border-neutral-300">Images</div>
+              <div className="p-3 border-r border-neutral-300">Date</div>
+              <div className="p-3 border-r border-neutral-300">Service</div>
               <div className="p-3">Attend By</div>
             </div>
 
             {/* BODY */}
-            <div className="divide-y divide-neutral-800">
+            <div className="divide-y overflow-y-auto max-h-[500px]">
               {data?.map((service, index) => (
                 <div key={service._id} className="w-full">
                   {/* MAIN ROW */}
@@ -34,27 +34,27 @@ function AllScheduleService({ data }) {
                     onClick={() =>
                       setShowDetail(showDetail === service._id ? null : service._id)
                     }
-                    className="grid grid-cols-1 md:grid-cols-[120px_120px_150px_1fr_150px] gap-3 md:gap-0 p-4 cursor-pointer bg-white/40 hover:bg-white/30 transition items-center"
+                    className="grid grid-cols-1 md:grid-cols-[120px_120px_150px_1fr_150px] gap-2.5 md:gap-0 p-4 cursor-pointer bg-white hover:bg-neutral-50 transition items-stretch md:items-center"
                   >
                     {/* TYPE */}
-                    <div className="md:border-r md:border-neutral-200 md:px-3 flex justify-between items-center">
-                      <span className="text-xs font-bold uppercase text-neutral-400 md:hidden mr-2">Type:</span>
-                      <span className="font-medium text-sm text-neutral-900">{service.type}</span>
+                    <div className="md:border-r md:border-neutral-300 md:px-3 flex justify-between items-center md:justify-start">
+                      <span className="text-xs font-bold uppercase md:hidden text-neutral-700">Type</span>
+                      <span className="font-bold text-sm text-neutral-900">{service.type}</span>
                     </div>
 
                     {/* IMAGE */}
                     <div
-                      className="md:border-r md:border-neutral-200 md:px-3 flex justify-between items-center"
+                      className="md:border-r md:border-neutral-300 md:px-3 flex justify-between items-center md:justify-start"
                       onClick={(e) => e.stopPropagation()}
                     >
-                      <span className="text-xs font-bold uppercase text-neutral-400 md:hidden mr-2">Images:</span>
+                      <span className="text-xs font-bold uppercase md:hidden text-neutral-700">Images</span>
                       {service.regularService[0].image ? (
                         <div className="relative">
                           <Button
                             label="Show"
                             small
                             height="h-7"
-                            color={service?.regularService[0].image.length > 0 ? "bg-green-600 text-xs text-white px-3 rounded hover:bg-green-700 transition" : "bg-green-600/40 hover:bg-green-600/40 cursor-not-allowed"}
+                            color={service?.regularService[0].image.length > 0 ? "bg-green-700 text-xs px-3 rounded hover:bg-green-800 transition text-white font-semibold" : "bg-neutral-200 cursor-not-allowed border border-neutral-300 text-neutral-700 text-xs px-3 rounded font-medium"}
                             onClick={() =>
                               dispatch(
                                 toggleModal({
@@ -72,40 +72,35 @@ function AllScheduleService({ data }) {
                           )}
                         </div>
                       ) : (
-                        <span className="text-xs text-neutral-400">No Image</span>
+                        <span className="text-xs font-semibold text-neutral-700">No Image</span>
                       )}
                     </div>
 
                     {/* DATE */}
-                    <div className="md:border-r md:border-neutral-200 md:px-3 flex flex-row justify-between md:flex-col items-center md:items-start md:justify-center">
-                      <span className="text-xs font-bold uppercase text-neutral-400 md:hidden mr-2">Date:</span>
-                      <div className="flex flex-col">
-                        <span className="text-sm text-neutral-900">{dateFormat(service?.regularService[0].date)}</span>
-                        {service.regularService[0].serviceDate && (
-                          <span className="text-xs text-neutral-500 mt-0.5">
-                            {service.regularService[0].serviceDate}
-                          </span>
-                        )}
+                    <div className="md:border-r md:border-neutral-300 md:px-3 flex justify-between items-center md:items-start md:justify-center">
+                      <span className="text-xs font-bold uppercase md:hidden text-neutral-700">Date</span>
+                      <div className="flex flex-col items-end md:items-start">
+                        <span className="text-sm text-neutral-900 font-bold md:font-semibold">{dateFormat(service?.regularService[0].date)}</span>
                       </div>
                     </div>
-                    {/* SERVICE */}
 
-                    <div className="md:border-r md:border-neutral-200 md:px-3 flex flex-row md:flex-col items-center md:items-start justify-between md:justify-center">
-                      <span className="text-xs font-bold uppercase text-neutral-400 md:hidden mr-2">Service:</span>
-                      <div className="flex flex-col min-w-0 w-full text-right md:text-left">
-                        <span className="font-medium text-sm text-neutral-900 truncate">
+                    {/* SERVICE */}
+                    <div className="md:border-r md:border-neutral-300 md:px-3 flex justify-between items-center md:items-start md:justify-center">
+                      <span className="text-xs font-bold uppercase md:hidden text-neutral-700">Service</span>
+                      <div className="flex flex-col min-w-0 text-right md:text-left max-w-[65%] md:max-w-full">
+                        <span className="font-bold text-sm text-neutral-900 truncate block">
                           {service.regularService[0].serviceName}
                         </span>
-                        <span className="text-xs text-neutral-500 truncate mt-0.5">
+                        <span className="text-xs font-bold text-neutral-700 truncate block mt-0.5">
                           {service.regularService[0].frequency}
                         </span>
                       </div>
                     </div>
 
                     {/* USER */}
-                    <div className="md:px-3 flex justify-between items-center">
-                      <span className="text-xs font-bold uppercase text-neutral-400 md:hidden mr-2">Attend By:</span>
-                      <span className="inline-flex items-center rounded-full bg-neutral-100 px-2.5 py-0.5 text-xs font-medium text-neutral-900 border border-neutral-500 whitespace-nowrap">
+                    <div className="md:px-3 flex justify-between items-center md:justify-start">
+                      <span className="text-xs font-bold uppercase md:hidden text-neutral-700">Attend By</span>
+                      <span className="inline-flex items-center rounded-md bg-neutral-100 px-2.5 py-0.5 text-xs font-bold text-neutral-900 border border-neutral-400 whitespace-nowrap">
                         {service.regularService[0].userName}
                       </span>
                     </div>
@@ -113,57 +108,59 @@ function AllScheduleService({ data }) {
 
                   {/* DETAILS SECTION */}
                   {user.type === "PestEmployee" && showDetail === service._id && (
-                    <div className="border-t border-neutral-200 bg-neutral-100 p-2 md:p-4 space-y-2 md:space-y-4">
+                    <div className="border-t border-neutral-300 bg-neutral-300 p-3 md:p-5 space-y-3 md:space-y-4">
                       {service.regularService[0].scopes?.map((sc, i) => (
                         <div
                           key={i}
-                          className="border border-neutral-200 rounded-lg bg-white p-2 md:p-4 shadow-sm"
+                          className="border border-neutral-300 rounded-lg bg-white p-3 md:p-4 shadow-xs"
                         >
-                          <h2 className="font-semibold text-base text-neutral-900 mb-3 border-b border-neutral-100 pb-2">
+                          <h2 className="font-bold text-sm text-neutral-900 mb-3 border-b border-neutral-200 pb-2">
                             {sc.scopeName}
                           </h2>
 
-                          <div className="space-y-2">
+                          <div className="space-y-3">
                             {sc.consumables?.map((con, j) => (
                               <div
                                 key={j}
-                                className="grid grid-cols-2 md:grid-cols-7 gap-2 md:gap-4 border border-neutral-200 rounded-lg p-2 md:p-4 bg-neutral-50/50 whitespace-pre-wrap"
+                                className="grid grid-cols-2 md:grid-cols-4 gap-3 border border-neutral-200 rounded-lg p-3 bg-neutral-50 whitespace-pre-wrap"
                               >
-                                <div className="sm:col-span-2 md:col-span-2">
-                                  <p className="text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-1">
-                                    Consumable
-                                  </p>
-                                  <p className="font-medium text-sm text-neutral-900">
+                                <div className="col-span-full flex flex-wrap items-center gap-2 border-b border-neutral-200 pb-2">
+                                  <span className="text-xs uppercase tracking-wider font-extrabold text-neutral-800">
+                                    Consumable:
+                                  </span>
+                                  <span className="font-bold text-xs text-neutral-900 bg-neutral-200 rounded px-2 py-0.5">
                                     {con.consumableName}
-                                  </p>
+                                  </span>
                                 </div>
 
                                 <div>
-                                  <p className="text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-1">
-                                    Calibration
+                                  <p className="text-[11px] font-bold uppercase tracking-wider text-neutral-700 mb-0.5">
+                                    Calibration Limit
                                   </p>
-                                  <p className="text-sm text-neutral-700">{con.calibration || "0"}</p>
+                                  <p className="text-sm font-bold text-neutral-900">{con.calibration || "0"}</p>
                                 </div>
 
                                 <div>
-                                  <p className="text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-1">
-                                    Used Cal.
+                                  <p className="text-[11px] font-bold uppercase tracking-wider text-neutral-700 mb-0.5">
+                                    Value Used
                                   </p>
-                                  <p className="text-sm text-neutral-700">{con.usedCalibration || "-"}</p>
+                                  <p className="text-sm font-bold text-neutral-900">{con.usedCalibration || "-"}</p>
                                 </div>
 
                                 <div>
-                                  <p className="text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-1">
+                                  <p className="text-[11px] font-bold uppercase tracking-wider text-neutral-700 mb-0.5">
                                     Action
                                   </p>
-                                  <p className="text-sm text-neutral-700">{con.action || "-"}</p>
+                                  <p className="text-sm font-bold text-neutral-900">{con.action || "-"}</p>
                                 </div>
 
-                                <div className="sm:col-span-2 md:col-span-2">
-                                  <p className="text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-1">
+                                <div>
+                                  <p className="text-[11px] font-bold uppercase tracking-wider text-neutral-700 mb-0.5">
                                     Comment
                                   </p>
-                                  <p className="text-sm text-neutral-700">{con.comment || "-"}</p>
+                                  <p className="text-sm font-bold text-neutral-900 truncate max-w-[150px]" title={con.comment}>
+                                    {con.comment || "-"}
+                                  </p>
                                 </div>
                               </div>
                             ))}
@@ -173,17 +170,19 @@ function AllScheduleService({ data }) {
 
                       {/* SCHEDULE */}
                       {service.regularService[0].schedule?.length > 0 && (
-                        <div className="border border-neutral-200 rounded-lg bg-white p-4 shadow-sm">
-                          <h2 className="font-semibold text-sm text-neutral-900 mb-3">
+                        <div className="border border-neutral-300 rounded-lg bg-white p-4 shadow-xs">
+                          <h2 className="font-bold text-xs uppercase tracking-wider text-neutral-700 mb-3">
                             Schedule Dates
                           </h2>
-                          <div className="flex flex-wrap gap-2 max-h-24 overflow-y-auto pr-1">
+                          <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto p-0.5">
                             {service.regularService[0].schedule.map((sch, idx) => (
                               <span
                                 key={idx}
-                                className={`px-2.5 py-1 rounded-md text-xs font-medium border ${sch.completed
-                                  ? "bg-green-50 text-green-700 border-green-200"
-                                  : "bg-neutral-50 text-neutral-600 border-neutral-200"
+                                className={`px-2 py-0.5 rounded text-xs font-bold border ${sch.completed
+                                    ? "bg-green-100 text-green-900 border-green-400"
+                                    : sch.status === "Missed"
+                                      ? "bg-red-100 text-red-900 border-red-400"
+                                      : "bg-neutral-200 text-neutral-900 border-neutral-400"
                                   }`}
                               >
                                 {sch.date}
@@ -199,10 +198,10 @@ function AllScheduleService({ data }) {
             </div>
           </div>
         </div>
-      ):
-      <p className="m-4 text-center text-gray-600">No schedule Works Found...</p> }
+      ) : (
+        <p className="m-4 text-center text-sm font-bold text-neutral-700">No schedule works found.</p>
+      )}
     </div>
-
   );
 }
 

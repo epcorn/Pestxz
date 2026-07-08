@@ -101,9 +101,9 @@ function ServiceShow({ services }) {
                   {/* MISSED */}
                   <td>
                     {missedSchedules.length > 0 ? (
-                      <div className="flex flex-col text-xs font-semibold text-red-500">
+                      <div className="flex flex-col text-sm font-semibold text-red-500">
                         <span>{missedSchedules.length} missed</span>
-                        <span className="text-[11px] text-gray-400 font-normal">
+                        <span className="text-[13px] text-blue-600 font-normal">
                           Last: {formatShortDate(missedSchedules.at(-1).date)}
                         </span>
                       </div>

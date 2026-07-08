@@ -364,85 +364,128 @@ export const clientAdminDashboard = async (req, res) => {
 
 export const adminDashboard = async (req, res) => {
   const { id } = req.params;
+
   const clientFilter = id && id !== "select" ? { client: id } : {};
 
+  const locationMatch =
+    id && id !== "select"
+      ? { $match: { client: new mongoose.Types.ObjectId(id) } }
+      : { $match: {} };
+
   try {
-    // ── 1. Fetch complaints & products
-    // ────────────────────────────────────────────────
-    const products = await ProductService.find();
-    
     const populateOpts = [
       { path: "location", select: "floor subLocation location" },
       { path: "client", select: "name -_id" },
     ];
 
-
-    const [complaints, allComplaints] = await Promise.all([
+    const [
+      complaints,
+      allComplaints,
+      productDashboard,
+      serviceCount,
+    ] = await Promise.all([
       Service.find(clientFilter).sort("-updatedAt").populate(populateOpts),
+
       Service.find({ type: "Complaint" }).populate([
         { path: "location", select: "floor subLocation location" },
         { path: "client", select: "name" },
       ]),
+
+      Location.aggregate([
+        locationMatch,
+        {
+          $facet: {
+            totalProducts: [
+              { $unwind: "$product" },
+              { $count: "count" },
+            ],
+            scheduleCount: [
+              { $unwind: "$product" },
+              { $unwind: "$product.schedule" },
+              {
+                $group: {
+                  _id: "$product.schedule.status",
+                  count: { $sum: 1 },
+                },
+              },
+              {
+                $project: {
+                  _id: 0,
+                  label: "$_id",
+                  count: 1,
+                },
+              },
+            ],
+          },
+        },
+      ]),
+
+      Location.aggregate([
+        locationMatch,
+        { $unwind: "$service" },
+        { $unwind: "$service.schedule" },
+        {
+          $group: {
+            _id: "$service.schedule.status",
+            count: { $sum: 1 },
+          },
+        },
+        {
+          $project: {
+            _id: 0,
+            label: "$_id",
+            count: 1,
+          },
+        },
+      ]),
     ]);
 
-    // ── 2. Helper: attach clientName ───────────────────────────────────────
     const withClientName = (item) => ({
       ...item._doc,
       clientName:
         item?.client?.name || item?.complaintDetails?.clientName || "-",
     });
 
-    // ── 3. Summary counts ──────────────────────────────────────────────────
-    const onlyComplaints = complaints.filter((c) => c.type === "Complaint");
-    const onlyRegulars = complaints.filter((c) => c.type === "Regular");
-
+    // Complaint Summary
     const statusMap = {
       Open: "open",
       "In Progress": "inProgress",
       Close: "closed",
     };
-    const complaintData = onlyComplaints.reduce(
-      (acc, c) => {
-        const key = statusMap[c?.complaintDetails?.status];
-        if (key) acc[key] += 1;
-        return acc;
-      },
-      {
-        total: onlyComplaints.length,
-        open: 0,
-        inProgress: 0,
-        closed: 0,
-      },
-    );
 
-    // ── 4. Service schedule counts ─────────────────────────────────────────
-    const locationMatch =
-      id && id !== "select"
-        ? { $match: { client: new mongoose.Types.ObjectId(id) } }
-        : { $match: {} };
+    const complaintData = complaints
+      .filter((c) => c.type === "Complaint")
+      .reduce(
+        (acc, complaint) => {
+          const key = statusMap[complaint?.complaintDetails?.status];
+          if (key) acc[key]++;
+          acc.total++;
+          return acc;
+        },
+        {
+          total: 0,
+          open: 0,
+          inProgress: 0,
+          closed: 0,
+        },
+      );
 
-    const serviceCount = await Location.aggregate([
-      locationMatch,
-      { $unwind: "$service" },
-      { $unwind: "$service.schedule" },
-      { $group: { _id: "$service.schedule.status", count: { $sum: 1 } } },
-      { $project: { _id: 0, label: "$_id", count: 1 } },
-    ]);
-
-    // ── 5. Month-wise breakdown ────────────────────────────────────────────
+    // Monthly Data
     const monthlyMap = {};
 
-    for (const item of complaints) {
+    complaints.forEach((item) => {
       const date = new Date(item.createdAt);
-      const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
-      const label = date.toLocaleString("default", {
-        month: "long",
-        year: "numeric",
-      });
+
+      const key = `${date.getFullYear()}-${String(
+        date.getMonth() + 1,
+      ).padStart(2, "0")}`;
 
       if (!monthlyMap[key]) {
         monthlyMap[key] = {
-          month: label,
+          month: date.toLocaleString("default", {
+            month: "long",
+            year: "numeric",
+          }),
           complaints: 0,
           regulars: 0,
           open: 0,
@@ -452,39 +495,57 @@ export const adminDashboard = async (req, res) => {
       }
 
       if (item.type === "Complaint") {
-        monthlyMap[key].complaints += 1;
-        const status = item?.complaintDetails?.status;
-        if (status === "Open") monthlyMap[key].open += 1;
-        if (status === "In Progress") monthlyMap[key].inProgress += 1;
-        if (status === "Close") monthlyMap[key].closed += 1;
-      } else if (item.type === "Regular") {
-        monthlyMap[key].regulars += 1;
+        monthlyMap[key].complaints++;
+
+        switch (item?.complaintDetails?.status) {
+          case "Open":
+            monthlyMap[key].open++;
+            break;
+          case "In Progress":
+            monthlyMap[key].inProgress++;
+            break;
+          case "Close":
+            monthlyMap[key].closed++;
+            break;
+        }
+      } else {
+        monthlyMap[key].regulars++;
       }
-    }
+    });
 
     const monthlyData = Object.entries(monthlyMap)
-      .sort(([a], [b]) => a.localeCompare(b)) // chronological order
-      .map(([, v]) => v);
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([, value]) => value);
 
-    const sortedComplaints = [...complaints].sort(
-      (a, b) => new Date(b.updatedAt) - new Date(a.updatedAt),
-    );
-    
-    
+    const latestComplaints = [...complaints]
+      .sort((a, b) => b.updatedAt - a.updatedAt)
+      .slice(0, 15)
+      .map(withClientName);
+
+    const productData = {
+      total: productDashboard[0]?.totalProducts?.[0]?.count || 0,
+      scheduleCount: productDashboard[0]?.scheduleCount || [],
+    };
+
     return res.json({
-      complaintData: [{ ...complaintData, serviceCount }],
+      complaintData: [
+        {
+          ...complaintData,
+          serviceCount,
+        },
+      ],
       all: allComplaints.map(withClientName),
-      latestComplaints: sortedComplaints.slice(0, 15).map(withClientName),
+      latestComplaints,
       monthlyData,
-      products,
+      productData,
     });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ msg: "Server error, try again later" });
+    console.error("Admin Dashboard Error:", error);
+    return res.status(500).json({
+      msg: "Server error, try again later",
+    });
   }
 };
-
-
 
 export const runnerData = async (req, res) => {
   const { lat, lon } = req.query;

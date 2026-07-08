@@ -354,6 +354,7 @@ export const newRegularService = async (req, res) => {
       msg: `Service Done on ${location.floor}`,
       client: location.client,
       user: req.user.name,
+      url: `/`,
     });
   } catch (error) {
     return res.status(500).json({ msg: "Server error, try again later" });
@@ -386,7 +387,10 @@ export const assignWork = async (req, res) => {
     }
 
     await service.save();
-    return res.status(200).json({ msg: "Operator assigned successfully" });
+    return res.status(200).json({
+      msg: "Operator assigned successfully",
+      url: `/complaint/${complaintId}`,
+    });
   } catch (error) {
     console.error("Error in assignWork controller:", error);
     return res.status(500).json({
@@ -475,7 +479,7 @@ export const casualServices = async (req, res) => {
       user: { name: req.user.name, id: req.user._id },
     });
 
-    return res.status(200).json({ msg: `casual service created by ` });
+    return res.status(200).json({ msg: `casual service created by `, url: `` });
   } catch (error) {
     console.error(error);
     res.status(500).json(error.message);
@@ -548,6 +552,7 @@ export const addProductService = async (req, res) => {
         name: cal.name,
         status: cal.status,
         image: cal.image,
+        size: cal?.size || "",
       })),
       servicedBy: {
         name: req.user.name,
