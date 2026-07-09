@@ -4,9 +4,13 @@ const scheduleItemSchema = new mongoose.Schema(
   {
     date: { type: Date },
     completed: { type: Boolean, default: false },
-    status: { type: String },
+    status: { type: String, default: "" },
     completedAt: { type: Date, default: null },
-    completedBy: { type: String, default: "" },
+    completedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: "",
+    },
   },
   { _id: false }, // schedule entries don't need their own _id
 );

@@ -24,7 +24,7 @@ function AdminDashboard() {
     selectedClient?._id || "select",
     { skip: user?.role !== "Admin", refetchOnReconnect: true }
   );
-  // console.log(adminDash)
+  console.log(adminDash)
 
   useEffect(() => {
     if (!assignId) return;
@@ -56,8 +56,27 @@ function AdminDashboard() {
     return acc;
   }, {}) || {};
 
-  const finalMergedData = { ...formattedData, ...chartCompData };
-  console.log(selectedMonth)
+  const prMapped = {
+    Done: "Done Products Services",
+    Missed: "Missed Products Services",
+    Pending: "Pending Products Services",
+  }
+  const regMapped = {
+    Done: "Done Regular Services",
+    Missed: "Missed Regular Services",
+    Pending: "Pending Regular Services",
+    Invalid: "Invalid Regular Services",
+  }
+  // const finalMergedData = { ...formattedData, ...chartCompData };
+
+  const finalMergedData = adminDash?.summary?.complaints
+
+  const prObj = Object.fromEntries(adminDash?.summary?.products?.scheduleCount?.map(p => ([prMapped[p.label], p.count])))
+  const regObj = Object.fromEntries(adminDash?.summary?.services?.scheduleCount?.map(p => ([regMapped[p.label], p.count])))
+  const prSchCount = adminDash?.summary?.products
+
+  const pieChartData = { ...adminDash?.summary?.complaints,...prObj, ...regObj }
+  console.log(pieChartData)
   return (
     <section className="p-2 md:p-6 bg-gray-50 min-h-screen space-y-6">
 
@@ -119,13 +138,13 @@ function AdminDashboard() {
         ))}
       </div>
       {/* monthly sort */}
-      <div className="ml-auto bg-white outline outline-gray-600 rounded w-fit px-2">
+      {/* <div className="ml-auto bg-white outline outline-gray-600 rounded w-fit px-2">
         <select className="px-2 py-1 focus:outline-0" value={selectedMonth} onChange={(e) => setSelectedMonth(Number(e.target.value))}>
           {adminDash?.monthlyData?.map(({ month }, i) => (
             <option key={month + i} value={i}>{month}</option>
           ))}
         </select>
-      </div>
+      </div> */}
 
       {/* charts  */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 flex gap-4 overflow-x-auto">
@@ -135,13 +154,12 @@ function AdminDashboard() {
         </div>
         <div className="w-px bg-gray-100 shrink-0" />
         <div className="min-w-[250px] flex items-center justify-center">
-          <PieChart values={finalMergedData} label={true} />
+          <PieChart values={pieChartData} label={true} />
         </div>
       </div>
 
       {/* Table */}
       <div className="bg-white rounded-2xl shadow-xs border border-gray-200 overflow-hidden">
-
         {/* Tabs */}
         <div className="bg-gray-300 px-4 py-3 flex gap-2">
           {["Complaint", "Regular"].map((tab) => (
@@ -236,7 +254,7 @@ function Row({ item, index, isRegular, assignId, assignRef, setAssignId, navigat
   return (
     <tr
       onClick={() => navigate(isRegular ? `/location/${item?.location?._id}` : `/complaint/${item?._id}`)}
-      className={`hover:bg-gray-50/80 transition-colors cursor-pointer text-sm ${bgStyle[cd.status]} transition-all text-xs`}
+      className={`hover:bg-gray-50/80 transition-colors cursor-pointer text-sm  transition-all text-xs`}
     >
       {/* Column 1 */}
       <td className="px-2 text-center py-4 font-bold text-blue-600 whitespace-nowrap">
@@ -254,11 +272,11 @@ function Row({ item, index, isRegular, assignId, assignRef, setAssignId, navigat
               setAssignId((prev) => (prev === item._id ? null : item._id));
             }}
           >
-            <span className="block text-sm font-semibold">
-              {cd?.assignedTo?.userName || <span className="text-gray-600">Assign</span>}
-            </span>
+            <p className="text-sm font-semibold">
+              {cd?.assignedTo?.userName || <span className="">Assign</span>}
+            </p>
             {cd?.assignedBy?.userName && (
-              <span className="px-2 py-0.5 rounded bg-gray-100 text-gray-600 text-[.6rem] md:text-xs font-bold capitalize tracking-wide border border-gray-200">
+              <span className="px-2 py-0.5 rounded bg-gray-100 text-gray-600 text-[.6rem] md:text-xs font-bold capitalize outline">
                 {cd.assignedBy.userName}
               </span>
             )}

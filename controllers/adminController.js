@@ -378,67 +378,62 @@ export const adminDashboard = async (req, res) => {
       { path: "client", select: "name -_id" },
     ];
 
-    const [
-      complaints,
-      allComplaints,
-      productDashboard,
-      serviceCount,
-    ] = await Promise.all([
-      Service.find(clientFilter).sort("-updatedAt").populate(populateOpts),
+    const [complaints, allComplaints, productDashboard, serviceDashboard] =
+      await Promise.all([
+        Service.find(clientFilter).sort("-updatedAt").populate(populateOpts),
 
-      Service.find({ type: "Complaint" }).populate([
-        { path: "location", select: "floor subLocation location" },
-        { path: "client", select: "name" },
-      ]),
+        Service.find({ type: "Complaint" }).populate([
+          { path: "location", select: "floor subLocation location" },
+          { path: "client", select: "name" },
+        ]),
+        
 
-      Location.aggregate([
-        locationMatch,
-        {
-          $facet: {
-            totalProducts: [
-              { $unwind: "$product" },
-              { $count: "count" },
-            ],
-            scheduleCount: [
-              { $unwind: "$product" },
-              { $unwind: "$product.schedule" },
-              {
-                $group: {
-                  _id: "$product.schedule.status",
-                  count: { $sum: 1 },
+        Location.aggregate([
+          locationMatch,
+          {
+            $facet: {
+              totalProducts: [{ $unwind: "$product" }, { $count: "count" }],
+              scheduleCount: [
+                { $unwind: "$product" },
+                { $unwind: "$product.schedule" },
+                {
+                  $group: {
+                    _id: "$product.schedule.status",
+                    count: { $sum: 1 },
+                  },
                 },
-              },
-              {
-                $project: {
-                  _id: 0,
-                  label: "$_id",
-                  count: 1,
+                {
+                  $project: {
+                    _id: 0,
+                    label: "$_id",
+                    count: 1,
+                  },
                 },
-              },
-            ],
+              ],
+            },
           },
-        },
-      ]),
+        ]),
 
-      Location.aggregate([
-        locationMatch,
-        { $unwind: "$service" },
-        { $unwind: "$service.schedule" },
-        {
-          $group: {
-            _id: "$service.schedule.status",
-            count: { $sum: 1 },
+        Location.aggregate([
+          locationMatch,
+          {
+            $facet: {
+              totalServices: [{ $unwind: "$service" }, { $count: "count" }],
+              scheduleCount: [
+                { $unwind: "$service" },
+                { $unwind: "$service.schedule" },
+                {
+                  $group: {
+                    _id: "$service.schedule.status",
+                    count: { $sum: 1 },
+                  },
+                },
+                { $project: { _id: 0, label: "$_id", count: 1 } },
+              ],
+            },
           },
-        },
-        {
-          $project: {
-            _id: 0,
-            label: "$_id",
-            count: 1,
-          },
-        },
-      ]),
-    ]);
+        ]),
+      ]);
 
     const withClientName = (item) => ({
       ...item._doc,
@@ -476,9 +471,10 @@ export const adminDashboard = async (req, res) => {
     complaints.forEach((item) => {
       const date = new Date(item.createdAt);
 
-      const key = `${date.getFullYear()}-${String(
-        date.getMonth() + 1,
-      ).padStart(2, "0")}`;
+      const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(
+        2,
+        "0",
+      )}`;
 
       if (!monthlyMap[key]) {
         monthlyMap[key] = {
@@ -491,6 +487,7 @@ export const adminDashboard = async (req, res) => {
           open: 0,
           inProgress: 0,
           closed: 0,
+          products: 0,
         };
       }
 
@@ -513,6 +510,7 @@ export const adminDashboard = async (req, res) => {
       }
     });
 
+
     const monthlyData = Object.entries(monthlyMap)
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([, value]) => value);
@@ -526,18 +524,27 @@ export const adminDashboard = async (req, res) => {
       total: productDashboard[0]?.totalProducts?.[0]?.count || 0,
       scheduleCount: productDashboard[0]?.scheduleCount || [],
     };
+    const serviceData = {
+      total: serviceDashboard[0]?.totalServices[0].count || 0,
+      scheduleCount: serviceDashboard[0].scheduleCount || [],
+    };
 
     return res.json({
       complaintData: [
         {
           ...complaintData,
-          serviceCount,
+          serviceCount: serviceDashboard,
         },
       ],
       all: allComplaints.map(withClientName),
       latestComplaints,
       monthlyData,
-      productData,
+      summary: {
+        complaints: { ...complaintData },
+        products: { ...productData },
+        services: { ...serviceData },
+        monthlyData,
+      },
     });
   } catch (error) {
     console.error("Admin Dashboard Error:", error);
