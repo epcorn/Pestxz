@@ -44,31 +44,42 @@ const keyMapping = {
 function MultiLineChart({ values = [], selectedMonth, admin = [], toggle }) {
 
   // --- 1. VALUES CHART CONFIGURATION ---
-  const valuesLabels = values?.map(item => item.month || '');
+  const valuesLabels = values?.map(item => {
+    const text = item.month.split(" ") || ''
+    const text1 = text[0].slice(0, 3)
+    const text2 = text[1].slice(2, 4)
+    return `${text1}-${text2}`
+  });
 
-  // console.log(values,admin,toggle,valuesLabels);
   const valuesData = {
     labels: valuesLabels,
     datasets: [
       {
         label: 'Total Complaints',
         data: values.map(item => item.complaints ?? 0),
-        borderColor: 'rgba(75, 192, 192, 1)',
-        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+        borderColor: '#FB2C36',
+        backgroundColor: '#FB2C3633',
         tension: 0.4,
       },
       {
         label: 'Closed Complaints',
-        data: values.map(item => item.Close ?? 0),
-        borderColor: 'rgba(255, 99, 132, 1)',
-        backgroundColor: 'rgba(255, 99, 132, 0.2)',
+        data: values.map(item => item.closed ?? 0),
+        borderColor: '#00C950',
+        backgroundColor: '#00C95033',
         tension: 0.2,
       },
       {
         label: 'Regular Services',
-        data: values.map(item => item.completedServices ?? 0),
+        data: values.map(item => item?.regularDone),
         borderColor: 'rgba(255, 206, 86, 1)',
         backgroundColor: 'rgba(255, 206, 86, 0.2)',
+        tension: 0.2,
+      },
+      {
+        label: 'Product Services',
+        data: values.map(item => item?.productDone),
+        borderColor: 'rgba(255, 99, 132, 1)',
+        backgroundColor: 'rgba(255, 99, 132, 0.2)',
         tension: 0.2,
       },
     ],
@@ -93,7 +104,7 @@ function MultiLineChart({ values = [], selectedMonth, admin = [], toggle }) {
     labels: adminLabels,
     datasets: adminDatasets,
   };
-  console.log(adminData)
+
   // --- 3. SHARED OPTIONS CONFIG ---
   const getOptions = (titleText) => ({
     responsive: true,
@@ -122,19 +133,20 @@ function MultiLineChart({ values = [], selectedMonth, admin = [], toggle }) {
   return (
     <>
       {/* Values Data Chart */}
-      {toggle === "values" &&
-        <div style={{ position: 'relative', width: '100%', height: '300px' }}>
-          <Line data={valuesData} options={getOptions('User Performance Analytics')} />
+      {toggle === "values" && (
+        <div className="relative w-full h-[300px]">
+          <Line data={valuesData} options={getOptions('Admin Metrics Overview')} />
         </div>
-      }
+      )}
 
       {/* Admin Data Chart */}
-      {toggle === "admin" &&
-        < div style={{ position: 'relative', width: '100%', height: '300px' }}>
+      {toggle === "admin" && (
+        <div className="relative w-full h-[300px]">
           <Line data={adminData} options={getOptions('Admin Metrics Overview')} />
         </div>
-      }
-    </ >
+      )}
+    </>
+
   );
 }
 

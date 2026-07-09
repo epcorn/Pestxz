@@ -127,10 +127,18 @@ export const updateClient = async (req, res) => {
     if (!req.user.rights.addData)
       return res.status(403).json({ msg: "You are not allowed to update" });
 
-    const updatedClient = await Client.findByIdAndUpdate(id, data, {
-      new: true,
-      runValidators: true,
-    });
+    const updatedClient = await Client.findByIdAndUpdate(
+      id,
+      {
+        address: data.address,
+        email: data.email,
+        phone: data.phone,
+      },
+      {
+        new: true,
+        runValidators: true,
+      },
+    );
 
     if (!updatedClient) {
       return res.status(404).json({ msg: "Client not found" });
@@ -140,4 +148,3 @@ export const updateClient = async (req, res) => {
     return res.status(500).json({ msg: "Server error", error: error.message });
   }
 };
-

@@ -25,6 +25,45 @@ import { useNavigate } from "react-router-dom";
 import UnscheduledNotification from "./UnscheduledNotification";
 import { StatCard } from "./AdminDashboard";
 import UnScheduledList from "../single_location/UnScheduledList";
+import React from "react";
+
+
+
+const prMapped = {
+  Done: "Done Products Services",
+  Missed: "Missed Products Services",
+  Pending: "Pending Products Services",
+}
+const regMapped = {
+  Done: "Done Regular Services",
+  Missed: "Missed Regular Services",
+  Pending: "Pending Regular Services",
+  Invalid: "Invalid",
+}
+const keyMapping = { total: "Total Complaints", open: "Open Complaints", inProgress: "In Progress", closed: "Closed Complaints", closed: "Closed Complaints", }
+
+const colorMap = {
+  open: { text: "text-red-600", border: "border-l-red-500", },
+  inProgress: { text: "text-amber-600", border: "border-l-amber-500", },
+  closed: { text: "text-green-600", border: "border-l-green-500", },
+  total: { text: "text-blue-600", border: "border-l-blue-500", },
+  "Done Regular Services": {
+    text: "text-blue-600", border: "border-l-blue-500",
+  },
+  "Pending Regular Services": {
+    text: "text-sky-500", border: "border-l-sky-400",
+  },
+  "Missed Regular Services": {
+    text: "text-indigo-700", border: "border-l-indigo-700",
+  },
+  Invalid: { text: "text-gray-500", border: "border-l-gray-400", },
+  "Done Products Services": { text: "text-violet-600", border: "border-l-violet-500", },
+  "Pending Products Services": {
+    text: "text-fuchsia-400", border: "border-l-fuchsia-300",
+  },
+  "Missed Products Services": { text: "text-purple-700", border: "border-l-purple-700", },
+};
+
 
 const ClientDashboard = () => {
   const dispatch = useDispatch();
@@ -46,10 +85,9 @@ const ClientDashboard = () => {
   const { data: clientDash, isLoading: clgLoading } = useAdminDashboardQuery(user.client, {
     skip: !user.client,
   });
-
+  console.log(clientDash)
   const { data: unschedule, isLoading: unscLoading } = useGetUnscheduledReportsQuery({
-    refetchOnMountOrArgChange: true, // ✅
-    pollingInterval: 50000,
+    refetchOnReconnect: true, // ✅
   });
 
   const { data: client } = useGetSingleClientQuery(user?.client, { skip: !user?.client });
@@ -63,17 +101,23 @@ const ClientDashboard = () => {
     return clientDash.latestComplaints.filter(lat => lat.type === toggle);
   }, [toggle, clientDash, statusFilter]);
 
-
   const handleCards = (value) => {
-    if (["Close", "In Progress", "Open"].includes(value)) {
-      setStatusFilter(value)
+    const map = { open: "Open", inProgress: "In Progress", closed: "Close", "Done Regular Services": "Done", "Done Products Services": "Done" }
+    const status = map[value]
+
+    if (["Close", "In Progress", "Open"].includes(status)) {
+      setStatusFilter(status)
       setToggle("Complaint")
-      window.scrollTo({ top: 600, behavior: "smooth" })
+      window.scrollTo({
+        top: document.documentElement.scrollHeight - window.innerHeight - 10, behavior: "smooth"
+      })
     }
     if (["Done"].includes(value)) {
       setStatusFilter(value)
       setToggle("Regular")
-      window.scrollTo({ top: 600, behavior: "smooth" })
+      window.scrollTo({
+        top: document.documentElement.scrollHeight - window.innerHeight - 100, behavior: "smooth"
+      })
     }
   }
   const handleChange = (e) => {
@@ -86,10 +130,15 @@ const ClientDashboard = () => {
   const statusCount = Object.assign({}, ...(adminDash?.dashBoardData?.statusCounts?.map(s => ({ [s._id]: s.count })) || []));
 
   const dashData = adminDash?.dashBoardData;
+  const { complaints: complaintsData, monthlyData, products, services } = clientDash?.summary || {}
 
+  const prObj = Object.fromEntries((products?.scheduleCount ?? []).map(p => ([prMapped[p.label], p.count])))
+  const regObj = Object.fromEntries((services?.scheduleCount ?? []).map(p => ([regMapped[p.label], p.count])))
+
+  const statsStrips = { ...complaintsData, ...prObj, ...regObj }
 
   return (
-    <section className="p-4 md:px-8 bg-slate-50/50 min-h-screen font-sans">
+    <section className="p-2 bg-slate-50/50 min-h-screen font-sans">
       {isLoading ? (
         <Loading />
       ) : error ? (
@@ -113,68 +162,63 @@ const ClientDashboard = () => {
           </div>
 
           {/* Stat Cards */}
+
           <div className="flex flex-wrap gap-3">
-            <StatCard
-              title={'Open Complaints'}
-              value={dashData?.Open || 0}
-              textColor={'text-green-600'}
-              color={'border-l-red-500'}
-              onClick={handleCards}
-              arrkey={'Open'}
-              active={statusFilter}
-            />
-            <StatCard
-              title={'In Progress'}
-              value={dashData?.['In Progress'] || 0}
-              textColor={'text-amber-600'}
-              color={'border-l-amber-500'}
-              onClick={handleCards}
-              arrkey={'In Progress'}
-              active={statusFilter}
-            />
-            <StatCard
-              title={'Closed Complaints'}
-              value={dashData?.Close || 0}
-              textColor={'text-green-600'}
-              color={'border-l-green-500'}
-              onClick={handleCards}
-              arrkey={'Close'}
-              active={statusFilter}
-            />
-            <StatCard
-              title={'Total Complaints'}
-              value={dashData?.allcomplaints || 0}
-              textColor={'text-blue-600'}
-              color={'border-l-blue-500'}
-            />
-            {dashData?.statusCounts?.map(st => st?._id !== "Invalid" && (
-              <StatCard
-                key={st?._id}
-                title={st?._id}
-                value={st?.count || 0}
-                textColor={'text-fuchsia-600'}
-                color={'border-l-fuchsia-500'}
-                onClick={handleCards}
-                arrkey={st?._id}
-                active={statusFilter}
-              />
-            ))}
+            {Object.entries(statsStrips ?? [])?.map(([key, val]) => {
+              if (["Pending Products Services", "Pending Regular Services", "Missed Regular Services", "Missed Products Services"].includes(key)) { return };
+              return (
+                <React.Fragment key={key}>
+                  <StatCard
+                    title={keyMapping?.[key] || key}
+                    value={val}
+                    textColor={colorMap?.[key]?.text}
+                    color={colorMap?.[key]?.border}
+                    onClick={handleCards}
+                    arrkey={key}
+                    active={statusFilter}
+                  />
+                </React.Fragment>
+              )
+            })}
           </div>
 
+          <div className="my-2">
+            <div className="grid grid-cols-1 lg:grid-cols-6 gap-4 p-2">
 
-          <div className="flex my-2 gap-5 items-stretch w-full p-4 overflow-x-auto snap-x snap-mandatory *:snap-center">
+              {/* Multiline Chart */}
+              <div className="lg:col-span-4 rounded-2xl shadow-md p-4 bg-white min-w-0">
+                <h3 className="h4 text-center mb-2">Multiline Chart</h3>
+                <div className="w-full overflow-x-auto">
+                  <MultiLineChart
+                    values={adminDash?.monthlyData}
+                    weekly={adminDash?.weekly}
+                    toggle="values"
+                  />
+                </div>
+              </div>
 
-            {/* Line Chart Container (Takes up remaining space) */}
-            <div className="relative flex-1 min-w-[600px] bg-neutral-200 border border-gray-200 p-4 h-full rounded-2xl shadow">
-              <h3 className="h4 text-center">Multiline chart</h3>
-              <MultiLineChart values={adminDash?.monthlyData} weekly={adminDash.weekly} toggle={"values"} />
+              {/* Product Pie */}
+              <div className="lg:col-span-2 rounded-2xl shadow-md p-4 bg-white flex items-center justify-center min-w-0">
+                <PieChart values={prObj} modelKey="Product Service" />
+              </div>
+
             </div>
 
-            {/* Pie Chart Container (Fixed, tight fit) */}
-            <div className="relative w-full md:w-[350px] flex items-center justify-center border border-gray-300 p-4 rounded-2xl bg-neutral-200 shadow">
-              <PieChart values={{ ...allData, ...statusCount }} />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-2 mt-4">
+
+              {/* Complaint Pie */}
+              <div className="rounded-2xl shadow-md p-4 bg-white flex items-center justify-center min-w-0">
+                <PieChart values={complaintsData} modelKey="Complaints" />
+              </div>
+
+              {/* Regular Pie */}
+              <div className="rounded-2xl shadow-md p-4 bg-white flex items-center justify-center min-w-0">
+                <PieChart values={regObj} modelKey="Regular Service" />
+              </div>
+
             </div>
           </div>
+
 
           {/* Table Section */}
           <div className="mt-12">

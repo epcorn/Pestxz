@@ -378,61 +378,68 @@ export const adminDashboard = async (req, res) => {
       { path: "client", select: "name -_id" },
     ];
 
-    const [complaints, allComplaints, productDashboard, serviceDashboard] =
-      await Promise.all([
-        Service.find(clientFilter).sort("-updatedAt").populate(populateOpts),
+    const [
+      complaints,
+      allComplaints,
+      locationProduct,
+      productDashboard,
+      serviceDashboard,
+    ] = await Promise.all([
+      Service.find(clientFilter).sort("-updatedAt").populate(populateOpts),
 
-        Service.find({ type: "Complaint" }).populate([
-          { path: "location", select: "floor subLocation location" },
-          { path: "client", select: "name" },
-        ]),
+      Service.find({ type: "Complaint" }).populate([
+        { path: "location", select: "floor subLocation location" },
+        { path: "client", select: "name" },
+      ]),
 
-        Location.aggregate([
-          locationMatch,
-          {
-            $facet: {
-              totalProducts: [{ $unwind: "$product" }, { $count: "count" }],
-              scheduleCount: [
-                { $unwind: "$product" },
-                { $unwind: "$product.schedule" },
-                {
-                  $group: {
-                    _id: "$product.schedule.status",
-                    count: { $sum: 1 },
-                  },
+      Location.find(clientFilter).select("product"),
+
+      Location.aggregate([
+        locationMatch,
+        {
+          $facet: {
+            totalProducts: [{ $unwind: "$product" }, { $count: "count" }],
+            scheduleCount: [
+              { $unwind: "$product" },
+              { $unwind: "$product.schedule" },
+              {
+                $group: {
+                  _id: "$product.schedule.status",
+                  count: { $sum: 1 },
                 },
-                {
-                  $project: {
-                    _id: 0,
-                    label: "$_id",
-                    count: 1,
-                  },
+              },
+              {
+                $project: {
+                  _id: 0,
+                  label: "$_id",
+                  count: 1,
                 },
-              ],
-            },
+              },
+            ],
           },
-        ]),
+        },
+      ]),
 
-        Location.aggregate([
-          locationMatch,
-          {
-            $facet: {
-              totalServices: [{ $unwind: "$service" }, { $count: "count" }],
-              scheduleCount: [
-                { $unwind: "$service" },
-                { $unwind: "$service.schedule" },
-                {
-                  $group: {
-                    _id: "$service.schedule.status",
-                    count: { $sum: 1 },
-                  },
+      Location.aggregate([
+        locationMatch,
+        {
+          $facet: {
+            totalServices: [{ $unwind: "$service" }, { $count: "count" }],
+            scheduleCount: [
+              { $unwind: "$service" },
+              { $unwind: "$service.schedule" },
+              {
+                $group: {
+                  _id: "$service.schedule.status",
+                  count: { $sum: 1 },
                 },
-                { $project: { _id: 0, label: "$_id", count: 1 } },
-              ],
-            },
+              },
+              { $project: { _id: 0, label: "$_id", count: 1 } },
+            ],
           },
-        ]),
-      ]);
+        },
+      ]),
+    ]);
 
     const withClientName = (item) => ({
       ...item._doc,
@@ -445,15 +452,22 @@ export const adminDashboard = async (req, res) => {
       Open: "open",
       "In Progress": "inProgress",
       Close: "closed",
+      reopenCount: "Reopened complaints",
     };
 
     const complaintData = complaints
       .filter((c) => c.type === "Complaint")
       .reduce(
         (acc, complaint) => {
-          const key = statusMap[complaint?.complaintDetails?.status];
-          if (key) acc[key]++;
+          const { status, reopenCount = 0 } = complaint.complaintDetails || {};
+
+          if (status === "Open") acc.open++;
+          else if (status === "In Progress") acc.inProgress++;
+          else if (status === "Close") acc.closed++;
+
+          acc.reopenCount += reopenCount;
           acc.total++;
+
           return acc;
         },
         {
@@ -461,11 +475,104 @@ export const adminDashboard = async (req, res) => {
           open: 0,
           inProgress: 0,
           closed: 0,
+          reopenCount: 0,
         },
       );
 
     // Monthly Data
     const monthlyMap = {};
+    // Monthly Product Data
+    locationProduct.forEach((location) => {
+      // Products
+      location.product?.forEach((product) => {
+        product.schedule?.forEach((schedule) => {
+          if (!schedule.date) return;
+
+          const date = new Date(schedule.date);
+          const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+
+          if (!monthlyMap[key]) {
+            monthlyMap[key] = {
+              month: date.toLocaleString("default", {
+                month: "long",
+                year: "numeric",
+              }),
+              complaints: null,
+              regulars: null,
+              open: null,
+              inProgress: null,
+              closed: null,
+              reopenCount: null,
+
+              productDone: null,
+              productPending: null,
+              productMissed: null,
+
+              regularDone: null,
+              regularPending: null,
+              regularMissed: null,
+            };
+          }
+
+          switch (schedule.status) {
+            case "Done":
+              monthlyMap[key].productDone++;
+              break;
+            case "Pending":
+              monthlyMap[key].productPending++;
+              break;
+            case "Missed":
+              monthlyMap[key].productMissed++;
+              break;
+          }
+        });
+      });
+
+      // Regular Services
+      location.service?.forEach((service) => {
+        service.schedule?.forEach((schedule) => {
+          if (!schedule.date) return;
+
+          const date = new Date(schedule.date);
+          const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+
+          if (!monthlyMap[key]) {
+            monthlyMap[key] = {
+              month: date.toLocaleString("default", {
+                month: "long",
+                year: "numeric",
+              }),
+              complaints: null,
+              regulars: null,
+              open: null,
+              inProgress: null,
+              closed: null,
+              reopenCount: null,
+
+              productDone: null,
+              productPending: null,
+              productMissed: null,
+
+              regularDone: null,
+              regularPending: null,
+              regularMissed: null,
+            };
+          }
+
+          switch (schedule.status) {
+            case "Done":
+              monthlyMap[key].regularDone++;
+              break;
+            case "Pending":
+              monthlyMap[key].regularPending++;
+              break;
+            case "Missed":
+              monthlyMap[key].regularMissed++;
+              break;
+          }
+        });
+      });
+    });
 
     complaints.forEach((item) => {
       const date = new Date(item.createdAt);
@@ -486,7 +593,15 @@ export const adminDashboard = async (req, res) => {
           open: 0,
           inProgress: 0,
           closed: 0,
-          products: 0,
+          reopenCount: 0,
+
+          productDone: 0,
+          productPending: 0,
+          productMissed: 0,
+
+          regularDone: 0,
+          regularPending: 0,
+          regularMissed: 0,
         };
       }
 
@@ -504,6 +619,9 @@ export const adminDashboard = async (req, res) => {
             monthlyMap[key].closed++;
             break;
         }
+        monthlyMap[key].reopenCount =
+          (monthlyMap[key].reopenCount || 0) +
+          (item?.complaintDetails?.reopenCount || 0);
       } else {
         monthlyMap[key].regulars++;
       }
@@ -528,15 +646,8 @@ export const adminDashboard = async (req, res) => {
     };
 
     return res.json({
-      complaintData: [
-        {
-          ...complaintData,
-          serviceCount: serviceDashboard,
-        },
-      ],
       all: allComplaints.map(withClientName),
       latestComplaints,
-      monthlyData,
       summary: {
         complaints: { ...complaintData },
         products: { ...productData },

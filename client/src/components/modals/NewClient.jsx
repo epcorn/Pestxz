@@ -17,7 +17,7 @@ const calculateEndDate = (startDate, months) => {
   const date = new Date(startDate);
   const totalMonths = parseInt(months, 10);
 
-  const computeEndDate = new Date(date.getFullYear(), date.getMonth() + totalMonths , 0);
+  const computeEndDate = new Date(date.getFullYear(), date.getMonth() + totalMonths, 0);
 
   return computeEndDate.toLocaleDateString("en-CA"); // yyyy-mm-dd
 };
@@ -56,7 +56,7 @@ const NewClient = ({ update = false, id, clientDetails }) => {
   const servicePeriod = watch("servicePeriod");
   const endDate = calculateEndDate(startDate, servicePeriod);
 
-  console.log(servicePeriod)
+  
   useEffect(() => {
     if (clientDetails) {
       reset({
@@ -65,15 +65,17 @@ const NewClient = ({ update = false, id, clientDetails }) => {
         contractNo: clientDetails.contractNo || "",
         email: clientDetails.email || "",
         phone: clientDetails.phone || "",
-        startDate: clientDetails.startDate || "",
+        startDate: new Date(clientDetails?.startDate).toISOString().split("T")[0] || "",
         servicePeriod: clientDetails.servicePeriod || "",
         adminName: clientDetails.adminName || "",
         adminPass: "",
+        prefDay: clientDetails.prefDay || "",
       });
     }
   }, [clientDetails, reset]);
 
   const submit = async (data) => {
+    console.log("cant click")
     try {
       const payload = { ...data, endDate };
       let res;
@@ -128,11 +130,11 @@ const NewClient = ({ update = false, id, clientDetails }) => {
 
       {/* Row 4 — Dates */}
       <div>
-        <InputRow label="Start Date" id="startDate" errors={errors} register={register} type="date" 
-        min={update ? undefined : today} 
-        required={true} 
-        disabled={update}
-         />
+        <InputRow label="Start Date" id="startDate" errors={errors} register={register} type="date"
+          min={update ? undefined : today}
+          required={true}
+          disabled={update}
+        />
       </div>
 
       <div className="flex flex-col">
@@ -173,7 +175,7 @@ const NewClient = ({ update = false, id, clientDetails }) => {
         errors={errors}
         register={register}
         required={false}
-        // disabled={clientDetails}
+        disabled={clientDetails}
       />
 
       <InputSelect
@@ -182,6 +184,7 @@ const NewClient = ({ update = false, id, clientDetails }) => {
         onChange={(val) => setValue("prefTime", val?.value || "")}
         options={timeList}
         required={false}
+        disable={clientDetails}
         isClearable
       />
     </div>

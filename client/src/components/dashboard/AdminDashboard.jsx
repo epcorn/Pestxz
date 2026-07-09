@@ -60,16 +60,17 @@ function AdminDashboard() {
     Invalid: "Invalid",
   }
 
-  const { products, services, complaints } = adminDash?.summary
-  const prObj = Object.fromEntries(products?.scheduleCount?.map(p => ([prMapped[p.label], p.count])))
-  const regObj = Object.fromEntries(services?.scheduleCount?.map(p => ([regMapped[p.label], p.count])))
+  const { products, services, complaints, monthlyData } = adminDash?.summary || {}
+  const prObj = Object.fromEntries((products?.scheduleCount ?? []).map(p => ([prMapped[p.label], p.count])))
+  const regObj = Object.fromEntries((services?.scheduleCount ?? []).map(p => ([regMapped[p.label], p.count])))
 
 
   const pieChartData = { ...complaints, ...prObj, ...regObj }
-  console.log(pieChartData)
-  const { open, inProgress, closed, total, serviceCount } = adminDash?.summary?.complaints || {}
+
+  const { open, inProgress, closed, total, reopenCount, serviceCount } = adminDash?.summary?.complaints || {}
+
   return (
-    <section className="p-2 md:p-6 bg-gray-50 min-h-screen space-y-6">
+    <section className="p-2 md:p-3 bg-gray-50 min-h-screen space-y-6">
 
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-200 pb-5">
@@ -106,12 +107,11 @@ function AdminDashboard() {
 
       {/* Stat cards */}
       <div className="flex flex-wrap gap-2">
-
-
         <StatCard title="Open Complaints" value={open} color="border-l-red-500" textColor="text-red-500" />
         <StatCard title="In Progress" value={inProgress} color="border-l-amber-500" textColor="text-amber-500" />
         <StatCard title="Closed Complaints" value={closed} color="border-l-green-500" textColor="text-green-500" />
         <StatCard title="Total Complaints" value={total} color="border-l-blue-500" textColor="text-blue-500" />
+        <StatCard title="Re Opened" value={reopenCount} color="border-l-blue-500" textColor="text-blue-500" />
         {services?.scheduleCount?.map((ser) =>
           ser?.label == "Done" && (
             <StatCard key={ser.label} title={"Regular Services " + ser.label} value={ser.count} color="border-l-fuchsia-600" textColor="text-fuchsia-500" />
@@ -133,14 +133,40 @@ function AdminDashboard() {
       </div> */}
 
       {/* charts  */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 flex gap-4 overflow-x-auto">
+      <div className="my-2">
+        <div className="grid grid-cols-1 lg:grid-cols-6 gap-4 ">
 
-        <div className="min-w-[400px] flex-1">
-          <MultiLineChart admin={adminDash?.monthlyData} selectedMonth={selectedMonth} toggle={"admin"} />
+          {/* Multiline Chart */}
+          <div className="lg:col-span-4 rounded-2xl shadow-md p-2 bg-white min-w-0">
+            <h3 className="h4 text-center mb-2">Multiline Chart</h3>
+            <div className="w-full overflow-x-auto">
+              <MultiLineChart
+                values={monthlyData}
+                weekly={adminDash?.weekly}
+                toggle="values"
+              />
+            </div>
+          </div>
+
+          {/* Product Pie */}
+          <div className="lg:col-span-2 rounded-2xl shadow-md p-4 bg-white flex items-center justify-center min-w-0">
+            <PieChart values={complaints} modelKey="Product Service" />
+          </div>
+
         </div>
-        <div className="w-px bg-gray-100 shrink-0" />
-        <div className="min-w-[250px] flex items-center justify-center">
-          <PieChart values={pieChartData} label={true} />
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-2 mt-4">
+
+          {/* Complaint Pie */}
+          <div className="rounded-2xl shadow-md p-4 bg-white flex items-center justify-center min-w-0">
+            <PieChart values={prObj} modelKey="Complaints" />
+          </div>
+
+          {/* Regular Pie */}
+          <div className="rounded-2xl shadow-md p-4 bg-white flex items-center justify-center min-w-0">
+            <PieChart values={regObj} modelKey="Regular Service" />
+          </div>
+
         </div>
       </div>
 
