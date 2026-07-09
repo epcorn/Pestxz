@@ -8,16 +8,16 @@ const clientSchema = new mongoose.Schema(
     contractNo: { type: String, required: true },
     phone: { type: String, required: true },
 
-    startDate: { type: String, required: true },
+    startDate: { type: Date, required: true },
     servicePeriod: { type: String, required: true },
-    endDate: { type: String, required: true },
+    endDate: { type: Date, required: true },
     prefDay: { type: String, default: "" },
     prefTime: { type: String, default: "" },
 
     adminName: { type: String },
     adminPass: { type: String },
 
-    reportURL:{type:String}
+    reportURL: { type: String },
   },
   {
     timestamps: true,

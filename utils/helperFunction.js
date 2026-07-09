@@ -343,7 +343,7 @@ export const buildSchedule = (contractStart, contractEnd, frequency) =>
     completed: d.completed,
     status: d.status,
     completedAt: null,
-    completedBy: "",
+    completedBy: null,
   }));
 
 export const releaseProductCounter = async (code, serialNo) => {

@@ -152,15 +152,19 @@ const SingleClient = () => {
                   <div>
                     <span className="font-medium text-neutral-700">Phone:</span> {data.client.phone}
                   </div>
-                  <div>
-                    <span className="font-medium text-neutral-700">Contract Start Date:</span> {data.client.startDate}
-                  </div>
+                  {data?.client?.startDate &&
+                    <div>
+                      <span className="font-medium text-neutral-700">Contract Start Date:</span> {typeof data?.client?.startDate === "string" ? data?.client?.startDate.split("T")[0] || "" : new Date(data?.client?.startDate)?.toISOString().split("T")[0] || ""}
+                    </div>
+                  }
                   <div>
                     <span className="font-medium text-neutral-700">Contract Period:</span> {data.client?.servicePeriod} Months
                   </div>
-                  <div>
-                    <span className="font-medium text-neutral-700">Contract End Date:</span> {data.client.endDate}
-                  </div>
+                  {data?.client?.endDate &&
+                    <div>
+                      <span className="font-medium text-neutral-700">Contract End Date:</span> {typeof data?.client?.endDate === "string" ? data?.client?.endDate.split("T")[0] || "" : new Date(data?.client?.endDate).toISOString().split("T")[0] || ""}
+                    </div>
+                  }
                   <div>
                     <span className="font-medium text-neutral-700">Preferred Day:</span> {data.client.prefDay}
                   </div>

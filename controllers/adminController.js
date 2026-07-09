@@ -386,7 +386,6 @@ export const adminDashboard = async (req, res) => {
           { path: "location", select: "floor subLocation location" },
           { path: "client", select: "name" },
         ]),
-        
 
         Location.aggregate([
           locationMatch,
@@ -509,7 +508,6 @@ export const adminDashboard = async (req, res) => {
         monthlyMap[key].regulars++;
       }
     });
-
 
     const monthlyData = Object.entries(monthlyMap)
       .sort(([a], [b]) => a.localeCompare(b))

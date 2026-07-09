@@ -128,7 +128,11 @@ const NewClient = ({ update = false, id, clientDetails }) => {
 
       {/* Row 4 — Dates */}
       <div>
-        <InputRow label="Start Date" id="startDate" errors={errors} register={register} type="date" min={update ? undefined : today} required={true} disabled={update} />
+        <InputRow label="Start Date" id="startDate" errors={errors} register={register} type="date" 
+        min={update ? undefined : today} 
+        required={true} 
+        disabled={update}
+         />
       </div>
 
       <div className="flex flex-col">
@@ -169,7 +173,7 @@ const NewClient = ({ update = false, id, clientDetails }) => {
         errors={errors}
         register={register}
         required={false}
-        disabled={clientDetails}
+        // disabled={clientDetails}
       />
 
       <InputSelect

@@ -139,7 +139,7 @@ export const addLocation = async (req, res) => {
           completed: date.completed,
           status: date.status,
           completedAt: null,
-          completedBy: "",
+          completedBy: null,
         }));
 
         return {
@@ -191,7 +191,7 @@ export const addLocation = async (req, res) => {
             completed: date.completed,
             status: date.status,
             completedAt: null,
-            completedBy: "",
+            completedBy: null,
           }));
 
           return {

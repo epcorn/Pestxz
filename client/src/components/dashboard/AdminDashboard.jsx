@@ -47,14 +47,6 @@ function AdminDashboard() {
   );
 
   // const productData=Object.fromEntries(adminDash.productData.scheduleCount.map(i=> ))
-  const chartCompDataArray = adminDash?.complaintData.map(({ serviceCount, ...rest }) => rest);
-  const chartCompData = chartCompDataArray?.[0] || {};
-
-  const chartRegData = adminDash?.complaintData[0]?.serviceCount;
-  const formattedData = chartRegData?.reduce((acc, curr) => {
-    acc[curr.label] = curr.count;
-    return acc;
-  }, {}) || {};
 
   const prMapped = {
     Done: "Done Products Services",
@@ -65,18 +57,17 @@ function AdminDashboard() {
     Done: "Done Regular Services",
     Missed: "Missed Regular Services",
     Pending: "Pending Regular Services",
-    Invalid: "Invalid Regular Services",
+    Invalid: "Invalid",
   }
-  // const finalMergedData = { ...formattedData, ...chartCompData };
 
-  const finalMergedData = adminDash?.summary?.complaints
+  const { products, services, complaints } = adminDash?.summary
+  const prObj = Object.fromEntries(products?.scheduleCount?.map(p => ([prMapped[p.label], p.count])))
+  const regObj = Object.fromEntries(services?.scheduleCount?.map(p => ([regMapped[p.label], p.count])))
 
-  const prObj = Object.fromEntries(adminDash?.summary?.products?.scheduleCount?.map(p => ([prMapped[p.label], p.count])))
-  const regObj = Object.fromEntries(adminDash?.summary?.services?.scheduleCount?.map(p => ([regMapped[p.label], p.count])))
-  const prSchCount = adminDash?.summary?.products
 
-  const pieChartData = { ...adminDash?.summary?.complaints,...prObj, ...regObj }
+  const pieChartData = { ...complaints, ...prObj, ...regObj }
   console.log(pieChartData)
+  const { open, inProgress, closed, total, serviceCount } = adminDash?.summary?.complaints || {}
   return (
     <section className="p-2 md:p-6 bg-gray-50 min-h-screen space-y-6">
 
@@ -115,23 +106,18 @@ function AdminDashboard() {
 
       {/* Stat cards */}
       <div className="flex flex-wrap gap-2">
-        {adminDash?.complaintData?.map((d, i) => {
-          const { open, inProgress, closed, total, serviceCount } = d;
-          return (
-            <React.Fragment key={i}>
-              <StatCard title="Open Complaints" value={open} color="border-l-red-500" textColor="text-red-500" />
-              <StatCard title="In Progress" value={inProgress} color="border-l-amber-500" textColor="text-amber-500" />
-              <StatCard title="Closed Complaints" value={closed} color="border-l-green-500" textColor="text-green-500" />
-              <StatCard title="Total Complaints" value={total} color="border-l-blue-500" textColor="text-blue-500" />
-              {serviceCount?.map((ser) =>
-                ser?.label == "Done" && (
-                  <StatCard key={ser.label} title={"Regular Services " + ser.label} value={ser.count} color="border-l-fuchsia-600" textColor="text-fuchsia-500" />
-                )
-              )}
-            </React.Fragment>
+
+
+        <StatCard title="Open Complaints" value={open} color="border-l-red-500" textColor="text-red-500" />
+        <StatCard title="In Progress" value={inProgress} color="border-l-amber-500" textColor="text-amber-500" />
+        <StatCard title="Closed Complaints" value={closed} color="border-l-green-500" textColor="text-green-500" />
+        <StatCard title="Total Complaints" value={total} color="border-l-blue-500" textColor="text-blue-500" />
+        {services?.scheduleCount?.map((ser) =>
+          ser?.label == "Done" && (
+            <StatCard key={ser.label} title={"Regular Services " + ser.label} value={ser.count} color="border-l-fuchsia-600" textColor="text-fuchsia-500" />
           )
-        })}
-        {adminDash?.productData?.scheduleCount?.map(({ label, count }, i) => label === "Done" && (
+        )}
+        {products?.scheduleCount?.map(({ label, count }, i) => label === "Done" && (
           <React.Fragment key={i}>
             <StatCard title={'Product Services Done'} value={count} />
           </React.Fragment>

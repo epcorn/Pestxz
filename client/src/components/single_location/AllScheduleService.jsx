@@ -175,7 +175,7 @@ function AllScheduleService({ data }) {
                             Schedule Dates
                           </h2>
                           <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto p-0.5">
-                            {service.regularService[0].schedule.map((sch, idx) => (
+                            {service.regularService[0].schedule.map((sch, idx) => {console.log(sch); return(
                               <span
                                 key={idx}
                                 className={`px-2 py-0.5 rounded text-xs font-bold border ${sch.completed
@@ -187,7 +187,7 @@ function AllScheduleService({ data }) {
                               >
                                 {sch.date}
                               </span>
-                            ))}
+                            )})}
                           </div>
                         </div>
                       )}

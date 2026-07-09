@@ -9,7 +9,7 @@ const scheduleItemSchema = new mongoose.Schema(
     completedBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      default: "",
+      default: null,
     },
   },
   { _id: false }, // schedule entries don't need their own _id
