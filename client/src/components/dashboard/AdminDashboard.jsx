@@ -20,10 +20,11 @@ function AdminDashboard() {
 
   const { user } = useSelector((store) => store.helper);
   const { data: clients = [] } = useAllClientsQuery();
-  const { data: adminDash, isLoading } = useAdminDashboardQuery(
+  const { data: adminDash, isLoading: admindashLoading } = useAdminDashboardQuery(
     selectedClient?._id || "select",
     { skip: user?.role !== "Admin", refetchOnReconnect: true }
   );
+
   console.log(adminDash)
 
   useEffect(() => {
@@ -45,9 +46,6 @@ function AdminDashboard() {
     () => adminDash?.latestComplaints?.filter((item) => item.type === toggle) ?? [],
     [adminDash, toggle]
   );
-
-  // const productData=Object.fromEntries(adminDash.productData.scheduleCount.map(i=> ))
-
   const prMapped = {
     Done: "Done Products Services",
     Missed: "Missed Products Services",
@@ -106,15 +104,15 @@ function AdminDashboard() {
       {/* open ,inProgress,closed,total*/}
 
       {/* Stat cards */}
-      <div className="flex flex-wrap gap-2">
-        <StatCard title="Open Complaints" value={open} color="border-l-red-500" textColor="text-red-500" />
-        <StatCard title="In Progress" value={inProgress} color="border-l-amber-500" textColor="text-amber-500" />
-        <StatCard title="Closed Complaints" value={closed} color="border-l-green-500" textColor="text-green-500" />
-        <StatCard title="Total Complaints" value={total} color="border-l-blue-500" textColor="text-blue-500" />
-        <StatCard title="Re Opened" value={reopenCount} color="border-l-blue-500" textColor="text-blue-500" />
+      <div className={`flex flex-wrap gap-2 ${admindashLoading ? "animate-pulse" : ""}`}>
+        <StatCard title="Open Complaints" value={open || 0} color="border-l-red-500" textColor="text-red-500" />
+        <StatCard title="In Progress" value={inProgress || 0} color="border-l-amber-500" textColor="text-amber-500" />
+        <StatCard title="Closed Complaints" value={closed || 0} color="border-l-green-500" textColor="text-green-500" />
+        <StatCard title="Total Complaints" value={total || 0} color="border-l-blue-500" textColor="text-blue-500" />
+        <StatCard title="Re Opened" value={reopenCount || 0} color="border-l-blue-500" textColor="text-blue-500" />
         {services?.scheduleCount?.map((ser) =>
           ser?.label == "Done" && (
-            <StatCard key={ser.label} title={"Regular Services " + ser.label} value={ser.count} color="border-l-fuchsia-600" textColor="text-fuchsia-500" />
+            <StatCard key={ser.label} title={"Regular Services " + ser.label} value={ser.count || 0} color="border-l-fuchsia-600" textColor="text-fuchsia-500" />
           )
         )}
         {products?.scheduleCount?.map(({ label, count }, i) => label === "Done" && (
@@ -138,8 +136,8 @@ function AdminDashboard() {
 
           {/* Multiline Chart */}
           <div className="lg:col-span-4 rounded-2xl shadow-md p-2 bg-white min-w-0">
-            <h3 className="h4 text-center mb-2">Multiline Chart</h3>
-            <div className="w-full overflow-x-auto">
+
+            <div className={`w-full overflow-x-auto ${admindashLoading ? "animate-pulse" : ""}`}>
               <MultiLineChart
                 values={monthlyData}
                 weekly={adminDash?.weekly}
@@ -149,24 +147,22 @@ function AdminDashboard() {
           </div>
 
           {/* Product Pie */}
-          <div className="lg:col-span-2 rounded-2xl shadow-md p-4 bg-white flex items-center justify-center min-w-0">
-            <PieChart values={complaints} modelKey="Product Service" />
+          <div className={`lg:col-span-2 rounded-2xl shadow-md p-4 bg-white flex items-center justify-center min-w-0 ${admindashLoading ? "animate-pulse" : ""}`}>
+            <PieChart values={complaints} modelKey="Complaints" />
           </div>
-
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-2 mt-4">
 
           {/* Complaint Pie */}
-          <div className="rounded-2xl shadow-md p-4 bg-white flex items-center justify-center min-w-0">
-            <PieChart values={prObj} modelKey="Complaints" />
+          <div className={`rounded-2xl shadow-md p-4 bg-white flex items-center justify-center min-w-0 ${admindashLoading ? "animate-pulse" : ""}`}>
+            <PieChart values={prObj} modelKey="Product Service" />
           </div>
 
           {/* Regular Pie */}
-          <div className="rounded-2xl shadow-md p-4 bg-white flex items-center justify-center min-w-0">
+          <div className={`rounded-2xl shadow-md p-4 bg-white flex items-center justify-center min-w-0 ${admindashLoading ? "animate-pulse" : ""}`}>
             <PieChart values={regObj} modelKey="Regular Service" />
           </div>
-
         </div>
       </div>
 
@@ -197,7 +193,6 @@ function AdminDashboard() {
                 {!isRegular && <th scope="col" className="px-4 py-3">Assigned to</th>}
                 <th scope="col" className="px-4 py-3">Date</th>
                 <th scope="col" className="px-4 py-3">{isRegular ? "Serviced by" : "Updated by"}</th>
-                {/* HTML standard uses colSpan, not Tailwind class col-span-2 */}
                 <th scope="col" className="px-4 py-3">Client</th>
                 <th scope="col" className="px-4 py-3">Status</th>
               </tr>
@@ -205,9 +200,8 @@ function AdminDashboard() {
 
             {/* Rows Container */}
             <tbody className="divide-y divide-gray-100 bg-white">
-              {isLoading ? (
+              {admindashLoading ? (
                 <tr>
-                  {/* Fixed: Added colSpan here so layout doesn't break during loading */}
                   <td colSpan={isRegular ? 6 : 7} className="p-8 text-center text-gray-400 text-sm">
                     Loading records...
                   </td>
@@ -233,11 +227,8 @@ function AdminDashboard() {
                 ))
               )}
             </tbody>
-
           </table>
         </div>
-
-
       </div>
     </section >
   );

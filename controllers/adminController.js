@@ -482,105 +482,11 @@ export const adminDashboard = async (req, res) => {
     // Monthly Data
     const monthlyMap = {};
     // Monthly Product Data
-    locationProduct.forEach((location) => {
-      // Products
-      location.product?.forEach((product) => {
-        product.schedule?.forEach((schedule) => {
-          if (!schedule.date) return;
+    const getMonthKey = (date) =>
+      `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
 
-          const date = new Date(schedule.date);
-          const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
-
-          if (!monthlyMap[key]) {
-            monthlyMap[key] = {
-              month: date.toLocaleString("default", {
-                month: "long",
-                year: "numeric",
-              }),
-              complaints: null,
-              regulars: null,
-              open: null,
-              inProgress: null,
-              closed: null,
-              reopenCount: null,
-
-              productDone: null,
-              productPending: null,
-              productMissed: null,
-
-              regularDone: null,
-              regularPending: null,
-              regularMissed: null,
-            };
-          }
-
-          switch (schedule.status) {
-            case "Done":
-              monthlyMap[key].productDone++;
-              break;
-            case "Pending":
-              monthlyMap[key].productPending++;
-              break;
-            case "Missed":
-              monthlyMap[key].productMissed++;
-              break;
-          }
-        });
-      });
-
-      // Regular Services
-      location.service?.forEach((service) => {
-        service.schedule?.forEach((schedule) => {
-          if (!schedule.date) return;
-
-          const date = new Date(schedule.date);
-          const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
-
-          if (!monthlyMap[key]) {
-            monthlyMap[key] = {
-              month: date.toLocaleString("default", {
-                month: "long",
-                year: "numeric",
-              }),
-              complaints: null,
-              regulars: null,
-              open: null,
-              inProgress: null,
-              closed: null,
-              reopenCount: null,
-
-              productDone: null,
-              productPending: null,
-              productMissed: null,
-
-              regularDone: null,
-              regularPending: null,
-              regularMissed: null,
-            };
-          }
-
-          switch (schedule.status) {
-            case "Done":
-              monthlyMap[key].regularDone++;
-              break;
-            case "Pending":
-              monthlyMap[key].regularPending++;
-              break;
-            case "Missed":
-              monthlyMap[key].regularMissed++;
-              break;
-          }
-        });
-      });
-    });
-
-    complaints.forEach((item) => {
-      const date = new Date(item.createdAt);
-
-      const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(
-        2,
-        "0",
-      )}`;
+    const ensureMonth = (date) => {
+      const key = getMonthKey(date);
 
       if (!monthlyMap[key]) {
         monthlyMap[key] = {
@@ -588,6 +494,7 @@ export const adminDashboard = async (req, res) => {
             month: "long",
             year: "numeric",
           }),
+
           complaints: 0,
           regulars: 0,
           open: 0,
@@ -605,26 +512,86 @@ export const adminDashboard = async (req, res) => {
         };
       }
 
+      return monthlyMap[key];
+    };
+
+    locationProduct.forEach((location) => {
+      // Products
+      location.product?.forEach((product) => {
+        product.schedule?.forEach((schedule) => {
+          if (!schedule.date) return;
+
+          const month = ensureMonth(new Date(schedule.date));
+
+          switch (schedule.status?.trim()) {
+            case "Done":
+              month.productDone++;
+              break;
+            case "Pending":
+              month.productPending++;
+              break;
+            case "Missed":
+              month.productMissed++;
+              break;
+          }
+        });
+      });
+
+      // Regular Services
+      location.service?.forEach((service) => {
+        service.schedule?.forEach((schedule) => {
+          if (!schedule.date) return;
+
+          const month = ensureMonth(new Date(schedule.date));
+
+          switch (schedule.status?.trim()) {
+            case "Done":
+              month.regularDone++;
+              break;
+            case "Pending":
+              month.regularPending++;
+              break;
+            case "Missed":
+              month.regularMissed++;
+              break;
+          }
+        });
+      });
+    });
+
+    complaints.forEach((item) => {
+      const month = ensureMonth(new Date(item.createdAt));
+
       if (item.type === "Complaint") {
-        monthlyMap[key].complaints++;
+        month.complaints++;
 
         switch (item?.complaintDetails?.status) {
           case "Open":
-            monthlyMap[key].open++;
+            month.open++;
             break;
+
           case "In Progress":
-            monthlyMap[key].inProgress++;
+            month.inProgress++;
             break;
+
           case "Close":
-            monthlyMap[key].closed++;
+            month.closed++;
             break;
         }
-        monthlyMap[key].reopenCount =
-          (monthlyMap[key].reopenCount || 0) +
-          (item?.complaintDetails?.reopenCount || 0);
+
+        month.reopenCount += item?.complaintDetails?.reopenCount || 0;
       } else {
-        monthlyMap[key].regulars++;
+        month.regulars++;
       }
+    });
+
+    // Convert untouched values (0) to null
+    Object.values(monthlyMap).forEach((month) => {
+      Object.keys(month).forEach((key) => {
+        if (key !== "month" && month[key] === 0) {
+          month[key] = null;
+        }
+      });
     });
 
     const monthlyData = Object.entries(monthlyMap)
@@ -637,11 +604,11 @@ export const adminDashboard = async (req, res) => {
       .map(withClientName);
 
     const productData = {
-      total: productDashboard[0]?.totalProducts?.[0]?.count || 0,
+      total: productDashboard?.[0]?.totalProducts?.[0]?.count || 0,
       scheduleCount: productDashboard[0]?.scheduleCount || [],
     };
     const serviceData = {
-      total: serviceDashboard[0]?.totalServices[0].count || 0,
+      total: serviceDashboard?.[0]?.totalServices?.[0]?.count || 0,
       scheduleCount: serviceDashboard[0].scheduleCount || [],
     };
 

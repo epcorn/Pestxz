@@ -66,8 +66,8 @@ const SingleLocation = () => {
     { key: "allComp", label: "Complaints" },
     { key: "allReg", label: "Scheduled" },
     { key: "allProducts", label: "Products" },
-    { key: "allUnsch", label: "Un-Scheduled" },
     { key: "allCasual", label: "Casual" },
+    { key: "allUnsch", label: "Un-Scheduled" },
   ];
 
   return (
@@ -149,6 +149,16 @@ const SingleLocation = () => {
                   }))} />
               )}
 
+              {(["PestEmployee"].includes(user?.type)) && (
+                <Button
+                  small={true}
+                  label="Casual Service"
+                  onClick={() => dispatch(toggleModal({
+                    name: "casual",
+                    status: true,
+                  }))} />
+              )}
+
               {(DBUser?.rights.scan_Unscheduled || user.role === "Operator") && (
                 <Button
                   small={true}
@@ -159,15 +169,6 @@ const SingleLocation = () => {
                   }))} />
               )}
 
-              {(["PestEmployee"].includes(user?.type)) && (
-                <Button
-                  small={true}
-                  label="Casual Service"
-                  onClick={() => dispatch(toggleModal({
-                    name: "casual",
-                    status: true,
-                  }))} />
-              )}
             </div>
 
             {/* modals tied to the buttons above (logic unchanged) */}

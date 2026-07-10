@@ -14,6 +14,9 @@ import { useSingleLocationDetailsQuery } from '../../redux/locationSlice'
 import { socket } from '../../socket'
 import InputRow from '../InputRow'
 
+
+// const storageKey = `${id}_${product.serialNo}`;
+
 function ProductServiceForm({ products, currentUser }) {
 
   const { id } = useParams()
@@ -155,6 +158,8 @@ function ProductServiceCard({ product, currentUser, onSubmitted, id }) {
         }
       }),
     }
+    const saveLocal = localStorage.setItem(`${id}_${product.serialNo}`, JSON.stringify(payload));
+
     console.log(data, payload)
     try {
       const res = await addProducts(payload).unwrap()
@@ -170,41 +175,13 @@ function ProductServiceCard({ product, currentUser, onSubmitted, id }) {
 
   return (
     <form onSubmit={handleSubmit(submit)} className="bg-white p-1 pb-4 border-b w-full overflow-hidden">
-      <div
-        className='bg-gray-300 px-2 w-fit outline rounded whitespace-nowrap cursor-pointer'
-        onClick={() => { dispatch(toggleModal({ name: `${product._id}-prevRecords`, status: true })) }}
-      >
-        show previous records
-      </div>
 
-      <div
-        className={`
-      fixed bg-black/30 z-50 inset-0 content-center h-full overflow-y-auto
-      transform transition-transform duration-300 ease-in-out
-      ${isModalOpen?.[`${product._id}-prevRecords`]
-            ? "opacity-100 block"
-            : "opacity-0 hidden pointer-events-none"
-          }
-    `}
-      >
-        <div className='flex flex-col'>
-          <button
-            onClick={() =>
-              dispatch(toggleModal({ name: `${product._id}-prevRecords`, status: false }))
-            }
-            className="px-2 mr-3 my-2 py-1 rounded ml-auto bg-red-500 text-white"
-          >
-            ✕
-          </button>
-
-          <PreviousServices
-            product={product}
-            dispatch={dispatch}
-            isModalOpen={isModalOpen}
-            toggleModal={toggleModal}
-          />
-        </div>
-      </div>
+      <PreviousServices
+        product={product}
+        dispatch={dispatch}
+        isModalOpen={isModalOpen}
+        toggleModal={toggleModal}
+      />
 
       <div className="grid grid-cols-3">
         <p><strong>Product Name:</strong> <span>{product.productName}</span></p>
@@ -256,7 +233,7 @@ function ProductServiceCard({ product, currentUser, onSubmitted, id }) {
 
       <div>
         {hasRodentChoice && (
-          <div className="mb-4 p-3 border-2 border-amber-300 rounded bg-amber-50 ">
+          <div className="mb-4 mt-2 p-3 border-2 border-amber-300 rounded bg-amber-50 ">
             <h3 className="text-lg font-semibold mb-2">Method Used</h3>
             <div className="flex gap-6 ml-3">
               <label className="flex items-center gap-2 cursor-pointer">
@@ -366,21 +343,52 @@ function PreviousServices({ product, dispatch, isModalOpen, toggleModal }) {
     data?.productsService?.filter(pr => pr.code === product.code) || [];
 
   return (
-    <div className="bg-white border shadow-lg">
+    <>
+      <div
+        className='bg-amber-600 text-white py-1 px-2 w-fit outline rounded whitespace-nowrap cursor-pointer'
+        onClick={() => { dispatch(toggleModal({ name: `${product._id}-prevRecords`, status: true })) }}
+      >
+        show previous records
+      </div>
 
+      <div
+        className={`
+      fixed bg-black/30 z-50 inset-0 content-center h-full overflow-y-auto
+      transform transition-transform duration-300 ease-in-out
+      ${isModalOpen?.[`${product._id}-prevRecords`]
+            ? "opacity-100 block"
+            : "opacity-0 hidden pointer-events-none"
+          }
+    `}
+      >
+        <div className='flex flex-col'>
+          <button
+            type='button'
+            onClick={() =>
+              dispatch(toggleModal({ name: `${product._id}-prevRecords`, status: false }))
+            }
+            className="px-2 mr-3 my-2 py-1 rounded ml-auto bg-red-500 text-white"
+          >
+            ✕
+          </button>
 
-      {sorted.length ? (
-        <ExpandedProductLists
-          maxh="max-h-72"
-          w="w-full"
-          dispatch={dispatch}
-          isModalOpen={isModalOpen}
-          toggleModal={toggleModal}
-          productData={sorted}
-        />
-      ) : (
-        <p className='p-5 text-2xl font-semibold text-center'>No Previous service record found.</p>
-      )}
-    </div>
+          <div className="bg-white max-w-2xl mx-auto shadow-lg">
+
+            {sorted.length ? (
+              <ExpandedProductLists
+                maxh="max-h-72"
+                w="w-full"
+                dispatch={dispatch}
+                isModalOpen={isModalOpen}
+                toggleModal={toggleModal}
+                productData={sorted}
+              />
+            ) : (
+              <p className='p-5 text-2xl font-semibold text-center'>No Previous service record found.</p>
+            )}
+          </div>
+        </div>
+      </div>
+    </>
   );
 }

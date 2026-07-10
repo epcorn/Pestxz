@@ -142,7 +142,7 @@ export function ExpandedProductLists({ productData, isModalOpen, dispatch, toggl
                 <span>{pr.servicedBy.name}</span>
               </div>
               <div>
-                <span className="font-bold block">Product Quality</span>
+                <span className="font-bold block">Equipment's Quality</span>
                 <span className="font-mono underline text-blue-600 font-bold"
                   onClick={(e) => {
                     e.stopPropagation();
@@ -153,7 +153,7 @@ export function ExpandedProductLists({ productData, isModalOpen, dispatch, toggl
                 {isModalOpen?.[`${pr._id}-quality`] && <ImagesModal name={`${pr._id}-quality`} image={pr.quality.image} />}
               </div>
 
-              <div className='col-span-full grid grid-rows-2 gap-y-2'>
+              <div className='col-span-full outline p-0.5 grid grid-rows-2 gap-y-2'>
                 <span className="font-bold block col-span-full ">Calibration Count</span>
                 <div className='flex flex-wrap gap-2'>
                   {pr?.calibration.map(cal => (

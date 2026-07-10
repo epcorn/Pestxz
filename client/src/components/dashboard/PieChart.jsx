@@ -1,7 +1,6 @@
 import React from 'react'
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js'
-import { Pie, Doughnut, Line } from 'react-chartjs-2'
-
+import { Doughnut } from 'react-chartjs-2'
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
@@ -38,17 +37,18 @@ function PieChart({ values, line = false, modelKey }) {
 
   const statusColors = {
     // Complaints
-
-    "open": "#EF4444",
-    "Open": "#EF4444",
-    "inProgress": "#F59E0B",
-    "In Progress": "#F59E0B",
-    "Close": "#22C55E",
-    "Reopened Complaints": "#8B5CF6",
+    complaints: {
+      "open": "#EF4444",
+      "Open": "#EF4444",
+      "inProgress": "#F59E0B",
+      "In Progress": "#F59E0B",
+      "Close": "#22C55E",
+      "Reopened": "#8B5CF6",
+    },
     // Regular Services
     regular: {
       "Done": "#3B82F6",
-      "Pending": "#94A3B8",
+      "Pending": "#4b6b99",
       "Missed": "#F97316",
     },
     // Product Services
@@ -58,17 +58,17 @@ function PieChart({ values, line = false, modelKey }) {
       "Missed": "#EC4899",
     }
   };
+  
   const newKeys = filteredKeys.map(f => keyMapping[f] || f)
   const chartType = modelKey?.split(" ")?.[0].toLowerCase();
 
+  // FIXED: Direct look up into the specific chart category color mapping
   const backgroundColor = newKeys.map(
-    key =>
-      statusColors[key] ||
-      statusColors[chartType]?.[key] ||
-      "#9CA3AF"
+    key => statusColors?.[chartType]?.[key] || "#9CA3AF"
   );
+  
   const borderColor = backgroundColor;
-
+  
   const data = {
     labels: newKeys,
     datasets: [
@@ -80,24 +80,23 @@ function PieChart({ values, line = false, modelKey }) {
         borderWidth: 1,
       },
     ],
-
   }
+
   const options = {
     responsive: true,
-    maintainAspectRatio: false, // let it fill the fixed-height wrapper below
+    maintainAspectRatio: false, 
     plugins: {
       legend: { display: true, position: "bottom", labels: { font: { size: 10 }, color: "black" } },
-      tooltip: { position: "nearest" }, // was "tootip" — typo, tooltip config was silently ignored
+      tooltip: { position: "nearest" }, 
       title: { display: true, text: `Status of ${modelKey}` }
     }
   }
 
   return (
-    <div style={{ width: '100%', maxWidth: 320, height: 260, position: 'relative', margin: '0 auto' }}>
+    <div style={{ width: '100%', maxWidth: 400, height: 260, position: 'relative', margin: '0 auto' }}>
       <Doughnut data={data} options={options} />
     </div>
   )
 }
 
 export default PieChart
-

@@ -16,7 +16,7 @@ function TickerTape() {
 
   const { data: runnerData, isLoading: runnerLoading } = useRunnerDataQuery(
     { lon: stats.lon, lat: stats.lat },
-    { skip: !stats.lon || !stats.lat,refetchOnReconnect:true }
+    { skip: !stats.lon || !stats.lat, refetchOnReconnect: true }
   );
 
   const temp = runnerData?.data?.environment?.temp;
@@ -25,7 +25,7 @@ function TickerTape() {
 
   if (runnerLoading || !runnerData) {
     return (
-      <div className="flex items-center h-7 bg-slate-950 px-3 text-[10px] text-slate-400 font-mono w-full rounded-md border border-slate-800/60">
+      <div className="flex items-center h-7 bg-slate-950 px-3 text-[10px] text-slate-400 font-mono min-w-dvw rounded-md border border-slate-800/60">
         <span className="w-2 h-2 rounded-full bg-sky-500 animate-ping mr-2 shrink-0"></span>
         Loading live pest metrics...
       </div>
@@ -82,17 +82,13 @@ export default TickerTape;
 // Enhanced Color Utility Functions
 function getAlertStyle(score) {
   if (score >= 85) {
-    // Very High: Balanced Premium Crimson Red
     return `bg-rose-950/60 text-rose-100 border-rose-800/80 shadow-sm shadow-rose-950/50 animate-pulse`;
   }
   if (score >= 65) {
-    // High: Smooth Muted Orange/Amber
     return `bg-amber-950/40 text-amber-200 border-amber-800/60`;
   }
   if (score >= 40) {
-    // Moderate: Calm Yellow/Slate Neutral
     return `bg-slate-900 text-slate-300 border-slate-700/50`;
   }
-  // Low Risk: Healthy Emerald Green
   return `bg-emerald-950/40 text-emerald-400 border-emerald-900/40`;
 }

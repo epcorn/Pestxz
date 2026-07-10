@@ -67,7 +67,7 @@ const Landing = () => {
     <section className="bg-gray-400 bg-opacity-10 bg-[url('https://res.cloudinary.com/djc8opvcg/image/upload/v1701669902/samples/Caravela_Beach_Resort_eukgag.jpg')] bg-cover bg-center bg-no-repeat bg-blend-multiply">
       <div className="mx-auto flex flex-col items-center justify-center px-6 py-8 h-screen">
 
-        <div className="w-sm rounded-lg shadow bg-black/10 sm:max-w-md xl:p-0 backdrop-blur-xs outline-2 outline-white/50">
+        <div className="max-w-sm rounded-lg shadow bg-black/10 sm:max-w-md xl:p-0 backdrop-blur-xs outline-2 outline-white/50">
           <div className="space-y-4 p-6 sm:p-8">
             {/* Logo */}
             <div className="flex justify-center">

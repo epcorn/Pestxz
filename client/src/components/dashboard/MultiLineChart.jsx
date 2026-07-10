@@ -37,8 +37,7 @@ const getColor = (index, alpha = 1) => {
 const keyMapping = {
   "complaints": "Total Complaints",
   "regulars": "Total Services",
-  "productCompleted": "Total Product Service Done"
-
+  "productCompleted": "Total Product Service Done",
 }
 
 function MultiLineChart({ values = [], selectedMonth, admin = [], toggle }) {
@@ -87,9 +86,7 @@ function MultiLineChart({ values = [], selectedMonth, admin = [], toggle }) {
 
   // --- 2. ADMIN CHART CONFIGURATION ---
   const adminLabels = admin?.map(item => item.month || '');
-
   const selectedData = admin?.[selectedMonth] ?? {}
-
   const adminKeys = Object?.keys(selectedData)?.filter(key => ['complaints', 'regulars', 'productCompleted']?.includes(key));
 
   const adminDatasets = adminKeys?.map((key, index) => ({
