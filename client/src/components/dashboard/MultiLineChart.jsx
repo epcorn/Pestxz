@@ -139,7 +139,7 @@ function MultiLineChart({ values = [], selectedMonth, admin = [], toggle }) {
       {/* Admin Data Chart */}
       {toggle === "admin" && (
         <div className="relative w-full h-[300px]">
-          <Line data={adminData} options={getOptions('Admin Metrics Overview')} />
+          <Line data={adminData} options={getOptions('Total Metrics Overview')} />
         </div>
       )}
     </>

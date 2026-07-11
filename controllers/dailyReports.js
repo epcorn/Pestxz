@@ -124,8 +124,8 @@ export const dailyServiceReport = async (req, res) => {
     // }
 
     const { value = "all" } = req.params;
-    const todayStart = new Date();
-    todayStart.setUTCHours(0, 0, 0, 0);
+    const today = new Date();
+    const todayStart = today.setUTCHours(0, 0, 0, 0);
     const todayEnd = new Date();
     todayEnd.setUTCHours(23, 59, 59, 999);
 
@@ -134,30 +134,38 @@ export const dailyServiceReport = async (req, res) => {
     const clientQuery =
       req.user.role === "ClientAdmin" ? { _id: req.user.client } : {};
     const selectFields = req.user.client ? "" : "-adminPass";
-    let populateOptions = [];
     let uploadURL;
+    let matchCondition;
+    let populateOptions = [
+      {
+        path: "services",
+        match: todayMatchCondition,
+        populate: { path: "location" },
+      },
+      {
+        path: "unschedules",
+        match: matchCondition,
+        populate: { path: "location" },
+      },
+      {
+        path: "casuals",
+        match: matchCondition,
+        populate: { path: "location" },
+      },
+    ];
 
     if (value === "today") {
-      const todayMatchCondition = {
+      matchCondition = {
         updatedAt: { $gte: todayStart, $lte: todayEnd },
       };
-      populateOptions = [
-        {
-          path: "services",
-          match: todayMatchCondition,
-          populate: { path: "location" },
-        },
-        {
-          path: "unschedules",
-          match: todayMatchCondition,
-          populate: { path: "location" },
-        },
-        {
-          path: "casuals",
-          match: todayMatchCondition,
-          populate: { path: "location" },
-        },
-      ];
+    } else if (value === "weekly") {
+      const year = today.getFullYear();
+      const month = today.getMonth();
+      const monthstart = new Date(year, month, 1);
+      const monthend = new Date(year, month + 1, 1);
+      const matchCondition = {
+        updatedAt: { $gte: monthstart, $lte: monthend },
+      };
     } else {
       populateOptions = [
         { path: "services", populate: { path: "location" } },

@@ -25,8 +25,6 @@ function AdminDashboard() {
     { skip: user?.role !== "Admin", refetchOnReconnect: true }
   );
 
-  console.log(adminDash)
-
   useEffect(() => {
     if (!assignId) return;
     const handler = (e) => {
@@ -68,7 +66,7 @@ function AdminDashboard() {
   const { open, inProgress, closed, total, reopenCount, serviceCount } = adminDash?.summary?.complaints || {}
 
   return (
-    <section className="p-2 md:p-3 bg-gray-50 min-h-screen space-y-6">
+    <section className="p-2 md:p-3 bg-gray-50 min-h-screen">
 
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-200 pb-5">
@@ -92,7 +90,7 @@ function AdminDashboard() {
                   setSelectedClient(client || null);
                 }}
                 className="outline-none text-xs sm:text-sm font-semibold bg-transparent cursor-pointer text-gray-700">
-                <option value="">Total Statistics</option>
+                <option value="">Choose Clients</option>
                 {clients.map((d) => (
                   <option key={d._id} value={d._id}>{d.name}</option>
                 ))}
@@ -101,40 +99,66 @@ function AdminDashboard() {
           </div>
         )}
       </div>
-      
+
       {/* Stat cards */}
-      <div className={`flex flex-wrap gap-y-1 gap-x-2 ${admindashLoading ? "animate-pulse" : ""}`}>
-        <StatCard title="Open Complaints" value={open || 0} color="border-l-red-500" textColor="text-red-500" />
-        <StatCard title="In Progress" value={inProgress || 0} color="border-l-amber-500" textColor="text-amber-500" />
-        <StatCard title="Closed Complaints" value={closed || 0} color="border-l-green-500" textColor="text-green-500" />
-        <StatCard title="Total Complaints" value={total || 0} color="border-l-blue-500" textColor="text-blue-500" />
-        <StatCard title="Re Opened" value={reopenCount || 0} color="border-l-blue-500" textColor="text-blue-500" />
-        {services?.scheduleCount?.map((ser) =>
-          ser?.label == "Done" && (
-            <StatCard key={ser.label} title={"Regular Services " + ser.label} value={ser.count || 0} color="border-l-fuchsia-600" textColor="text-fuchsia-500" />
-          )
-        )}
-        {products?.scheduleCount?.map(({ label, count }, i) => label === "Done" && (
-          <React.Fragment key={i}>
-            <StatCard title={'Product Services Done'} value={count} />
-          </React.Fragment>
-        ))}
+      <div className="space-y-4">
+        <h3 className="text-gray-600 hidden font-semibold text-center mb-2">Complaints</h3>
+
+        {/* Container for all layout blocks */}
+        <div className={`flex flex-col gap-3 ${admindashLoading ? "animate-pulse" : ""}`}>
+
+          {/* Complaints Section */}
+          <div className="flex flex-wrap gap-y-1 gap-x-2">
+            <StatCard title="Open Complaints" value={open || 0} color="border-l-red-500" textColor="text-red-500" />
+            <StatCard title="In Progress" value={inProgress || 0} color="border-l-amber-500" textColor="text-amber-500" />
+            <StatCard title="Closed Complaints" value={closed || 0} color="border-l-green-500" textColor="text-green-500" />
+            <StatCard title="Total Complaints" value={total || 0} color="border-l-blue-500" textColor="text-blue-500" />
+            <StatCard title="Re Opened" value={reopenCount || 0} color="border-l-blue-500" textColor="text-blue-500" />
+          </div>
+          
+          {/* Products Section */}
+          {products?.scheduleCount?.length > 0 && (
+            <div title="products" className="bg-white outline-2 outline-indigo-600 rounded-md">
+              <h3 className="font-semibold text-gray-600 hidden text-center">Products</h3>
+              <div className="flex flex-wrap gap-x-2 gap-y-1">
+                {products.scheduleCount.map(({ label, count }, i) => (
+                  <StatCard key={i} title={label} value={count} color="border-l-indigo-600" textColor="text-indigo-700" />
+                ))}
+              </div>
+            </div>
+          )}
+          
+          {/* Services Section */}
+          {services?.scheduleCount?.length > 0 && (
+            <div title="service" className="bg-white rounded-md outline-2 outline-fuchsia-700">
+              <h3 className="font-semibold text-gray-600 hidden text-center">Services</h3>
+              <div className="flex flex-wrap gap-x-2 gap-y-1">
+                {services.scheduleCount.map(({ label, count }) =>
+                  label !== "Invalid" && (
+                    <StatCard key={label} title={label} value={count || 0} color="border-l-fuchsia-600" textColor="text-fuchsia-700" />
+                  )
+                )}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
+
+
       {/* monthly sort */}
       {/* <div className="ml-auto bg-white outline outline-gray-600 rounded w-fit px-2">
         <select className="px-2 py-1 focus:outline-0" value={selectedMonth} onChange={(e) => setSelectedMonth(Number(e.target.value))}>
           {adminDash?.monthlyData?.map(({ month }, i) => (
             <option key={month + i} value={i}>{month}</option>
-          ))}
-        </select>
-      </div> */}
-
+            ))}
+            </select>
+            </div> */}
       {/* charts  */}
       <div className="my-2">
         <div className="grid grid-cols-1 lg:grid-cols-6 gap-4 ">
 
           {/* Multiline Chart */}
-          <div className="lg:col-span-4 rounded-2xl shadow-md p-2 bg-white min-w-0">
+          <div className="lg:col-span-6 rounded-2xl shadow-md p-2 bg-white min-w-0">
 
             <div className={`w-full overflow-x-auto ${admindashLoading ? "animate-pulse" : ""}`}>
               <MultiLineChart
@@ -340,8 +364,8 @@ export function StatCard({ active, title, value, color, textColor, arrkey, onCli
   const isActive = active === arrkey || active === title;
 
   return (
-    <div
-      className={`bg-gray-50 shadow flex-1 px-3 py-2 md:px-5 md:py-3 rounded-l-xl border border-gray-100 whitespace-nowrap border-l-2 transition-all duration-200 ease-in-out ${color} ${isActive ? "translate-y-1 shadow-md bg-white" : "translate-y-0 cursor-pointer"}`}
+    <div title={title}
+      className={`bg-gray-50 shadow flex-1 px-3 py-2 md:px-5 md:py-3 rounded-l-xl border border-gray-100 whitespace-nowrap border-l-4 transition-all duration-200 ease-in-out ${color} ${isActive ? "translate-y-1 shadow-md bg-white" : "translate-y-0 cursor-pointer"}`}
       onClick={() => onClick(arrkey || title)}
     >
       <p className="text-[9px] md:text-xs uppercase tracking-wide text-gray-400 font-semibold">{title}</p>
