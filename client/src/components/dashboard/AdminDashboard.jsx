@@ -101,10 +101,9 @@ function AdminDashboard() {
           </div>
         )}
       </div>
-      {/* open ,inProgress,closed,total*/}
-
+      
       {/* Stat cards */}
-      <div className={`flex flex-wrap gap-2 ${admindashLoading ? "animate-pulse" : ""}`}>
+      <div className={`flex flex-wrap gap-y-1 gap-x-2 ${admindashLoading ? "animate-pulse" : ""}`}>
         <StatCard title="Open Complaints" value={open || 0} color="border-l-red-500" textColor="text-red-500" />
         <StatCard title="In Progress" value={inProgress || 0} color="border-l-amber-500" textColor="text-amber-500" />
         <StatCard title="Closed Complaints" value={closed || 0} color="border-l-green-500" textColor="text-green-500" />
@@ -147,16 +146,21 @@ function AdminDashboard() {
           </div>
 
           {/* Product Pie */}
-          <div className={`lg:col-span-2 rounded-2xl shadow-md p-4 bg-white flex items-center justify-center min-w-0 ${admindashLoading ? "animate-pulse" : ""}`}>
+          <div className={`lg:col-span-2 hidden rounded-2xl shadow-md p-4 bg-white flex items-center justify-center min-w-0 ${admindashLoading ? "animate-pulse" : ""}`}>
             <PieChart values={complaints} modelKey="Complaints" />
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-2 mt-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-2 mt-4">
 
           {/* Complaint Pie */}
           <div className={`rounded-2xl shadow-md p-4 bg-white flex items-center justify-center min-w-0 ${admindashLoading ? "animate-pulse" : ""}`}>
             <PieChart values={prObj} modelKey="Product Service" />
+          </div>
+
+          {/* Product Pie */}
+          <div className={` rounded-2xl shadow-md p-4 bg-white flex items-center justify-center min-w-0 ${admindashLoading ? "animate-pulse" : ""}`}>
+            <PieChart values={complaints} modelKey="Complaints" />
           </div>
 
           {/* Regular Pie */}

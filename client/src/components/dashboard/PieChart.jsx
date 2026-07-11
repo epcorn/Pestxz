@@ -38,24 +38,24 @@ function PieChart({ values, line = false, modelKey }) {
   const statusColors = {
     // Complaints
     complaints: {
-      "open": "#EF4444",
-      "Open": "#EF4444",
-      "inProgress": "#F59E0B",
-      "In Progress": "#F59E0B",
-      "Close": "#22C55E",
-      "Reopened": "#8B5CF6",
+      "open": "#EF444480",
+      "Open": "#EF4444BF",
+      "inProgress": "#F59E0BBF",
+      "In Progress": "#F59E0BBF",
+      "Close": "#22C55EBF",
+      "Reopened": "#8B5CF6BF",
     },
     // Regular Services
     regular: {
-      "Done": "#3B82F6",
-      "Pending": "#4b6b99",
-      "Missed": "#F97316",
+      "Done": "#3B82F6BF",
+      "Pending": "#4b6b99BF",
+      "Missed": "#F97316BF",
     },
     // Product Services
     product: {
-      "Done": "#06B6D4",
-      "Pending": "#A855F7",
-      "Missed": "#EC4899",
+      "Done": "#06B6D4BF",
+      "Pending": "#A855F7BF",
+      "Missed": "#EC4899BF",
     }
   };
   
@@ -67,8 +67,8 @@ function PieChart({ values, line = false, modelKey }) {
     key => statusColors?.[chartType]?.[key] || "#9CA3AF"
   );
   
-  const borderColor = backgroundColor;
-  
+  const borderColor = backgroundColor?.map(p=> p.slice(0,7));
+
   const data = {
     labels: newKeys,
     datasets: [
