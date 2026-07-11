@@ -89,6 +89,80 @@ export const qrCodeGenerator = async ({ link, floor, location }) => {
   }
 };
 
+//using sharp
+export const productQrCodeGenerator = async ({
+  link,
+  floor,
+  location,
+  serialNo,
+}) => {
+  const loc = location.substring(0, 25);
+  const subLoc = location.substring(25);
+
+  try {
+    const width = 220; // was 100 — bigger for reliable scanning at print size
+    const qrSize = 220;
+    const topPadding = 34; // room for branding + serialNo
+    const bottomPadding = subLoc ? 65 : 55; // room for 4 lines: floor, location, sub-location, spacing
+    const totalHeight = topPadding + qrSize + bottomPadding;
+
+    // 1. QR code buffer
+    const qrBuffer = await QRCode.toBuffer(link, {
+      width: qrSize,
+      margin: 2,
+    });
+
+    // 2. Text overlay — branding + serialNo at top, details at bottom
+    const svgText = `
+      <svg width="${width}" height="${totalHeight}">
+        <style>
+          .branding { fill: rgb(32, 125, 192); font-size: 16px; font-family: Arial; font-weight: bold; font-style: italic; }
+          .serial   { fill: white; font-size: 12px; font-family: Arial; font-weight: bold; }
+          .details  { fill: white; font-size: 13px; stroke:"red"; font-family: Arial; }
+        </style>
+
+        <!-- Top: branding + serial no -->
+        <text x="50%" y="18" text-anchor="middle" class="branding">Powered By PestXZ</text>
+        <text x="50%" y="32" text-anchor="middle" class="serial">S/N: ${serialNo ?? "-"}</text>
+
+        <!-- Bottom: floor / location details, each line spaced to fit inside totalHeight -->
+        <text x="6" y="${topPadding + qrSize + 20}" class="details">Floor: ${floor}</text>
+        <text x="6" y="${topPadding + qrSize + 35}" class="details">Location: ${loc}</text>
+        ${subLoc ? `<text x="6" y="${topPadding + qrSize + 45}" class="details">${subLoc}</text>` : ""}
+      </svg>
+    `;
+
+    // 3. Composite
+    const buf = await sharp({
+      create: {
+        width,
+        height: totalHeight,
+        channels: 3,
+        background: { r: 0, g: 0, b: 0 },
+      },
+    })
+      .composite([
+        { input: qrBuffer, top: topPadding, left: (width - qrSize) / 2 },
+        { input: Buffer.from(svgText), top: 0, left: 0 },
+      ])
+      .png()
+      .toBuffer();
+    fs.writeFileSync("./tmp/qr.jpeg", buf);
+
+    return buf;
+  } catch (error) {
+    console.log("QR Error", error);
+    return false;
+  }
+};
+
+productQrCodeGenerator({
+  floor: "1st",
+  link: "wwww.link.com",
+  location: "room class = details >Location",
+  serialNo: "RBC-2026-004",
+});
+
 // for converting qr.jpg to svg
 export const qrCodeGeneratorSVG = async ({ link, floor, location }) => {
   let loc = location.substring(0, 25);

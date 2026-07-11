@@ -198,7 +198,7 @@ function RegularForm({ serviceData, id, type, locationName, setRegular }) {
                           </p>
                           <p className="text-sm md:text-lg bg-white font-semibold outline px-2 py-1 rounded outline-gray-400">
                             Date:{" "}
-                            <span className="text-base text-blue-600">{todaySchedule?.date}</span>
+                            <span className="text-base text-blue-600">{todaySchedule?.date.split("T")[0]}</span>
                           </p>
                         </>
                       }
