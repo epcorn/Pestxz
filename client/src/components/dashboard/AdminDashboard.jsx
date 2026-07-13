@@ -7,13 +7,31 @@ import { AssignWork } from "../../pages/Complaints";
 import PieChart from "./PieChart";
 import MultiLineChart from "./MultiLineChart";
 
+const prMapped = {
+  Done: "Done Products Services",
+  Missed: "Missed Products Services",
+  Pending: "Pending Products Services",
+};
+const regMapped = {
+  Done: "Done Regular Services",
+  Missed: "Missed Regular Services",
+  Pending: "Pending Regular Services",
+  Invalid: "Invalid",
+};
+
+// month.product = { Done, Pending, Missed } -> [{ label, count }]
+// so it matches the exact shape products.scheduleCount already has.
+const nestedToScheduleCount = (statusCounts) =>
+  Object.entries(statusCounts || {})
+    .map(([label, count]) => ({ label, count: count || 0 }))
 
 function AdminDashboard() {
   const [assignId, setAssignId] = useState(null);
   const [toggle, setToggle] = useState(
     () => sessionStorage.getItem("adminDashboardToggle") || "Complaint"
   );
-  const [selectedMonth, setSelectedMonth] = useState(0)
+  // "overall" or a stringified index into monthlyData
+  const [selectedMonth, setSelectedMonth] = useState("overall");
   const [selectedClient, setSelectedClient] = useState(null);
   const assignRef = useRef(null);
   const navigate = useNavigate();
@@ -44,26 +62,70 @@ function AdminDashboard() {
     () => adminDash?.latestComplaints?.filter((item) => item.type === toggle) ?? [],
     [adminDash, toggle]
   );
-  const prMapped = {
-    Done: "Done Products Services",
-    Missed: "Missed Products Services",
-    Pending: "Pending Products Services",
-  }
-  const regMapped = {
-    Done: "Done Regular Services",
-    Missed: "Missed Regular Services",
-    Pending: "Pending Regular Services",
-    Invalid: "Invalid",
-  }
 
-  const { products, services, complaints, monthlyData } = adminDash?.summary || {}
-  const prObj = Object.fromEntries((products?.scheduleCount ?? []).map(p => ([prMapped[p.label], p.count])))
-  const regObj = Object.fromEntries((services?.scheduleCount ?? []).map(p => ([regMapped[p.label], p.count])))
+  const { products, services, complaints, monthlyData } = adminDash?.summary || {};
 
+  const isOverall = selectedMonth === "overall";
+  const activeMonth = !isOverall ? monthlyData?.[Number(selectedMonth)] : null;
 
-  const pieChartData = { ...complaints, ...prObj, ...regObj }
+  // Reset back to "overall" if the client/data changes and the previously
+  // selected month index no longer exists (e.g. switching clients).
+  useEffect(() => {
+    if (!isOverall && !monthlyData?.[Number(selectedMonth)]) {
+      setSelectedMonth("overall");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [monthlyData]);
 
-  const { open, inProgress, closed, total, reopenCount, serviceCount } = adminDash?.summary?.complaints || {}
+  // ---- Complaint stat cards: overall summary vs. one month's slice ----
+  const complaintStats = isOverall
+    ? {
+      open: complaints?.open || 0,
+      inProgress: complaints?.inProgress || 0,
+      closed: complaints?.closed || 0,
+      closeReq: complaints?.closeReq || 0,
+      total: complaints?.total || 0,
+      reopenCount: complaints?.reopenCount || 0,
+    }
+    : {
+      open: activeMonth?.open || 0,
+      inProgress: activeMonth?.inProgress || 0,
+      closeReq: activeMonth?.closeReq || 0,
+      closed: activeMonth?.closed || 0,
+      total: activeMonth?.complaints || 0,
+      reopenCount: activeMonth?.reopenCount || 0,
+    };
+  const { open, inProgress, closed, total, closeReq, reopenCount } = complaintStats;
+  // ---- Products / Services blocks: same {total, scheduleCount} shape either way ----
+  const productsView = isOverall
+    ? products
+    : {
+      total: products.total,
+      scheduleCount: nestedToScheduleCount(activeMonth?.product),
+    };
+
+  const servicesView = isOverall
+    ? services
+    : {
+      total: products.total,
+      scheduleCount: nestedToScheduleCount(activeMonth?.regular),
+    };
+
+  console.log(adminDash?.summary)
+  const prObj = Object.fromEntries(
+    (productsView?.scheduleCount ?? []).map((p) => [prMapped[p.label], p.count])
+  );
+  const regObj = Object.fromEntries(
+    (servicesView?.scheduleCount ?? []).map((p) => [regMapped[p.label], p.count])
+  );
+
+  const pieChartComplaints = isOverall
+    ? complaints
+    : {
+      Open: activeMonth?.open || 0,
+      "In Progress": activeMonth?.inProgress || 0,
+      Close: activeMonth?.closed || 0,
+    };
 
   return (
     <section className="p-2 md:p-3 bg-gray-50 min-h-screen">
@@ -100,6 +162,21 @@ function AdminDashboard() {
         )}
       </div>
 
+
+      {/* overall / monthly toggle */}
+      <div className="ml-auto bg-white outline outline-gray-600 rounded w-fit px-2 mt-2">
+        <select
+          className="px-2 py-1 focus:outline-0"
+          value={selectedMonth}
+          onChange={(e) => setSelectedMonth(e.target.value)}
+        >
+          <option value="overall">Overall</option>
+          {monthlyData?.map(({ month }, i) => (
+            <option key={month + i} value={i}>{month}</option>
+          ))}
+        </select>
+      </div>
+
       {/* Stat cards */}
       <div className="space-y-4">
         <h3 className="text-gray-600 hidden font-semibold text-center mb-2">Complaints</h3>
@@ -110,54 +187,50 @@ function AdminDashboard() {
           {/* Complaints Section */}
           <div className="flex flex-wrap gap-y-1 gap-x-2">
             <StatCard title="Open Complaints" value={open || 0} color="border-l-red-500" textColor="text-red-500" />
-            <StatCard title="In Progress" value={inProgress || 0} color="border-l-amber-500" textColor="text-amber-500" />
+            <StatCard title="In Progress" value={inProgress || 0} color="border-l-amber-500" textColor="text-amber-500 animate-pulse" />
             <StatCard title="Closed Complaints" value={closed || 0} color="border-l-green-500" textColor="text-green-500" />
             <StatCard title="Total Complaints" value={total || 0} color="border-l-blue-500" textColor="text-blue-500" />
             <StatCard title="Re Opened" value={reopenCount || 0} color="border-l-blue-500" textColor="text-blue-500" />
+            <StatCard title="Close Req" value={closeReq || 0} color="border-l-blue-500" textColor="text-blue-500" />
           </div>
-          
-          {/* Products Section */}
-          {products?.scheduleCount?.length > 0 && (
-            <div title="products" className="bg-white outline-2 outline-indigo-600 rounded-md">
-              <h3 className="font-semibold text-gray-600 hidden text-center">Products</h3>
-              <div className="flex flex-wrap gap-x-2 gap-y-1">
-                {products.scheduleCount.map(({ label, count }, i) => (
-                  <StatCard key={i} title={label} value={count} color="border-l-indigo-600" textColor="text-indigo-700" />
-                ))}
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+
+            {/* Products Section */}
+            {productsView?.scheduleCount?.length > 0 && (
+              <div title="products" className="bg-white">
+                <h3 className="font-semibold text-gray-600 text-center">Products ({products?.total})</h3>
+                <div className="flex flex-wrap gap-x-2 gap-y-1 outline-2 outline-indigo-600 pb-1 rounded-md">
+                  {productsView.scheduleCount.map(({ label, count }, i) => (
+                    <StatCard key={i} title={label} value={count} color="border-l-indigo-600" textColor="text-indigo-700" />
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
-          
-          {/* Services Section */}
-          {services?.scheduleCount?.length > 0 && (
-            <div title="service" className="bg-white rounded-md outline-2 outline-fuchsia-700">
-              <h3 className="font-semibold text-gray-600 hidden text-center">Services</h3>
-              <div className="flex flex-wrap gap-x-2 gap-y-1">
-                {services.scheduleCount.map(({ label, count }) =>
-                  label !== "Invalid" && (
-                    <StatCard key={label} title={label} value={count || 0} color="border-l-fuchsia-600" textColor="text-fuchsia-700" />
-                  )
-                )}
+            )}
+
+            {/* Services Section */}
+            {servicesView?.scheduleCount?.length > 0 && (
+              <div title="service" className="bg-white">
+                <h3 className="font-semibold text-gray-600 text-center">Services ({services.total})</h3>
+                <div className="flex flex-wrap gap-x-2 gap-y-1 rounded-md outline-2 outline-fuchsia-700 pb-1">
+                  {servicesView.scheduleCount.map(({ label, count }) =>
+                    label !== "Invalid" && (
+                      <StatCard key={label} title={label} value={count || 0} color="border-l-fuchsia-600" textColor="text-fuchsia-700" />
+                    )
+                  )}
+                </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
 
 
-      {/* monthly sort */}
-      {/* <div className="ml-auto bg-white outline outline-gray-600 rounded w-fit px-2">
-        <select className="px-2 py-1 focus:outline-0" value={selectedMonth} onChange={(e) => setSelectedMonth(Number(e.target.value))}>
-          {adminDash?.monthlyData?.map(({ month }, i) => (
-            <option key={month + i} value={i}>{month}</option>
-            ))}
-            </select>
-            </div> */}
       {/* charts  */}
       <div className="my-2">
         <div className="grid grid-cols-1 lg:grid-cols-6 gap-4 ">
 
-          {/* Multiline Chart */}
+          {/* Multiline Chart — always shows the full monthly trend regardless of toggle */}
           <div className="lg:col-span-6 rounded-2xl shadow-md p-2 bg-white min-w-0">
 
             <div className={`w-full overflow-x-auto ${admindashLoading ? "animate-pulse" : ""}`}>
@@ -168,23 +241,18 @@ function AdminDashboard() {
               />
             </div>
           </div>
-
-          {/* Product Pie */}
-          <div className={`lg:col-span-2 hidden rounded-2xl shadow-md p-4 bg-white flex items-center justify-center min-w-0 ${admindashLoading ? "animate-pulse" : ""}`}>
-            <PieChart values={complaints} modelKey="Complaints" />
-          </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-2 mt-4">
 
-          {/* Complaint Pie */}
+          {/* Product/Service Pie */}
           <div className={`rounded-2xl shadow-md p-4 bg-white flex items-center justify-center min-w-0 ${admindashLoading ? "animate-pulse" : ""}`}>
             <PieChart values={prObj} modelKey="Product Service" />
           </div>
 
-          {/* Product Pie */}
-          <div className={` rounded-2xl shadow-md p-4 bg-white flex items-center justify-center min-w-0 ${admindashLoading ? "animate-pulse" : ""}`}>
-            <PieChart values={complaints} modelKey="Complaints" />
+          {/* Complaint Pie */}
+          <div className={`rounded-2xl shadow-md p-4 bg-white flex items-center justify-center min-w-0 ${admindashLoading ? "animate-pulse" : ""}`}>
+            <PieChart values={pieChartComplaints} modelKey="Complaints" />
           </div>
 
           {/* Regular Pie */}

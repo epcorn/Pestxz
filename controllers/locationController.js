@@ -114,6 +114,8 @@ export const addLocation = async (req, res) => {
     const contractStart = new Date(client.startDate);
     const contractEnd = new Date(client.endDate);
 
+    const locationId = newLocation._id;
+
     // ── build service array ──────────────────────────────────────────
     let formattedServices = [];
     if (type.includes("service") && serviceReq?.length) {
@@ -129,11 +131,19 @@ export const addLocation = async (req, res) => {
           .status(400)
           .json({ msg: "Please add at least one valid service" });
 
+      const newLocation = await Location.create({
+        floor: capitalLetter(floor),
+        subLocation: capitalLetter(subLocation || ""),
+        location: capitalLetter(location),
+        client: client._id,
+      });
+
       formattedServices = validServices.map((service) => {
         const schedule = generateSchedule(
           contractStart,
           contractEnd,
           service.frequency,
+          service.prefDay
         ).map((date) => ({
           date: date.date,
           completed: date.completed,
@@ -170,7 +180,7 @@ export const addLocation = async (req, res) => {
         return res.status(400).json({ msg: "Please fill all product fields" });
 
       formattedProduct = await Promise.all(
-        validProductReq.map(async (pr) => {
+        validProductReq.map(async (pr, i) => {
           const {
             productId,
             productName,
@@ -193,7 +203,16 @@ export const addLocation = async (req, res) => {
             completedAt: null,
             completedBy: null,
           }));
+          const serialNo = await productCounter(code);
+          const qrData = await qrCodeGenerator({
+            link: `https://pestxz.com/location/${locationId}`,
+            floor: newLocation.floor,
+            location: `${newLocation.location}, ${newLocation.subLocation}`,
+            serialNo,
+          });
 
+          fs.writeFileSync(`./tmp/qr${i}.jpeg`, qrData);
+          const qrLink = await uploadFile({ filePath: `./tmp/qr${i}.jpeg` });
           return {
             productId,
             productName,
@@ -201,10 +220,11 @@ export const addLocation = async (req, res) => {
             versionName,
             frequency,
             code,
-            serialNo: await productCounter(code),
+            serialNo,
             specification,
             calibrations: calibrations ?? [],
             schedule,
+            qrLink,
           };
         }),
       );
@@ -215,16 +235,9 @@ export const addLocation = async (req, res) => {
         .status(400)
         .json({ msg: "Please add at least one service or product" });
 
-    const newLocation = await Location.create({
-      floor: capitalLetter(floor),
-      subLocation: capitalLetter(subLocation || ""),
-      location: capitalLetter(location),
-      service: formattedServices,
-      product: formattedProduct,
-      client: client._id,
-    });
+    newLocation.service = formattedServices;
+    newLocation.product = formattedProduct;
 
-    const locationId = newLocation._id;
     const qrData = await qrCodeGenerator({
       link: `https://pestxz.com/location/${locationId}`,
       floor: newLocation.floor,
@@ -573,7 +586,9 @@ export const getLocationDetails = async (req, res) => {
       updatedAt: -1,
     });
 
-    const productsService = await ProductService.find({ location: location._id }).sort({ updatedAt: -1 });
+    const productsService = await ProductService.find({
+      location: location._id,
+    }).sort({ updatedAt: -1 });
     // const productsService = await ProductService.aggregate([
     //   { $sort: { createdAt: -1 } },
     //   {

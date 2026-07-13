@@ -382,6 +382,7 @@ export const adminDashboard = async (req, res) => {
       complaints,
       allComplaints,
       locationProduct,
+      locationService,
       productDashboard,
       serviceDashboard,
     ] = await Promise.all([
@@ -393,6 +394,7 @@ export const adminDashboard = async (req, res) => {
       ]),
 
       Location.find(clientFilter).select("product"),
+      Location.find(clientFilter).select("service"),
 
       Location.aggregate([
         locationMatch,
@@ -452,6 +454,7 @@ export const adminDashboard = async (req, res) => {
       Open: "open",
       "In Progress": "inProgress",
       Close: "closed",
+      closeReq: "closeReq",
       reopenCount: "Reopened complaints",
     };
 
@@ -463,6 +466,7 @@ export const adminDashboard = async (req, res) => {
 
           if (status === "Open") acc.open++;
           else if (status === "In Progress") acc.inProgress++;
+          else if (status === "Close Req") acc.closeReq++;
           else if (status === "Close") acc.closed++;
 
           acc.reopenCount += reopenCount;
@@ -473,8 +477,9 @@ export const adminDashboard = async (req, res) => {
         {
           total: 0,
           open: 0,
-          inProgress: 0,
+          closeReq: 0,
           closed: 0,
+          inProgress: 0,
           reopenCount: 0,
         },
       );
@@ -498,17 +503,20 @@ export const adminDashboard = async (req, res) => {
           complaints: 0,
           regulars: 0,
           open: 0,
+          closeReq: 0,
           inProgress: 0,
           closed: 0,
           reopenCount: 0,
-
-          productDone: 0,
-          productPending: 0,
-          productMissed: 0,
-
-          regularDone: 0,
-          regularPending: 0,
-          regularMissed: 0,
+          product: {
+            Done: 0,
+            Pending: 0,
+            Missed: 0,
+          },
+          regular: {
+            Done: 0,
+            Pending: 0,
+            Missed: 0,
+          },
         };
       }
 
@@ -525,18 +533,19 @@ export const adminDashboard = async (req, res) => {
 
           switch (schedule.status?.trim()) {
             case "Done":
-              month.productDone++;
+              month.product.Done++;
               break;
             case "Pending":
-              month.productPending++;
+              month.product.Pending++;
               break;
             case "Missed":
-              month.productMissed++;
+              month.product.Missed++;
               break;
           }
         });
       });
-
+    });
+    locationService.forEach((location) => {
       // Regular Services
       location.service?.forEach((service) => {
         service.schedule?.forEach((schedule) => {
@@ -546,13 +555,13 @@ export const adminDashboard = async (req, res) => {
 
           switch (schedule.status?.trim()) {
             case "Done":
-              month.regularDone++;
+              month.regular.Done++;
               break;
             case "Pending":
-              month.regularPending++;
+              month.regular.Pending++;
               break;
             case "Missed":
-              month.regularMissed++;
+              month.regular.Missed++;
               break;
           }
         });
@@ -569,11 +578,12 @@ export const adminDashboard = async (req, res) => {
           case "Open":
             month.open++;
             break;
-
           case "In Progress":
             month.inProgress++;
             break;
-
+          case "Close Req":
+            month.closeReq++;
+            break;
           case "Close":
             month.closed++;
             break;
@@ -586,13 +596,13 @@ export const adminDashboard = async (req, res) => {
     });
 
     // Convert untouched values (0) to null
-    Object.values(monthlyMap).forEach((month) => {
-      Object.keys(month).forEach((key) => {
-        if (key !== "month" && month[key] === 0) {
-          month[key] = null;
-        }
-      });
-    });
+    // Object.values(monthlyMap).forEach((month) => {
+    //   Object.keys(month).forEach((key) => {
+    //     if (key !== "month" && month[key] === 0) {
+    //       month[key] = null;
+    //     }
+    //   });
+    // });
 
     const monthlyData = Object.entries(monthlyMap)
       .sort(([a], [b]) => a.localeCompare(b))

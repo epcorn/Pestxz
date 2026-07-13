@@ -14,7 +14,7 @@ const Clients = () => {
 
   const { data, isLoading, isFetching, error } = useAllClientsQuery();
   const [deleteClient, { isLoading: deleteLoading }] = useDeleteClientMutation();
-
+  
   const handleDelete = async () => {
     try {
       await deleteClient(isModalOpen.delete.id).unwrap();
@@ -30,7 +30,7 @@ const Clients = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-0 md:px-3 lg:px-5 py-6">
-      <Headers header={"Client Registry"} user={user}/>
+      <Headers header={"Client Registry"} user={user} />
 
       <NewClientModal />
       {(isLoading || isFetching) ? (

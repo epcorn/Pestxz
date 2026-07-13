@@ -36,7 +36,7 @@ const SingleLocation = () => {
   const { id } = useParams();
   const { user, isModalOpen } = useSelector((store) => store.helper);
   const [regular, setRegular] = useState(false);
-  const [toggleLists, setToggleLists] = useState("")
+  const [toggleLists, setToggleLists] = useState("");
   const dispatch = useDispatch();
   const [show, setShow] = useState(false);
 

@@ -297,14 +297,36 @@ export const removeOldQr = async (url) => {
 };
 
 // GENERATE SCHEDULE
-export const generateSchedule = (start, end, frequency) => {
+export const generateSchedule = (start, end, frequency, preffDay) => {
+  const dayMap = {
+    sunday: 0,
+    monday: 1,
+    tuesday: 2,
+    wednesday: 3,
+    thursday: 4,
+    friday: 5,
+    saturday: 6,
+  };
+
   const today = new Date();
   const schedule = [];
   const freq = (frequency || "").toLowerCase().trim();
+  const targetDayStr = (preffDay || "").toLowerCase().trim();
 
   let current = new Date(start);
   let endDate = new Date(end);
+
+  // If start date is in the past, adjust it to today
   current = today < current ? current : today;
+
+  // --- PREFERRED DAY LOGIC ---
+  // If a valid preferred day is passed, jump 'current' forward to that weekday
+  if (targetDayStr in dayMap) {
+    const targetDayNum = dayMap[targetDayStr];
+    const currentDayNum = current.getDay();
+    const daysToAdd = (targetDayNum - currentDayNum + 7) % 7;
+    current.setDate(current.getDate() + daysToAdd);
+  }
 
   while (current <= endDate) {
     schedule.push({
@@ -312,6 +334,7 @@ export const generateSchedule = (start, end, frequency) => {
       status: "Pending",
       completed: false,
     });
+
     const next = new Date(current);
 
     switch (freq) {
@@ -319,84 +342,107 @@ export const generateSchedule = (start, end, frequency) => {
         next.setDate(next.getDate() + 1);
         break;
 
-      // EVERY 2 DAYS
       case "alternate days":
         next.setDate(next.getDate() + 2);
         break;
 
-      // 2 TIMES IN WEEK
       case "twice a week":
         next.setDate(next.getDate() + 3);
         break;
 
-      // 3 TIMES IN WEEK
       case "thrice a week":
         next.setDate(next.getDate() + 2);
         break;
 
-      // ONCE EVERY 7 DAYS
       case "weekly":
         next.setDate(next.getDate() + 7);
         break;
 
-      // EVERY 15 DAYS
       case "fortnightly":
       case "bi-weekly":
         next.setDate(next.getDate() + 14);
         break;
 
-      // 2 SERVICES IN MONTH
       case "twice monthly":
         next.setDate(next.getDate() + 15);
         break;
 
-      // 3 SERVICES IN MONTH
       case "thrice a month":
         next.setDate(next.getDate() + 10);
         break;
 
-      // EVERY MONTH
       case "monthly":
+        // Reset to day 1 first to prevent calendar month-skipping overflow bugs
+        const currentDay = next.getDate();
+        next.setDate(1);
         next.setMonth(next.getMonth() + 1);
+        next.setDate(currentDay);
         break;
 
-      // EVERY 2 MONTHS
       case "alternate monthly":
+        const altDay = next.getDate();
+        next.setDate(1);
         next.setMonth(next.getMonth() + 2);
+        next.setDate(altDay);
         break;
 
-      // EVERY 3 MONTHS
       case "quarterly":
+        const qDay = next.getDate();
+        next.setDate(1);
         next.setMonth(next.getMonth() + 3);
+        next.setDate(qDay);
         break;
 
-      // EVERY 6 MONTHS
       case "half yearly":
+        const hDay = next.getDate();
+        next.setDate(1);
         next.setMonth(next.getMonth() + 6);
+        next.setDate(hDay);
         break;
 
       case "once":
       case "one time":
-        current = new Date(end);
-        current.setDate(current.getDate() + 1);
+        // Fixed: break the loop safely without mutating current out of sync
+        next.setDate(endDate.getDate() + 1);
         break;
 
-      // 3 SERVICES IN 4 MONTHS // approx every 40 days
       case "3 services once in 4 month":
         next.setDate(next.getDate() + 40);
         break;
 
-      // 2 SERVICES IN 6 MONTHS // approx every 90 days
       case "2 services once in 6 month":
         next.setDate(next.getDate() + 90);
         break;
+
       case "yearly":
         next.setFullYear(next.getFullYear() + 1);
         break;
 
       default:
+        const dDay = next.getDate();
+        next.setDate(1);
         next.setMonth(next.getMonth() + 1);
+        next.setDate(dDay);
         break;
+    }
+
+    // --- RE-ALIGN PREFERRED DAY AFTER MONTHLY/YEARLY INCREMENTS ---
+    // If adding a month shifted the day off Friday, snap it back to Friday
+    if (
+      targetDayStr in dayMap &&
+      [
+        "monthly",
+        "alternate monthly",
+        "quarterly",
+        "half yearly",
+        "yearly",
+        "default",
+      ].includes(freq)
+    ) {
+      const targetDayNum = dayMap[targetDayStr];
+      const nextDayNum = next.getDay();
+      const adjustment = (targetDayNum - nextDayNum + 7) % 7;
+      next.setDate(next.getDate() + adjustment);
     }
 
     current = next;
@@ -411,8 +457,8 @@ export const toArray = (val) => {
   return [val];
 };
 
-export const buildSchedule = (contractStart, contractEnd, frequency) =>
-  generateSchedule(contractStart, contractEnd, frequency).map((d) => ({
+export const buildSchedule = (contractStart, contractEnd, frequency, day) =>
+  generateSchedule(contractStart, contractEnd, frequency, day).map((d) => ({
     date: d.date,
     completed: d.completed,
     status: d.status,
@@ -450,7 +496,7 @@ export const formatServices = (
     const schedule =
       old?.schedule?.length && old.frequency === service.frequency
         ? old.schedule
-        : buildSchedule(contractStart, contractEnd, service.frequency);
+        : buildSchedule(contractStart, contractEnd, service.frequency, day);
 
     return {
       serviceId: service.serviceId,

@@ -6,13 +6,9 @@ const scheduleItemSchema = new mongoose.Schema(
     completed: { type: Boolean, default: false },
     status: { type: String, default: "" },
     completedAt: { type: Date, default: null },
-    completedBy: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      default: null,
-    },
+    completedBy: { type: String, default: null },
   },
-  { _id: false }, // schedule entries don't need their own _id
+  { _id: false },
 );
 const productEntrySchema = new mongoose.Schema({
   productId: { type: mongoose.Schema.Types.ObjectId, ref: "Product" },

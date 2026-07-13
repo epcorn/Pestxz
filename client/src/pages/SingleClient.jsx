@@ -234,7 +234,7 @@ const SingleClient = () => {
                     Services/ [Products]
                   </th>
                   <th className="font-bold text-center border-neutral-500 border-2 w-28">
-                    QR Codes
+                    Location Qr/ Product Qr
                   </th>
                   <th className="font-bold max-w-25 text-center border-neutral-500 border-2 px-2">
                     Action
@@ -277,12 +277,26 @@ const SingleClient = () => {
 
                     </td>
                     <td className="border-r font-normal text-center border-neutral-500">
-                      <Button
-                        label={<span className="flex items-center gap-1"><PiDownloadSimpleBold /> {location?.qrCount}</span>}
-                        small
-                        height="h-7"
-                        onClick={() => handleQrDownload(location?._id, location)}
-                      />
+                      <div className="flex justify-center items-center">
+                        <Button
+                          label={<span className="flex items-center gap-1"><PiDownloadSimpleBold /> {location?.qrCount}</span>}
+                          small
+                          height="h-7"
+                          onClick={() => handleQrDownload(location?._id, location)}
+                        />
+                        /
+                        <div className={`${location.product.length > 0 ? "" : "opacity-50"}`}>
+                          <Button
+                            label={<span className="flex items-center gap-1"><PiDownloadSimpleBold /> {`~`}</span>}
+                            small
+                            height="h-7"
+                            onClick={() => { dispatch(toggleModal({ name: `${location._id}_product`, status: true })) }}
+                          />
+                        </div>
+                        {isModalOpen[`${location._id}_product`] && location.product.length > 0 &&
+                          <ProductQrModal data={location?.product} dispatch={dispatch} toggleModal={toggleModal} modalKey={`${location._id}_product`} />
+                        }
+                      </div>
                     </td>
                     <td className="flex items-center justify-center h-9 space-x-3 font-normal text-center border-neutral-500">
                       <button
@@ -313,3 +327,27 @@ const SingleClient = () => {
   );
 };
 export default SingleClient;
+
+
+function ProductQrModal({ data, dispatch, toggleModal, modalKey }) {
+  return (
+    <div className="fixed inset-0 bg-black/30 h-full w-full z-50 content-center">
+      <div className="bg-white p-3 max-w-md mx-auto ">
+        <h3 className="text-lg font-semibold text-center mx-auto my-2 mb-4 border-b flex items-center justify-between"><span>Products Qr Download</span> <span className="text-red-600 outline inline-block w-5 h-5 leading-none rounded-full text-sm content-center " onClick={() => dispatch(toggleModal({ name: modalKey, status: false }))}>X</span></h3>
+        {data?.map((d, i) => (
+          <div key={d._id} className="grid grid-cols-5 items-center">
+            <p className="">{i + 1}</p>
+            <p className="col-span-2">{d.productName}</p>
+            <p>{d.serialNo}</p>
+            <Button
+              label={<span className="flex items-center gap-1"><PiDownloadSimpleBold /> 0</span>}
+              small
+              height="h-7"
+              onClick={() => handleQrDownload(d?._id, d)}
+            />
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}

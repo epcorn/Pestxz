@@ -183,7 +183,7 @@ export const MONGOURL =
     : process.env.MONGO_LOCAL;
 
 // createAdmin();
-// addAdminsjson()   // do not run this if not required
+
 autoMarkMissed()
 const connectDB = async () => {
   try {

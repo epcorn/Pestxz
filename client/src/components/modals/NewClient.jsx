@@ -12,10 +12,13 @@ import { toggleModal } from "../../redux/helperSlice";
 import FormModal from "./FormModal";
 import { endDateList, timeList } from "../../utils/constData";
 
+const prefferedDay = [{ label: "Sunday", value: "Sunday" }, { label: "Monday", value: "Monday" }, { label: "Tuesday", value: "Tuesday" }, { label: "Wednesday", value: "Wednesday" }, { label: "Thursday", value: "Thursday" }, { label: "Friday", value: "Friday" }, { label: "Saturday", value: "Saturday" },];
+
 const calculateEndDate = (startDate, months) => {
   if (!startDate || !months) return "";
   const date = new Date(startDate);
   const totalMonths = parseInt(months, 10);
+
 
   const computeEndDate = new Date(date.getFullYear(), date.getMonth() + totalMonths, 0);
 
@@ -56,7 +59,7 @@ const NewClient = ({ update = false, id, clientDetails }) => {
   const servicePeriod = watch("servicePeriod");
   const endDate = calculateEndDate(startDate, servicePeriod);
 
-  
+
   useEffect(() => {
     if (clientDetails) {
       reset({
@@ -169,13 +172,23 @@ const NewClient = ({ update = false, id, clientDetails }) => {
         />
       </div>
 
-      <InputRow
+      {/* <InputRow
         label="Preferred Day"
         id="prefDay"
         errors={errors}
         register={register}
         required={false}
         disabled={clientDetails}
+      /> */}
+      {/* prefDay */}
+      <InputSelect
+        label={"Preferred Day"}
+        value={watch("prefDay") ? { label: watch("prefDay"), value: watch("prefDay") } : null}
+        onChange={val => setValue("prefDay", val?.value || "")}
+        options={prefferedDay}
+        disable={clientDetails}
+        required={false}
+        isClearable
       />
 
       <InputSelect
