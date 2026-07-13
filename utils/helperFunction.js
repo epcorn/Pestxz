@@ -156,12 +156,12 @@ export const productQrCodeGenerator = async ({
   }
 };
 
-productQrCodeGenerator({
-  floor: "1st",
-  link: "wwww.link.com",
-  location: "room class = details >Location",
-  serialNo: "RBC-2026-004",
-});
+// productQrCodeGenerator({
+//   floor: "1st",
+//   link: "wwww.link.com",
+//   location: "room class = details >Location",
+//   serialNo: "RBC-2026-004",
+// });
 
 // for converting qr.jpg to svg
 export const qrCodeGeneratorSVG = async ({ link, floor, location }) => {
@@ -307,7 +307,7 @@ export const generateSchedule = (start, end, frequency, preffDay) => {
     friday: 5,
     saturday: 6,
   };
-console.log(preffDay)
+  console.log(preffDay);
   const today = new Date();
   const schedule = [];
   const freq = (frequency || "").toLowerCase().trim();
@@ -400,7 +400,6 @@ console.log(preffDay)
         next.setDate(hDay);
         break;
 
-      case "once":
       case "one time":
         // Fixed: break the loop safely without mutating current out of sync
         next.setDate(endDate.getDate() + 1);

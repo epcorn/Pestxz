@@ -10,7 +10,7 @@ function NewDashboard() {
   return (
     <>
       {user.role === "ClientAdmin" && <ClientDashboard />}
-      {user.role === "Admin" && <AdminDashboard />}
+      {(user.role === "Admin" || user.role === "BranchAdmin") && <AdminDashboard />}
       {user.role === "Operator" && <OperatorDashboard />}
     </>
   )

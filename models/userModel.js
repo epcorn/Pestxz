@@ -91,6 +91,7 @@ export const createAdmin = async () => {
       password: password,
       role: role,
       type: type,
+      phone: phone,
       department: department,
       rights: rights,
     });

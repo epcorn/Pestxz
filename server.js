@@ -184,7 +184,7 @@ export const MONGOURL =
 
 // createAdmin();
 
-autoMarkMissed()
+autoMarkMissed();
 const connectDB = async () => {
   try {
     await mongoose

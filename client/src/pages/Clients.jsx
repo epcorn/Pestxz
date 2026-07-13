@@ -14,7 +14,7 @@ const Clients = () => {
 
   const { data, isLoading, isFetching, error } = useAllClientsQuery();
   const [deleteClient, { isLoading: deleteLoading }] = useDeleteClientMutation();
-  
+
   const handleDelete = async () => {
     try {
       await deleteClient(isModalOpen.delete.id).unwrap();
@@ -29,7 +29,7 @@ const Clients = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-0 md:px-3 lg:px-5 py-6">
+    <div className="max-w-7xl mx-auto px-0 md:px-3 lg:px-5 pb-6">
       <Headers header={"Client Registry"} user={user} />
 
       <NewClientModal />
@@ -53,37 +53,37 @@ const Clients = () => {
           </div>
 
           {/* ELASTIC FLEX SECTIONS / AUTOMATED MOBILE STACK CARD GRID */}
-          <div className="divide-y divide-neutral-200">
+          <div className="divide-y divide-neutral-700">
             {data?.map((client) => (
               <div
                 key={client._id}
                 className="flex flex-col md:flex-row md:items-center py-4 px-4 text-sm text-neutral-700 hover:bg-neutral-50 transition-colors gap-3 md:gap-4"
               >
                 {/* A. Client Name Block */}
-                <div className="w-full md:w-56 flex justify-between md:block items-center shrink-0">
-                  <span className="md:hidden text-xs font-semibold text-neutral-400 uppercase">Client Name</span>
-                  <span className="font-semibold text-neutral-900 md:font-normal">{client.name}</span>
+                <div className="w-full md:w-56 flex flex-col md:block shrink-0">
+                  <span className="md:hidden text-xs font-bold underline text-black uppercase">Client Name</span>
+                  <span className="font-semibold text-neutral-500 ml-3 md:font-bold">{client.name}</span>
                 </div>
 
                 {/* B. Dynamic Auto Wrapping Address Column */}
                 <div className="w-full flex-1 flex flex-col md:block items-start justify-between min-w-0">
-                  <span className="md:hidden text-xs font-semibold text-neutral-400 uppercase mb-0.5">Address</span>
-                  <p className="break-words text-neutral-600 text-left w-full text-xs md:text-sm line-clamp-2 md:line-clamp-none" title={client.address}>
+                  <span className="md:hidden text-xs font-bold underline text-black uppercase">Address</span>
+                  <p className="break-words text-neutral-600 font-bold text-left ml-3 w-full text-xs md:text-sm line-clamp-2 md:line-clamp-none" title={client.address}>
                     {client.address}
                   </p>
                 </div>
 
                 {/* C. Monospaced Minimalist Contract Row */}
-                <div className="w-full md:w-30 flex justify-between md:block md:text-center items-center shrink-0">
-                  <span className="md:hidden text-xs font-semibold text-neutral-400 uppercase">Contract No</span>
-                  <span className="font-mono text-xs md:text-sm bg-neutral-50 md:bg-transparent px-2 py-0.5 md:p-0 rounded border border-neutral-100 md:border-none">
+                <div className="w-full md:w-30 flex flex-col md:block md:text-center shrink-0">
+                  <span className="md:hidden text-xs font-bold text-black uppercase">Contract No</span>
+                  <span className="font-mono text-xs md:text-sm bg-neutral-50 md:bg-transparent px-2 py-0.5 md:p-0 rounded border border-neutral-300 ml-3 md:border-none w-fit ">
                     {client.contractNo || "—"}
                   </span>
                 </div>
 
 
                 <div className="w-full md:w-44 flex justify-between md:block md:text-center items-center shrink-0 pt-2.5 md:pt-0 border-t md:border-none border-neutral-100">
-                  <span className="md:hidden text-xs font-semibold text-neutral-400 uppercase">Action</span>
+                  <span className="md:hidden text-xs font-bold text-black uppercase">Action</span>
                   <div className="flex justify-start md:justify-center items-center gap-2">
                     {client.name !== "EPCORN" ? (
                       <>

@@ -151,7 +151,7 @@ const Users = () => {
                         <td className="px-5 py-3.5 text-gray-500">
                           {item?.type === "ClientEmployee"
                             ? item?.client?.name
-                            : "Express Employee"}
+                            : "Employee"}
                         </td>
                       )}
 

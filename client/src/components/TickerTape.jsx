@@ -22,6 +22,7 @@ function TickerTape() {
   const temp = runnerData?.data?.environment?.temp;
   const humidity = runnerData?.data?.environment?.humidity;
   const pestData = runnerData?.data?.pests || [];
+  const { rain, clouds } = runnerData?.data?.environment || {}
 
   if (runnerLoading || !runnerData) {
     return (
@@ -37,7 +38,7 @@ function TickerTape() {
       {/* Weather Info Section */}
       <div className="flex items-center gap-3 bg-slate-800 text-slate-200 h-full px-3 text-[10px] font-semibold border-r border-slate-700/60 shrink-0 tracking-wide font-mono">
         <p className="whitespace-nowrap flex items-center gap-1">
-          <img src="/rain.gif" className='h-full w-4 rounded-full overflow-hidden' alt="" />
+          <img src={rain > 2 ? "/rain.gif" : "/cloudy.gif"} className='h-full w-4 rounded-full overflow-hidden' alt="" />
           <span className="text-amber-400 hidden">☀️</span> {Math.round(temp)}°C
         </p>
         <p className="whitespace-nowrap flex items-center gap-1">

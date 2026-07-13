@@ -27,7 +27,7 @@ const navList = [
     icon: <BsBarChartFill className="w-6 h-6 " />,
     name: "Dashboard",
     to: "/stats",
-    role: ["Admin", "ClientAdmin", "Operator"],
+    role: ["Admin", "ClientAdmin", "Operator", "BranchAdmin"],
   },
   {
     icon: <FaBuilding className="w-6 h-6" />,

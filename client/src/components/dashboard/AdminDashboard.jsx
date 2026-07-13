@@ -111,7 +111,6 @@ function AdminDashboard() {
       scheduleCount: nestedToScheduleCount(activeMonth?.regular),
     };
 
-  console.log(adminDash?.summary)
   const prObj = Object.fromEntries(
     (productsView?.scheduleCount ?? []).map((p) => [prMapped[p.label], p.count])
   );

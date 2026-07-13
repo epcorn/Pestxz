@@ -49,7 +49,7 @@ const NewClient = ({ update = false, id, clientDetails }) => {
       startDate: "",
       servicePeriod: "",
       endDate: "",
-
+      prefToggler: "Daily",
       adminName: "",
       adminPass: "",
     },
@@ -58,7 +58,6 @@ const NewClient = ({ update = false, id, clientDetails }) => {
   const startDate = watch("startDate");
   const servicePeriod = watch("servicePeriod");
   const endDate = calculateEndDate(startDate, servicePeriod);
-
 
   useEffect(() => {
     if (clientDetails) {
@@ -94,8 +93,16 @@ const NewClient = ({ update = false, id, clientDetails }) => {
       toast.error(error?.data?.msg || error.error);
     }
   };
+  const prefTogler = watch("prefToggler")
 
   const today = new Date().toLocaleDateString("en-CA");
+
+  useEffect(() => {
+    if (prefTogler !== "Other") {
+      setValue("prefDay", []),
+        setValue("prefTime", "")
+    }
+  }, [prefTogler, setValue])
 
   const formBody = (
     <div className="grid grid-cols-2 gap-x-3 pb-5">
@@ -172,32 +179,37 @@ const NewClient = ({ update = false, id, clientDetails }) => {
         />
       </div>
 
-      {/* <InputRow
-        label="Preferred Day"
-        id="prefDay"
-        errors={errors}
-        register={register}
-        required={false}
-        disabled={clientDetails}
-      /> */}
-      {/* prefDay */}
+      <div className="grid grid-cols-3 gap-3 ml-1 col-span-2 mt-2">
+        {['Daily', 'Alternate Days', "Other"].map((d) => (
+          <div key={d} className="flex gap-2 items-center outline w-fit px-2 rounded mx-auto *:cursor-pointer">
+            <label htmlFor={d}>{d}</label>
+            <input type="radio" value={d} {...register("prefToggler")} id={d} />
+          </div>
+        ))}
+      </div>
+
       <InputSelect
-        label={"Preferred Day"}
-        value={watch("prefDay") ? { label: watch("prefDay"), value: watch("prefDay") } : null}
-        onChange={val => setValue("prefDay", val?.value || "")}
+        label={"Preferred Day (max>3)"}
+        value={(Array.isArray(watch("prefDay")) ? watch("prefDay") : []).map(day => ({ label: day, value: day }))}
+        onChange={(val) => {
+          const values = (val || []).map(opt => opt.value);
+          if (values.length > 3) return;
+          setValue("prefDay", values)
+        }}
         options={prefferedDay}
-        disable={clientDetails}
+        disable={clientDetails || prefTogler !== "Other"}
         required={false}
+        isMulti={true}
         isClearable
       />
 
       <InputSelect
         label="Preferred Time"
         value={watch("prefTime") ? { label: watch("prefTime"), value: watch("prefTime") } : null}
-        onChange={(val) => setValue("prefTime", val?.value || "")}
+        onChange={val => setValue("prefTime", val?.value || "")}
         options={timeList}
         required={false}
-        disable={clientDetails}
+        disable={clientDetails || prefTogler !== "Other"}
         isClearable
       />
     </div>

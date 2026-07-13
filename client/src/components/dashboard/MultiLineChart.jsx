@@ -41,12 +41,12 @@ const keyMapping = {
 }
 
 function MultiLineChart({ values = [], selectedMonth, admin = [], toggle }) {
-
+  // console.log(values)
   // --- 1. VALUES CHART CONFIGURATION ---
   const valuesLabels = values?.map(item => {
     const text = item.month.split(" ") || ''
-    const text1 = text[0].slice(0, 3)
-    const text2 = text[1].slice(2, 4)
+    const text1 = text?.[0]?.slice(0, 3)
+    const text2 = text?.[1]?.slice(2, 4)
     return `${text1}-${text2}`
   });
 
