@@ -71,15 +71,23 @@ const NewClient = ({ update = false, id, clientDetails }) => {
         servicePeriod: clientDetails.servicePeriod || "",
         adminName: clientDetails.adminName || "",
         adminPass: "",
-        prefDay: clientDetails.prefDay || "",
+        prefDay: clientDetails.prefDay || [],
+        prefTime: clientDetails.prefTime || "",
+        prefToggler: clientDetails.prefToggler
+          || (clientDetails.prefDay?.length ? "Other" : "Daily"),
       });
     }
   }, [clientDetails, reset]);
 
   const submit = async (data) => {
-    console.log("cant click")
+
     try {
-      const payload = { ...data, endDate };
+      const payload = {
+        ...data, endDate,
+        prefDay: data.prefToggler === "Other" ? data.prefDay : [],
+        prefTime: data.prefToggler === "Other" ? data.prefTime : ""
+      };
+
       let res;
       if (update) {
         res = await updateClient({ id, data: payload }).unwrap();
@@ -180,6 +188,7 @@ const NewClient = ({ update = false, id, clientDetails }) => {
       </div>
 
       <div className="grid grid-cols-3 gap-3 ml-1 col-span-2 mt-2">
+        <h3 className="col-span-3 font-semibold text-gray-800">Select Preff Day Category</h3>
         {['Daily', 'Alternate Days', "Other"].map((d) => (
           <div key={d} className="flex gap-2 items-center outline w-fit px-2 rounded mx-auto *:cursor-pointer">
             <label htmlFor={d}>{d}</label>
@@ -187,31 +196,33 @@ const NewClient = ({ update = false, id, clientDetails }) => {
           </div>
         ))}
       </div>
+      {prefTogler === "Other" && <>
+        <InputSelect
+          label={"Day (max>3)"}
+          value={(Array.isArray(watch("prefDay")) ? watch("prefDay") : []).map(day => ({ label: day, value: day }))}
+          onChange={(val) => {
+            const values = (val || []).map(opt => opt.value);
+            if (values.length > 3) return;
+            setValue("prefDay", values)
+          }}
+          options={prefferedDay}
+          disable={clientDetails || prefTogler !== "Other"}
+          required={false}
+          isMulti={true}
+          isClearable
+        />
 
-      <InputSelect
-        label={"Preferred Day (max>3)"}
-        value={(Array.isArray(watch("prefDay")) ? watch("prefDay") : []).map(day => ({ label: day, value: day }))}
-        onChange={(val) => {
-          const values = (val || []).map(opt => opt.value);
-          if (values.length > 3) return;
-          setValue("prefDay", values)
-        }}
-        options={prefferedDay}
-        disable={clientDetails || prefTogler !== "Other"}
-        required={false}
-        isMulti={true}
-        isClearable
-      />
-
-      <InputSelect
-        label="Preferred Time"
-        value={watch("prefTime") ? { label: watch("prefTime"), value: watch("prefTime") } : null}
-        onChange={val => setValue("prefTime", val?.value || "")}
-        options={timeList}
-        required={false}
-        disable={clientDetails || prefTogler !== "Other"}
-        isClearable
-      />
+        <InputSelect
+          label="Preferred Time"
+          value={watch("prefTime") ? { label: watch("prefTime"), value: watch("prefTime") } : null}
+          onChange={val => setValue("prefTime", val?.value || "")}
+          options={timeList}
+          required={false}
+          disable={clientDetails || prefTogler !== "Other"}
+          isClearable
+        />
+      </>
+      }
     </div>
   );
 

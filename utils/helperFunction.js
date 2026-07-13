@@ -307,11 +307,40 @@ export const generateSchedule = (start, end, frequency, preffDay) => {
     friday: 5,
     saturday: 6,
   };
-  console.log(preffDay);
+
   const today = new Date();
   const schedule = [];
   const freq = (frequency || "").toLowerCase().trim();
-  const targetDayStr = (preffDay || "").toLowerCase().trim();
+
+  // --- FREQUENCIES THAT NEVER USE PREFERRED DAYS ---
+  const NO_PREF_DAY_FREQUENCIES = ["daily", "alternate days"];
+  const usesPrefDay = !NO_PREF_DAY_FREQUENCIES.includes(freq);
+
+  // --- NORMALIZE PREFERRED DAYS (accepts a single string or an array, max 3) ---
+  const rawDays = usesPrefDay
+    ? (Array.isArray(preffDay) ? preffDay : (preffDay ? [preffDay] : []))
+    : [];
+  const targetDayNums = [
+    ...new Set(
+      rawDays
+        .map((d) => (d || "").toLowerCase().trim())
+        .filter((d) => d in dayMap)
+        .map((d) => dayMap[d])
+    ),
+  ].slice(0, 3);
+
+  // Days to add to `date` to reach the nearest of targetDayNums
+  // (0 if date already matches one of them, or if none apply)
+  const daysToNearestTarget = (date) => {
+    if (targetDayNums.length === 0) return 0;
+    const currentDayNum = date.getDay();
+    let min = 7;
+    for (const targetDayNum of targetDayNums) {
+      const diff = (targetDayNum - currentDayNum + 7) % 7;
+      if (diff < min) min = diff;
+    }
+    return min === 7 ? 0 : min;
+  };
 
   let current = new Date(start);
   let endDate = new Date(end);
@@ -320,13 +349,8 @@ export const generateSchedule = (start, end, frequency, preffDay) => {
   current = today < current ? current : today;
 
   // --- PREFERRED DAY LOGIC ---
-  // If a valid preferred day is passed, jump 'current' forward to that weekday
-  if (targetDayStr in dayMap) {
-    const targetDayNum = dayMap[targetDayStr];
-    const currentDayNum = current.getDay();
-    const daysToAdd = (targetDayNum - currentDayNum + 7) % 7;
-    current.setDate(current.getDate() + daysToAdd);
-  }
+  // Jump 'current' forward to the nearest of the preferred days, if applicable
+  current.setDate(current.getDate() + daysToNearestTarget(current));
 
   while (current <= endDate) {
     schedule.push({
@@ -371,39 +395,37 @@ export const generateSchedule = (start, end, frequency, preffDay) => {
         next.setDate(next.getDate() + 10);
         break;
 
-      case "monthly":
-        // Reset to day 1 first to prevent calendar month-skipping overflow bugs
+      case "monthly": {
         const currentDay = next.getDate();
         next.setDate(1);
         next.setMonth(next.getMonth() + 1);
         next.setDate(currentDay);
         break;
+      }
 
-      case "alternate monthly":
+      case "alternate monthly": {
         const altDay = next.getDate();
         next.setDate(1);
         next.setMonth(next.getMonth() + 2);
         next.setDate(altDay);
         break;
+      }
 
-      case "quarterly":
+      case "quarterly": {
         const qDay = next.getDate();
         next.setDate(1);
         next.setMonth(next.getMonth() + 3);
         next.setDate(qDay);
         break;
+      }
 
-      case "half yearly":
+      case "half yearly": {
         const hDay = next.getDate();
         next.setDate(1);
         next.setMonth(next.getMonth() + 6);
         next.setDate(hDay);
         break;
-
-      case "one time":
-        // Fixed: break the loop safely without mutating current out of sync
-        next.setDate(endDate.getDate() + 1);
-        break;
+      }
 
       case "3 services once in 4 month":
         next.setDate(next.getDate() + 40);
@@ -417,18 +439,19 @@ export const generateSchedule = (start, end, frequency, preffDay) => {
         next.setFullYear(next.getFullYear() + 1);
         break;
 
-      default:
+      default: {
         const dDay = next.getDate();
         next.setDate(1);
         next.setMonth(next.getMonth() + 1);
         next.setDate(dDay);
         break;
+      }
     }
 
-    // --- RE-ALIGN PREFERRED DAY AFTER MONTHLY/YEARLY INCREMENTS ---
-    // If adding a month shifted the day off Friday, snap it back to Friday
+    // --- RE-ALIGN TO NEAREST PREFERRED DAY AFTER MONTHLY/YEARLY INCREMENTS ---
     if (
-      targetDayStr in dayMap &&
+      usesPrefDay &&
+      targetDayNums.length > 0 &&
       [
         "monthly",
         "alternate monthly",
@@ -438,10 +461,7 @@ export const generateSchedule = (start, end, frequency, preffDay) => {
         "default",
       ].includes(freq)
     ) {
-      const targetDayNum = dayMap[targetDayStr];
-      const nextDayNum = next.getDay();
-      const adjustment = (targetDayNum - nextDayNum + 7) % 7;
-      next.setDate(next.getDate() + adjustment);
+      next.setDate(next.getDate() + daysToNearestTarget(next));
     }
 
     current = next;

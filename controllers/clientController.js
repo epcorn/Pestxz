@@ -51,8 +51,8 @@ export const registerClient = async (req, res) => {
       endDate,
       adminName: adminName || "",
       adminPass: adminPass || "",
-      prefDay: prefDay || "",
-      prefTime: prefDay || "",
+      prefDay: Array.isArray(prefDay) ? prefDay : [],
+      prefTime: prefTime || "",
     });
 
     if (adminName)

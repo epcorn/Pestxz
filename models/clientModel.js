@@ -11,7 +11,7 @@ const clientSchema = new mongoose.Schema(
     startDate: { type: Date, required: true },
     servicePeriod: { type: String, required: true },
     endDate: { type: Date, required: true },
-    prefDay: { type: String, default: "" },
+    prefDay: { type: [String], default: [] },
     prefTime: { type: String, default: "" },
 
     adminName: { type: String },
