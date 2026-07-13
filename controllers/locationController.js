@@ -13,6 +13,7 @@ import {
   formatProducts,
   formatServices,
   generateSchedule,
+  productQrCodeGenerator,
   qrCodeGenerator,
   qrCodeGeneratorSVG,
   releaseProductCounter,
@@ -114,6 +115,12 @@ export const addLocation = async (req, res) => {
     const contractStart = new Date(client.startDate);
     const contractEnd = new Date(client.endDate);
 
+    const newLocation = await Location.create({
+      floor: capitalLetter(floor),
+      subLocation: capitalLetter(subLocation || ""),
+      location: capitalLetter(location),
+      client: client._id,
+    });
     const locationId = newLocation._id;
 
     // ── build service array ──────────────────────────────────────────
@@ -131,19 +138,12 @@ export const addLocation = async (req, res) => {
           .status(400)
           .json({ msg: "Please add at least one valid service" });
 
-      const newLocation = await Location.create({
-        floor: capitalLetter(floor),
-        subLocation: capitalLetter(subLocation || ""),
-        location: capitalLetter(location),
-        client: client._id,
-      });
-
       formattedServices = validServices.map((service) => {
         const schedule = generateSchedule(
           contractStart,
           contractEnd,
           service.frequency,
-          service.prefDay
+          client.prefDay,
         ).map((date) => ({
           date: date.date,
           completed: date.completed,
@@ -196,6 +196,7 @@ export const addLocation = async (req, res) => {
             contractStart,
             contractEnd,
             frequency,
+            client.prefDay,
           ).map((date) => ({
             date: date.date,
             completed: date.completed,
@@ -204,7 +205,7 @@ export const addLocation = async (req, res) => {
             completedBy: null,
           }));
           const serialNo = await productCounter(code);
-          const qrData = await qrCodeGenerator({
+          const qrData = await productQrCodeGenerator({
             link: `https://pestxz.com/location/${locationId}`,
             floor: newLocation.floor,
             location: `${newLocation.location}, ${newLocation.subLocation}`,
@@ -224,7 +225,7 @@ export const addLocation = async (req, res) => {
             specification,
             calibrations: calibrations ?? [],
             schedule,
-            qrLink,
+            qr: qrLink,
           };
         }),
       );

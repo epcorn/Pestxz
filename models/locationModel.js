@@ -17,6 +17,7 @@ const productEntrySchema = new mongoose.Schema({
   versionName: { type: String },
   frequency: { type: String },
   code: { type: String },
+  qr: { type: String },
   serialNo: { type: String },
   specification: { type: String },
   calibrations: [{ type: String }],

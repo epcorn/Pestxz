@@ -142,7 +142,7 @@ export const frequencies = [
   "alternate monthly",
   "quarterly",
   "half yearly",
-  "once",
+  // "once",
   "3 services once in 4 month",
   "2 services once in 6 month",
   "yearly",

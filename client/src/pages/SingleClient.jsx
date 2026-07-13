@@ -335,7 +335,7 @@ function ProductQrModal({ data, dispatch, toggleModal, modalKey }) {
       <div className="bg-white p-3 max-w-md mx-auto ">
         <h3 className="text-lg font-semibold text-center mx-auto my-2 mb-4 border-b flex items-center justify-between"><span>Products Qr Download</span> <span className="text-red-600 outline inline-block w-5 h-5 leading-none rounded-full text-sm content-center " onClick={() => dispatch(toggleModal({ name: modalKey, status: false }))}>X</span></h3>
         {data?.map((d, i) => (
-          <div key={d._id} className="grid grid-cols-5 items-center">
+          <div key={d._id} className="grid grid-cols-5 items-center" data-url={d?.qr}>
             <p className="">{i + 1}</p>
             <p className="col-span-2">{d.productName}</p>
             <p>{d.serialNo}</p>
@@ -343,7 +343,7 @@ function ProductQrModal({ data, dispatch, toggleModal, modalKey }) {
               label={<span className="flex items-center gap-1"><PiDownloadSimpleBold /> 0</span>}
               small
               height="h-7"
-              onClick={() => handleQrDownload(d?._id, d)}
+              onClick={() => saveAs(d?.qr, `QR-${d.serialNo}.jpg`)}
             />
           </div>
         ))}
