@@ -224,7 +224,6 @@ const LocationModal = ({ clientId, locationDetails }) => {
         </div>
       </div>
 
-<div></div>
       {type.includes("service") && (
         <ServiceSection
           allServices={allServices}

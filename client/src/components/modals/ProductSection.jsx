@@ -69,7 +69,7 @@ function ProductRow({ control, register, errors, setValue, index, products, allP
         )}
       </div>
       <div className="grid grid-cols-3 gap-x-2">
-<input type="hidden" {...register(`products.${index}._id`)} />
+        <input type="hidden" {...register(`products.${index}._id`)} />
         <div>
           <Controller
             name={`products.${index}.product`}
@@ -183,10 +183,10 @@ function ProductSection({ control, register, errors, setValue, products, allProd
   })
 
   return (
-    <div className="col-span-3">
+    <div className="col-span-3 bg-emerald-200 mt-2 p-2">
 
       <div className="flex justify-between items-center">
-        <h3 className="font-semibold text-lg">Select Products</h3>
+        <h3 className="font-semibold text-lg">Products</h3>
         <Button
           type="button"
           label={'Add Products'}

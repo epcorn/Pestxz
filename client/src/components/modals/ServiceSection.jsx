@@ -3,13 +3,13 @@ import { frequencies } from '../../utils/helperFunctions';
 
 function ServiceSection({ serviceReq, defaultService, allServices, setValue, watch }) {
   return (
-    <div className="col-span-3 mt-2">
-      <div className="flex items-center justify-between mb-1">
-        <h3 className="font-semibold">Service Details</h3>
+    <div className="col-span-3 mt-2 bg-blue-200">
+      <div className="flex items-center justify-between mb-1 p-2">
+        <h3 className="font-semibold">Services</h3>
 
         <button
           type="button"
-          className="border px-3 py-1 rounded"
+          className="border px-3 py-1 rounded bg-blue-800 text-white"
           onClick={() =>
             setValue("serviceReq", [...serviceReq, { ...defaultService }])
           }>
@@ -17,7 +17,7 @@ function ServiceSection({ serviceReq, defaultService, allServices, setValue, wat
         </button>
       </div>
 
-      <div className="overflow-y-auto max-h-72  bg-gray-100">
+      <div className="overflow-y-auto max-h-72  ">
         <div className="space-y-1">
           {serviceReq?.map((item, index) => {
             const selectedService = allServices.find(
@@ -27,39 +27,42 @@ function ServiceSection({ serviceReq, defaultService, allServices, setValue, wat
             const scopes = selectedService?.scopes || [];
 
             return (
-              <div key={index} className="border border-gray-400 rounded p-3 space-y-4">
+              <div key={index} className="border-2 border-gray-900 rounded p-3 space-y-4 bg-gray-200/50">
                 {/* TOP */}
                 <div className="grid md:grid-cols-3 gap-3">
                   {/* SERVICE */}
-                  <select
-                    className="border bg-white border-gray-400 rounded px-1"
-                    value={watch(`serviceReq.${index}.serviceId`) || ""}
-                    onChange={(e) => {
-                      const service = allServices.find(
-                        (s) => s._id === e.target.value,
-                      );
+                  <div className='flex gap-3'>
+                    <span className='outline w-7 h-7 text-center content-center bg-white rounded-full'>{index + 1}</span>
+                    <select
+                      className="border w-full bg-white h-10 border-gray-400 rounded px-1"
+                      value={watch(`serviceReq.${index}.serviceId`) || ""}
+                      onChange={(e) => {
+                        const service = allServices.find(
+                          (s) => s._id === e.target.value,
+                        );
 
-                      setValue(
-                        `serviceReq.${index}.serviceId`,
-                        service?._id || "",
-                      );
+                        setValue(
+                          `serviceReq.${index}.serviceId`,
+                          service?._id || "",
+                        );
 
-                      setValue(
-                        `serviceReq.${index}.serviceName`,
-                        service?.serviceName || "",
-                      );
+                        setValue(
+                          `serviceReq.${index}.serviceName`,
+                          service?.serviceName || "",
+                        );
 
-                      setValue(`serviceReq.${index}.scopes`, []);
-                    }}>
-                    <option value="">Select Service</option>
+                        setValue(`serviceReq.${index}.scopes`, []);
+                      }}>
+                      <option value="">Select Service</option>
 
-                    {allServices.map((service) => (
-                      <option key={service._id} value={service._id}>
-                        {service.serviceName}
-                      </option>
-                    ))}
-                  </select>
+                      {allServices.map((service) => (
+                        <option key={service._id} value={service._id}>
+                          {service.serviceName}
+                        </option>
+                      ))}
+                    </select>
 
+                  </div>
                   {/* FREQUENCY */}
                   <select
                     className="border bg-white border-gray-400 text-black rounded p-2 capitalize"
@@ -132,7 +135,7 @@ function ServiceSection({ serviceReq, defaultService, allServices, setValue, wat
                               }}
                             />
 
-                            <span>{scope.scopeName}</span>
+                            <span className='font-semibold'>{scope.scopeName}</span>
                           </label>
 
                           {/* CONSUMABLES */}
@@ -147,7 +150,7 @@ function ServiceSection({ serviceReq, defaultService, allServices, setValue, wat
                                 return (
                                   <div
                                     key={consumable._id}
-                                    className="grid md:grid-cols-2 gap-2 items-center">
+                                    className="grid grid-cols-2 gap-1 items-center px-5">
                                     {/* CHECKBOX */}
                                     <label className="flex items-center gap-2">
                                       <input
@@ -197,9 +200,9 @@ function ServiceSection({ serviceReq, defaultService, allServices, setValue, wat
                                     <input
                                       type="text"
                                       placeholder="Calibration"
-                                      className="border rounded p-2 disabled:opacity-35"
+                                      className="border-2 border-black rounded p-1 px-2 disabled:opacity-45 disabled:border-gray-400"
                                       disabled={!selectedConsumable}
-                                     
+
                                       value={
                                         selectedConsumable?.calibration ?? ''
                                       }
