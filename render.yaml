@@ -1,0 +1,34 @@
+services:
+  # 1. THE FRONTEND SERVICE (Vite App inside /client)
+  - type: web
+    name: backdated-frontend
+    env: static
+    plan: free
+    rootDir: ./client             # Forces Render to step into the frontend folder
+    buildCommand: npm install && npm run build
+    publishDir: ./dist            # Vite outputs build folder inside /client/dist
+    routes:
+      - type: rewrite
+        src: /*
+        dest: /index.html         # Fixes React Router refresh 404 bugs
+    envVars:
+      - key: NODE_VERSION
+        value: 20.x               # Modern Node runtime required to compile Vite v6
+
+  # 2. THE BACKEND SERVICE (Legacy Node app at Root)
+  - type: web
+    name: backdated-backend
+    env: node
+    plan: free
+    rootDir: .                    # Runs directly from your repository root
+    buildCommand: npm install
+    startCommand: node index.js   # Change index.js to your actual backend entry file
+    envVars:
+      - key: NODE_VERSION
+        value: 12.22.12           # Legacy engine for backdated Cloudinary code
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false               # Configure securely in Render Dashboard
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
