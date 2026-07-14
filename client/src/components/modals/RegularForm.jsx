@@ -11,14 +11,14 @@ import { socket } from "../../socket";
 
 const getStorageKey = (id, name) => `pestxz_saved_services_${id}_${name}`;
 
-const todayShort = () => {
-  const d = new Date();
+const todayShort = (d) => {
+  // const d = new Date();
   const day = d.getDate().toString().padStart(2, "0");
   const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
   return `${day}-${months[d.getMonth()]}`;
 };
 
-function RegularForm({ serviceData, id, type, locationName, setRegular }) {
+function RegularForm({ serviceData, id, type, locationName, setRegular, today }) {
   const { isModalOpen } = useSelector(store => store.helper);
   const dispatch = useDispatch();
   const [count, setCount] = useState({ type: "", count: 0 })
@@ -32,7 +32,7 @@ function RegularForm({ serviceData, id, type, locationName, setRegular }) {
 
   const { register, reset, setValue, getValues, watch } = useForm();
   const STORAGE_KEY = getStorageKey(id, locationName);
-  const today = todayShort();
+  const todays = todayShort(today); //before today=
 
 
   const upComing = isRegular ? serviceData.map(s =>
@@ -144,7 +144,7 @@ function RegularForm({ serviceData, id, type, locationName, setRegular }) {
 
 
   const servicesForToday = isRegular ? serviceData?.filter((ser) =>
-    ser?.schedule?.some((s) => formatShortDate(s.date) === today && !s.completed)) : serviceData;
+    ser?.schedule?.some((s) => formatShortDate(s.date) === todays && !s.completed)) : serviceData;
 
   if (isRegular && !servicesForToday?.length) {
     const allDates = upComing?.map(u => u[0]?.date).filter(Boolean) || [];
@@ -178,7 +178,7 @@ function RegularForm({ serviceData, id, type, locationName, setRegular }) {
           {serviceData.length === 0 ? <div className="text-center font-semibold my-5 bg-gray-200 ">No Services Found on Location</div> : <form className="space-y-6 bg-green-200">
             {servicesForToday?.map((ser, i) => {
               const todaySchedule = isRegular ? ser.schedule?.find(
-                (s) => formatShortDate(s.date) === today && !s.completed) : null;
+                (s) => formatShortDate(s.date) === todays && !s.completed) : null;
               return (
                 <div
                   key={i}

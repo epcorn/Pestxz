@@ -17,13 +17,13 @@ import InputRow from '../InputRow'
 
 // const storageKey = `${id}_${product.serialNo}`;
 
-function ProductServiceForm({ products, currentUser }) {
+function ProductServiceForm({ products, currentUser, today }) {
 
   const { id } = useParams()
   const [submittedIds, setSubmittedIds] = React.useState([])
   const dates = useSelector(selectDates)
 
-  const todayLocal = new Date().toLocaleDateString('sv-SE');
+  const todayLocal = today.toLocaleDateString('sv-SE');
   const queue = products?.filter(p => {
     if (submittedIds.includes(p._id)) return false;
     return p.schedule?.some(sc => {

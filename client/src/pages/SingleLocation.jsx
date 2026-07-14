@@ -39,6 +39,7 @@ const SingleLocation = () => {
   const [toggleLists, setToggleLists] = useState("");
   const dispatch = useDispatch();
   const [show, setShow] = useState(false);
+  const today = new Date()
 
   useEffect(() => {
     const handleScroll = () => {
@@ -110,7 +111,7 @@ const SingleLocation = () => {
 
           {/* ===== FLOATING STICKY SUMMARY BAR (unchanged behavior) ===== */}
           <div
-            className={`fixed z-[5] top-22 left-4 md:left-4 lg:left-60 w-[95dvw] md:w-[95dvw] lg:w-[79dvw] flex items-center gap-3 p-2 bg-slate-700 shadow-lg rounded-b-lg transition-all duration-500 origin-top ${show ? "opacity-100 scale-100 translate-y-0 pointer-events-auto" : "opacity-0 scale-95 -translate-y-4 pointer-events-none"}`}
+            className={`fixed z-[5] top-22 left-4 md:left-4 lg:left-64 w-[95dvw] md:w-[95dvw] lg:w-[79dvw] flex items-center gap-3 p-2 bg-slate-700 shadow-lg rounded-b-lg transition-all duration-500 origin-top ${show ? "opacity-100 scale-100 translate-y-0 pointer-events-auto" : "opacity-0 scale-95 -translate-y-4 pointer-events-none"}`}
           >
             {data.client && (
               <p className="px-3 py-1 bg-white text-slate-800 rounded-md text-sm font-medium whitespace-nowrap">
@@ -129,10 +130,10 @@ const SingleLocation = () => {
             {(data?.location?.service?.length > 0 || data?.location?.product?.length > 0) && (
               <div className="space-y-4">
                 {data?.location?.service?.length > 0 && (
-                  <ServiceShow services={data?.location?.service} />
+                  <ServiceShow services={data?.location?.service} today={today} />
                 )}
                 {data?.location?.product?.length > 0 && (
-                  <ProductShow products={data?.location?.product} />
+                  <ProductShow products={data?.location?.product} today={today} />
                 )}
               </div>
             )}
@@ -179,10 +180,10 @@ const SingleLocation = () => {
               />
             )}
             {(DBUser?.rights.scan_Unscheduled || user.role === "Operator") && isModalOpen.unscheduled && (
-              <UnscheduledForm existing={servicesIds} type={'raise'} locationId={data.location._id} />
+              <UnscheduledForm existing={servicesIds} type={'raise'} locationId={data.location._id} today={today} />
             )}
             {(["PestEmployee"].includes(user?.type)) && isModalOpen?.casual && (
-              <RegularForm serviceData={data?.location?.service} id={data?.location?._id} locationName={data?.location?.floor} type={'casual'} setRegular={isModalOpen?.casual} />
+              <RegularForm serviceData={data?.location?.service} id={data?.location?._id} locationName={data?.location?.floor} type={'casual'} setRegular={isModalOpen?.casual} today={today} />
             )}
 
             {/* ===== TABS ===== */}
@@ -275,7 +276,7 @@ const SingleLocation = () => {
                       <IoIosArrowDown className={`${isModalOpen?.allReg ? "rotate-180" : ""} transition-all`} />
                     </h2>
                     <div className="p-2">
-                      <ProductLists data={data?.productsService} />
+                      <ProductLists data={data?.productsService} today={today} />
                     </div>
                   </div>
                 )}
@@ -287,7 +288,7 @@ const SingleLocation = () => {
                       <IoIosArrowDown className={`${isModalOpen?.allReg ? "rotate-180" : ""} transition-all`} />
                     </h2>
                     <div className="p-2">
-                      <AllScheduleService data={data?.regularService} />
+                      <AllScheduleService data={data?.regularService} today={today} />
                     </div>
                   </div>
                 )}
@@ -299,7 +300,7 @@ const SingleLocation = () => {
                       <IoIosArrowDown className={`${isModalOpen?.allReg ? "rotate-180" : ""} transition-all`} />
                     </h2>
                     <div className="p-2">
-                      {!isLoading && <UnScheduledList work={data?.unscheduled || []} />}
+                      {!isLoading && <UnScheduledList work={data?.unscheduled || []} today={today} />}
                     </div>
                   </div>
                 )}
@@ -311,7 +312,7 @@ const SingleLocation = () => {
                       <IoIosArrowDown className={`${isModalOpen?.allCasual ? "rotate-180" : ""} transition-all`} />
                     </h2>
                     <div className="p-2">
-                      <CasualLists work={data?.casuals || []} />
+                      <CasualLists work={data?.casuals || []} today={today} />
                     </div>
                   </div>
                 )}
@@ -320,21 +321,21 @@ const SingleLocation = () => {
 
             {/* ===== PRODUCT SERVICE FORM ===== */}
             {DBUser?.rights?.scan_Scheduled && data?.location?.product?.length > 0 && (
-              <ProductServiceForm products={data?.location?.product} />
+              <ProductServiceForm products={data?.location?.product} today={today} />
             )}
 
             {/* ===== REGULAR SERVICE FORM + PREMISE HISTORY ===== */}
             {DBUser && DBUser?.rights?.scan_Scheduled && (
               <div className="space-y-6">
                 <div className="bg-neutral-50 rounded-xl border border-neutral-200 shadow-inner p-1">
-                  <RegularForm serviceData={data?.location?.service} id={data?.location?._id} locationName={data?.location?.floor} type={'regular'} setRegular={setRegular} />
+                  <RegularForm serviceData={data?.location?.service} id={data?.location?._id} locationName={data?.location?.floor} type={'regular'} setRegular={setRegular} today={today} />
                 </div>
 
                 <div className="bg-slate-500 rounded-2xl p-4">
                   <h2 className="font-bold text-lg text-white px-1 mb-2">
                     All Premise Services
                   </h2>
-                  <AllPremise />
+                  <AllPremise today={today}/>
                 </div>
               </div>
             )}

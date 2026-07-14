@@ -13,7 +13,6 @@ function ProductLists({ data }) {
 
   // const products = data.flatMap(d => d.productservices)
 
-  console.log(data)
   return (
     <section className="">
 

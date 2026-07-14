@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { compareDates, formatShortDate } from "../../utils/helperFunctions";
 
-function ServiceShow({ services }) {
+function ServiceShow({ services, today }) {
   const [expandedServiceId, setExpandedServiceId] = useState(null);
 
   return (
@@ -26,14 +26,13 @@ function ServiceShow({ services }) {
               const nextServices = schedules.filter((sc) => {
                 if (sc.completed) return false;
                 const d = new Date(sc.date);
-                const today = new Date();
                 today.setHours(0, 0, 0, 0);
                 return d >= today;
               });
 
               const isExpanded = expandedServiceId === index;
               const visibleSchedules = isExpanded ? schedules : nextServices.slice(0, 5);
-              const { nextDate, todaysDate, todaysStatus } = compareDates(schedules)
+              const { nextDate, todaysDate, todaysStatus } = compareDates(schedules, today)
 
               return (
                 <tr key={index} className="border-b border-black last:border-b-0 *:px-2 py-2">

@@ -55,7 +55,7 @@ const UserModal = ({ userDetails }) => {
 
   useEffect(() => {
     if (rawClients) {
-      const formattedClients = rawClients?.map((item) => ({
+      const formattedClients = rawClients?.clients?.map((item) => ({
         label: item.name,
         value: item._id,
       }));

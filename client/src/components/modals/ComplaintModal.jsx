@@ -6,8 +6,7 @@ import { InputRow, InputSelect } from "..";
 import { toggleModal } from "../../redux/helperSlice";
 import { useAllLocationsQuery } from "../../redux/locationSlice";
 import {
-  useNewComplaintMutation,
-  useUpdateComplaintMutation,
+  useNewComplaintMutation, useUpdateComplaintMutation,
 } from "../../redux/serviceSlice";
 import {
   clientAdminStatus,
@@ -33,9 +32,9 @@ const ComplaintModal = ({ locationId, mode = "create" }) => {
   const { isModalOpen, user } = useSelector((store) => store.helper);
 
   const { data: DBUser } = useGetSingleUserQuery(user._id, { skip: !user._id });
-  const { data: clients } = useAllClientsQuery(undefined, { skip: user.type !== "PestEmployee" });
+  const { data: clientsData } = useAllClientsQuery(undefined, { skip: user.type !== "PestEmployee" });
 
-  const clientOptions = clients?.map(c => ({ label: c.name, value: c._id }))
+  const clientOptions = clientsData.clients?.map(c => ({ label: c.name, value: c._id }))
   const [addComplaint, { isLoading: addLoading }] =
     useNewComplaintMutation();
 

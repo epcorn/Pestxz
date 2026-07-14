@@ -3,7 +3,7 @@ import { compareDates, formatShortDate } from '../../utils/helperFunctions';
 import { useDispatch } from 'react-redux';
 import { dateTransfer } from '../../redux/helperSlice';
 
-function ProductShow({ products }) {
+function ProductShow({ products, today }) {
   const dispatch = useDispatch();
 
   const [show, setShow] = React.useState({ id: "", status: false });
@@ -13,7 +13,7 @@ function ProductShow({ products }) {
     if (products?.length > 0) {
       // Find the first valid nextDate from your products list to transfer
       for (const pr of products) {
-        const { nextDate } = compareDates(pr?.schedule || []);
+        const { nextDate } = compareDates(pr?.schedule || [], today);
         if (nextDate) {
           dispatch(dateTransfer(nextDate));
           break; // Stop after transferring the relevant date
@@ -51,7 +51,7 @@ function ProductShow({ products }) {
           <tbody className="whitespace-nowrap bg-white text-sm">
             {products?.map((pr, i) => {
               const schedules = pr?.schedule || [];
-              const { todaysStatus, nextDate, todaysDate } = compareDates(schedules);
+              const { todaysStatus, nextDate, todaysDate } = compareDates(schedules, today);
 
               const isExpanded = show.id === pr.productId && show.status;
               const slicedSchedules = isExpanded ? schedules : schedules.filter(f => f.status !== "Missed" && f.status !== "Done").slice(0, 5);

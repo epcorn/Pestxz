@@ -62,8 +62,8 @@ export function decodeBase64Svg(base64String) {
   }
 }
 
-export function compareDates(schedules) {
-  const today = new Date();
+export function compareDates(schedules, today) {
+  
   today.setHours(0, 0, 0, 0);
 
   const sortedSchedules = [...schedules].sort(
