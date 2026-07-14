@@ -1,33 +1,33 @@
 services:
   # 1. THE FRONTEND SERVICE (Vite App inside /client)
   - type: web
-    name: backdated-frontend
+    name: pestxz-frontend
     env: static
     plan: free
-    rootDir: ./client             # Forces Render to step into the frontend folder
+    rootDir: ./client
     buildCommand: npm install && npm run build
-    publishDir: ./dist            # Vite outputs build folder inside /client/dist
+    publishDir: ./dist
     routes:
       - type: rewrite
         src: /*
-        dest: /index.html         # Fixes React Router refresh 404 bugs
+        dest: /index.html
     envVars:
       - key: NODE_VERSION
-        value: 20.x               # Modern Node runtime required to compile Vite v6
+        value: 20.x               # Modern Node runtime for Vite compilation
 
-  # 2. THE BACKEND SERVICE (Legacy Node app at Root)
+  # 2. THE BACKEND SERVICE (Express App at Root)
   - type: web
-    name: backdated-backend
+    name: pestxz-backend
     env: node
     plan: free
-    rootDir: .                    # Runs directly from your repository root
-    buildCommand: npm install
-    startCommand: node index.js   # Change index.js to your actual backend entry file
+    rootDir: .
+    buildCommand: npm install     # Installs backend dependencies
+    startCommand: node server.js  # Runs your main file (using node instead of nodemon)
     envVars:
       - key: NODE_VERSION
-        value: 12.22.12           # Legacy engine for backdated Cloudinary code
+        value: 20.x               # FIXED: Modern Node required for Mongoose v8, Sharp, and ES Modules
       - key: CLOUDINARY_CLOUD_NAME
-        sync: false               # Configure securely in Render Dashboard
+        sync: false
       - key: CLOUDINARY_API_KEY
         sync: false
       - key: CLOUDINARY_API_SECRET
