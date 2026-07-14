@@ -13,7 +13,7 @@ const Clients = () => {
   const dispatch = useDispatch();
   const { isModalOpen, user } = useSelector((store) => store.helper);
   const [page, setPage] = useState(1)
-  const { data, isLoading, isFetching, error } = useAllClientsQuery();
+  const { data, isLoading, isFetching, error } = useAllClientsQuery({limit:10, page:1});
   const [deleteClient, { isLoading: deleteLoading }] = useDeleteClientMutation();
   
   const handleDelete = async () => {

@@ -82,9 +82,12 @@ export const getAllClient = async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
+    const isFetchAll = limit >= 50;
 
     const [clients, totalClients] = await Promise.all([
-      Client.find().select("-adminPass -adminName").skip(skip).limit(limit),
+      isFetchAll
+        ? Client.find().select("-adminPass -adminName")
+        : Client.find().select("-adminPass -adminName").skip(skip).limit(limit),
       Client.countDocuments(),
     ]);
     if (!clients || clients.length === 0)

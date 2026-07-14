@@ -24,7 +24,7 @@ router.get("/getUnscheduledReports/:id", getUnscheduledReports)
 router.patch("/statusUnschedule/:id", statusUnscheduled)
 
 router.get("/allServices", getAllService);
-router.get("/client/:id", getAllLocations);
+router.get("/client/:id?", getAllLocations);
 router.get("/convert", convertSvgToPngBuffer);
 router.post("/add", addLocation);
 router.patch("/qr-count/:id", qrCounter);

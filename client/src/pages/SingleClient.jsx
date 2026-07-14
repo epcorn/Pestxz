@@ -20,6 +20,7 @@ import { useUpdateClientMutation } from "../redux/clientSlice";
 import { useGetSingleUserQuery } from "../redux/userSlice";
 
 const SingleClient = () => {
+  const [page, setPage] = useState(1);
   const { isModalOpen, user } = useSelector((store) => store.helper);
   const [locationDetails, setLocationDetails] = useState({});
   const [clientDetails, setClientDetails] = useState(null)
@@ -28,7 +29,7 @@ const SingleClient = () => {
   const { id } = useParams();
 
   const { data: me } = useGetSingleUserQuery(user._id, { skip: !user._id })
-  const { data, isLoading, isFetching, error } = useAllLocationsQuery({ id });
+  const { data, isLoading, isFetching, error } = useAllLocationsQuery({ id, limit: 10, page });
   const [deleteLocation, { isLoading: deleteLoading }] =
     useDeleteLocationMutation();
   const [updateClient, { isLoading: updateLoading }] =
@@ -36,13 +37,13 @@ const SingleClient = () => {
   const [qrCountInc] = useQrCounterMutation();
   const [makeQrDOCX] = useMakeQrDocxMutation();
   const [triggerBackFill, { data: backfill, isLoading: backFillLoading }] = useLazyBackFillSchedulesQuery()
-
+  console.log(data)
   // handle edit model
   const handleEditModal = (location) => {
     setLocationDetails(location);
     dispatch(toggleModal({ name: "location", status: true }));
   };
-  console.log(data)
+
   // add new model
   const handleNewModal = () => {
     setLocationDetails(null);
@@ -95,6 +96,7 @@ const SingleClient = () => {
     saveAs(res?.qr, `${data.clientName}-Location.docx`)
 
   }
+  const pages = Array.from({ length: data?.pages }, (_, index) => index + 1);
 
   return (
     <>
@@ -104,8 +106,8 @@ const SingleClient = () => {
         error && <AlertMessage>{error?.data?.msg || error.error}</AlertMessage>
       )}
       {!error && data?.client && (
-        <div>
-          <div className="py-5 border-b border-neutral-200">
+        <div className="max-h-full overflow-auto flex flex-col">
+          <div className="border-b border-neutral-200 max-h-full ">
             {/* Header Section */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
               <div>
@@ -203,26 +205,29 @@ const SingleClient = () => {
             </div>
           </div>
 
+
+          {/* for testing purpose  */}
           <div className="hidden">
             <Button label={'Add schedules'} onClick={handleBackfill}
               isLoading={backFillLoading} disabled={backFillLoading} />
           </div>
 
-          <div className="">
-            <Button label={selectedQr.length > 0 ? "Download Selected Qr" : 'Download All Qr'}
-              onClick={handleDownloadAll}
-            />
-          </div>
-
-          <div className="overflow-y-auto my-4">
+          <div className="overflow-y-auto my-2">
             <table className="w-full border whitespace-nowrap border-neutral-500 bg-text">
               <thead>
                 <tr className="h-10 w-full text-md md:text-lg leading-none">
-                  <th className="font-bold text-center border-neutral-500 border-2 px-3 min-w-26" onClick={() => {
-                    if (selectedQr.length === 0) return;
-                    setSelectedQr([])
-                  }}>
-                    {selectedQr.length > 0 ? "Deselect" : "Select"}
+                  <th className="font-bold text-center border-neutral-500 border-2 px-3 min-w-26" >
+                    <div className="flex items-center gap-2">
+                      <p onClick={() => {
+                        if (selectedQr.length === 0) return;
+                        setSelectedQr([])
+                      }}>
+                        {selectedQr.length > 0 ? "Deselect" : "Select"}
+                      </p>
+                      <Button label={<PiDownloadSimpleBold />}
+                        onClick={handleDownloadAll}
+                      />
+                    </div>
                   </th>
                   <th className="font-bold text-center border-neutral-500 border-2 px-3">
                     Floor
@@ -321,6 +326,23 @@ const SingleClient = () => {
               </tbody>
             </table>
           </div>
+          {pages?.length > 0 && (
+            <nav className="mb-1">
+              <ul className="list-style-none flex justify-center mt-2">
+                {pages.map((item) => (
+                  <li className="pr-1" key={item}>
+                    <button
+                      className={`relative block rounded px-3 py-1.5 text-sm transition-all duration-30  ${page === item ? "bg-blue-400" : "bg-neutral-700"
+                        } text-white hover:bg-blue-400`}
+                      onClick={() => setPage(item)}
+                    >
+                      {item}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+          )}
         </div>
       )}
     </>

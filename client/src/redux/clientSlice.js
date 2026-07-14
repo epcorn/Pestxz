@@ -11,11 +11,13 @@ export const clientSlice = apiSlice.injectEndpoints({
       invalidatesTags: ["Client"],
     }),
     allClients: builder.query({
-      query: () => ({
-        url: "/api/client",
-      }),
-      providesTags: ["Client"],
-      keepUnusedDataFor: 60,
+      query: (params = {}) => {
+        const { limit, page } = params;
+        const queryString = limit && page ? `?limit=${limit}&page=${page}` : "";
+        return {
+          url: `/api/client${queryString}`,
+        };
+      },
     }),
     deleteClient: builder.mutation({
       query: (id) => ({

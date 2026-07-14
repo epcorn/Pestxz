@@ -273,20 +273,71 @@ export const getAllLocations = async (req, res) => {
   const { id } = req.params;
 
   try {
+    // Check if pagination parameters are provided
+    const hasPagination = req.query.page && req.query.limit;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    // =================================================================
+    // CASE A: NO ID PARAMETER PASSED -> FETCH SYSTEM-WIDE LOCATIONS
+    // =================================================================
+    if (!id || id === "undefined") {
+      let locations;
+      let totalLocations;
+      let totalPages = 1;
+
+      if (hasPagination) {
+        const [paginatedData, count] = await Promise.all([
+          Location.find()
+            .populate("client", "name email")
+            .skip(skip)
+            .limit(limit),
+          Location.countDocuments(),
+        ]);
+
+        locations = paginatedData;
+        totalLocations = count;
+        totalPages = Math.ceil(count / limit);
+      } else {
+        locations = await Location.find().populate("client", "name email");
+        totalLocations = locations.length;
+      }
+
+      if (!locations || locations.length === 0) {
+        return res.status(404).json({ msg: "No locations found" });
+      }
+
+      const floors = [...new Set(locations.map((l) => l.floor))];
+
+      return res.json({
+        locations,
+        floors,
+        pages: totalPages,
+        totalLocations,
+      });
+    }
+
+    // =================================================================
+    // CASE B: CLIENT / EMPLOYEE ID PROVIDED -> ORIGINAL CLIENT FILTER WITH PAGINATION
+    // =================================================================
     let clientId;
-    // CASE 1: ClientEmployee → get client from token
+
     if (id === "ClientEmployee") {
       clientId = req.user.client;
     } else if (id.length === 24) {
       const location = await Location.findById(id).select("client");
       if (location) {
         clientId = location.client;
-        // console.log("getAllLocations Id ln-156:", clientId);
       } else {
         clientId = id;
       }
     }
-    // FIND CLIENT
+
+    if (!clientId) {
+      return res.status(400).json({ msg: "Invalid parameter format provided" });
+    }
+
     const client = await Client.findById(clientId).select(
       "-adminPass -adminName",
     );
@@ -294,7 +345,24 @@ export const getAllLocations = async (req, res) => {
       return res.status(404).json({ msg: "Client not found" });
     }
 
-    const locations = await Location.find({ client: clientId });
+    // FIXED: Apply pagination logic to the client-specific query block
+    let locations;
+    let totalLocations;
+    let totalPages = 1;
+
+    if (hasPagination) {
+      const [paginatedData, count] = await Promise.all([
+        Location.find({ client: clientId }).skip(skip).limit(limit),
+        Location.countDocuments({ client: clientId }),
+      ]);
+      locations = paginatedData;
+      totalLocations = count;
+      totalPages = Math.ceil(count / limit);
+    } else {
+      locations = await Location.find({ client: clientId });
+      totalLocations = locations.length;
+    }
+
     const floors = [...new Set(locations.map((l) => l.floor))];
 
     return res.json({
@@ -302,12 +370,15 @@ export const getAllLocations = async (req, res) => {
       clientName: client.name,
       locations,
       floors,
+      pages: totalPages,       // Added to support frontend pagination components
+      totalLocations,          // Added to track total matched items
     });
   } catch (error) {
-    console.log(error);
+    console.error("Error in getAllLocations:", error);
     return res.status(500).json({ msg: "Server error, try again later" });
   }
 };
+
 
 export const updateLocation = async (req, res) => {
   const { id } = req.params;

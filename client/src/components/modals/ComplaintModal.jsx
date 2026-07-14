@@ -32,9 +32,9 @@ const ComplaintModal = ({ locationId, mode = "create" }) => {
   const { isModalOpen, user } = useSelector((store) => store.helper);
 
   const { data: DBUser } = useGetSingleUserQuery(user._id, { skip: !user._id });
-  const { data: clientsData } = useAllClientsQuery(undefined, { skip: user.type !== "PestEmployee" });
+  const { data: clientsData } = useAllClientsQuery({ limit: 50, page: 1 }, { skip: user.type !== "PestEmployee" });
 
-  const clientOptions = clientsData.clients?.map(c => ({ label: c.name, value: c._id }))
+  const clientOptions = clientsData?.clients?.map(c => ({ label: c.name, value: c._id }))
   const [addComplaint, { isLoading: addLoading }] =
     useNewComplaintMutation();
 

@@ -5,91 +5,62 @@ import express from "express";
 import mongoose from "mongoose";
 import Service from "./models/serviceModel.js";
 import Client from "./models/clientModel.js";
+import { generateSchedule } from "./utils/helperFunction.js";
 dotenv.config();
 const app = express();
 
 async function finds() {
-  // 1. Fetch the aggregated counts
-  const aggregatedData = await Location.aggregate([
-    { $match: {} },
-    {
-      $facet: {
-        totalServices: [{ $unwind: "$service" }, { $count: "count" }],
-        scheduleCount: [
-          { $unwind: "$service" },
-          { $unwind: "$service.schedule" },
-          {
-            $group: {
-              _id: "$service.schedule.status",
-              count: { $sum: 1 },
-            },
-          },
-          { $project: { _id: 0, label: "$_id", count: 1 } },
-        ],
-      },
-    },
-  ]);
+  try {
+    // Populate client to get startDate, endDate, and prefDay
+    const locations = await Location.find({}).populate("client");
+    let updatedCount = 0;
 
-  // 2. Fetch the raw location documents to run your monthly loops
-  // (Fixes the "location is not defined" ReferenceError)
-  const locations = await Location.find({});
+    for (const location of locations) {
+      let isModified = false;
 
-  const monthlyMap = {};
-  
-  const getMonthKey = (date) =>
-    `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+      if (location.service && Array.isArray(location.service)) {
+        // Use a standard map or for-loop to avoid deep reference styling issues
+        for (let ser of location.service) {
+          if (ser.serviceName === "Ratrid") {
+            ser.frequency = "weekly";
 
-  const ensureMonth = (date) => {
-    const key = getMonthKey(date);
+            // Grab your configuration parameters
+            const startDate = location.startDate || location.client?.startDate;
+            const endDate = location.endDate || location.client?.endDate;
+            const prefDay = location.prefDay || location.client?.prefDay;
 
-    if (!monthlyMap[key]) {
-      monthlyMap[key] = {
-        month: date.toLocaleString("default", {
-          month: "long",
-          year: "numeric",
-        }),
-        complaints: 0,
-        regulars: 0,
-        open: 0,
-        closeReq: 0,
-        inProgress: 0,
-        closed: 0,
-        reopenCount: 0,
-        product: { Done: 0, Pending: 0, Missed: 0 },
-        regular: { Done: 0, Pending: 0, Missed: 0 },
-      };
-    }
-    return monthlyMap[key];
-  };
+            if (startDate && endDate) {
+              const newSchedules = generateSchedule(
+                startDate,
+                endDate,
+                "weekly",
+                prefDay,
+              );
 
-  // Loop through the array of locations fetched from the database
-  locations.forEach((location) => {
-    location.service?.forEach((service) => {
-      service.schedule?.forEach((schedule) => {
-        if (!schedule.date) return;
-
-        const month = ensureMonth(new Date(schedule.date));
-
-        switch (schedule.status?.trim()) {
-          case "Done":
-            month.regular.Done++;
-            break;
-          case "Pending":
-            month.regular.Pending++;
-            break;
-          case "Missed":
-            month.regular.Missed++;
-            break;
+              ser.schedule = newSchedules;
+              isModified = true;
+            } else {
+              console.warn(
+                `Skipping schedule generation for location ${location._id} due to missing contract dates.`,
+              );
+            }
+          }
         }
-      });
-    });
-  });
+      }
 
-  // 3. Combine both sets of data into your final return object
-  return {
-    summary: aggregatedData[0] || { totalServices: [], scheduleCount: [] },
-    monthlyBreakdown: Object.values(monthlyMap) // Converts map object to scannable array
-  };
+      if (isModified) {
+        location.markModified("service");
+        await location.save();
+        updatedCount++;
+      }
+    }
+
+    console.log(
+      `Successfully updated ${updatedCount} locations containing "Greenshield".`,
+    );
+  } catch (error) {
+    console.error("Mongoose Save Error:", error);
+  }
 }
 
 app.get("/", async (req, res) => {
@@ -98,7 +69,7 @@ app.get("/", async (req, res) => {
 });
 app.listen(8000, async () => {
   await mongoose
-    .connect(process.env.MONGO_LOCAL)
+    .connect(process.env.MONGO_URI)
     .then((conn) => console.log("mongoose connetcted"));
   console.log("app started 8000");
 });

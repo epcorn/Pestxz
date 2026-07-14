@@ -11,9 +11,17 @@ export const locationSlice = apiSlice.injectEndpoints({
       invalidatesTags: ["Location"],
     }),
     allLocations: builder.query({
-      query: ({ id }) => ({
-        url: `/api/location/client/${id}`,
-      }),
+      query: (params = {}) => {
+        const { id, page, limit } = params;
+        if (!page && !limit && id && id !== "undefined") {
+          return {
+            url: `/api/location/client/${id}`,
+          };
+        }
+        return {
+          url: `/api/location/client/${id}?page=${page}&limit=${limit}`,
+        };
+      },
       providesTags: ["Location"],
     }),
     getSingleLocation: builder.query({
