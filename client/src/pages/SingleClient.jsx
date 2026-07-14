@@ -216,6 +216,9 @@ const SingleClient = () => {
             <table className="w-full border whitespace-nowrap border-neutral-500 bg-text">
               <thead>
                 <tr className="h-10 w-full text-md md:text-lg leading-none">
+                  <th className="font-bold text-center border-neutral-500 border-2 px-3">
+                    Sr No
+                  </th>
                   <th className="font-bold text-center border-neutral-500 border-2 px-3 min-w-26" >
                     <div className="flex items-center gap-2">
                       <p onClick={() => {
@@ -247,11 +250,14 @@ const SingleClient = () => {
                 </tr>
               </thead>
               <tbody className="w-full">
-                {data.locations?.map((location) => (
+                {data.locations?.map((location, i) => (
                   <tr
                     key={location._id}
                     className="h-9 text-sm leading-none bg-text border-b border-neutral-500 hover:bg-slate-200"
                   >
+                    <td className="px-3 border-r font-normal border-neutral-500 text-center">
+                      {i + 1}
+                    </td>
                     <td className="px-3 border-r font-normal border-neutral-500 text-center">
                       <input
                         type="checkbox"
