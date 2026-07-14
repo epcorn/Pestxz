@@ -79,9 +79,21 @@ export const registerClient = async (req, res) => {
 
 export const getAllClient = async (req, res) => {
   try {
-    const clients = await Client.find().select("-adminPass -adminName");
-    if (!clients) return res.status(400).json({ msg: "clients not found" });
-    return res.json(clients);
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const [clients, totalClients] = await Promise.all([
+      Client.find().select("-adminPass -adminName").skip(skip).limit(limit),
+      Client.countDocuments(),
+    ]);
+    if (!clients || clients.length === 0)
+      return res.status(400).json({ msg: "clients not found" });
+
+    return res.json({
+      clients,
+      pages: Math.ceil(totalClients / limit),
+    });
   } catch (error) {
     console.log(error);
     res.status(500).json({ msg: "Server error, try again later" });

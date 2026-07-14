@@ -27,8 +27,8 @@ const Complaints = () => {
 
   const { user, isModalOpen } = useSelector((store) => store.helper);
   const { data: DBuser } = useGetSingleUserQuery(user._id, { skip: !user._id });
-  const { data: clients = [] } = useAllClientsQuery();
-
+  const { data: clientsData = [] } = useAllClientsQuery();
+  const clients = clientsData?.clients || []
   const { data: clientLocations, isLoading: locationLoading } =
     useAllLocationsQuery({
       id: user.type === "ClientEmployee" ? user.client : myClient
@@ -44,7 +44,7 @@ const Complaints = () => {
   }, { refetchOnReconnect: true, refetchOnFocus: true, });
 
   const pages = Array.from({ length: data?.pages }, (_, index) => index + 1);
-
+  
   const handleSearch = (e) => {
     e.preventDefault();
     setSearch(tempSearch);
@@ -55,7 +55,6 @@ const Complaints = () => {
     setSearch("");
     setLocation({ client: "", floor: "" });
   };
-  console.log(data)
   const complaints = data?.complaints?.filter(d => d?.type !== "Regular") ?? []
 
   return (

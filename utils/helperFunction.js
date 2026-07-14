@@ -318,14 +318,18 @@ export const generateSchedule = (start, end, frequency, preffDay) => {
 
   // --- NORMALIZE PREFERRED DAYS (accepts a single string or an array, max 3) ---
   const rawDays = usesPrefDay
-    ? (Array.isArray(preffDay) ? preffDay : (preffDay ? [preffDay] : []))
+    ? Array.isArray(preffDay)
+      ? preffDay
+      : preffDay
+        ? [preffDay]
+        : []
     : [];
   const targetDayNums = [
     ...new Set(
       rawDays
         .map((d) => (d || "").toLowerCase().trim())
         .filter((d) => d in dayMap)
-        .map((d) => dayMap[d])
+        .map((d) => dayMap[d]),
     ),
   ].slice(0, 3);
 

@@ -7,14 +7,15 @@ import { useSelector, useDispatch } from "react-redux";
 import { toggleModal } from "../redux/helperSlice";
 import { MdAddCircle } from "react-icons/md";
 import Headers from "../components/Headers";
+import { useState } from "react";
 
 const Clients = () => {
   const dispatch = useDispatch();
   const { isModalOpen, user } = useSelector((store) => store.helper);
-
+  const [page, setPage] = useState(1)
   const { data, isLoading, isFetching, error } = useAllClientsQuery();
   const [deleteClient, { isLoading: deleteLoading }] = useDeleteClientMutation();
-
+  
   const handleDelete = async () => {
     try {
       await deleteClient(isModalOpen.delete.id).unwrap();
@@ -28,9 +29,13 @@ const Clients = () => {
     }
   };
 
+  const pages = Array.from({ length: data?.pages }, (_, index) => index + 1);
+  console.log(pages)
   return (
-    <div className="max-w-7xl mx-auto px-0 md:px-3 lg:px-5 pb-6">
+    <div className="max-w-7xl mx-auto px-0 pb-6 max-h-full overflow-auto">
+      <div className="sticky top-0 bg-slate-100">
       <Headers header={"Client Registry"} user={user} />
+      </div>
 
       <NewClientModal />
       {(isLoading || isFetching) ? (
@@ -41,10 +46,10 @@ const Clients = () => {
         <div className="my-4">
           <AlertMessage>{error?.data?.msg || error.error}</AlertMessage>
         </div>
-      ) : data?.length > 0 ? (
+      ) : data?.clients?.length > 0 ? (
 
         /* 4. MAIN DATA VIEW LIST MODULE CONTAINER */
-        <div className="overflow-hidden rounded-lg border border-neutral-200 bg-white shadow-sm">
+        <div className="overflow-hidden rounded-lg border border-neutral-400 bg-white shadow-sm max-h-full">
           <div className="hidden md:flex items-center bg-neutral-300 border-b border-neutral-200 text-xs font-bold uppercase tracking-wider text-neutral-500 py-3 px-4 gap-4 text-center">
             <div className="w-56 text-left shrink-0">Client Name</div>
             <div className="flex-1 text-left">Address</div>
@@ -53,8 +58,8 @@ const Clients = () => {
           </div>
 
           {/* ELASTIC FLEX SECTIONS / AUTOMATED MOBILE STACK CARD GRID */}
-          <div className="divide-y divide-neutral-700">
-            {data?.map((client) => (
+          <div className="divide-y divide-neutral-700 overflow-y-auto max-h-full">
+            {data?.clients?.map((client) => (
               <div
                 key={client._id}
                 className="flex flex-col md:flex-row md:items-center py-4 px-4 text-sm text-neutral-700 hover:bg-neutral-50 transition-colors gap-3 md:gap-4"
@@ -80,7 +85,6 @@ const Clients = () => {
                     {client.contractNo || "—"}
                   </span>
                 </div>
-
 
                 <div className="w-full md:w-44 flex justify-between md:block md:text-center items-center shrink-0 pt-2.5 md:pt-0 border-t md:border-none border-neutral-100">
                   <span className="md:hidden text-xs font-bold text-black uppercase">Action</span>
@@ -115,6 +119,24 @@ const Clients = () => {
         <div className="text-center py-12 border-2 border-dashed border-neutral-200 rounded-xl bg-white">
           <p className="text-sm text-neutral-500">No client data found records inside registry.</p>
         </div>
+      )}
+
+      {pages?.length > 0 && (
+        <nav className="mb-1">
+          <ul className="list-style-none flex justify-center mt-2">
+            {pages.map((item) => (
+              <li className="pr-1" key={item}>
+                <button
+                  className={`relative block rounded px-3 py-1.5 text-sm transition-all duration-30  ${page === item ? "bg-blue-400" : "bg-neutral-700"
+                    } text-white hover:bg-blue-400`}
+                  onClick={() => setPage(item)}
+                >
+                  {item}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </nav>
       )}
     </div>
   );

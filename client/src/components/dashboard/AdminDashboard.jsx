@@ -37,12 +37,13 @@ function AdminDashboard() {
   const navigate = useNavigate();
 
   const { user } = useSelector((store) => store.helper);
-  const { data: clients = [] } = useAllClientsQuery();
+  const { data: clientsData = [] } = useAllClientsQuery();
   const { data: adminDash, isLoading: admindashLoading } = useAdminDashboardQuery(
     selectedClient?._id || "select",
     { skip: user?.role !== "Admin", refetchOnReconnect: true }
   );
-
+  const clients = clientsData?.clients
+  console.log(clientsData)
   useEffect(() => {
     if (!assignId) return;
     const handler = (e) => {
@@ -134,7 +135,7 @@ function AdminDashboard() {
         <div>
           <p className="text-xs text-gray-400 uppercase font-bold tracking-wider">System Overview</p>
           <h3 className="h3 font-black text-gray-800 mt-1">
-            {selectedClient?.name || `All Clients Data (${clients.length})`}
+            {selectedClient?.name || `All Clients Data (${clients?.length})`}
           </h3>
         </div>
 
@@ -152,7 +153,7 @@ function AdminDashboard() {
                 }}
                 className="outline-none text-xs sm:text-sm font-semibold bg-transparent cursor-pointer text-gray-700">
                 <option value="">Choose Clients</option>
-                {clients.map((d) => (
+                {clients?.map((d) => (
                   <option key={d._id} value={d._id}>{d.name}</option>
                 ))}
               </select>
