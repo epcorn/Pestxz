@@ -18,6 +18,7 @@ import { toast } from "react-toastify";
 import { saveAs } from "file-saver";
 import { useUpdateClientMutation } from "../redux/clientSlice";
 import { useGetSingleUserQuery } from "../redux/userSlice";
+import Pagination from "./Pagination";
 
 const SingleClient = () => {
   const [page, setPage] = useState(1);
@@ -29,7 +30,8 @@ const SingleClient = () => {
   const { id } = useParams();
 
   const { data: me } = useGetSingleUserQuery(user._id, { skip: !user._id })
-  const { data, isLoading, isFetching, error } = useAllLocationsQuery({ id, limit: 10, page });
+  const limit = 15
+  const { data, isLoading, isFetching, error } = useAllLocationsQuery({ id, limit, page });
   const [deleteLocation, { isLoading: deleteLoading }] =
     useDeleteLocationMutation();
   const [updateClient, { isLoading: updateLoading }] =
@@ -37,7 +39,7 @@ const SingleClient = () => {
   const [qrCountInc] = useQrCounterMutation();
   const [makeQrDOCX] = useMakeQrDocxMutation();
   const [triggerBackFill, { data: backfill, isLoading: backFillLoading }] = useLazyBackFillSchedulesQuery()
-  console.log(data)
+  
   // handle edit model
   const handleEditModal = (location) => {
     setLocationDetails(location);
@@ -97,6 +99,7 @@ const SingleClient = () => {
 
   }
   const pages = Array.from({ length: data?.pages }, (_, index) => index + 1);
+
 
   return (
     <>
@@ -227,9 +230,12 @@ const SingleClient = () => {
                       }}>
                         {selectedQr.length > 0 ? "Deselect" : "Select"}
                       </p>
-                      <Button label={<PiDownloadSimpleBold />}
+                      <button className="outline px-2 py-1 rounded bg-blue-700 text-white "
                         onClick={handleDownloadAll}
-                      />
+                      >
+
+                        <PiDownloadSimpleBold />
+                      </button>
                     </div>
                   </th>
                   <th className="font-bold text-center border-neutral-500 border-2 px-3">
@@ -256,7 +262,7 @@ const SingleClient = () => {
                     className="h-9 text-sm leading-none bg-text border-b border-neutral-500 hover:bg-slate-200"
                   >
                     <td className="px-3 border-r font-normal border-neutral-500 text-center">
-                      {i + 1}
+                      {(page - 1) * limit + (i + 1)}
                     </td>
                     <td className="px-3 border-r font-normal border-neutral-500 text-center">
                       <input
@@ -332,23 +338,7 @@ const SingleClient = () => {
               </tbody>
             </table>
           </div>
-          {pages?.length > 0 && (
-            <nav className="mb-1">
-              <ul className="list-style-none flex justify-center mt-2">
-                {pages.map((item) => (
-                  <li className="pr-1" key={item}>
-                    <button
-                      className={`relative block rounded px-3 py-1.5 text-sm transition-all duration-30  ${page === item ? "bg-blue-400" : "bg-neutral-700"
-                        } text-white hover:bg-blue-400`}
-                      onClick={() => setPage(item)}
-                    >
-                      {item}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </nav>
-          )}
+          <Pagination page={page} setPage={setPage} totalPages={data?.pages} />
         </div>
       )}
     </>

@@ -16,6 +16,7 @@ import Select from "react-select";
 import Headers from "../components/Headers";
 import { useGetSingleUserQuery } from "../redux/userSlice";
 import { socket } from "../socket";
+import Pagination from "./Pagination";
 
 const Complaints = () => {
   const [page, setPage] = useState(1);
@@ -44,7 +45,7 @@ const Complaints = () => {
   }, { refetchOnReconnect: true, refetchOnFocus: true, });
 
   const pages = Array.from({ length: data?.pages }, (_, index) => index + 1);
-  
+
   const handleSearch = (e) => {
     e.preventDefault();
     setSearch(tempSearch);
@@ -135,23 +136,7 @@ const Complaints = () => {
           <>
             <ComplaintTable data={complaints} user={user} />
 
-            {pages?.length > 0 && (
-              <nav className="mb-1">
-                <ul className="list-style-none flex justify-center mt-2">
-                  {pages.map((item) => (
-                    <li className="pr-1" key={item}>
-                      <button
-                        className={`relative block rounded px-3 py-1.5 text-sm transition-all duration-30  ${page === item ? "bg-blue-400" : "bg-neutral-700"
-                          } text-white hover:bg-blue-400`}
-                        onClick={() => setPage(item)}
-                      >
-                        {item}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </nav>
-            )}
+            <Pagination page={page} setPage={setPage} totalPages={data?.pages} />
           </>
         )}
       </div >

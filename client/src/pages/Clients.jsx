@@ -8,14 +8,15 @@ import { toggleModal } from "../redux/helperSlice";
 import { MdAddCircle } from "react-icons/md";
 import Headers from "../components/Headers";
 import { useState } from "react";
+import Pagination from "./Pagination";
 
 const Clients = () => {
   const dispatch = useDispatch();
   const { isModalOpen, user } = useSelector((store) => store.helper);
   const [page, setPage] = useState(1)
-  const { data, isLoading, isFetching, error } = useAllClientsQuery({limit:10, page:1});
+  const { data, isLoading, isFetching, error } = useAllClientsQuery({ limit: 10, page: 1 });
   const [deleteClient, { isLoading: deleteLoading }] = useDeleteClientMutation();
-  
+
   const handleDelete = async () => {
     try {
       await deleteClient(isModalOpen.delete.id).unwrap();
@@ -34,7 +35,7 @@ const Clients = () => {
   return (
     <div className="max-w-7xl mx-auto px-0 pb-6 max-h-full overflow-auto">
       <div className="sticky top-0 bg-slate-100">
-      <Headers header={"Client Registry"} user={user} />
+        <Headers header={"Client Registry"} user={user} />
       </div>
 
       <NewClientModal />
@@ -121,23 +122,7 @@ const Clients = () => {
         </div>
       )}
 
-      {pages?.length > 0 && (
-        <nav className="mb-1">
-          <ul className="list-style-none flex justify-center mt-2">
-            {pages.map((item) => (
-              <li className="pr-1" key={item}>
-                <button
-                  className={`relative block rounded px-3 py-1.5 text-sm transition-all duration-30  ${page === item ? "bg-blue-400" : "bg-neutral-700"
-                    } text-white hover:bg-blue-400`}
-                  onClick={() => setPage(item)}
-                >
-                  {item}
-                </button>
-              </li>
-            ))}
-          </ul>
-        </nav>
-      )}
+      <Pagination page={pages} setPage={setPage} totalPages={data?.pages} />
     </div>
   );
 };
