@@ -110,4 +110,5 @@ export const {
   useUnscheduledReportMutation,
   useGetUnscheduledReportsQuery,
   useStatusUnscheduleMutation,
+  useLazyAllLocationsQuery,
 } = locationSlice;

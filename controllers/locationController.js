@@ -370,15 +370,14 @@ export const getAllLocations = async (req, res) => {
       clientName: client.name,
       locations,
       floors,
-      pages: totalPages,       // Added to support frontend pagination components
-      totalLocations,          // Added to track total matched items
+      pages: totalPages, // Added to support frontend pagination components
+      totalLocations, // Added to track total matched items
     });
   } catch (error) {
     console.error("Error in getAllLocations:", error);
     return res.status(500).json({ msg: "Server error, try again later" });
   }
 };
-
 
 export const updateLocation = async (req, res) => {
   const { id } = req.params;
@@ -420,6 +419,8 @@ export const updateLocation = async (req, res) => {
         existingLocation.product,
         contractStart,
         contractEnd,
+        id,
+        { floor, subLocation, location },
       );
       if (error) return res.status(400).json({ msg: error });
       formattedProduct = formatted;

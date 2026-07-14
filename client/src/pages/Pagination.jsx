@@ -26,7 +26,7 @@ function Pagination({ page, totalPages, setPage }) {
   const { range: visiblePages, showLeftEllipsis, showRightEllipsis } = getPaginationRange(page, totalPages);
 
   // Only show pagination controls if there is more than 1 page total
-  if (!totalPages || totalPages <= 1) return null;
+  if (!totalPages || totalPages <= 0) return null;
 
   return (
     <nav className="mb-1">

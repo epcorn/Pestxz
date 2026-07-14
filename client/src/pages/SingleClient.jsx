@@ -3,6 +3,7 @@ import { DeleteModal, LocationModal, NewClientModal } from "../components/modals
 import {
   useAllLocationsQuery,
   useDeleteLocationMutation,
+  useLazyAllLocationsQuery,
   useLazyBackFillSchedulesQuery,
   useMakeQrDocxMutation,
   useQrCounterMutation,
@@ -22,6 +23,7 @@ import Pagination from "./Pagination";
 
 const SingleClient = () => {
   const [page, setPage] = useState(1);
+  const [state, setState] = useState({ loading: false, text: "" })
   const { isModalOpen, user } = useSelector((store) => store.helper);
   const [locationDetails, setLocationDetails] = useState({});
   const [clientDetails, setClientDetails] = useState(null)
@@ -30,8 +32,9 @@ const SingleClient = () => {
   const { id } = useParams();
 
   const { data: me } = useGetSingleUserQuery(user._id, { skip: !user._id })
-  const limit = 15
+  const limit = 15;
   const { data, isLoading, isFetching, error } = useAllLocationsQuery({ id, limit, page });
+  const [triggerFetchAll] = useLazyAllLocationsQuery(); //for all qr docx
   const [deleteLocation, { isLoading: deleteLoading }] =
     useDeleteLocationMutation();
   const [updateClient, { isLoading: updateLoading }] =
@@ -39,7 +42,7 @@ const SingleClient = () => {
   const [qrCountInc] = useQrCounterMutation();
   const [makeQrDOCX] = useMakeQrDocxMutation();
   const [triggerBackFill, { data: backfill, isLoading: backFillLoading }] = useLazyBackFillSchedulesQuery()
-  
+
   // handle edit model
   const handleEditModal = (location) => {
     setLocationDetails(location);
@@ -66,12 +69,16 @@ const SingleClient = () => {
   };
 
   const services = data?.locations?.map(loc => loc.service || []) || []
+
   const handleBackfill = async () => {
     const res = await triggerBackFill().unwrap()
     toast.success(res.msg || "Done");
   }
+
+
   const handleQrDownload = async (id, location) => {
     try {
+      console.log(id, location)
       await qrCountInc(id).unwrap();
 
       saveAs(location?.qr, `QR-${location.location}`);
@@ -81,23 +88,63 @@ const SingleClient = () => {
   }
 
   const handleDownloadAll = async () => {
-    let qrs;
-    let ids;
-    if (selectedQr.length > 0) {
-      qrs = selectedQr.map(s => s.qr)
-      ids = selectedQr.map(s => s.id)
-    }
-    else {
-      qrs = data.locations.map(l => l.qr)
-      ids = data.locations.map(l => l._id)
-    }
+    let qrs = [];
+    let ids = [];
+    const isValidQr = (qrValue) => {
+      return qrValue !== false && qrValue !== "false" && !!qrValue;
+    };
+    const downloadPromise = (async () => {
+      if (selectedQr.length > 0) {
+        const validSelection = selectedQr.filter(s => isValidQr(s.qr));
+        qrs = validSelection.map(s => s.qr);
+        ids = validSelection.map(s => s.id);
+      } else {
+        const response = await triggerFetchAll({ id }).unwrap();
 
-    const payload = { qrs: qrs, client: data.clientName }
-    await qrCountInc(ids).unwrap();
-    const res = await makeQrDOCX(payload).unwrap();
-    saveAs(res?.qr, `${data.clientName}-Location.docx`)
+        if (!response?.locations || response.locations.length === 0) {
+          throw new Error("No locations found for this client.");
+        }
 
-  }
+        const validLocations = response.locations.filter(l => isValidQr(l.qr));
+        qrs = validLocations.map(l => l.qr);
+        ids = validLocations.map(l => l._id);
+      }
+
+      if (qrs.length === 0) {
+        throw new Error("No valid QR codes found to download.");
+      }
+
+      const payload = { qrs: qrs, client: data?.clientName || "Client" };
+
+      // Execute database increments & Docx creation
+      await qrCountInc(ids).unwrap();
+      const res = await makeQrDOCX(payload).unwrap();
+
+      saveAs(res?.qr, `${data?.clientName || "Client"}-Location.docx`);
+      return data?.clientName || "Client";
+    })();
+
+    // Bind promise to toast notification
+    toast.promise(
+      downloadPromise,
+      {
+        pending: 'Fetching all locations & generating QR File, please wait...',
+        success: {
+          render({ data: clientName }) {
+            return `File Downloaded for ${clientName}!!!`;
+          },
+          autoClose: 3000,
+        },
+        error: {
+          render({ data: err }) {
+            console.error(err);
+            return err?.message || "Failed to generate or download the QR document.";
+          }
+        }
+      }
+    );
+  };
+
   const pages = Array.from({ length: data?.pages }, (_, index) => index + 1);
 
 
@@ -215,56 +262,60 @@ const SingleClient = () => {
               isLoading={backFillLoading} disabled={backFillLoading} />
           </div>
 
-          <div className="overflow-y-auto my-2">
-            <table className="w-full border whitespace-nowrap border-neutral-500 bg-text">
-              <thead>
-                <tr className="h-10 w-full text-md md:text-lg leading-none">
-                  <th className="font-bold text-center border-neutral-500 border-2 px-3">
+          <div className="overflow-auto border border-neutral-300 rounded-lg max-h-[500px] my-2">
+            <table className="w-full border-collapse whitespace-nowrap bg-white">
+              <thead className="sticky top-0 bg-gray-300 z-10 shadow-[inset_0_-1px_0_rgba(0,0,0,0.1)]">
+                <tr className="h-10 text-sm md:text-base text-neutral-800">
+                  <th className="font-bold text-center border border-neutral-300 px-3">
                     Sr No
                   </th>
-                  <th className="font-bold text-center border-neutral-500 border-2 px-3 min-w-26" >
-                    <div className="flex items-center gap-2">
-                      <p onClick={() => {
-                        if (selectedQr.length === 0) return;
-                        setSelectedQr([])
-                      }}>
+                  <th className="font-bold text-center border border-neutral-300 px-3 min-w-26">
+                    <div className="flex items-center justify-center gap-2">
+                      <button
+                        type="button"
+                        className="cursor-pointer text-xs font-semibold text-blue-600 hover:text-blue-800"
+                        onClick={() => {
+                          if (selectedQr.length === 0) return;
+                          setSelectedQr([]);
+                        }}
+                      >
                         {selectedQr.length > 0 ? "Deselect" : "Select"}
-                      </p>
-                      <button className="outline px-2 py-1 rounded bg-blue-700 text-white "
+                      </button>
+                      <button
+                        className="px-2 py-1 rounded bg-blue-700 text-white hover:bg-blue-800 transition-colors"
                         onClick={handleDownloadAll}
                       >
-
-                        <PiDownloadSimpleBold />
+                        <PiDownloadSimpleBold className="w-4 h-4" />
                       </button>
                     </div>
                   </th>
-                  <th className="font-bold text-center border-neutral-500 border-2 px-3">
+                  <th className="font-bold text-center border border-neutral-300 px-3">
                     Floor
                   </th>
-                  <th className="font-bold text-center border-neutral-500 border-2 px-3">
+                  <th className="font-bold text-left border border-neutral-300 px-4">
                     Location
                   </th>
-                  <th className="font-bold text-center border-neutral-500 border-2 w-32 px-3">
-                    Services/ [Products]
+                  <th className="font-bold text-center border border-neutral-300 w-32 px-3">
+                    Services / [Products]
                   </th>
-                  <th className="font-bold text-center border-neutral-500 border-2 w-28">
-                    Location Qr/ Product Qr
+                  <th className="font-bold text-center border border-neutral-300 w-28 px-3">
+                    Location Qr / Product Qr
                   </th>
-                  <th className="font-bold max-w-25 text-center border-neutral-500 border-2 px-2">
+                  <th className="font-bold text-center border border-neutral-300 px-4">
                     Action
                   </th>
                 </tr>
               </thead>
-              <tbody className="w-full">
+              <tbody className="divide-y divide-neutral-200">
                 {data.locations?.map((location, i) => (
                   <tr
                     key={location._id}
-                    className="h-9 text-sm leading-none bg-text border-b border-neutral-500 hover:bg-slate-200"
+                    className="h-11 text-sm bg-white hover:bg-slate-50 transition-colors"
                   >
-                    <td className="px-3 border-r font-normal border-neutral-500 text-center">
+                    <td className="px-3 border border-neutral-200 font-medium text-neutral-500 text-center">
                       {(page - 1) * limit + (i + 1)}
                     </td>
-                    <td className="px-3 border-r font-normal border-neutral-500 text-center">
+                    <td className="px-3 border border-neutral-200 text-center">
                       <input
                         type="checkbox"
                         name={location.floor}
@@ -276,35 +327,40 @@ const SingleClient = () => {
                               ? prev.filter(item => item.id !== location._id)
                               : [...prev, { qr: location.qr, id: location._id }]
                           )}
+                        className="w-4 h-4 text-blue-600 border-neutral-300 rounded focus:ring-blue-500"
                       />
                     </td>
-                    <td className="px-3 border-r font-normal border-neutral-500">
+                    <td className="px-3 border border-neutral-200 text-center">
                       <Link to={`/location/${location?._id}`}>
                         <Button label={location.floor} small={true} />
                       </Link>
                     </td>
-                    <td className="px-3 border-r font-normal border-neutral-500">
-                      {location.location}, {location.subLocation}
+                    <td className="px-4 border border-neutral-200 text-left text-neutral-700">
+                      <span className="font-medium">{location.location}</span>
+                      {location.subLocation && <span className="text-neutral-500 text-xs block">{location.subLocation}</span>}
                     </td>
-                    <td className="px-3 border-r font-normal text-center leading-tight border-neutral-500">
-                      <span>{location.service?.map((item) => item.serviceName).join(", ")}</span> <br />
-
-                      {location.product.length !== 0 ?
-                        <span>[{location.product?.map((item) => item.productName).join(", ")}]</span> : ""}
-
+                    <td className="px-3 border border-neutral-200 text-center leading-relaxed text-neutral-600">
+                      <span className="font-semibold">
+                        {location.service?.map((item) => item.serviceName).join(", ") || "-"}
+                      </span>
+                      {location.product && location.product.length !== 0 && (
+                        <div className="text-sm text-neutral-500 font-semibold mt-0.5">
+                          [{location.product?.map((item) => item.productName).join(", ")}]
+                        </div>
+                      )}
                     </td>
-                    <td className="border-r font-normal text-center border-neutral-500">
-                      <div className="flex justify-center items-center">
+                    <td className="px-3 border border-neutral-200 text-center">
+                      <div className="flex justify-center items-center gap-1">
                         <Button
                           label={<span className="flex items-center gap-1"><PiDownloadSimpleBold /> {location?.qrCount}</span>}
                           small
                           height="h-7"
                           onClick={() => handleQrDownload(location?._id, location)}
                         />
-                        /
-                        <div className={`${location.product.length > 0 ? "" : "opacity-50"}`}>
+                        <span className="text-neutral-300">|</span>
+                        <div className={location.product.length > 0 ? "" : "opacity-40 pointer-events-none"}>
                           <Button
-                            label={<span className="flex items-center gap-1"><PiDownloadSimpleBold /> {`~`}</span>}
+                            label={<span className="flex items-center gap-1"><PiDownloadSimpleBold /> ~</span>}
                             small
                             height="h-7"
                             onClick={() => { dispatch(toggleModal({ name: `${location._id}_product`, status: true })) }}
@@ -315,23 +371,26 @@ const SingleClient = () => {
                         }
                       </div>
                     </td>
-                    <td className="flex items-center justify-center h-9 space-x-3 font-normal text-center border-neutral-500">
-                      <button
-                        type="button"
-                        onClick={() => handleEditModal(location)}
-                      >
-                        <FaEdit className="h-5 w-5 text-indigo-600" />
-                      </button>
-                      <DeleteModal
-                        title="Delete Location"
-                        description="this location"
-                        handleDelete={handleDelete}
-                        isLoading={deleteLoading}
-                        id={{
-                          id: location._id,
-                          name: `${location.location}, ${location.subLocation}`,
-                        }}
-                      />
+                    <td className="px-4 border border-neutral-200 text-center">
+                      <div className="flex items-center justify-center gap-3">
+                        <button
+                          type="button"
+                          onClick={() => handleEditModal(location)}
+                          className="hover:scale-105 transition-transform"
+                        >
+                          <FaEdit className="h-5 w-5 text-indigo-600 hover:text-indigo-800" />
+                        </button>
+                        <DeleteModal
+                          title="Delete Location"
+                          description="this location"
+                          handleDelete={handleDelete}
+                          isLoading={deleteLoading}
+                          id={{
+                            id: location._id,
+                            name: `${location.location}, ${location.subLocation}`,
+                          }}
+                        />
+                      </div>
                     </td>
                   </tr>
                 ))}

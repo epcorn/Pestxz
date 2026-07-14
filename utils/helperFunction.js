@@ -546,6 +546,8 @@ export const formatProducts = async (
   existingProducts,
   contractStart,
   contractEnd,
+  locationId,
+  loc,
 ) => {
   const valid = productReq.filter(
     (p) => p.productId && p.versionId && p.frequency,
@@ -553,7 +555,7 @@ export const formatProducts = async (
   if (!valid.length) return { error: "Please fill all product fields" };
 
   const formatted = await Promise.all(
-    valid.map(async (pr) => {
+    valid.map(async (pr, i) => {
       const old = pr._id
         ? existingProducts.find((p) => p._id?.toString() === pr._id?.toString())
         : null;
@@ -563,19 +565,22 @@ export const formatProducts = async (
         old.productId?.toString() !== pr.productId ||
         old.versionId?.toString() !== pr.versionId;
 
-      console.log(
-        "_id of products: " + pr.productName,
-        pr._id,
-        "Old: ",
-        old,
-        changed ? true : false,
-      );
       const serialNo = changed ? await productCounter(pr.code) : old.serialNo;
 
       const schedule =
         !changed && old?.schedule?.length && old.frequency === pr.frequency
           ? old.schedule
           : buildSchedule(contractStart, contractEnd, pr.frequency);
+
+      const qrData = await productQrCodeGenerator({
+        link: `https://pestxz.com/location/${locationId}`,
+        floor: loc.floor,
+        location: `${loc.location}, ${loc.subLocation}`,
+        serialNo,
+      });
+
+      fs.writeFileSync(`./tmp/qr${i}.jpeg`, qrData);
+      const qrLink = await uploadFile({ filePath: `./tmp/qr${i}.jpeg` });
 
       return {
         _id: old?._id || new mongoose.Types.ObjectId(),
@@ -589,6 +594,7 @@ export const formatProducts = async (
         specification: pr.specification,
         calibrations: toArray(pr.calibrations),
         schedule,
+        qr: qrLink,
       };
     }),
   );
