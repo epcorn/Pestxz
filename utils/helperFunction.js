@@ -315,7 +315,7 @@ export const generateSchedule = (start, end, frequency, preffDay) => {
   // --- FREQUENCIES THAT NEVER USE PREFERRED DAYS ---
   const NO_PREF_DAY_FREQUENCIES = ["daily", "alternate days"];
   const usesPrefDay = !NO_PREF_DAY_FREQUENCIES.includes(freq);
-  console.log("preffDay: ", preffDay);
+
   // --- NORMALIZE PREFERRED DAYS (accepts a single string or an array, max 3) ---
   const rawDays = usesPrefDay
     ? Array.isArray(preffDay)
