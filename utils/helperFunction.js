@@ -308,7 +308,7 @@ export const generateSchedule = (start, end, frequency, preffDay) => {
     saturday: 6,
   };
 
-  const today = new Date();
+  const today = new Date('2026-06-01');
   const schedule = [];
   const freq = (frequency || "").toLowerCase().trim();
 

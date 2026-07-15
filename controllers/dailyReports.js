@@ -139,7 +139,7 @@ export const dailyServiceReport = async (req, res) => {
     let populateOptions = [
       {
         path: "services",
-        match: todayMatchCondition,
+        match: matchCondition,
         populate: { path: "location" },
       },
       {
@@ -193,9 +193,9 @@ export const dailyServiceReport = async (req, res) => {
       const workbook = new exceljs.Workbook();
 
       if (isPestEmployee) {
-        await workbook.xlsx.readFile("./tmp/dailyReportPestEmp.xlsx");
+        await workbook.xlsx.readFile("./tmp/dailyReport_Pest.xlsx");
       } else {
-        await workbook.xlsx.readFile("./tmp/dailyReport.xlsx");
+        await workbook.xlsx.readFile("./tmp/dailyReport_Client.xlsx");
       }
       // ✅ Fresh workbook per client so rows don't bleed across clients
 
@@ -243,6 +243,7 @@ export const dailyServiceReport = async (req, res) => {
           location: `${loc.floor}, ${loc.location}, ${loc.subLocation}`,
           serviceName: regs.serviceName,
           scopes: flattenedScopes,
+          images: regs.image.join(", "),
         };
       });
 
@@ -277,10 +278,11 @@ export const dailyServiceReport = async (req, res) => {
         row.getCell(3).value = dataItem.userName;
         row.getCell(4).value = dataItem.location;
         row.getCell(5).value = dataItem.serviceName;
-        if (req.type === "PestEmployee") {
+        if (req.user.type === "PestEmployee") {
           row.getCell(6).value = scopeRichText;
           row.getCell(6).alignment = { wrapText: true, vertical: "middle" };
         }
+        row.getCell(7).value = dataItem.images;
 
         row.commit();
         currRow++;

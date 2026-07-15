@@ -39,7 +39,7 @@ const SingleLocation = () => {
   const [toggleLists, setToggleLists] = useState("");
   const dispatch = useDispatch();
   const [show, setShow] = useState(false);
-  const today = new Date()
+  const today = new Date();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -108,10 +108,9 @@ const SingleLocation = () => {
               </div>
             </div>
           </div>
-
           {/* ===== FLOATING STICKY SUMMARY BAR (unchanged behavior) ===== */}
           <div
-            className={`fixed z-[5] top-22 left-4 md:left-4 lg:left-64 w-[95dvw] md:w-[95dvw] lg:w-[79dvw] flex items-center gap-3 p-2 bg-slate-700 shadow-lg rounded-b-lg transition-all duration-500 origin-top ${show ? "opacity-100 scale-100 translate-y-0 pointer-events-auto" : "opacity-0 scale-95 -translate-y-4 pointer-events-none"}`}
+            className={`fixed z-[5] top-21 right-0 w-full lg:w-[83dvw] flex items-center gap-3 p-2 bg-slate-700 shadow-lg rounded-b-lg transition-all duration-500 origin-top ${show ? "opacity-100 scale-100 translate-y-0 pointer-events-auto" : "opacity-0 scale-95 -translate-y-4 pointer-events-none"}`}
           >
             {data.client && (
               <p className="px-3 py-1 bg-white text-slate-800 rounded-md text-sm font-medium whitespace-nowrap">
@@ -122,10 +121,7 @@ const SingleLocation = () => {
               {`${data.location.floor}, ${data.location.location}, ${data.location.subLocation}`}
             </p>
           </div>
-
-
           <div className="px-0 space-y-6">
-
             {/* ===== SERVICE / PRODUCT TABLES ===== */}
             {(data?.location?.service?.length > 0 || data?.location?.product?.length > 0) && (
               <div className="space-y-4">
@@ -137,7 +133,6 @@ const SingleLocation = () => {
                 )}
               </div>
             )}
-
             {/* ===== ACTION BUTTONS ===== */}
             <div className="flex flex-wrap gap-3 bg-white fixed right-0 opacity-25 hover:opacity-100 transition-all duration-200 z-50 bottom-0">
               {DBUser?.rights?.raise && id && (
@@ -169,9 +164,7 @@ const SingleLocation = () => {
                     status: true,
                   }))} />
               )}
-
             </div>
-
             {/* modals tied to the buttons above (logic unchanged) */}
             {DBUser?.rights.raise && id && isModalOpen.complaint && (
               <ComplaintModal
@@ -335,7 +328,7 @@ const SingleLocation = () => {
                   <h2 className="font-bold text-lg text-white px-1 mb-2">
                     All Premise Services
                   </h2>
-                  <AllPremise today={today}/>
+                  <AllPremise today={today} />
                 </div>
               </div>
             )}

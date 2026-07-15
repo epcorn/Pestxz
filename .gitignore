@@ -14,6 +14,7 @@ dist
 dist-ssr
 *.local
 playground*
+test.js
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
