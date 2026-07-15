@@ -308,7 +308,7 @@ export const generateSchedule = (start, end, frequency, preffDay) => {
     saturday: 6,
   };
 
-  const today = new Date("2026-06-01");
+  const today = new Date();
   const schedule = [];
   const freq = (frequency || "").toLowerCase().trim();
 
@@ -347,7 +347,7 @@ export const generateSchedule = (start, end, frequency, preffDay) => {
   let current = new Date(start);
   let endDate = new Date(end);
 
-  current = today < current ? current : today;
+  // current = today < current ? current : today;
 
   current.setDate(current.getDate() + daysToNearestTarget(current));
 

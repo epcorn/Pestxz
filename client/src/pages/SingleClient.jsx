@@ -49,7 +49,7 @@ const SingleClient = () => {
   const [updateClient, { isLoading: updateLoading }] =
     useUpdateClientMutation();
   const [qrCountInc] = useQrCounterMutation();
-  const [makeQrDOCX] = useMakeQrDocxMutation();
+  const [makeQrDOCX, { isLoading: docQrLoading }] = useMakeQrDocxMutation();
   const [triggerBackFill, { data: backfill, isLoading: backFillLoading }] =
     useLazyBackFillSchedulesQuery();
 
@@ -139,7 +139,7 @@ const SingleClient = () => {
       pending: "Fetching all locations & generating QR File, please wait...",
       success: {
         render({ data: clientName }) {
-          return `File Downloaded for ${clientName}!!!`;
+          return `File Downloaded Successfully!!!`;
         },
         autoClose: 3000,
       },
@@ -322,7 +322,8 @@ const SingleClient = () => {
                         {selectedQr.length > 0 ? "Deselect" : "Select"}
                       </button>
                       <button
-                        className="px-2 py-1 rounded bg-blue-700 text-white hover:bg-blue-800 transition-colors"
+                        className="px-2 py-1 rounded bg-blue-700 text-white hover:bg-blue-800 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+                        disabled={docQrLoading}
                         onClick={handleDownloadAll}>
                         <PiDownloadSimpleBold className="w-4 h-4" />
                       </button>

@@ -394,12 +394,31 @@ export const updateLocation = async (req, res) => {
     productReq,
     type,
     changes,
+    confirmRemoval = {},
   } = req.body;
 
   try {
     const existingLocation = await Location.findById(id);
     if (!existingLocation)
       return res.status(404).json({ msg: "Location not found" });
+
+    const removingService =
+      !type.includes("service") && existingLocation.service?.length > 0;
+    const removingProduct =
+      !type.includes("product") && existingLocation.product?.length > 0;
+
+    if (removingService && !confirmRemoval.service) {
+      return res.status(409).json({
+        msg: "This update will remove all existing services. Please confirm removal.",
+        code: "CONFIRM_SERVICE_REMOVAL",
+      });
+    }
+    if (removingProduct && !confirmRemoval.product) {
+      return res.status(409).json({
+        msg: "This update will remove all existing products. Please confirm removal.",
+        code: "CONFIRM_PRODUCT_REMOVAL",
+      });
+    }
 
     const client = await Client.findById(existingLocation.client);
     const contractStart = new Date(client.startDate);
@@ -522,12 +541,8 @@ export const updateLocation = async (req, res) => {
           subLocation,
           location,
           qr: qrLink,
-          service: type.includes("service")
-            ? formattedServices
-            : existingLocation.service || [],
-          product: type.includes("product")
-            ? formattedProduct
-            : existingLocation.product || [],
+          service: type.includes("service") ? formattedServices : [],
+          product: type.includes("product") ? formattedProduct : [],
         },
         ...(changeEntry && { $push: { changes: changeEntry } }),
       },

@@ -33,6 +33,28 @@ const LocationModal = ({ clientId, locationDetails }) => {
   const { data = {}, isLoading, isFetching } = useAllServiceQuery();
   const allServices = data?.services?.flatMap((ser) => ser.service) || [];
 
+
+  const hasExistingProducts = locationDetails?.product?.length > 0;
+  const hasExistingServices = locationDetails?.service?.length > 0
+
+  const handleTypeToggle = (key, hasExisting) => {
+    setType((prev) => {
+      const isCurrentlyOn = prev.includes(key);
+
+      // Unchecking something that has real saved data → confirm first
+      if (isCurrentlyOn && hasExisting) {
+        const ok = window.confirm(
+          `This will remove all existing ${key}s from this location once you submit. Are you sure?`
+        );
+        if (!ok) return prev; // no-op, checkbox stays checked
+      }
+
+      return isCurrentlyOn
+        ? prev.filter((t) => t !== key)
+        : [...prev, key];
+    });
+  };
+
   const {
     register,
     formState: { errors },
@@ -78,6 +100,8 @@ const LocationModal = ({ clientId, locationDetails }) => {
       setType(["service"]);
       return;
     }
+
+
 
     const hasProduct = locationDetails.product?.length > 0;
     const hasService = locationDetails.service?.length > 0;
@@ -127,6 +151,11 @@ const LocationModal = ({ clientId, locationDetails }) => {
   const submit = async (data) => {
     data.clientId = clientId;
     data.type = type;
+
+    data.confirmRemoval = {
+      service: hasExistingServices && !type.includes("service"),
+      product: hasExistingProducts && !type.includes("product"),
+    };
 
     if (!type.length) {
       toast.warning("Please select at least service or product ");
@@ -196,13 +225,7 @@ const LocationModal = ({ clientId, locationDetails }) => {
             type="checkbox"
             id="type-service"
             checked={type.includes("service")}
-            onChange={() =>
-              setType((prev) =>
-                prev.includes("service")
-                  ? prev.filter((t) => t !== "service")
-                  : [...prev, "service"]
-              )
-            }
+            onChange={() => handleTypeToggle("service", hasExistingServices)}
           />
           <label htmlFor="type-service">Services</label>
         </div>
@@ -212,13 +235,7 @@ const LocationModal = ({ clientId, locationDetails }) => {
             type="checkbox"
             id="type-product"
             checked={type.includes("product")}
-            onChange={() =>
-              setType((prev) =>
-                prev.includes("product")
-                  ? prev.filter((t) => t !== "product")
-                  : [...prev, "product"]
-              )
-            }
+            onChange={() => handleTypeToggle("product", hasExistingProducts)}
           />
           <label htmlFor="type-product">Product</label>
         </div>
