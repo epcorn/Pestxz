@@ -59,9 +59,9 @@ function ServiceShow({ services, today }) {
                                   ${isToday ? "bg-green-200 text-green-700 animate-pulse" : ""} 
                                   ${isInvalid ? "bg-gray-200 text-gray-500 opacity-60" : ""}
                                   ${isMissed ? "bg-red-200 text-red-700" : ""}
-                                  ${isDone ? "bg-blue-200 text-blue-700" : ""}
                                   ${!isToday && !isInvalid && !isMissed && !isDone ? "outline-gray-300" : ""}
                                   ${nextDate?.date === n?.date ? "bg-yellow-200 outline-yellow-600 text-yellow-600" : ""}
+                                  ${isDone ? "bg-blue-200! outline-blue-700! text-blue-700!" : ""}
                                 `}
                               >
                                 {formatShortDate(n?.date)}

@@ -64,7 +64,7 @@ function RegularForm({ serviceData, id, type, locationName, setRegular, today })
       };
     });
     localStorage.setItem(STORAGE_KEY, JSON.stringify(existing));
-    toast.success("Progress Saved 🚀");
+    // toast.success("Progress Saved 🚀");
   };
 
   const buildPayload = (field, ser, values) => {
@@ -84,6 +84,30 @@ function RegularForm({ serviceData, id, type, locationName, setRegular, today })
       saveLocally(ser.serviceName);
 
       const values = getValues();
+
+      //testing block
+      // Target Schedule Date Validation
+      let targetSchedule = todaySchedule;
+
+      if (isRegular) {
+        const chosenDateStr = values?.selectedDate?.[ser.serviceName]; // Format: YYYY-MM-DD
+        if (!chosenDateStr) {
+          toast.error("Please select a date first");
+          return;
+        }
+
+        // Find an uncompleted schedule date matching what was typed/selected
+        targetSchedule = ser.schedule?.find(
+          (s) => s.date.split("T")[0] === chosenDateStr && !s.completed
+        );
+
+        if (!targetSchedule) {
+          toast.error(`Service already done for date (${chosenDateStr})`);
+          return;
+        }
+      }
+      //testing block
+
       const partialWithoutComment = [];
       ser.scopes?.forEach((sc) => {
         sc.consumables?.forEach((con) => {
@@ -107,7 +131,7 @@ function RegularForm({ serviceData, id, type, locationName, setRegular, today })
       form.append("usedCalibration", JSON.stringify(buildPayload("usedCalibration", ser, values)));
       form.append("action", JSON.stringify(buildPayload("action", ser, values)));
       form.append("comment", JSON.stringify(buildPayload("comment", ser, values)));
-      if (isRegular && todaySchedule) form.append("serviceDate", todaySchedule.date);
+      if (isRegular && targetSchedule) form.append("serviceDate", targetSchedule.date);
       if (isUnschedule) {
         form.append("type", "update");
         form.append("unscheduledId", id); // id prop IS the unscheduled doc's _id here
@@ -117,7 +141,7 @@ function RegularForm({ serviceData, id, type, locationName, setRegular, today })
       if (files) {
         Array.from(files)?.slice(0, 2).forEach((file) => form.append("image", file));
       }
-
+      // toast.success("Successfull")
       const res = isUnschedule
         ? await updateUnscheduled(form).unwrap()
         : await (isRegular ? regularService : casualService)({ id, form }).unwrap();
@@ -134,17 +158,20 @@ function RegularForm({ serviceData, id, type, locationName, setRegular, today })
       setRerender((prev) => [...prev, res]);
 
       isRegular ? setRegular(false) : dispatch(toggleModal({ name: type, status: false }));
-      reset();
+      // reset();
     } catch (err) {
       console.log(err);
-      toast.error("Submission failed");
+      toast.error(err.data.msg || "Submission failed");
     }
   };
 
+  // const servicesForToday = isRegular ? serviceData?.filter((ser) =>
+  //   ser?.schedule?.some((s) => formatShortDate(s.date) === todays && !s.completed)) : serviceData;
 
-
+  //testing block
   const servicesForToday = isRegular ? serviceData?.filter((ser) =>
-    ser?.schedule?.some((s) => formatShortDate(s.date) === todays && !s.completed)) : serviceData;
+    ser?.schedule?.some((s) => !s.completed)) : serviceData;
+  //testing block
 
   if (isRegular && !servicesForToday?.length) {
     const allDates = upComing?.map(u => u[0]?.date).filter(Boolean) || [];
@@ -199,6 +226,11 @@ function RegularForm({ serviceData, id, type, locationName, setRegular, today })
                           <p className="text-sm md:text-lg bg-white font-semibold outline px-2 py-1 rounded outline-gray-400">
                             Date:{" "}
                             <span className="text-base text-blue-600">{todaySchedule?.date.split("T")[0]}</span>
+                            <input
+                              type="date"
+                              {...register(`selectedDate.${ser.serviceName}`, { required: isRegular })}
+                              className="border border-gray-300 rounded px-1 text-base text-blue-600 focus:outline-none"
+                            />
                           </p>
                         </>
                       }

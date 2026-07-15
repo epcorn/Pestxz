@@ -122,6 +122,10 @@ const SingleLocation = () => {
               {`${data.location.floor}, ${data.location.location}, ${data.location.subLocation}`}
             </p>
           </div>
+
+          <div>
+            <input type="date" onChange={(e)=> console.log(e.target.value)}/>
+          </div>
           <div className="px-0 space-y-6">
             {/* ===== SERVICE / PRODUCT TABLES ===== */}
             {(data?.location?.service?.length > 0 || data?.location?.product?.length > 0) && (

@@ -295,24 +295,45 @@ export const newRegularService = async (req, res) => {
     const usedCalibration = JSON.parse(req.body.usedCalibration || "{}");
     const action = JSON.parse(req.body.action || "{}");
     const comment = JSON.parse(req.body.comment || "{}");
-    const serviceDate = req.body.serviceDate; // "27-May"
+    const serviceDate = req.body.serviceDate;
 
     const locationService = location.service.find(
       (s) =>
         s.serviceId?.toString().trim() === service.serviceId?.toString().trim(),
     );
 
-    if (locationService && Array.isArray(locationService.schedule)) {
-      const target = locationService.schedule.find(
-        (s) => s.date === serviceDate,
-      );
-      if (target) {
-        target.completed = true;
-        target.status = "Done";
-        target.completedAt = new Date();
-        target.completedBy = req.user.name;
-      }
+    // ── De-duplicated conditional check ──
+    if (!locationService || !Array.isArray(locationService.schedule)) {
+      return res
+        .status(400)
+        .json({ msg: "Service schedule data not found for this location" });
     }
+
+    const target = locationService.schedule.find((s) => {
+      if (!s.date) return false;
+
+      const dateString =
+        typeof s.date.toISOString === "function"
+          ? s.date.toISOString().split("T")[0]
+          : String(s.date).split("T")[0];
+      // console.log(dateString, new Date(serviceDate).toISOString().split("T")[0]);
+      return dateString === new Date(serviceDate).toISOString().split("T")[0] && !s.completed;
+    });
+
+    // Safeguard guard clause to prevent tracking empty/ghost services
+    if (!target) {
+      return res
+        .status(400)
+        .json({
+          msg: "No matching pending schedule date found or date already completed.",
+        });
+    }
+
+    // Update target parameters safely
+    target.completed = true;
+    target.status = "Done";
+    target.completedAt = serviceDate;
+    target.completedBy = req.user.name;
 
     location.markModified("service");
     await location.save();
@@ -322,7 +343,7 @@ export const newRegularService = async (req, res) => {
       serviceName: service.serviceName,
       frequency: service.frequency,
       serviceDate,
-      schedule: locationService?.schedule || [],
+      schedule: locationService.schedule,
       scopes: service.scopes?.map((scope) => ({
         scopeId: scope.scopeId,
         scopeName: scope.scopeName,
@@ -340,7 +361,7 @@ export const newRegularService = async (req, res) => {
       userName: req.user.name,
       role: req.user.role,
       status: "Done",
-      completedAt: new Date(),
+      completedAt: serviceDate,
     };
 
     await Service.create({
@@ -357,7 +378,10 @@ export const newRegularService = async (req, res) => {
       url: `/`,
     });
   } catch (error) {
-    return res.status(500).json({ msg: "Server error, try again later" });
+    console.log(error);
+    return res
+      .status(500)
+      .json({ msg: "Server error, try again later", error });
   }
 };
 
