@@ -40,7 +40,7 @@ const SingleLocation = () => {
   const dispatch = useDispatch();
   const [show, setShow] = useState(false);
   
-  const today = new Date();
+  const today = new Date("2026-06-01");
 
   useEffect(() => {
     const handleScroll = () => {
@@ -123,9 +123,9 @@ const SingleLocation = () => {
             </p>
           </div>
 
-          <div>
+          {/* <div>
             <input type="date" onChange={(e)=> console.log(e.target.value)}/>
-          </div>
+          </div> */}
           <div className="px-0 space-y-6">
             {/* ===== SERVICE / PRODUCT TABLES ===== */}
             {(data?.location?.service?.length > 0 || data?.location?.product?.length > 0) && (

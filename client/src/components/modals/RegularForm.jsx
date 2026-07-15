@@ -192,7 +192,7 @@ function RegularForm({ serviceData, id, type, locationName, setRegular, today })
     );
   }
 
-
+  console.log("servicesForToday:", servicesForToday);
   return (
     <div className={`${isRegular ? "" : "fixed inset-0 z-90 w-full h-dvh grid place-items-center bg-black/50"}`}>
       <div className={`w-full max-h-[80dvh] bg-gray-200 overflow-auto outline-4 outline-gray-800 rounded-lg ${isRegular ? "w-full" : "max-w-3xl"}`}>
@@ -260,38 +260,54 @@ function RegularForm({ serviceData, id, type, locationName, setRegular, today })
                           return (
                             <div
                               key={con.consumableName}
-                              className=" mb-2 flex flex-wrap gap-x-3 outline"
+                              className="mb-3 grid grid-cols-1 sm:grid-cols-12 gap-2 items-center border border-gray-300 p-2 rounded bg-white"
                             >
+                              {/* Consumable Name */}
                               <input
                                 defaultValue={con.consumableName}
                                 disabled
-                                className="flex-1 outline max-w-fit outline-gray-400 p-2 bg-gray-100 col-span-2 font-bold"
+                                className="sm:col-span-3 w-full border border-gray-300 p-2 bg-gray-100 font-semibold rounded text-sm text-gray-700"
                               />
-                              <input
-                                defaultValue={con.calibration || 0}
-                                disabled
-                                className="max-w-20 outline outline-gray-400 p-2 bg-gray-100"
-                              />
-                              <input
-                                placeholder="Used"
-                                {...register(`usedCalibration.${ser.serviceName}.${sc.scopeName}.${con.consumableName}`)}
-                                className="max-w-20 outline outline-gray-400 p-2 focus:outline-2 focus:outline-gray-800"
-                              />
+
+                              {/* Standard Calibration Value */}
+                              <div className="sm:col-span-2 flex items-center gap-1">
+                                <span className="text-gray-400 text-xs sm:hidden">Target:</span>
+                                <input
+                                  defaultValue={con.calibration || 0}
+                                  disabled
+                                  className="w-full border border-gray-300 p-2 bg-gray-100 rounded text-center"
+                                />
+                              </div>
+
+                              {/* Used Calibration Input */}
+                              <div className="sm:col-span-2 flex items-center gap-1">
+                                <span className="text-gray-400 text-xs sm:hidden">Used:</span>
+                                <input
+                                  type="number"
+                                  placeholder="Used"
+                                  {...register(`usedCalibration.${ser.serviceName}.${sc.scopeName}.${con.consumableName}`)}
+                                  className="w-full border border-gray-300 p-2 rounded focus:border-gray-800 focus:ring-1 focus:ring-gray-800 text-center"
+                                />
+                              </div>
+
+                              {/* Action Status Dropdown */}
                               <select
                                 {...register(`action.${ser.serviceName}.${sc.scopeName}.${con.consumableName}`)}
-                                className="outline outline-gray-400 p-2 focus:outline-2 focus:outline-gray-800"
+                                className="sm:col-span-2 w-full border border-gray-300 p-2 rounded focus:border-gray-800 focus:ring-1 focus:ring-gray-800"
                               >
                                 <option>Done</option>
                                 <option>Not Done</option>
                                 <option>Partial Done</option>
                               </select>
+
+                              {/* Execution Remarks / Comments */}
                               <textarea
                                 rows={1}
-                                placeholder={actionVal === "Partial Done" ? "Comment Required..." : "comment..."}
+                                placeholder={actionVal === "Partial Done" ? "Comment Required..." : "Comment..."}
                                 {...register(`comment.${ser.serviceName}.${sc.scopeName}.${con.consumableName}`)}
-                                className={`flex-1 outline p-2 focus:outline-2 focus:outline-gray-800 ${actionVal === "Partial Done"
-                                  ? "outline-orange-400 bg-orange-50"
-                                  : "outline-gray-400"
+                                className={`sm:col-span-3 w-full border p-2 rounded focus:border-gray-800 focus:ring-1 focus:ring-gray-800 text-sm resize-none ${actionVal === "Partial Done"
+                                  ? "border-orange-400 bg-orange-50 focus:border-orange-500 focus:ring-orange-500"
+                                  : "border-gray-300"
                                   }`}
                               />
                             </div>
