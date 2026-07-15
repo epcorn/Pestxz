@@ -24,7 +24,10 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // ── Fetch a URL and return it as a Buffer, with timeout + retry ──
-const fetchImageBuffer = async (url, { retries = 2, timeoutMs = 10000 } = {}) => {
+const fetchImageBuffer = async (
+  url,
+  { retries = 2, timeoutMs = 20000 } = {},
+) => {
   if (!url || typeof url !== "string") {
     throw new Error(`Invalid QR url: ${url}`);
   }
@@ -56,14 +59,43 @@ const fetchImageBuffer = async (url, { retries = 2, timeoutMs = 10000 } = {}) =>
       const isLastAttempt = attempt === retries;
       if (isLastAttempt) break;
 
-      // Exponential-ish backoff before retrying
-      await new Promise((r) => setTimeout(r, 500 * (attempt + 1)));
+      // Short backoff before retrying — capped so a run of retries
+      // across hundreds of URLs doesn't itself become the bottleneck.
+      await new Promise((r) => setTimeout(r, 400 * (attempt + 1)));
     } finally {
       clearTimeout(timer);
     }
   }
 
   throw lastError;
+};
+
+// ── Run async tasks with a concurrency cap (no idle pausing) ──
+// Keeps up to `limit` fetches in flight at all times — as soon as one
+// finishes, the next starts immediately. This is faster than batching
+// with fixed pauses, since it never sits idle. Individual failures are
+// absorbed by fetchImageBuffer's own timeout + retry, not by slowing
+// the whole job down.
+const runWithConcurrencyLimit = async (items, limit, worker) => {
+  const results = new Array(items.length);
+  let nextIndex = 0;
+
+  const runners = new Array(Math.min(limit, items.length))
+    .fill(null)
+    .map(async () => {
+      while (nextIndex < items.length) {
+        const currentIndex = nextIndex++;
+        try {
+          const value = await worker(items[currentIndex], currentIndex);
+          results[currentIndex] = { status: "fulfilled", value };
+        } catch (reason) {
+          results[currentIndex] = { status: "rejected", reason };
+        }
+      }
+    });
+
+  await Promise.all(runners);
+  return results;
 };
 
 export const makeQrFile = async (req, res) => {
@@ -79,9 +111,15 @@ export const makeQrFile = async (req, res) => {
       return res.status(400).json({ error: "No QR codes provided" });
     }
 
-    // ── Fetch all QR images in parallel, tolerating individual failures ──
-    const results = await Promise.allSettled(
-      qrUrls.map((url) => fetchImageBuffer(url)),
+    // ── Fetch QR images with limited concurrency (no idle pauses) ──
+    // 20 fetches in flight at all times — fast, while still bounded
+    // enough to avoid overwhelming the host. Relies on fetchImageBuffer's
+    // timeout + retry to absorb individual slow/failed requests.
+    const CONCURRENCY_LIMIT = 20;
+    const results = await runWithConcurrencyLimit(
+      qrUrls,
+      CONCURRENCY_LIMIT,
+      (url) => fetchImageBuffer(url),
     );
 
     const qrBuffers = results
