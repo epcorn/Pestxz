@@ -16,7 +16,6 @@ const emptyProduct = {
 function ProductRow({ control, register, errors, setValue, index, products, allProducts, prFrequency, onRemove, canRemove }) {
   const selectedProduct = useWatch({ control, name: `products.${index}.product` })
   const selectedVersion = useWatch({ control, name: `products.${index}.version` })
-
   const versions = React.useMemo(() => {
     if (!selectedProduct?.value) return selectedVersion ? [selectedVersion] : []
     if (!selectedProduct?.value || !products) return []
@@ -57,7 +56,8 @@ function ProductRow({ control, register, errors, setValue, index, products, allP
   return (
     <div className="col-span-3 outline outline-gray-400 rounded m-1 p-1">
 
-      <div className="w-fit ml-auto gap-2">
+      <div className="flex justify-between pl-5 gap-2">
+        <span className='outline w-7 h-7 text-center content-center bg-white leading-none text-lg'>{index + 1}</span>
         {canRemove && (
           <Button
             type="button"
@@ -170,7 +170,6 @@ function ProductRow({ control, register, errors, setValue, index, products, allP
             </div>
           ))}
         </div>
-
       </div>
     </div>
   )
@@ -209,7 +208,7 @@ function ProductSection({ control, register, errors, setValue, products, allProd
             allProducts={allProducts}
             prFrequency={prFrequency}
             onRemove={() => remove(index)}
-            canRemove={fields.length > 1}
+            canRemove={fields.length >= 0}
           />
         ))}
       </div>
