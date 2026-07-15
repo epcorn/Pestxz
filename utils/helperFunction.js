@@ -315,7 +315,7 @@ export const generateSchedule = (start, end, frequency, preffDay) => {
   // --- FREQUENCIES THAT NEVER USE PREFERRED DAYS ---
   const NO_PREF_DAY_FREQUENCIES = ["daily", "alternate days"];
   const usesPrefDay = !NO_PREF_DAY_FREQUENCIES.includes(freq);
-console.log("preffDay: ",preffDay)
+  console.log("preffDay: ", preffDay);
   // --- NORMALIZE PREFERRED DAYS (accepts a single string or an array, max 3) ---
   const rawDays = usesPrefDay
     ? Array.isArray(preffDay)
@@ -544,11 +544,10 @@ export const formatProducts = async (
   contractEnd,
   locationId,
   loc,
-  day,
+  client,
 ) => {
   const valid = productReq.filter(
     (p) => p.productId && p.versionId && p.frequency,
-    day,
   );
   if (!valid.length) return { error: "Please fill all product fields" };
 
@@ -563,12 +562,19 @@ export const formatProducts = async (
         old.productId?.toString() !== pr.productId ||
         old.versionId?.toString() !== pr.versionId;
 
-      const serialNo = changed ? await productCounter(pr.code) : old.serialNo;
+      const serialNo = changed
+        ? await productCounter(pr.code, client)
+        : old.serialNo;
 
       const schedule =
         !changed && old?.schedule?.length && old.frequency === pr.frequency
           ? old.schedule
-          : buildSchedule(contractStart, contractEnd, pr.frequency, day);
+          : buildSchedule(
+              contractStart,
+              contractEnd,
+              pr.frequency,
+              client.prefDay,
+            );
 
       const qrData = await productQrCodeGenerator({
         link: `https://pestxz.com/location/${locationId}`,

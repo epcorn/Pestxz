@@ -32,21 +32,26 @@ const internalRoles = [
   "BranchAdmin",
 ];
 
-export async function productCounter(code) {
+export async function productCounter(code, client) {
+  const productCode = `${client.contractNo}_${code}`;
+
   let counter = await Counter.findOneAndUpdate(
-    { productCode: code },
+    { productCode: productCode },
     { $inc: { seq: 1 } },
     { new: true },
   );
 
   if (!counter) {
     try {
-      counter = await Counter.create({ productCode: code, seq: 2 });
+      counter = await Counter.create({
+        productCode: productCode,
+        seq: 2,
+      });
     } catch (err) {
       if (err.code === 11000) {
         // another request created it first — just increment normally
         counter = await Counter.findOneAndUpdate(
-          { productCode: code },
+          { productCode: productCode },
           { $inc: { seq: 1 } },
           { new: true },
         );
@@ -58,7 +63,7 @@ export async function productCounter(code) {
 
   const today = new Date().getFullYear();
   const paddedSeq = String(counter.seq).padStart(3, "0");
-  return `${code}-${today.toString().slice(2)}-${paddedSeq}`;
+  return `${productCode}-${today.toString().slice(2)}-${paddedSeq}`;
 }
 
 export const qrCounter = async (req, res) => {
@@ -204,7 +209,7 @@ export const addLocation = async (req, res) => {
             completedAt: null,
             completedBy: null,
           }));
-          const serialNo = await productCounter(code);
+          const serialNo = await productCounter(code, client);
           const qrData = await productQrCodeGenerator({
             link: `https://pestxz.com/location/${locationId}`,
             floor: newLocation.floor,
@@ -422,7 +427,7 @@ export const updateLocation = async (req, res) => {
         contractEnd,
         id,
         { floor, subLocation, location },
-        client.prefDay,
+        client,
       );
       if (error) return res.status(400).json({ msg: error });
       formattedProduct = formatted;
