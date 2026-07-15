@@ -210,15 +210,15 @@ export const addLocation = async (req, res) => {
             completedBy: null,
           }));
           const serialNo = await productCounter(code, client);
-          const qrData = await productQrCodeGenerator({
+          const prQrData = await productQrCodeGenerator({
             link: `https://pestxz.com/location/${locationId}`,
             floor: newLocation.floor,
             location: `${newLocation.location}, ${newLocation.subLocation}`,
             serialNo,
           });
 
-          fs.writeFileSync(`./tmp/qr${i}.jpeg`, qrData);
-          const qrLink = await uploadFile({ filePath: `./tmp/qr${i}.jpeg` });
+          fs.writeFileSync(`./tmp/qr${i}.jpeg`, prQrData);
+          const prQrLink = await uploadFile({ filePath: `./tmp/qr${i}.jpeg` });
           return {
             productId,
             productName,
@@ -230,7 +230,7 @@ export const addLocation = async (req, res) => {
             specification,
             calibrations: calibrations ?? [],
             schedule,
-            qr: qrLink,
+            qr: prQrLink,
           };
         }),
       );
@@ -244,26 +244,29 @@ export const addLocation = async (req, res) => {
     newLocation.service = formattedServices;
     newLocation.product = formattedProduct;
 
-    const qrData = await qrCodeGenerator({
-      link: `https://pestxz.com/location/${locationId}`,
-      floor: newLocation.floor,
-      location: `${newLocation.location}, ${newLocation.subLocation}`,
-    });
-    if (!qrData) {
-      await Location.findByIdAndDelete(locationId);
-      return res
-        .status(400)
-        .json({ msg: "QR generation error. Try again later" });
+    let qrLink = "";
+    if (type.includes("service")) {
+      const qrData = await qrCodeGenerator({
+        link: `https://pestxz.com/location/${locationId}`,
+        floor: newLocation.floor,
+        location: `${newLocation.location}, ${newLocation.subLocation}`,
+      });
+      if (!qrData) {
+        await Location.findByIdAndDelete(locationId);
+        return res
+          .status(400)
+          .json({ msg: "QR generation error. Try again later" });
+      }
+      fs.writeFileSync("./tmp/qr.jpeg", qrData);
+      qrLink = await uploadFile({ filePath: "./tmp/qr.jpeg" });
+      if (!qrLink) {
+        await Location.findByIdAndDelete(locationId);
+        return res
+          .status(400)
+          .json({ msg: "QR upload error. Try again later" });
+      }
+      newLocation.qr = qrLink;
     }
-
-    fs.writeFileSync("./tmp/qr.jpeg", qrData);
-    const qrLink = await uploadFile({ filePath: "./tmp/qr.jpeg" });
-    if (!qrLink) {
-      await Location.findByIdAndDelete(locationId);
-      return res.status(400).json({ msg: "QR upload error. Try again later" });
-    }
-
-    newLocation.qr = qrLink;
     await newLocation.save();
     autoMarkMissed();
 

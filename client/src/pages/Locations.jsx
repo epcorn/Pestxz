@@ -1,183 +1,144 @@
 import { saveAs } from "file-saver";
 import { useDispatch, useSelector } from "react-redux";
-import { AlertMessage, Button, Loading } from "../components";
-import { FaEdit } from "react-icons/fa";
-import { useAllLocationsQuery, useDeleteLocationMutation } from "../redux/locationSlice";
-import { MdAddCircle } from "react-icons/md";
+import { AlertMessage, Button, Loading, LoadingSpinner } from "../components";
+import { useAllLocationsQuery } from "../redux/locationSlice";
 import { toggleModal } from "../redux/helperSlice";
-import { DeleteModal, LocationModal } from "../components/modals";
 import { useState } from "react";
-import { toast } from "react-toastify";
 import { Link } from "react-router-dom";
 import { useAllUserQuery } from "../redux/adminSlice";
 import ImagesModal from "../components/modals/ImagesModal";
 import Headers from "../components/Headers";
+import Pagination from "./Pagination";
 
 const Locations = () => {
-  const [selectFloor, setSelectFloor] = useState([])
-  const [locationDetails, setLocationDetails] = useState({});
+  const [page, setPage] = useState(1);
   const dispatch = useDispatch();
   const { user, isModalOpen } = useSelector((store) => store.helper);
-  const [deleteLocation, { isLoading: deleteLoading }] = useDeleteLocationMutation();
-  const { data, isLoading, isFetching, error } = useAllLocationsQuery({
-    id: user?.type,
-  }, { skip: user?.role !== "ClientAdmin" }
+
+  const limit = 10;
+  const { data, isLoading, isFetching, error } = useAllLocationsQuery(
+    { id: user?.type, limit: limit, page },
+    { skip: user?.role !== "ClientAdmin" }
   );
   const { data: clientusers } = useAllUserQuery();
-  console.log(data)
 
-  const client = data?.client;
+  // if (isLoading || isFetching) return <Loading />;
+  if (error) return <AlertMessage>{error?.data?.msg || error.error}</AlertMessage>;
+  if (!data) return null;
+
+  const client = data.client || {};
+
   return (
-    <>
-      {isLoading || isFetching ? (
-        <Loading />
-      ) : (
-        error && <AlertMessage>{error?.data?.msg || error.error}</AlertMessage>
-      )}
+    <div className="px-4 pb-2 max-w-7xl max-h-full mx-auto text-gray-800 antialiased overflow-y-auto flex flex-col scroll-smooth ">
+      {/* Top Header Row */}
+      <div className="border-b border-gray-200">
+        <Headers header="Location Management" user={user} />
+      </div>
 
-      {!error && data && (
-        <div>
-          {/* Main Page Heading Section */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-5 mb-5 border-b border-slate-200 gap-4">
-            <Headers header={'Location Managements'} user={user} />
+      {/* Contract Details Data Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 p-4 bg-gray-50 border border-gray-200 rounded text-sm">
+        <div className="space-y-1">
+          <p><strong>Contract No:</strong> {client.contractNo}</p>
+          <p><strong>Service Period:</strong> {client.servicePeriod} Months</p>
+          <p><strong>Email:</strong> {client.email}</p>
+        </div>
+        <div className="space-y-1">
+          <p><strong>Start Date:</strong> {new Date(client?.startDate).toISOString().split("T")[0]}</p>
+          <p><strong>End Date:</strong> {new Date(client?.endDate).toISOString().split("T")[0]}</p>
+          <p><strong>Address:</strong> {client.address}</p>
+        </div>
+      </div>
 
-
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 my-5 mx-2">
-            <div>
-              <h6 className="">
-                <strong>Contract No: </strong>{" "}
-                <span className="text-sm">{client.contractNo}</span>
-              </h6>
-              <h6 className="">
-                <strong>Service Period: </strong> <span className="text-sm">{client.servicePeriod} Months</span>
-              </h6>
-              <h6 className="">
-                <strong>Email: </strong> <span className="text-sm">{client.email}</span>
-              </h6>
-            </div>
-            <div>
-              <div className="flex justify-between flex-wrap">
-                <h6 className="">
-                  <strong>Start Date: </strong> <span className="text-sm">{client.startDate}</span>
-                </h6>
-                <h6 className="">
-                  <strong>End Date: </strong> <span className="text-sm">{client.endDate}</span>
-                </h6>
-              </div>
-              <h6 className="">
-                <strong>Address: </strong> <span className="text-sm">{client.address}</span>
-              </h6>
-            </div>
-          </div>
-
-          <div className="overflow-y-auto my-4">
-            <table className="w-full border whitespace-nowrap border-neutral-500 bg-text">
-              <thead>
-                <tr className="h-9 w-full text-md md:text-lg leading-none">
-                  <th className="font-bold text-center border-neutral-500 border-2 px-3">
-                    Floor
-                  </th>
-                  <th className="font-bold text-center border-neutral-500 border-2 px-3">
-                    Location
-                  </th>
-                  <th className="font-bold text-center border-neutral-500 border-2 w-32 px-3">
-                    Services/[Products]
-                  </th>
-                  {/* <th className="font-bold text-center border-neutral-500 border-2 w-32 px-3">
-                    Products
-                  </th> */}
-                  <th className="font-bold text-center border-neutral-500 border-2 w-32 px-3 hidden">
-                    Assign
-                  </th>
-                  <th className="font-bold text-center border-neutral-500 border-2 w-28">
-                    QR Code
-                  </th>
-                </tr>
-              </thead>
-
-              {/* FIXED CONDITIONAL LAYOUT LOGIC */}
-              {!data?.locations || data.locations.length === 0 ? (
-                <tbody className="w-full">
-                  <tr>
-                    <td
-                      colSpan={6}
-                      className="text-center py-20 text-sm font-medium text-neutral-500"
-                    >
-                      No locations available
+      {/* Main Table Interface */}
+      <div className="overflow-x-auto border border-gray-200 rounded mb-4">
+        <table className="w-full text-left text-sm border-collapse min-w-[900px]">
+          <thead>
+            <tr className="bg-gray-300 border-b border-gray-200 text-xs font-semibold uppercase tracking-wider sticky top-0 text-gray-600">
+              <th className="p-3 border-r border-gray-200 w-32">Floor</th>
+              <th className="p-3 border-r border-gray-200">Location</th>
+              <th className="p-3 border-r border-gray-200">Services & Products</th>
+              <th className="p-3 text-center w-36">QR Code</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-200 bg-white">
+            {!data.locations || data.locations.length === 0 ? (
+              <tr>
+                <td colSpan={4} className="text-center py-12 text-gray-400 font-medium">
+                  No locations available.
+                </td>
+              </tr>
+            ) : (isLoading || isFetching) ? <tr>
+              <td colSpan={4} className="h-52 text-center">
+                <div className="flex justify-center items-center h-full w-full">
+                  <LoadingSpinner />
+                </div>
+              </td>
+            </tr>
+              : (
+                data.locations.map((location) => (
+                  <tr key={location._id} className="hover:bg-gray-50 transition-colors">
+                    {/* Floor Link Cell */}
+                    <td className="p-3 border-r border-gray-200 font-medium">
+                      <Link to={`/location/${location._id}`} className="block">
+                        <Button label={location.floor} small color="bg-blue-600 text-white" />
+                      </Link>
                     </td>
-                  </tr>
-                </tbody>
-              ) : (
-                <tbody className="w-full">
-                  {data?.locations.map((location) => (
-                    <tr
-                      key={location._id}
-                      className="h-10 text-sm leading-none bg-text border-b border-neutral-500 hover:bg-slate-200"
-                    >
-                      <td className="px-3 border-r font-normal border-neutral-500 hover:text-cyan-700">
-                        <Link to={`/location/${location._id}`}>
-                          <Button label={location.floor} />
-                        </Link>
-                      </td>
-                      <td className="px-3 border-r font-normal border-neutral-500">
-                        {location.location}, {location.subLocation}
-                      </td>
-                      <td className="px-3 border-r font-normal text-center border-neutral-500">
-                        <p>
-                          {location.service?.map((item) => item.serviceName).join(", ")}
-                        </p>
-                        {location.product.length > 0 &&
-                          <p>
-                            [{location.product.map(p => p.productName).join(", ")}]
-                          </p>
-                        }
 
-                      </td>
-                      <td className="px-3 border-r font-normal text-center border-neutral-500 hidden">
-                        <select name="" id="" className="text-center">
-                          <option value="NA">---Select---</option>
-                          {clientusers?.map(u => (
-                            <option key={u._id} value={u._id}>{u.name}</option>
-                          ))}
-                        </select>
-                      </td>
-                      <td className="border-r font-normal text-center border-neutral-500">
-                        {user.type !== "ClientEmployee" ?
+                    {/* Location Strings Cell */}
+                    <td className="p-3 border-r border-gray-200 vertical-align-middle">
+                      <span className="font-semibold">{location.location}</span>
+                      {location.subLocation && <span className="text-gray-500 text-xs block">{location.subLocation}</span>}
+                    </td>
+
+                    {/* Linked Parameters Info Items */}
+                    <td className="p-3 border-r border-gray-200 leading-relaxed">
+                      <div className="text-gray-700">
+                        {location.service?.map((item) => item.serviceName).join(", ") || "—"}
+                      </div>
+                      {location.product && location.product.length > 0 && (
+                        <div className="text-xs text-gray-500 mt-1">
+                          [{location.product.map((p) => p.productName).join(", ")}]
+                        </div>
+                      )}
+                    </td>
+
+                    {/* Dynamic Action Trigger Buttons */}
+                    <td className="p-3 text-center">
+                      {user.type !== "ClientEmployee" ? (
+                        <Button
+                          label="Download"
+                          small
+                          height="h-7"
+                          color="bg-emerald-600 text-white"
+                          onClick={() => saveAs(location.qr, `QR-${location.location}`)}
+                        />
+                      ) : (
+                        <>
                           <Button
-                            label="Download"
+                            label="View Image"
                             small
                             height="h-7"
-                            color="bg-green-600"
-                            onClick={() =>
-                              saveAs(location.qr, `QR-${location.location}`)
-                            }
+                            color="bg-gray-600 text-white"
+                            onClick={() => dispatch(toggleModal({ name: "qrimage", status: true }))}
                           />
-                          :
-                          <>
-                            <Button
-                              label="Image"
-                              onClick={() => dispatch(toggleModal({
-                                name: "qrimage",
-                                status: true,
-                              }))} />
-
-                            {isModalOpen.qrimage && (
-                              <ImagesModal image={location.qr} name={"qrimage"} />
-                            )}
-                          </>
-                        }
-                      </td>
-
-                    </tr>
-                  ))}
-                </tbody>
+                          {isModalOpen.qrimage && (
+                            <ImagesModal image={location.qr} name="qrimage" />
+                          )}
+                        </>
+                      )}
+                    </td>
+                  </tr>
+                ))
               )}
-            </table>
-          </div>
-        </div>
-      )}
-    </>
+          </tbody>
+        </table>
+      </div>
+
+      {/* Structural Pagination Layout Row */}
+      <div className="pt-2">
+        <Pagination page={page} setPage={setPage} totalPages={data?.pages} />
+      </div>
+    </div>
   );
 };
 
