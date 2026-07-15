@@ -87,9 +87,8 @@ const SingleClient = () => {
   const handleQrDownload = async (id, location) => {
     try {
       console.log(id, location);
-      await qrCountInc(id).unwrap();
-
       saveAs(location?.qr, `QR-${location.location}`);
+      await qrCountInc(id).unwrap();
     } catch (error) {
       throw new Error("download error");
     }
@@ -127,10 +126,9 @@ const SingleClient = () => {
       const payload = { qrs: qrs, client: data?.clientName || "Client" };
       // Execute database increments & Docx creation
 
-      await qrCountInc(ids).unwrap();
       const res = await makeQrDOCX(payload).unwrap();
-
       saveAs(res?.qr, `${data?.clientName || "Client"}-Location.docx`);
+      await qrCountInc(ids).unwrap();
       return data?.clientName || "Client";
     })();
 
@@ -584,12 +582,9 @@ function ProductQrModal({ data, dispatch, toggleModal, makeQrDOCX, modalKey, cli
           {/* Location details card with Download All button */}
           <div className="flex items-center justify-between gap-4 p-3 bg-blue-50 border border-blue-100 rounded-lg">
             <div className="min-w-0">
-              <span className="text-xs font-semibold text-blue-600 uppercase tracking-wider block">
-                Location
-              </span>
-              <p className="text-sm font-medium text-blue-900 truncate">
+              <p className="text-sm font-medium text-blue-900 line-clamp-2 break-words">
                 {data.floor}, {data.location}
-                {data.subLocation && ` (${data.subLocation})`}
+                {data.subLocation && ` (${data.subLocation}) cfrgt rgthy`}
               </p>
             </div>
             <Button
