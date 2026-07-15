@@ -40,7 +40,7 @@ const SingleLocation = () => {
   const dispatch = useDispatch();
   const [show, setShow] = useState(false);
   
-  const today = new Date("2026-06-01");
+  const today = new Date();
 
   useEffect(() => {
     const handleScroll = () => {

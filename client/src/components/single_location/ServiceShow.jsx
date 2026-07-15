@@ -32,9 +32,9 @@ function ServiceShow({ services, today }) {
               });
 
               const isExpanded = expandedServiceId === index;
-              const visibleSchedules = isExpanded ? schedules : nextServices.slice(0, 5);
+              const visibleSchedules = isExpanded ? schedules : nextServices.slice(0, 10);
               const { nextDate, todaysDate, todaysStatus } = compareDates(schedules, today)
-
+              console.log(schedules)
               return (
                 <tr key={index} className="border-b border-black last:border-b-0 *:px-2 py-2">
                   {/* SERVICE NAME */}
@@ -43,9 +43,9 @@ function ServiceShow({ services, today }) {
                   {/* UPCOMING DATES */}
                   <td className="border-r border-black">
                     <div className="flex flex-wrap gap-2 min-w-[200px] p-1 max-h-20 text-xs font-semibold overflow-auto items-center">
-                      {schedules.length > 0 ? (
+                      {schedules?.length > 0 ? (
                         <>
-                          {visibleSchedules.map((n, i) => {
+                          {schedules?.map((n, i) => {
 
                             const isToday = n?.date === todaysDate?.date;
                             const isMissed = n?.status === "Missed";
