@@ -407,6 +407,7 @@ export const updateLocation = async (req, res) => {
         existingLocation.service,
         contractStart,
         contractEnd,
+        client.prefDay,
       );
       if (error) return res.status(400).json({ msg: error });
       formattedServices = formatted;
@@ -421,6 +422,7 @@ export const updateLocation = async (req, res) => {
         contractEnd,
         id,
         { floor, subLocation, location },
+        client.prefDay,
       );
       if (error) return res.status(400).json({ msg: error });
       formattedProduct = formatted;

@@ -308,14 +308,14 @@ export const generateSchedule = (start, end, frequency, preffDay) => {
     saturday: 6,
   };
 
-  const today = new Date('2026-06-01');
+  const today = new Date("2026-06-01");
   const schedule = [];
   const freq = (frequency || "").toLowerCase().trim();
 
   // --- FREQUENCIES THAT NEVER USE PREFERRED DAYS ---
   const NO_PREF_DAY_FREQUENCIES = ["daily", "alternate days"];
   const usesPrefDay = !NO_PREF_DAY_FREQUENCIES.includes(freq);
-
+console.log("preffDay: ",preffDay)
   // --- NORMALIZE PREFERRED DAYS (accepts a single string or an array, max 3) ---
   const rawDays = usesPrefDay
     ? Array.isArray(preffDay)
@@ -333,8 +333,6 @@ export const generateSchedule = (start, end, frequency, preffDay) => {
     ),
   ].slice(0, 3);
 
-  // Days to add to `date` to reach the nearest of targetDayNums
-  // (0 if date already matches one of them, or if none apply)
   const daysToNearestTarget = (date) => {
     if (targetDayNums.length === 0) return 0;
     const currentDayNum = date.getDay();
@@ -349,11 +347,8 @@ export const generateSchedule = (start, end, frequency, preffDay) => {
   let current = new Date(start);
   let endDate = new Date(end);
 
-  // If start date is in the past, adjust it to today
   current = today < current ? current : today;
 
-  // --- PREFERRED DAY LOGIC ---
-  // Jump 'current' forward to the nearest of the preferred days, if applicable
   current.setDate(current.getDate() + daysToNearestTarget(current));
 
   while (current <= endDate) {
@@ -506,6 +501,7 @@ export const formatServices = (
   existingServices,
   contractStart,
   contractEnd,
+  day,
 ) => {
   const valid = serviceReq.filter(
     (s) => s.serviceId && s.serviceName && s.scopes?.length > 0,
@@ -548,9 +544,11 @@ export const formatProducts = async (
   contractEnd,
   locationId,
   loc,
+  day,
 ) => {
   const valid = productReq.filter(
     (p) => p.productId && p.versionId && p.frequency,
+    day,
   );
   if (!valid.length) return { error: "Please fill all product fields" };
 
@@ -570,7 +568,7 @@ export const formatProducts = async (
       const schedule =
         !changed && old?.schedule?.length && old.frequency === pr.frequency
           ? old.schedule
-          : buildSchedule(contractStart, contractEnd, pr.frequency);
+          : buildSchedule(contractStart, contractEnd, pr.frequency, day);
 
       const qrData = await productQrCodeGenerator({
         link: `https://pestxz.com/location/${locationId}`,

@@ -7,6 +7,7 @@ function ServiceShow({ services, today }) {
   return (
     <section className="">
       <div className="w-full overflow-x-auto">
+        <h3 className="text-lg font-semibold mx-2">Services Overview</h3>
         <table className="w-full text-left m-0.5 rounded-md table-auto outline-1 outline-black min-w-[900px]">
           <thead className="bg-gray-300 text-sm">
             <tr className="border-b border-black whitespace-nowrap *:px-4 *:py-2">
