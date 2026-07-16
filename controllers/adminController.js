@@ -613,14 +613,30 @@ export const adminDashboard = async (req, res) => {
       .slice(0, 15)
       .map(withClientName);
 
+    const statuses = ["Missed", "Pending", "Done"];
+
     const productData = {
       total: productDashboard?.[0]?.totalProducts?.[0]?.count || 0,
-      scheduleCount: productDashboard[0]?.scheduleCount || [],
+      scheduleCount: statuses.map((label) => ({
+        label,
+        count:
+          productDashboard?.[0]?.scheduleCount?.find(
+            (item) => item.label === label,
+          )?.count || 0,
+      })),
     };
+    // productDashboard[0]?.scheduleCount || [],
     const serviceData = {
       total: serviceDashboard?.[0]?.totalServices?.[0]?.count || 0,
-      scheduleCount: serviceDashboard[0].scheduleCount || [],
+      scheduleCount: statuses.map((label) => ({
+        label,
+        count:
+          serviceDashboard?.[0].scheduleCount?.find(
+            (item) => item.label === label,
+          )?.count || 0,
+      })),
     };
+    // serviceDashboard[0].scheduleCount || [],
 
     return res.json({
       all: allComplaints.map(withClientName),
