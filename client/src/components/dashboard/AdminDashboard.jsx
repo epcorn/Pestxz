@@ -43,7 +43,7 @@ function AdminDashboard() {
     { skip: user?.role !== "Admin", refetchOnReconnect: true }
   );
   const clients = clientsData?.clients
-  console.log(clientsData)
+
   useEffect(() => {
     if (!assignId) return;
     const handler = (e) => {
@@ -336,7 +336,7 @@ export default AdminDashboard;
 function Row({ item, index, isRegular, assignId, assignRef, setAssignId, navigate }) {
   const latestUpdate = item?.complaintUpdate?.at(-1);
   const cd = item?.complaintDetails;
-
+  console.log(item)
   const bgStyle = {
     Open: "bg-red-100",
     "In Progress": "bg-amber-100",
@@ -392,7 +392,11 @@ function Row({ item, index, isRegular, assignId, assignRef, setAssignId, navigat
 
       {/* Column 3 */}
       <td className="px-4 py-4 text-gray-600 text-xs whitespace-nowrap">
-        <p className="font-semibold">{new Date(item.createdAt).toLocaleDateString()}</p>
+        {isRegular ?
+           <div className="font-semibold">
+            {item?.regularService?.[0]?.completedAt.split("T")[0]}
+          </div> : <div>{item.createdAt.split("T")[0]}</div>
+        }
         <p className="text-gray-400 mt-0.5">
           {new Date(item.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
         </p>
