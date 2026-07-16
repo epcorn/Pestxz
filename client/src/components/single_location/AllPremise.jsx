@@ -27,17 +27,17 @@ function AllPremise({ today }) {
   }
 
   return (
-    <section className="bg-white rounded-md overflow-hidden select-none">
-      <table className="w-full border-collapse text-left text-sm text-slate-700">
+    <section className="bg-white rounded-md overflow-auto select-none max-h-96">
+      <table className="w-full h-full border-collapse text-left text-sm text-slate-700">
         <thead>
-          <tr className="border-b bg-gray-200 font-semibold text-slate-900 *:not-last:border-r">
+          <tr className="border-b bg-gray-200 font-semibold text-slate-900 *:not-last:border-r sticky top-0">
             <th className="py-3 px-2 text-center">No.</th>
             <th className="py-3 px-2">Location</th>
             <th className="py-3 px-2">Service name</th>
             <th className="py-3 px-2">Status</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-slate-300">
+        <tbody className="divide-y divide-slate-300 h-full overflow-auto">
           {allPremiseSchedules.length === 0 ? (
             <tr>
               <td colSpan="4" className="py-10 text-center text-slate-500 font-medium">
@@ -88,7 +88,7 @@ function AllPremise({ today }) {
                         {allDone ? "Completed" : partialDone ? "Partially Done" : "Pending"}
                       </span>
                       <span className="text-xs text-slate-500 font-medium">
-                        {completedCount} / {totalCount} tasks
+                        {completedCount} / {totalCount} services
                       </span>
                     </div>
                   </td>
