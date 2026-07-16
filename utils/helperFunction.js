@@ -296,6 +296,12 @@ export const removeOldQr = async (url) => {
   }
 };
 
+export function dateTimeSplitter(date) {
+
+    const getDate = new Date(date).toISOString()
+    const [acDate, acTime] = getDate.split("T")
+    return { date: acDate, time: acTime.split(".")[0] }
+}
 // GENERATE SCHEDULE
 export const generateSchedule = (start, end, frequency, preffDay) => {
   const dayMap = {

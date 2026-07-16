@@ -317,16 +317,17 @@ export const newRegularService = async (req, res) => {
           ? s.date.toISOString().split("T")[0]
           : String(s.date).split("T")[0];
       // console.log(dateString, new Date(serviceDate).toISOString().split("T")[0]);
-      return dateString === new Date(serviceDate).toISOString().split("T")[0] && !s.completed;
+      return (
+        dateString === new Date(serviceDate).toISOString().split("T")[0] &&
+        !s.completed
+      );
     });
 
     // Safeguard guard clause to prevent tracking empty/ghost services
     if (!target) {
-      return res
-        .status(400)
-        .json({
-          msg: "No matching pending schedule date found or date already completed.",
-        });
+      return res.status(400).json({
+        msg: "No matching pending schedule date found or date already completed.",
+      });
     }
 
     // Update target parameters safely
@@ -369,6 +370,8 @@ export const newRegularService = async (req, res) => {
       regularService: [regularService],
       client: location.client,
       location: id,
+      createdAt: new Date(serviceDate),
+      updatedAt: new Date(serviceDate),
     });
 
     return res.status(201).json({

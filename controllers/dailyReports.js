@@ -2,7 +2,12 @@ import { populate } from "dotenv";
 import Client from "../models/clientModel.js";
 import Service from "../models/serviceModel.js";
 import exceljs from "exceljs";
-import { removeOldQr, sendEmail, uploadFile } from "../utils/helperFunction.js";
+import {
+  dateTimeSplitter,
+  removeOldQr,
+  sendEmail,
+  uploadFile,
+} from "../utils/helperFunction.js";
 import fs from "fs";
 import path from "path";
 
@@ -235,9 +240,10 @@ export const dailyServiceReport = async (req, res) => {
                   ],
             )
           : null;
-
+        const { date, time } = dateTimeSplitter(regs.serviceDate);
+        
         return {
-          serviceDate: regs.serviceDate,
+          serviceDate: `${date} \n ${time}`,
           frequency: regs.frequency,
           userName: regs.userName,
           location: `${loc.floor}, ${loc.location}, ${loc.subLocation}`,
