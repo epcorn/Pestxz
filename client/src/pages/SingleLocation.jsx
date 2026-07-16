@@ -40,7 +40,7 @@ const SingleLocation = () => {
   const dispatch = useDispatch();
   const [show, setShow] = useState(false);
   
-  const today = new Date();
+  const today = new Date("2026-06-20");
 
   useEffect(() => {
     const handleScroll = () => {
@@ -111,7 +111,7 @@ const SingleLocation = () => {
           </div>
           {/* ===== FLOATING STICKY SUMMARY BAR (unchanged behavior) ===== */}
           <div
-            className={`fixed z-[5] top-21 right-0 w-full lg:w-[83dvw] flex items-center gap-3 p-2 bg-slate-700 shadow-lg rounded-b-lg transition-all duration-500 origin-top ${show ? "opacity-100 scale-100 translate-y-0 pointer-events-auto" : "opacity-0 scale-95 -translate-y-4 pointer-events-none"}`}
+            className={`fixed z-[5] top-21 right-0 lg:right-5 w-full lg:w-[80dvw] flex items-center gap-3 p-2 bg-slate-700 shadow-lg rounded-b-lg transition-all duration-500 origin-top ${show ? "opacity-100 scale-100 translate-y-0 pointer-events-auto" : "opacity-0 scale-95 -translate-y-4 pointer-events-none"}`}
           >
             {data.client && (
               <p className="px-3 py-1 bg-white text-slate-800 rounded-md text-sm font-medium whitespace-nowrap">

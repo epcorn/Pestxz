@@ -187,7 +187,7 @@ function RegularForm({ serviceData, id, type, locationName, setRegular, today })
                   <div className="flex justify-between mb-4">
                     <div className="flex gap-x-4 gap-y-2 items-center flex-wrap">
                       <p className="text-sm md:text-lg bg-white font-semibold outline px-2 py-1 rounded outline-gray-400">
-                        Service:{" "}
+                        <span className="outline px-1.5 leading-none rounded-full text-gray-700 font-semibold mr-2 text-sm">{i + 1}</span> Service:{" "}
                         <span className="text-base text-gray-500">{ser.serviceName}</span>
                       </p>
                       {(isRegular) &&
@@ -219,35 +219,35 @@ function RegularForm({ serviceData, id, type, locationName, setRegular, today })
                     {ser.scopes?.map((sc) => (
                       <div
                         key={sc.scopeName}
-                        className="mt-2 outline outline-gray-400 p-3 rounded bg-white"
+                        className="mt-2 outline-4 outline-gray-400 p-3 rounded bg-white"
                       >
-                        <h4 className="font-bold mb-3 ">Scope: {sc.scopeName}</h4>
+                        <h4 className="font-bold mb-3 underline ">Scope: {sc.scopeName}</h4>
                         {sc.consumables?.map((con, i) => {
                           const actionVal = watchAction?.action?.[ser.serviceName]?.[sc.scopeName]?.[con.consumableName];
 
                           return (
                             <div
                               key={con.consumableName}
-                              className=" mb-2 flex flex-wrap gap-x-3 outline"
+                              className=" mb-2 flex flex-wrap gap-x-3 gap-y-1 outline"
                             >
                               <input
                                 defaultValue={con.consumableName}
                                 disabled
-                                className="flex-1 outline max-w-fit outline-gray-400 p-2 bg-gray-100 col-span-2 font-bold"
+                                className="flex-1 outline-2 max-w-fit outline-gray-700 p-2 bg-gray-100 col-span-2 font-bold"
                               />
                               <input
                                 defaultValue={con.calibration || 0}
                                 disabled
-                                className="max-w-20 outline outline-gray-400 p-2 bg-gray-100"
+                                className="max-w-20 outline-2 outline-gray-400 p-2 bg-gray-100"
                               />
                               <input
                                 placeholder="Used"
                                 {...register(`usedCalibration.${ser.serviceName}.${sc.scopeName}.${con.consumableName}`)}
-                                className="max-w-20 outline outline-gray-400 p-2 focus:outline-2 focus:outline-gray-800"
+                                className="max-w-20 outline-2 p-2 focus:outline-2 focus:outline-gray-800"
                               />
                               <select
                                 {...register(`action.${ser.serviceName}.${sc.scopeName}.${con.consumableName}`)}
-                                className="outline outline-gray-400 p-2 focus:outline-2 focus:outline-gray-800"
+                                className="outline-2 outline-gray-900 p-2 focus:outline-2 focus:outline-gray-800"
                               >
                                 <option>Done</option>
                                 <option>Not Done</option>
@@ -257,7 +257,7 @@ function RegularForm({ serviceData, id, type, locationName, setRegular, today })
                                 rows={1}
                                 placeholder={actionVal === "Partial Done" ? "Comment Required..." : "comment..."}
                                 {...register(`comment.${ser.serviceName}.${sc.scopeName}.${con.consumableName}`)}
-                                className={`flex-1 outline p-2 focus:outline-2 focus:outline-gray-800 ${actionVal === "Partial Done"
+                                className={`flex-1 outline-2 p-2 focus:outline-2 focus:outline-gray-800 ${actionVal === "Partial Done"
                                   ? "outline-orange-400 bg-orange-50"
                                   : "outline-gray-400"
                                   }`}
