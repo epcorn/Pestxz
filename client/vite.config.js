@@ -6,6 +6,10 @@ import tailwindcss from "@tailwindcss/vite";
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
+    watch: {
+      // Prevents Vite from hitting OS file watching limits
+      ignored: ["**/node_modules/**", "**/dist/**", "**/.git/**"],
+    },
     port: 3000,
     proxy: {
       "/api": {

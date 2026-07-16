@@ -52,7 +52,7 @@ function AdminDashboard() {
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, [assignId]);
-
+console.log(adminDash)
   const handleToggle = (val) => {
     setToggle(val);
     sessionStorage.setItem("adminDashboardToggle", val);
@@ -69,13 +69,10 @@ function AdminDashboard() {
   const isOverall = selectedMonth === "overall";
   const activeMonth = !isOverall ? monthlyData?.[Number(selectedMonth)] : null;
 
-  // Reset back to "overall" if the client/data changes and the previously
-  // selected month index no longer exists (e.g. switching clients).
   useEffect(() => {
     if (!isOverall && !monthlyData?.[Number(selectedMonth)]) {
       setSelectedMonth("overall");
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [monthlyData]);
 
   // ---- Complaint stat cards: overall summary vs. one month's slice ----
@@ -336,7 +333,7 @@ export default AdminDashboard;
 function Row({ item, index, isRegular, assignId, assignRef, setAssignId, navigate }) {
   const latestUpdate = item?.complaintUpdate?.at(-1);
   const cd = item?.complaintDetails;
-  console.log(item)
+
   const bgStyle = {
     Open: "bg-red-100",
     "In Progress": "bg-amber-100",

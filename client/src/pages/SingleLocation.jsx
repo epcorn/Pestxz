@@ -25,7 +25,7 @@ import AllPremise from "../components/single_location/AllPremise";
 import UnScheduledList from "../components/single_location/UnScheduledList";
 import UnscheduledForm from "../components/single_location/UnscheduledForm";
 import CasualLists from "../components/single_location/casual/CasualLists";
-import CasualForm from "../components/single_location/casual/CasualForm";
+// import CasualForm from "../components/single_location/casual/CasualForm";
 import Headers from "../components/Headers";
 import ProductShow from "../components/single_location/ProductShow";
 import ProductServiceForm from "../components/modals/ProductServiceForm";
@@ -112,7 +112,7 @@ const SingleLocation = () => {
           </div>
           {/* ===== FLOATING STICKY SUMMARY BAR (unchanged behavior) ===== */}
           <div
-            className={`fixed z-[5] top-21 right-0 xl:right-5 w-full lg:left-60 lg:w-[calc(100vw-15rem)] xl:w-[calc(80vw-1.25rem)] flex items-center gap-3 p-2 bg-slate-700 shadow-lg rounded-b-lg transition-all duration-500 origin-top ${show
+            className={`fixed z-10 top-21 right-0 xl:right-5 w-full lg:left-60 lg:w-[calc(100vw-15rem)] xl:w-[calc(80vw-1.25rem)] flex items-center gap-3 p-2 bg-slate-700 shadow-lg rounded-b-lg transition-all duration-500 origin-top ${show
                 ? "opacity-100 scale-100 translate-y-0 pointer-events-auto"
                 : "opacity-0 scale-95 -translate-y-4 pointer-events-none"
               }`}

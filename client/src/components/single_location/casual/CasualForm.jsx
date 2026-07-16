@@ -55,10 +55,10 @@ function CasualForm({ mode, client, casualId, name }) {
           });
         }
 console.log(payload)
-        // const res = await casualService(formData).unwrap();
-        // toast.success(res?.msg || "Casual service added");
-        // reset();
-        // dispatch(toggleModal({ name: name, status: false }));
+        const res = await casualService(formData).unwrap();
+        toast.success(res?.msg || "Casual service added");
+        reset();
+        dispatch(toggleModal({ name: name, status: false }));
 
       }
     } catch (error) {
