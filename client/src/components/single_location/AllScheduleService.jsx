@@ -11,6 +11,7 @@ function AllScheduleService({ data }) {
   const dispatch = useDispatch();
   const { isModalOpen } = useSelector((store) => store.helper);
 
+  console.log(data)
   return (
     <div>
       {data?.length > 0 ? (
@@ -80,7 +81,7 @@ function AllScheduleService({ data }) {
                     <div className="md:border-r md:border-neutral-300 md:px-3 flex justify-between items-center md:items-start md:justify-center">
                       <span className="text-xs font-bold uppercase md:hidden text-neutral-700">Date</span>
                       <div className="flex flex-col items-end md:items-start">
-                        <span className="text-sm text-neutral-900 font-bold md:font-semibold">{dateFormat(service?.regularService[0].date)}</span>
+                        <span className="text-sm text-neutral-900 font-bold md:font-semibold">{dateFormat(service?.regularService?.[0]?.serviceDate)}</span>
                       </div>
                     </div>
 
@@ -169,25 +170,27 @@ function AllScheduleService({ data }) {
                       ))}
 
                       {/* SCHEDULE */}
-                      {service.regularService[0].schedule?.length > 0 && (
+                      {service?.regularService?.[0].schedule?.length > 0 && (
                         <div className="border border-neutral-300 rounded-lg bg-white p-4 shadow-xs">
                           <h2 className="font-bold text-xs uppercase tracking-wider text-neutral-700 mb-3">
                             Schedule Dates
                           </h2>
                           <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto p-0.5">
-                            {service.regularService[0].schedule.map((sch, idx) => {console.log(sch); return(
-                              <span
-                                key={idx}
-                                className={`px-2 py-0.5 rounded text-xs font-bold border ${sch.completed
+                            {service?.regularService?.[0]?.schedule?.map((sch, idx) => {
+                              console.log(sch); return (
+                                <span
+                                  key={idx}
+                                  className={`px-2 py-0.5 rounded text-xs font-bold border ${sch.completed
                                     ? "bg-green-100 text-green-900 border-green-400"
                                     : sch.status === "Missed"
                                       ? "bg-red-100 text-red-900 border-red-400"
                                       : "bg-neutral-200 text-neutral-900 border-neutral-400"
-                                  }`}
-                              >
-                                {sch.date}
-                              </span>
-                            )})}
+                                    }`}
+                                >
+                                  {new Date(sch.date).toISOString().split("T")[0]}
+                                </span>
+                              )
+                            })}
                           </div>
                         </div>
                       )}

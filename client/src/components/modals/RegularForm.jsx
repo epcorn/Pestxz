@@ -64,7 +64,7 @@ function RegularForm({ serviceData, id, type, locationName, setRegular, today })
       };
     });
     localStorage.setItem(STORAGE_KEY, JSON.stringify(existing));
-    // toast.success("Progress Saved 🚀");
+    toast.success("Progress Saved 🚀");
   };
 
   const buildPayload = (field, ser, values) => {
@@ -84,30 +84,6 @@ function RegularForm({ serviceData, id, type, locationName, setRegular, today })
       saveLocally(ser.serviceName);
 
       const values = getValues();
-
-      //testing block
-      // Target Schedule Date Validation
-      let targetSchedule = todaySchedule;
-
-      if (isRegular) {
-        const chosenDateStr = values?.selectedDate?.[ser.serviceName]; // Format: YYYY-MM-DD
-        if (!chosenDateStr) {
-          toast.error("Please select a date first");
-          return;
-        }
-
-        // Find an uncompleted schedule date matching what was typed/selected
-        targetSchedule = ser.schedule?.find(
-          (s) => s.date.split("T")[0] === chosenDateStr && !s.completed
-        );
-
-        if (!targetSchedule) {
-          toast.error(`Service already done for date (${chosenDateStr})`);
-          return;
-        }
-      }
-      //testing block
-
       const partialWithoutComment = [];
       ser.scopes?.forEach((sc) => {
         sc.consumables?.forEach((con) => {
@@ -131,7 +107,7 @@ function RegularForm({ serviceData, id, type, locationName, setRegular, today })
       form.append("usedCalibration", JSON.stringify(buildPayload("usedCalibration", ser, values)));
       form.append("action", JSON.stringify(buildPayload("action", ser, values)));
       form.append("comment", JSON.stringify(buildPayload("comment", ser, values)));
-      if (isRegular && targetSchedule) form.append("serviceDate", targetSchedule.date);
+      if (isRegular && todaySchedule) form.append("serviceDate", todaySchedule.date);
       if (isUnschedule) {
         form.append("type", "update");
         form.append("unscheduledId", id); // id prop IS the unscheduled doc's _id here
@@ -141,7 +117,7 @@ function RegularForm({ serviceData, id, type, locationName, setRegular, today })
       if (files) {
         Array.from(files)?.slice(0, 2).forEach((file) => form.append("image", file));
       }
-      // toast.success("Successfull")
+
       const res = isUnschedule
         ? await updateUnscheduled(form).unwrap()
         : await (isRegular ? regularService : casualService)({ id, form }).unwrap();
@@ -158,20 +134,17 @@ function RegularForm({ serviceData, id, type, locationName, setRegular, today })
       setRerender((prev) => [...prev, res]);
 
       isRegular ? setRegular(false) : dispatch(toggleModal({ name: type, status: false }));
-      // reset();
+      reset();
     } catch (err) {
       console.log(err);
-      toast.error(err.data.msg || "Submission failed");
+      toast.error("Submission failed");
     }
   };
 
-  // const servicesForToday = isRegular ? serviceData?.filter((ser) =>
-  //   ser?.schedule?.some((s) => formatShortDate(s.date) === todays && !s.completed)) : serviceData;
 
-  //testing block
+
   const servicesForToday = isRegular ? serviceData?.filter((ser) =>
-    ser?.schedule?.some((s) => !s.completed)) : serviceData;
-  //testing block
+    ser?.schedule?.some((s) => formatShortDate(s.date) === todays && !s.completed)) : serviceData;
 
   if (isRegular && !servicesForToday?.length) {
     const allDates = upComing?.map(u => u[0]?.date).filter(Boolean) || [];
@@ -192,7 +165,7 @@ function RegularForm({ serviceData, id, type, locationName, setRegular, today })
     );
   }
 
-  // console.log("servicesForToday:", servicesForToday);
+
   return (
     <div className={`${isRegular ? "" : "fixed inset-0 z-90 w-full h-dvh grid place-items-center bg-black/50"}`}>
       <div className={`w-full max-h-[80dvh] bg-gray-200 overflow-auto outline-4 outline-gray-800 rounded-lg ${isRegular ? "w-full" : "max-w-3xl"}`}>
@@ -226,11 +199,6 @@ function RegularForm({ serviceData, id, type, locationName, setRegular, today })
                           <p className="text-sm md:text-lg bg-white font-semibold outline px-2 py-1 rounded outline-gray-400">
                             Date:{" "}
                             <span className="text-base text-blue-600">{todaySchedule?.date.split("T")[0]}</span>
-                            <input
-                              type="date"
-                              {...register(`selectedDate.${ser.serviceName}`, { required: isRegular })}
-                              className="border border-gray-300 rounded px-1 text-base text-blue-600 focus:outline-none"
-                            />
                           </p>
                         </>
                       }
@@ -260,19 +228,11 @@ function RegularForm({ serviceData, id, type, locationName, setRegular, today })
                           return (
                             <div
                               key={con.consumableName}
-<<<<<<< HEAD
-                              className="mb-3 grid grid-cols-1 sm:grid-cols-12 gap-2 items-center border border-gray-300 p-2 rounded bg-white"
-=======
                               className=" mb-2 flex flex-wrap gap-x-3 gap-y-1 outline"
->>>>>>> product
                             >
-                              {/* Consumable Name */}
                               <input
                                 defaultValue={con.consumableName}
                                 disabled
-<<<<<<< HEAD
-                                className="sm:col-span-3 w-full border border-gray-300 p-2 bg-gray-100 font-semibold rounded text-sm text-gray-700"
-=======
                                 className="flex-1 outline-2 max-w-fit outline-gray-700 p-2 bg-gray-100 col-span-2 font-bold"
                               />
                               <input
@@ -284,58 +244,22 @@ function RegularForm({ serviceData, id, type, locationName, setRegular, today })
                                 placeholder="Used"
                                 {...register(`usedCalibration.${ser.serviceName}.${sc.scopeName}.${con.consumableName}`)}
                                 className="max-w-20 outline-2 p-2 focus:outline-2 focus:outline-gray-800"
->>>>>>> product
                               />
-
-                              {/* Standard Calibration Value */}
-                              <div className="sm:col-span-2 flex items-center gap-1">
-                                <span className="text-gray-400 text-xs sm:hidden">Target:</span>
-                                <input
-                                  defaultValue={con.calibration || 0}
-                                  disabled
-                                  className="w-full border border-gray-300 p-2 bg-gray-100 rounded text-center"
-                                />
-                              </div>
-
-                              {/* Used Calibration Input */}
-                              <div className="sm:col-span-2 flex items-center gap-1">
-                                <span className="text-gray-400 text-xs sm:hidden">Used:</span>
-                                <input
-                                  type="number"
-                                  placeholder="Used"
-                                  {...register(`usedCalibration.${ser.serviceName}.${sc.scopeName}.${con.consumableName}`)}
-                                  className="w-full border border-gray-300 p-2 rounded focus:border-gray-800 focus:ring-1 focus:ring-gray-800 text-center"
-                                />
-                              </div>
-
-                              {/* Action Status Dropdown */}
                               <select
                                 {...register(`action.${ser.serviceName}.${sc.scopeName}.${con.consumableName}`)}
-<<<<<<< HEAD
-                                className="sm:col-span-2 w-full border border-gray-300 p-2 rounded focus:border-gray-800 focus:ring-1 focus:ring-gray-800"
-=======
                                 className="outline-2 outline-gray-900 p-2 focus:outline-2 focus:outline-gray-800"
->>>>>>> product
                               >
                                 <option>Done</option>
                                 <option>Not Done</option>
                                 <option>Partial Done</option>
                               </select>
-
-                              {/* Execution Remarks / Comments */}
                               <textarea
                                 rows={1}
-                                placeholder={actionVal === "Partial Done" ? "Comment Required..." : "Comment..."}
+                                placeholder={actionVal === "Partial Done" ? "Comment Required..." : "comment..."}
                                 {...register(`comment.${ser.serviceName}.${sc.scopeName}.${con.consumableName}`)}
-<<<<<<< HEAD
-                                className={`sm:col-span-3 w-full border p-2 rounded focus:border-gray-800 focus:ring-1 focus:ring-gray-800 text-sm resize-none ${actionVal === "Partial Done"
-                                  ? "border-orange-400 bg-orange-50 focus:border-orange-500 focus:ring-orange-500"
-                                  : "border-gray-300"
-=======
                                 className={`flex-1 outline-2 p-2 focus:outline-2 focus:outline-gray-800 ${actionVal === "Partial Done"
                                   ? "outline-orange-400 bg-orange-50"
                                   : "outline-gray-400"
->>>>>>> product
                                   }`}
                               />
                             </div>

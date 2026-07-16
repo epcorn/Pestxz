@@ -34,7 +34,7 @@ function ServiceShow({ services, today }) {
               const isExpanded = expandedServiceId === index;
               const visibleSchedules = isExpanded ? schedules : nextServices.slice(0, 10);
               const { nextDate, todaysDate, todaysStatus } = compareDates(schedules, today)
-              console.log(schedules)
+              
               return (
                 <tr key={index} className="border-b border-black last:border-b-0 *:px-2 py-2">
                   {/* SERVICE NAME */}

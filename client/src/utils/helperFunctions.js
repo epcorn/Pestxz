@@ -41,6 +41,7 @@ export const dateFormat = (date) => {
     minute: "2-digit",
     hour12: false,
   });
+
   // return `${date.split("T")[0]}, ${date.split("T")[1].slice(0, 5)}`;
   // const formattedDate = new Date(date).toLocaleString();
   // return formattedDate;
@@ -63,11 +64,10 @@ export function decodeBase64Svg(base64String) {
 }
 
 export function compareDates(schedules, today) {
-  
   today.setHours(0, 0, 0, 0);
 
   const sortedSchedules = [...schedules].sort(
-    (a, b) => new Date(a.date) - new Date(b.date)
+    (a, b) => new Date(a.date) - new Date(b.date),
   );
 
   const nextDate = sortedSchedules.find((f) => {
@@ -91,7 +91,6 @@ export function compareDates(schedules, today) {
 
   return { todaysStatus, nextDate, todaysDate };
 }
-
 
 // DATE FORMAT → 01-Jun
 export const formatShortDate = (date) => {

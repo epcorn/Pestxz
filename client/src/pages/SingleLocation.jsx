@@ -39,8 +39,9 @@ const SingleLocation = () => {
   const [toggleLists, setToggleLists] = useState("");
   const dispatch = useDispatch();
   const [show, setShow] = useState(false);
-  
-  const today = new Date("2026-06-20");
+  const [date, setDate] = useState("2026-07-16")
+
+  let today = new Date(date);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -123,9 +124,17 @@ const SingleLocation = () => {
             </p>
           </div>
 
-          {/* <div>
-            <input type="date" onChange={(e)=> console.log(e.target.value)}/>
-          </div> */}
+          <div className="space-x-2 outline p-3">
+            <label htmlFor="date-picker">Change todays Date</label>
+            <input
+              id="date-picker"
+              type="date"
+              value={date} // Add value for controlled input stability
+              onChange={(e) => setDate(e.target.value)}
+              className="outline px-2 py-1"
+            />
+          </div>
+
           <div className="px-0 space-y-6">
             {/* ===== SERVICE / PRODUCT TABLES ===== */}
             {(data?.location?.service?.length > 0 || data?.location?.product?.length > 0) && (
@@ -333,7 +342,7 @@ const SingleLocation = () => {
                   <h2 className="font-bold text-lg text-white px-1 mb-2">
                     All Premise Services
                   </h2>
-                  <AllPremise today={today} />
+                  <AllPremise today={date} />
                 </div>
               </div>
             )}
