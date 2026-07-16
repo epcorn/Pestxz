@@ -1,6 +1,25 @@
 import React, { useState } from "react";
 import { compareDates, formatShortDate } from "../../utils/helperFunctions";
 
+const getStatusClasses = ({ isToday, isInvalid, isMissed, isDone, isNextDate }) => {
+  if (isDone) {
+    return "bg-green-200 text-green-700 outline-green-700 !outline-1";
+  }
+  if (isInvalid) {
+    return "bg-gray-200 text-gray-500 opacity-60 outline-none";
+  }
+  if (isMissed) {
+    return "bg-red-200 text-red-700 outline-none";
+  }
+  if (isToday) {
+    return "bg-blue-200 text-blue-700 outline-blue-600 animate-pulse";
+  }
+  if (isNextDate) {
+    return "bg-yellow-200 text-yellow-700 outline-yellow-600";
+  }
+  return "outline-gray-300 text-gray-700";
+};
+
 function ServiceShow({ services, today }) {
   const [expandedServiceId, setExpandedServiceId] = useState(null);
 
@@ -32,9 +51,10 @@ function ServiceShow({ services, today }) {
               });
 
               const isExpanded = expandedServiceId === index;
-              const visibleSchedules = isExpanded ? schedules : nextServices.slice(0, 10);
-              const { nextDate, todaysDate, todaysStatus } = compareDates(schedules, today)
-              
+              // Limit display to 10 upcoming schedules if not expanded
+              const visibleSchedules = isExpanded ? schedules : schedules.slice(0, 10);
+              const { nextDate, todaysDate } = compareDates(schedules, today);
+
               return (
                 <tr key={index} className="border-b border-black last:border-b-0 *:px-2 py-2">
                   {/* SERVICE NAME */}
@@ -45,34 +65,35 @@ function ServiceShow({ services, today }) {
                     <div className="flex flex-wrap gap-2 min-w-[200px] p-1 max-h-20 text-xs font-semibold overflow-auto items-center">
                       {schedules?.length > 0 ? (
                         <>
-                          {schedules?.map((n, i) => {
-
+                          {visibleSchedules?.map((n, i) => {
                             const isToday = n?.date === todaysDate?.date;
                             const isMissed = n?.status === "Missed";
                             const isDone = n?.completed;
                             const isInvalid = n?.status === "Invalid";
+                            const isNextDate = nextDate?.date === n?.date;
+
+                            const statusClass = getStatusClasses({
+                              isToday,
+                              isInvalid,
+                              isMissed,
+                              isDone,
+                              isNextDate,
+                            });
 
                             return (
                               <span
                                 key={i}
-                                className={`outline-1 rounded px-1.5 py-0.5 
-                                  ${isToday ? "bg-green-200 text-green-700 animate-pulse" : ""} 
-                                  ${isInvalid ? "bg-gray-200 text-gray-500 opacity-60" : ""}
-                                  ${isMissed ? "bg-red-200 text-red-700" : ""}
-                                  ${!isToday && !isInvalid && !isMissed && !isDone ? "outline-gray-300" : ""}
-                                  ${nextDate?.date === n?.date ? "bg-yellow-200 outline-yellow-600 text-yellow-600" : ""}
-                                  ${isDone ? "bg-blue-200! outline-blue-700! text-blue-700!" : ""}
-                                `}
+                                className={`outline-1 rounded px-1.5 py-0.5 transition-all ${statusClass}`}
                               >
                                 {formatShortDate(n?.date)}
                               </span>
                             );
                           })}
 
-                          {nextServices.length > 5 && (
+                          {schedules.length > 10 && (
                             <span
                               onClick={() => setExpandedServiceId(isExpanded ? null : index)}
-                              className="underline text-cyan-700 cursor-pointer select-none ml-1"
+                              className="underline text-cyan-700 cursor-pointer select-none ml-1 text-xs"
                             >
                               {isExpanded ? "Show less" : "Show All"}
                             </span>
