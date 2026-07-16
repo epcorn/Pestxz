@@ -183,7 +183,6 @@ export const MONGOURL =
     : process.env.MONGO_LOCAL;
 
 // createAdmin();
-
 // autoMarkMissed();
 const connectDB = async () => {
   try {
