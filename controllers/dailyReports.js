@@ -337,7 +337,7 @@ export const dailyServiceReport = async (req, res) => {
       });
 
       // ✅ Per-client file: always include client name in filename
-      const clientName = client.name.replace(/\s+/g, "_"); // sanitize spaces
+      const clientName = client.name.replace(/[\s\/]+/g, "_"); // sanitize spaces
       const fileName = `${clientName}_Daily_Service_Report-${sufix}.xlsx`;
       const filePath = `./tmp/reports/${fileName}`;
 
