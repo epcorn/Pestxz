@@ -29,6 +29,7 @@
     "morgan": "^1.10.0",
     "node-cron": "^4.2.1",
     "qrcode": "^1.5.3",
+    "react-window": "^2.2.7",
     "sharp": "^0.34.5",
     "socket.io": "^4.8.3"
   },

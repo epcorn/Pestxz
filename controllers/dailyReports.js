@@ -130,17 +130,41 @@ export const dailyServiceReport = async (req, res) => {
 
     const { value = "all" } = req.params;
     const today = new Date();
-    const todayStart = today.setUTCHours(0, 0, 0, 0);
+    const todayStart = new Date();
+    todayStart.setUTCHours(0, 0, 0, 0);
     const todayEnd = new Date();
     todayEnd.setUTCHours(23, 59, 59, 999);
 
     const isPestEmployee = req.user.type === "PestEmployee";
-
     const clientQuery =
       req.user.role === "ClientAdmin" ? { _id: req.user.client } : {};
     const selectFields = req.user.client ? "" : "-adminPass";
+
     let uploadURL;
     let matchCondition;
+
+    if (value === "today") {
+      matchCondition = {
+        updatedAt: { $gte: todayStart, $lte: todayEnd },
+      };
+
+      console.log("todaystart: ", todayStart, today);
+    } else if (value === "weekly") {
+      const year = today.getFullYear();
+      const month = today.getMonth();
+      const monthstart = new Date(year, month, 1);
+      const monthend = new Date(year, month + 1, 1);
+      const matchCondition = {
+        updatedAt: { $gte: monthstart, $lte: monthend },
+      };
+    } else {
+      populateOptions = [
+        { path: "services", populate: { path: "location" } },
+        { path: "unschedules", populate: { path: "location" } },
+        { path: "casuals", populate: { path: "location" } },
+      ];
+    }
+
     let populateOptions = [
       {
         path: "services",
@@ -158,26 +182,6 @@ export const dailyServiceReport = async (req, res) => {
         populate: { path: "location" },
       },
     ];
-
-    if (value === "today") {
-      matchCondition = {
-        updatedAt: { $gte: todayStart, $lte: todayEnd },
-      };
-    } else if (value === "weekly") {
-      const year = today.getFullYear();
-      const month = today.getMonth();
-      const monthstart = new Date(year, month, 1);
-      const monthend = new Date(year, month + 1, 1);
-      const matchCondition = {
-        updatedAt: { $gte: monthstart, $lte: monthend },
-      };
-    } else {
-      populateOptions = [
-        { path: "services", populate: { path: "location" } },
-        { path: "unschedules", populate: { path: "location" } },
-        { path: "casuals", populate: { path: "location" } },
-      ];
-    }
 
     const clients = await Client.find(clientQuery)
       .select(selectFields)
