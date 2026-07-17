@@ -5,7 +5,7 @@ import Button from "../Button";
 import { dateFormat } from "../../utils/helperFunctions";
 import ImagesModal from "../modals/ImagesModal";
 
-function AllScheduleService({ data, children }) {
+function AllScheduleService({ data }) {
   const { user } = useSelector(store => store.helper)
   const [showDetail, setShowDetail] = useState(null);
   const dispatch = useDispatch();

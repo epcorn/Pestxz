@@ -687,7 +687,7 @@ export const getLocationDetails = async (req, res) => {
     const productsService = await ProductService.find({
       location: location._id,
     }).sort({ updatedAt: -1 });
-  
+
     return res.json({
       location,
       client: client?.name || "",
@@ -721,6 +721,15 @@ export const getSingleLocation = async (req, res) => {
   }
 };
 //get single location complaints
+export const getSingleLocComplaint = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const complaints = await Service.find({ location: id, type: "Complaint" });
+    
+  } catch (error) {
+    res.status(500).json({ msg: "Server error, try again" });
+  }
+};
 //get single location products services
 //get single location regular services
 //get single location services

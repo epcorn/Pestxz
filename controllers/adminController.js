@@ -364,13 +364,8 @@ export const clientAdminDashboard = async (req, res) => {
 
 export const adminDashboard = async (req, res) => {
   const { id } = req.params;
-
-  const clientFilter = id && id !== "select" ? { client: id } : {};
-
-  const locationMatch =
-    id && id !== "select"
-      ? { $match: { client: new mongoose.Types.ObjectId(id) } }
-      : { $match: {} };
+  const clientFilter =
+    id && id !== "select" ? { client: new mongoose.Types.ObjectId(id) } : {};
 
   try {
     const populateOpts = [
@@ -378,100 +373,150 @@ export const adminDashboard = async (req, res) => {
       { path: "client", select: "name -_id" },
     ];
 
+    // Build conditional match pipeline for Client IDs
+    const clientMatchStage =
+      id && id !== "select"
+        ? { $match: { client: new mongoose.Types.ObjectId(id) } }
+        : { $match: {} };
+
     const [
       complaints,
       allComplaints,
-      locationProduct,
-      locationService,
-      productDashboard,
-      serviceDashboard,
+      productStats,
+      serviceStats,
+      monthlyScheduleStats,
     ] = await Promise.all([
-      Service.find(clientFilter).sort("-updatedAt").populate(populateOpts),
+      // 1. Fetch only what's needed for the active complaints/recent feeds (Paginated or capped is best)
+      Service.find(clientFilter)
+        .sort("-updatedAt")
+        .populate(populateOpts)
+        .lean(),
 
-      Service.find({ type: "Complaint" }).populate([
-        { path: "location", select: "floor subLocation location" },
-        { path: "client", select: "name" },
-      ]),
+      // 2. All Complaints (If this is massive, consider pagination instead of fetching ALL)
+      Service.find({ type: "Complaint", ...clientFilter })
+        .populate([
+          { path: "location", select: "floor subLocation location" },
+          { path: "client", select: "name" },
+        ])
+        .lean(),
 
-      Location.find(clientFilter).select("product"),
-      Location.find(clientFilter).select("service"),
-
+      // 3. Aggregated Product Count Metrics
       Location.aggregate([
-        locationMatch,
+        clientMatchStage,
+        { $unwind: "$product" },
         {
-          $facet: {
-            totalProducts: [{ $unwind: "$product" }, { $count: "count" }],
-            scheduleCount: [
-              { $unwind: "$product" },
-              { $unwind: "$product.schedule" },
-              {
-                $group: {
-                  _id: "$product.schedule.status",
-                  count: { $sum: 1 },
-                },
-              },
-              {
-                $project: {
-                  _id: 0,
-                  label: "$_id",
-                  count: 1,
-                },
-              },
-            ],
+          $group: {
+            _id: null,
+            totalProducts: { $sum: 1 },
+            schedules: { $push: "$product.schedule" },
+          },
+        },
+        { $unwind: "$schedules" },
+        { $unwind: "$schedules" },
+        {
+          $group: {
+            _id: "$schedules.status",
+            count: { $sum: 1 },
+            total: { $first: "$totalProducts" },
           },
         },
       ]),
 
+      // 4. Aggregated Service Count Metrics
       Location.aggregate([
-        locationMatch,
+        clientMatchStage,
+        { $unwind: "$service" },
         {
-          $facet: {
-            totalServices: [{ $unwind: "$service" }, { $count: "count" }],
-            scheduleCount: [
-              { $unwind: "$service" },
-              { $unwind: "$service.schedule" },
-              {
-                $group: {
-                  _id: "$service.schedule.status",
-                  count: { $sum: 1 },
-                },
+          $group: {
+            _id: null,
+            totalServices: { $sum: 1 },
+            schedules: { $push: "$service.schedule" },
+          },
+        },
+        { $unwind: "$schedules" },
+        { $unwind: "$schedules" },
+        {
+          $group: {
+            _id: "$schedules.status",
+            count: { $sum: 1 },
+            total: { $first: "$totalServices" },
+          },
+        },
+      ]),
+
+      // 5. Optimized Monthly Grouping directly from MongoDB
+      Location.aggregate([
+        clientMatchStage,
+        {
+          $project: {
+            combinedSchedules: {
+              $concatArrays: [
+                { $ifNull: ["$product.schedule", []] },
+                { $ifNull: ["$service.schedule", []] },
+              ],
+            },
+          },
+        },
+        { $unwind: "$combinedSchedules" },
+        { $unwind: "$combinedSchedules" },
+        {
+          $project: {
+            status: "$combinedSchedules.status",
+            isProduct: {
+              $cond: [
+                { $ifNull: ["$combinedSchedules.consumableId", false] },
+                "product",
+                "regular",
+              ],
+            }, // Adjust check based on schema
+            yearMonth: {
+              $dateToString: {
+                format: "%Y-%m",
+                date: "$combinedSchedules.date",
               },
-              { $project: { _id: 0, label: "$_id", count: 1 } },
-            ],
+            },
+          },
+        },
+        {
+          $group: {
+            _id: {
+              yearMonth: "$yearMonth",
+              isProduct: "$isProduct",
+              status: "$status",
+            },
+            count: { $sum: 1 },
           },
         },
       ]),
     ]);
 
-    const withClientName = (item) => ({
-      ...item._doc,
-      clientName:
-        item?.client?.name || item?.complaintDetails?.clientName || "-",
-    });
+    // --- Process Aggregated Counters ---
+    const statuses = ["Missed", "Pending", "Done"];
 
-    // Complaint Summary
-    const statusMap = {
-      Open: "open",
-      "In Progress": "inProgress",
-      Close: "closed",
-      closeReq: "closeReq",
-      reopenCount: "Reopened complaints",
+    const parseCounts = (aggResults) => {
+      const total = aggResults[0]?.total || 0;
+      const scheduleCount = statuses.map((status) => {
+        const found = aggResults.find((r) => r._id === status);
+        return { label: status, count: found ? found.count : 0 };
+      });
+      return { total, scheduleCount };
     };
 
+    const productData = parseCounts(productStats);
+    const serviceData = parseCounts(serviceStats);
+
+    // --- Process Complaints Summaries ---
     const complaintData = complaints
       .filter((c) => c.type === "Complaint")
       .reduce(
         (acc, complaint) => {
           const { status, reopenCount = 0 } = complaint.complaintDetails || {};
-
           if (status === "Open") acc.open++;
           else if (status === "In Progress") acc.inProgress++;
           else if (status === "Close Req") acc.closeReq++;
           else if (status === "Close") acc.closed++;
-
           acc.reopenCount += reopenCount;
           acc.total++;
-
           return acc;
         },
         {
@@ -484,22 +529,17 @@ export const adminDashboard = async (req, res) => {
         },
       );
 
-    // Monthly Data
+    // --- Build final Monthly Maps with aggregated values ---
     const monthlyMap = {};
-    // Monthly Product Data
-    const getMonthKey = (date) =>
-      `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
-
-    const ensureMonth = (date) => {
-      const key = getMonthKey(date);
-
-      if (!monthlyMap[key]) {
-        monthlyMap[key] = {
-          month: date.toLocaleString("default", {
+    const ensureMonth = (dateStr) => {
+      if (!monthlyMap[dateStr]) {
+        const [year, month] = dateStr.split("-");
+        const dateObj = new Date(parseInt(year), parseInt(month) - 1);
+        monthlyMap[dateStr] = {
+          month: dateObj.toLocaleString("default", {
             month: "long",
             year: "numeric",
           }),
-
           complaints: 0,
           regulars: 0,
           open: 0,
@@ -507,152 +547,72 @@ export const adminDashboard = async (req, res) => {
           inProgress: 0,
           closed: 0,
           reopenCount: 0,
-          product: {
-            Done: 0,
-            Pending: 0,
-            Missed: 0,
-          },
-          regular: {
-            Done: 0,
-            Pending: 0,
-            Missed: 0,
-          },
+          product: { Done: 0, Pending: 0, Missed: 0 },
+          regular: { Done: 0, Pending: 0, Missed: 0 },
         };
       }
-
-      return monthlyMap[key];
+      return monthlyMap[dateStr];
     };
 
-    locationProduct.forEach((location) => {
-      // Products
-      location.product?.forEach((product) => {
-        product.schedule?.forEach((schedule) => {
-          if (!schedule.date) return;
-
-          const month = ensureMonth(new Date(schedule.date));
-
-          switch (schedule.status?.trim()) {
-            case "Done":
-              month.product.Done++;
-              break;
-            case "Pending":
-              month.product.Pending++;
-              break;
-            case "Missed":
-              month.product.Missed++;
-              break;
-          }
-        });
-      });
-    });
-    locationService.forEach((location) => {
-      // Regular Services
-      location.service?.forEach((service) => {
-        service.schedule?.forEach((schedule) => {
-          if (!schedule.date) return;
-
-          const month = ensureMonth(new Date(schedule.date));
-
-          switch (schedule.status?.trim()) {
-            case "Done":
-              month.regular.Done++;
-              break;
-            case "Pending":
-              month.regular.Pending++;
-              break;
-            case "Missed":
-              month.regular.Missed++;
-              break;
-          }
-        });
-      });
+    // Map DB Aggregated schedules directly to months
+    monthlyScheduleStats.forEach((item) => {
+      if (!item._id.yearMonth) return;
+      const month = ensureMonth(item._id.yearMonth);
+      const type = item._id.isProduct; // "product" or "regular"
+      const status = item._id.status;
+      if (month[type] && month[type][status] !== undefined) {
+        month[type][status] += item.count;
+      }
     });
 
+    // Handle Complaints mapping dynamically
     complaints.forEach((item) => {
-      const month = ensureMonth(new Date(item.createdAt));
+      const date = new Date(item.createdAt);
+      if (isNaN(date.getTime())) return;
+      const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+      const month = ensureMonth(key);
 
       if (item.type === "Complaint") {
         month.complaints++;
-
-        switch (item?.complaintDetails?.status) {
-          case "Open":
-            month.open++;
-            break;
-          case "In Progress":
-            month.inProgress++;
-            break;
-          case "Close Req":
-            month.closeReq++;
-            break;
-          case "Close":
-            month.closed++;
-            break;
-        }
-
-        month.reopenCount += item?.complaintDetails?.reopenCount || 0;
+        const status = item.complaintDetails?.status;
+        if (status === "Open") month.open++;
+        else if (status === "In Progress") month.inProgress++;
+        else if (status === "Close Req") month.closeReq++;
+        else if (status === "Close") month.closed++;
+        month.reopenCount += item.complaintDetails?.reopenCount || 0;
       } else {
         month.regulars++;
       }
     });
 
-    // Convert untouched values (0) to null
-    // Object.values(monthlyMap).forEach((month) => {
-    //   Object.keys(month).forEach((key) => {
-    //     if (key !== "month" && month[key] === 0) {
-    //       month[key] = null;
-    //     }
-    //   });
-    // });
-
     const monthlyData = Object.entries(monthlyMap)
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([, value]) => value);
 
-    const latestComplaints = [...complaints]
-      .sort((a, b) => b.updatedAt - a.updatedAt)
+    // Map helpers
+    const withClientName = (item) => ({
+      ...item,
+      clientName: item.client?.name || item.complaintDetails?.clientName || "-",
+    });
+
+    const latestComplaints = complaints
+      .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
       .slice(0, 15)
       .map(withClientName);
-
-    const statuses = ["Missed", "Pending", "Done"];
-
-    const productData = {
-      total: productDashboard?.[0]?.totalProducts?.[0]?.count || 0,
-      scheduleCount: statuses.map((label) => ({
-        label,
-        count:
-          productDashboard?.[0]?.scheduleCount?.find(
-            (item) => item.label === label,
-          )?.count || 0,
-      })),
-    };
-    // productDashboard[0]?.scheduleCount || [],
-    const serviceData = {
-      total: serviceDashboard?.[0]?.totalServices?.[0]?.count || 0,
-      scheduleCount: statuses.map((label) => ({
-        label,
-        count:
-          serviceDashboard?.[0].scheduleCount?.find(
-            (item) => item.label === label,
-          )?.count || 0,
-      })),
-    };
-    // serviceDashboard[0].scheduleCount || [],
 
     return res.json({
       all: allComplaints.map(withClientName),
       latestComplaints,
       summary: {
-        complaints: { ...complaintData },
-        products: { ...productData },
-        services: { ...serviceData },
+        complaints: complaintData,
+        products: productData,
+        services: serviceData,
         monthlyData,
       },
     });
   } catch (error) {
     console.error("Admin Dashboard Error:", error);
-    return res.status(500).json({
-      msg: "Server error, try again later",
-    });
+    return res.status(500).json({ msg: "Server error, try again later" });
   }
 };
 
