@@ -357,7 +357,7 @@ export const newRegularService = async (req, res) => {
           action: action?.[scope.scopeId]?.[con.consumableId] || "Done",
           comment:
             comment?.[scope.scopeId]?.[con.consumableId] ||
-            "Completed Successfully",
+            "Completed",
         })),
       })),
       image: imageLink,

@@ -244,9 +244,11 @@ const LocationModal = ({ clientId, locationDetails }) => {
       {type.includes("service") && (
         <ServiceSection
           allServices={allServices}
-          defaultService={defaultService}
-          serviceReq={serviceReq}
+          // defaultService={defaultService}
+          // serviceReq={serviceReq}
           setValue={setValue}
+          control={control}
+          register={register}
           watch={watch}
         />
       )}
@@ -296,6 +298,7 @@ const LocationModal = ({ clientId, locationDetails }) => {
       {(isLoading || isFetching) && <Loading />}
       <FormModal
         open={isModalOpen.location}
+        height={'h-full max-h-full w-full'}
         title={locationDetails ? "Update Location" : "New Location"}
         formBody={formBody}
         submitLabel={locationDetails ? "Update Location" : "Add Location"}
