@@ -353,9 +353,9 @@ export const newRegularService = async (req, res) => {
           consumableName: con.consumableName,
           calibration: con.calibration,
           usedCalibration:
-            usedCalibration?.[scope.scopeId]?.[con.consumableId] || "",
+            usedCalibration?.[scope.scopeId]?.[con.consumableId] || "1",
           action: action?.[scope.scopeId]?.[con.consumableId] || "Done",
-          comment: comment?.[scope.scopeId]?.[con.consumableId] || "",
+          comment: comment?.[scope.scopeId]?.[con.consumableId] || "Completed Successfully",
         })),
       })),
       image: imageLink,
