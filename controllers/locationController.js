@@ -687,15 +687,6 @@ export const getLocationDetails = async (req, res) => {
     const productsService = await ProductService.find({
       location: location._id,
     }).sort({ updatedAt: -1 });
-    // const productsService = await ProductService.aggregate([
-    //   { $sort: { createdAt: -1 } },
-    //   {
-    //     $group: {
-    //       _id: "$code",
-    //       productservices: { $push: "$$ROOT" },
-    //     },
-    //   },
-    // ]);
 
     return res.json({
       location,
@@ -729,6 +720,19 @@ export const getSingleLocation = async (req, res) => {
     res.status(500).json({ msg: "Server error, try again later" });
   }
 };
+//get single location complaints
+export const getSingleLocComplaint = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const complaints = await Service.find({ location: id, type: "Complaint" });
+    
+  } catch (error) {
+    res.status(500).json({ msg: "Server error, try again" });
+  }
+};
+//get single location products services
+//get single location regular services
+//get single location services
 
 export const assignLocation = async (req, res) => {
   const { id, userId } = req.body.data;

@@ -39,14 +39,13 @@ const ComplaintTable = ({ data, user, toggle }) => {
   return (
     <div className="w-full mt-2 overflow-x-auto scrollbar-hide border border-gray-200 rounded-lg shadow-sm bg-white">
       {/* 1. Added flex flex-col to table layout */}
-      <table className="min-w-[1024px] w-full flex flex-col border-collapse">
+      <table className="min-w-[1024px] w-full flex flex-col table-auto border-collapse">
 
         {/* 2. Added flex flex-col to thead */}
         <thead className="flex flex-col w-full sticky top-0 z-10">
-          {/* 3. Added flex and w-full to tr */}
+          
           <tr className="bg-neutral-600 text-white text-sm font-bold uppercase tracking-wider flex w-full">
-            {/* 4. Defined explicit width allocations via flexbox layout widths */}
-            <th className="pl-2 py-3 text-center w-20 flex-shrink-0">Sr. No</th>
+                        
             <th className="pl-2 py-3 text-center flex-1">Number</th>
             {!isRegular && <th className="pl-2 py-3 text-left flex-1">Assigned To</th>}
             <th className="pl-2 py-3 text-left flex-1">Date</th>
@@ -69,11 +68,8 @@ const ComplaintTable = ({ data, user, toggle }) => {
 
             return (
               /* 6. Changed tr to use flex layout matching the thead dimensions */
-              <tr key={complaint?._id} className={`flex w-full hover:bg-neutral-50 transition-colors divide-x divide-gray-400 items-center text-xs md:text-sm ${bgStyle[complaint?.complaintDetails?.status]}`}>
+              <tr key={complaint?._id} className={`flex w-full hover:bg-neutral-50 transition-colors divide-x divide-gray-400 items-center text-xs md:text-sm`}>
 
-                <td className="px-2 text-center w-20 flex-shrink-0">
-                  {i + 1}
-                </td>
                 {/* Complaint Number */}
                 <td className="pl-2 py-4 text-center flex-1">
                   <Link to={rowLink} className="font-bold text-blue-600 hover:text-blue-800 transition-colors">

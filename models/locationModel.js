@@ -76,6 +76,8 @@ const locationSchema = new mongoose.Schema(
 
 locationSchema.index({ client: 1 });
 locationSchema.index({ "product.productId": 1 });
+locationSchema.index({ "product.schedule.date": 1 });
+locationSchema.index({ "service.schedule.date": 1 });
 
 const Location = mongoose.model("Location", locationSchema);
 export default Location;

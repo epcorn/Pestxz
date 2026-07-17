@@ -156,7 +156,13 @@ app.use(
 app.use(
   "/api/admin",
   authenticateUser,
-  authorizeUser("Admin", "ClientAdmin", "Operator", "TeamLeader"),
+  authorizeUser(
+    "Admin",
+    "ClientAdmin",
+    "Operator",
+    "BranchAdmin",
+    "TeamLeader",
+  ),
   adminRoute,
 );
 app.use("/api/location", authenticateUser, locationRoute);
@@ -183,7 +189,6 @@ export const MONGOURL =
     : process.env.MONGO_LOCAL;
 
 // createAdmin();
-
 // autoMarkMissed();
 const connectDB = async () => {
   try {

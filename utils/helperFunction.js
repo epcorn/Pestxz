@@ -296,6 +296,12 @@ export const removeOldQr = async (url) => {
   }
 };
 
+export function dateTimeSplitter(date) {
+
+    const getDate = new Date(date).toISOString()
+    const [acDate, acTime] = getDate.split("T")
+    return { date: acDate, time: acTime.split(".")[0] }
+}
 // GENERATE SCHEDULE
 export const generateSchedule = (start, end, frequency, preffDay) => {
   const dayMap = {
@@ -315,7 +321,7 @@ export const generateSchedule = (start, end, frequency, preffDay) => {
   // --- FREQUENCIES THAT NEVER USE PREFERRED DAYS ---
   const NO_PREF_DAY_FREQUENCIES = ["daily", "alternate days"];
   const usesPrefDay = !NO_PREF_DAY_FREQUENCIES.includes(freq);
-  console.log("preffDay: ", preffDay);
+
   // --- NORMALIZE PREFERRED DAYS (accepts a single string or an array, max 3) ---
   const rawDays = usesPrefDay
     ? Array.isArray(preffDay)

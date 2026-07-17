@@ -25,7 +25,7 @@ import AllPremise from "../components/single_location/AllPremise";
 import UnScheduledList from "../components/single_location/UnScheduledList";
 import UnscheduledForm from "../components/single_location/UnscheduledForm";
 import CasualLists from "../components/single_location/casual/CasualLists";
-import CasualForm from "../components/single_location/casual/CasualForm";
+// import CasualForm from "../components/single_location/casual/CasualForm";
 import Headers from "../components/Headers";
 import ProductShow from "../components/single_location/ProductShow";
 import ProductServiceForm from "../components/modals/ProductServiceForm";
@@ -39,8 +39,9 @@ const SingleLocation = () => {
   const [toggleLists, setToggleLists] = useState("");
   const dispatch = useDispatch();
   const [show, setShow] = useState(false);
-  
-  const today = new Date("2026-06-20");
+  const [date, setDate] = useState("2026-07-16")
+
+  let today = new Date(date);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -111,7 +112,10 @@ const SingleLocation = () => {
           </div>
           {/* ===== FLOATING STICKY SUMMARY BAR (unchanged behavior) ===== */}
           <div
-            className={`fixed z-[5] top-21 right-0 lg:right-5 w-full lg:w-[80dvw] flex items-center gap-3 p-2 bg-slate-700 shadow-lg rounded-b-lg transition-all duration-500 origin-top ${show ? "opacity-100 scale-100 translate-y-0 pointer-events-auto" : "opacity-0 scale-95 -translate-y-4 pointer-events-none"}`}
+            className={`fixed z-10 top-21 right-0 xl:right-5 w-full lg:left-60 lg:w-[calc(100vw-15rem)] xl:w-[calc(80vw-1.25rem)] flex items-center gap-3 p-2 bg-slate-700 shadow-lg rounded-b-lg transition-all duration-500 origin-top ${show
+                ? "opacity-100 scale-100 translate-y-0 pointer-events-auto"
+                : "opacity-0 scale-95 -translate-y-4 pointer-events-none"
+              }`}
           >
             {data.client && (
               <p className="px-3 py-1 bg-white text-slate-800 rounded-md text-sm font-medium whitespace-nowrap">
@@ -122,6 +126,18 @@ const SingleLocation = () => {
               {`${data.location.floor}, ${data.location.location}, ${data.location.subLocation}`}
             </p>
           </div>
+
+          <div className="space-x-2 outline p-3">
+            <label htmlFor="date-picker">Change todays Date</label>
+            <input
+              id="date-picker"
+              type="date"
+              value={date} // Add value for controlled input stability
+              onChange={(e) => setDate(e.target.value)}
+              className="outline px-2 py-1"
+            />
+          </div>
+
           <div className="px-0 space-y-6">
             {/* ===== SERVICE / PRODUCT TABLES ===== */}
             {(data?.location?.service?.length > 0 || data?.location?.product?.length > 0) && (
@@ -329,7 +345,7 @@ const SingleLocation = () => {
                   <h2 className="font-bold text-lg text-white px-1 mb-2">
                     All Premise Services
                   </h2>
-                  <AllPremise today={today} />
+                  <AllPremise today={date} />
                 </div>
               </div>
             )}

@@ -3,6 +3,13 @@ import { apiSlice } from "./apiSlice";
 import helperSlice from "./helperSlice";
 import { setupListeners } from "@reduxjs/toolkit/query";
 
+const actionLogger = (store) => (next) => (action) => {
+  if (action.type.includes("fulfilled") || action.type.includes("helper")) {
+    console.log("👉 Action Type:", action.type);
+  }
+  return next(action);
+};
+
 export const store = configureStore({
   reducer: {
     [apiSlice.reducerPath]: apiSlice.reducer,
@@ -10,7 +17,10 @@ export const store = configureStore({
   },
 
   middleware: (getDefaultMiddleware) =>
-    getDefaultMiddleware().concat(apiSlice.middleware),
+    getDefaultMiddleware({ serializableCheck: { warnAfter: 150 } }).concat(
+      apiSlice.middleware,
+      actionLogger,
+    ),
   devTools: true,
 });
 

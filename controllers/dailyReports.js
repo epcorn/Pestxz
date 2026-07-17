@@ -2,7 +2,12 @@ import { populate } from "dotenv";
 import Client from "../models/clientModel.js";
 import Service from "../models/serviceModel.js";
 import exceljs from "exceljs";
-import { removeOldQr, sendEmail, uploadFile } from "../utils/helperFunction.js";
+import {
+  dateTimeSplitter,
+  removeOldQr,
+  sendEmail,
+  uploadFile,
+} from "../utils/helperFunction.js";
 import fs from "fs";
 import path from "path";
 
@@ -235,9 +240,11 @@ export const dailyServiceReport = async (req, res) => {
                   ],
             )
           : null;
+        const { date, time } = dateTimeSplitter(regs.serviceDate);
 
         return {
-          serviceDate: regs.serviceDate,
+          serviceDate: date,
+          serviceTime: time,
           frequency: regs.frequency,
           userName: regs.userName,
           location: `${loc.floor}, ${loc.location}, ${loc.subLocation}`,
@@ -274,15 +281,16 @@ export const dailyServiceReport = async (req, res) => {
         }
 
         row.getCell(1).value = dataItem.serviceDate;
-        row.getCell(2).value = dataItem.frequency;
-        row.getCell(3).value = dataItem.userName;
-        row.getCell(4).value = dataItem.location;
-        row.getCell(5).value = dataItem.serviceName;
+        row.getCell(2).value = dataItem.serviceTime;
+        row.getCell(3).value = dataItem.frequency;
+        row.getCell(4).value = dataItem.userName;
+        row.getCell(5).value = dataItem.location;
+        row.getCell(6).value = dataItem.serviceName;
         if (req.user.type === "PestEmployee") {
-          row.getCell(6).value = scopeRichText;
-          row.getCell(6).alignment = { wrapText: true, vertical: "middle" };
+          row.getCell(7).value = scopeRichText;
+          row.getCell(7).alignment = { wrapText: true, vertical: "middle" };
         }
-        row.getCell(7).value = dataItem.images;
+        row.getCell(8).value = dataItem.images;
 
         row.commit();
         currRow++;
@@ -337,7 +345,7 @@ export const dailyServiceReport = async (req, res) => {
       });
 
       // ✅ Per-client file: always include client name in filename
-      const clientName = client.name.replace(/\s+/g, "_"); // sanitize spaces
+      const clientName = client.name.replace(/[\s\/]+/g, "_"); // sanitize spaces
       const fileName = `${clientName}_Daily_Service_Report-${sufix}.xlsx`;
       const filePath = `./tmp/reports/${fileName}`;
 

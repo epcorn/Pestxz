@@ -40,10 +40,10 @@ function AdminDashboard() {
   const { data: clientsData = [] } = useAllClientsQuery();
   const { data: adminDash, isLoading: admindashLoading } = useAdminDashboardQuery(
     selectedClient?._id || "select",
-    { skip: user?.role !== "Admin", refetchOnReconnect: true }
+    { skip: !['TeamLeader', 'BranchAdmin', "Admin"].includes(user?.role), refetchOnReconnect: true }
   );
   const clients = clientsData?.clients
-  console.log(clientsData)
+
   useEffect(() => {
     if (!assignId) return;
     const handler = (e) => {
@@ -52,7 +52,7 @@ function AdminDashboard() {
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, [assignId]);
-
+  console.log(adminDash)
   const handleToggle = (val) => {
     setToggle(val);
     sessionStorage.setItem("adminDashboardToggle", val);
@@ -69,13 +69,10 @@ function AdminDashboard() {
   const isOverall = selectedMonth === "overall";
   const activeMonth = !isOverall ? monthlyData?.[Number(selectedMonth)] : null;
 
-  // Reset back to "overall" if the client/data changes and the previously
-  // selected month index no longer exists (e.g. switching clients).
   useEffect(() => {
     if (!isOverall && !monthlyData?.[Number(selectedMonth)]) {
       setSelectedMonth("overall");
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [monthlyData]);
 
   // ---- Complaint stat cards: overall summary vs. one month's slice ----
@@ -392,7 +389,11 @@ function Row({ item, index, isRegular, assignId, assignRef, setAssignId, navigat
 
       {/* Column 3 */}
       <td className="px-4 py-4 text-gray-600 text-xs whitespace-nowrap">
-        <p className="font-semibold">{new Date(item.createdAt).toLocaleDateString()}</p>
+        {isRegular ?
+          <div className="font-semibold">
+            {item?.regularService?.[0]?.completedAt.split("T")[0]}
+          </div> : <div>{item.createdAt.split("T")[0]}</div>
+        }
         <p className="text-gray-400 mt-0.5">
           {new Date(item.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
         </p>

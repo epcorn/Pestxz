@@ -55,7 +55,7 @@ function ProductShow({ products, today }) {
 
               const isExpanded = show.id === pr.productId && show.status;
               const slicedSchedules = isExpanded ? schedules : schedules.filter(f => f.status !== "Missed" && f.status !== "Done").slice(0, 5);
-              
+
               return (
                 <tr key={pr.productId + i} className="border-b border-black last:border-b-0 *:px-2 py-2">
                   <td className="border-r border-black">{pr?.serialNo}</td>
@@ -90,8 +90,8 @@ function ProductShow({ products, today }) {
                           <span
                             key={sc.date}
                             className={`outline-1 rounded px-1.5 py-0.5 ${missed ? "bg-red-200 text-red-700" :
-                              done ? "bg-blue-200 text-blue-700" :
-                                isToday ? "bg-green-200 text-green-700 animate-pulse" :
+                              done ? "bg-green-200 text-green-700" :
+                                isToday ? "bg-blue-200 text-blue-700 animate-pulse" :
                                   isNext ? "bg-amber-200 text-amber-700" : ""
                               }`}
                           >
