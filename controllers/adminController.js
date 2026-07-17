@@ -367,32 +367,32 @@ export const adminDashboard = async (req, res) => {
   const clientFilter =
     id && id !== "select" ? { client: new mongoose.Types.ObjectId(id) } : {};
 
+  // Build match stage for Aggregations
+  const clientMatchStage =
+    id && id !== "select"
+      ? { $match: { client: new mongoose.Types.ObjectId(id) } }
+      : { $match: {} };
+
   try {
     const populateOpts = [
       { path: "location", select: "floor subLocation location" },
       { path: "client", select: "name -_id" },
     ];
 
-    // Build conditional match pipeline for Client IDs
-    const clientMatchStage =
-      id && id !== "select"
-        ? { $match: { client: new mongoose.Types.ObjectId(id) } }
-        : { $match: {} };
-
     const [
       complaints,
       allComplaints,
-      productStats,
-      serviceStats,
+      productDashboard,
+      serviceDashboard,
       monthlyScheduleStats,
     ] = await Promise.all([
-      // 1. Fetch only what's needed for the active complaints/recent feeds (Paginated or capped is best)
+      // 1. Fetch complaints filter
       Service.find(clientFilter)
         .sort("-updatedAt")
         .populate(populateOpts)
         .lean(),
 
-      // 2. All Complaints (If this is massive, consider pagination instead of fetching ALL)
+      // 2. All complaints
       Service.find({ type: "Complaint", ...clientFilter })
         .populate([
           { path: "location", select: "floor subLocation location" },
@@ -400,87 +400,97 @@ export const adminDashboard = async (req, res) => {
         ])
         .lean(),
 
-      // 3. Aggregated Product Count Metrics
+      // 3. Optimized Product Metrics Facet
       Location.aggregate([
         clientMatchStage,
-        { $unwind: "$product" },
         {
-          $group: {
-            _id: null,
-            totalProducts: { $sum: 1 },
-            schedules: { $push: "$product.schedule" },
-          },
-        },
-        { $unwind: "$schedules" },
-        { $unwind: "$schedules" },
-        {
-          $group: {
-            _id: "$schedules.status",
-            count: { $sum: 1 },
-            total: { $first: "$totalProducts" },
+          $facet: {
+            totalProducts: [{ $unwind: "$product" }, { $count: "count" }],
+            scheduleCount: [
+              { $unwind: "$product" },
+              { $unwind: "$product.schedule" },
+              {
+                $group: { _id: "$product.schedule.status", count: { $sum: 1 } },
+              },
+              { $project: { _id: 0, label: "$_id", count: 1 } },
+            ],
           },
         },
       ]),
 
-      // 4. Aggregated Service Count Metrics
+      // 4. Optimized Service Metrics Facet
       Location.aggregate([
         clientMatchStage,
-        { $unwind: "$service" },
         {
-          $group: {
-            _id: null,
-            totalServices: { $sum: 1 },
-            schedules: { $push: "$service.schedule" },
-          },
-        },
-        { $unwind: "$schedules" },
-        { $unwind: "$schedules" },
-        {
-          $group: {
-            _id: "$schedules.status",
-            count: { $sum: 1 },
-            total: { $first: "$totalServices" },
+          $facet: {
+            totalServices: [{ $unwind: "$service" }, { $count: "count" }],
+            scheduleCount: [
+              { $unwind: "$service" },
+              { $unwind: "$service.schedule" },
+              {
+                $group: { _id: "$service.schedule.status", count: { $sum: 1 } },
+              },
+              { $project: { _id: 0, label: "$_id", count: 1 } },
+            ],
           },
         },
       ]),
 
-      // 5. Optimized Monthly Grouping directly from MongoDB
+      // 5. Monthly breakdown mapping array before unwinding
       Location.aggregate([
         clientMatchStage,
+        {
+          $facet: {
+            productSchedules: [
+              { $unwind: "$product" },
+              { $unwind: "$product.schedule" },
+              {
+                $project: {
+                  _id: 0,
+                  status: "$product.schedule.status",
+                  date: "$product.schedule.date",
+                  isProduct: { $literal: "product" },
+                },
+              },
+            ],
+            serviceSchedules: [
+              { $unwind: "$service" },
+              { $unwind: "$service.schedule" },
+              {
+                $project: {
+                  _id: 0,
+                  status: "$service.schedule.status",
+                  date: "$service.schedule.date",
+                  isProduct: { $literal: "regular" },
+                },
+              },
+            ],
+          },
+        },
         {
           $project: {
             combinedSchedules: {
-              $concatArrays: [
-                { $ifNull: ["$product.schedule", []] },
-                { $ifNull: ["$service.schedule", []] },
-              ],
+              $concatArrays: ["$productSchedules", "$serviceSchedules"],
             },
           },
         },
-        { $unwind: "$combinedSchedules" },
         { $unwind: "$combinedSchedules" },
         {
           $project: {
             status: "$combinedSchedules.status",
-            isProduct: {
-              $cond: [
-                { $ifNull: ["$combinedSchedules.consumableId", false] },
-                "product",
-                "regular",
-              ],
-            }, // Adjust check based on schema
-            yearMonth: {
-              $dateToString: {
-                format: "%Y-%m",
-                date: "$combinedSchedules.date",
-              },
-            },
+            isProduct: "$combinedSchedules.isProduct",
+            date: "$combinedSchedules.date",
+          },
+        },
+        {
+          $match: {
+            date: { $exists: true, $ne: null },
           },
         },
         {
           $group: {
             _id: {
-              yearMonth: "$yearMonth",
+              yearMonth: { $dateToString: { format: "%Y-%m", date: "$date" } },
               isProduct: "$isProduct",
               status: "$status",
             },
@@ -490,22 +500,32 @@ export const adminDashboard = async (req, res) => {
       ]),
     ]);
 
-    // --- Process Aggregated Counters ---
-    const statuses = ["Missed", "Pending", "Done"];
+    // --- Process Counter Stats ---
+    const statuses = ["Done", "Pending", "Missed"];
 
-    const parseCounts = (aggResults) => {
-      const total = aggResults[0]?.total || 0;
-      const scheduleCount = statuses.map((status) => {
-        const found = aggResults.find((r) => r._id === status);
-        return { label: status, count: found ? found.count : 0 };
-      });
-      return { total, scheduleCount };
+    const productData = {
+      total: productDashboard?.[0]?.totalProducts?.[0]?.count || 0,
+      scheduleCount: statuses.map((label) => ({
+        label,
+        count:
+          productDashboard?.[0]?.scheduleCount?.find(
+            (item) => item.label === label,
+          )?.count || 0,
+      })),
     };
 
-    const productData = parseCounts(productStats);
-    const serviceData = parseCounts(serviceStats);
+    const serviceData = {
+      total: serviceDashboard?.[0]?.totalServices?.[0]?.count || 0,
+      scheduleCount: statuses.map((label) => ({
+        label,
+        count:
+          serviceDashboard?.[0]?.scheduleCount?.find(
+            (item) => item.label === label,
+          )?.count || 0,
+      })),
+    };
 
-    // --- Process Complaints Summaries ---
+    // --- Process Complaint Metrics ---
     const complaintData = complaints
       .filter((c) => c.type === "Complaint")
       .reduce(
@@ -529,7 +549,7 @@ export const adminDashboard = async (req, res) => {
         },
       );
 
-    // --- Build final Monthly Maps with aggregated values ---
+    // --- Process Monthly Trends Chart ---
     const monthlyMap = {};
     const ensureMonth = (dateStr) => {
       if (!monthlyMap[dateStr]) {
@@ -554,18 +574,19 @@ export const adminDashboard = async (req, res) => {
       return monthlyMap[dateStr];
     };
 
-    // Map DB Aggregated schedules directly to months
+    // Populate monthly schedule distributions
     monthlyScheduleStats.forEach((item) => {
-      if (!item._id.yearMonth) return;
+      if (!item._id.yearMonth || !item._id.isProduct) return;
       const month = ensureMonth(item._id.yearMonth);
       const type = item._id.isProduct; // "product" or "regular"
-      const status = item._id.status;
+      const status = item._id.status?.trim();
+
       if (month[type] && month[type][status] !== undefined) {
         month[type][status] += item.count;
       }
     });
 
-    // Handle Complaints mapping dynamically
+    // Populate monthly complaints/service occurrences
     complaints.forEach((item) => {
       const date = new Date(item.createdAt);
       if (isNaN(date.getTime())) return;
@@ -589,7 +610,6 @@ export const adminDashboard = async (req, res) => {
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([, value]) => value);
 
-    // Map helpers
     const withClientName = (item) => ({
       ...item,
       clientName: item.client?.name || item.complaintDetails?.clientName || "-",
