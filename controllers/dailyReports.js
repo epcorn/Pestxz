@@ -130,9 +130,9 @@ export const dailyServiceReport = async (req, res) => {
 
     const { value = "all" } = req.params;
     const today = new Date();
-    const todayStart = new Date();
+    const todayStart = new Date("2026-06-13");
     todayStart.setUTCHours(0, 0, 0, 0);
-    const todayEnd = new Date();
+    const todayEnd = new Date("2026-06-13");
     todayEnd.setUTCHours(23, 59, 59, 999);
 
     const isPestEmployee = req.user.type === "PestEmployee";
@@ -148,7 +148,7 @@ export const dailyServiceReport = async (req, res) => {
         updatedAt: { $gte: todayStart, $lte: todayEnd },
       };
 
-      console.log("todaystart: ", todayStart, today);
+      console.log("todaystart: ", todayStart,todayEnd, value);
     } else if (value === "weekly") {
       const year = today.getFullYear();
       const month = today.getMonth();
@@ -157,13 +157,14 @@ export const dailyServiceReport = async (req, res) => {
       const matchCondition = {
         updatedAt: { $gte: monthstart, $lte: monthend },
       };
-    } else {
-      populateOptions = [
-        { path: "services", populate: { path: "location" } },
-        { path: "unschedules", populate: { path: "location" } },
-        { path: "casuals", populate: { path: "location" } },
-      ];
-    }
+    } 
+    // else {
+    //   populateOptions = [
+    //     { path: "services", populate: { path: "location" } },
+    //     { path: "unschedules", populate: { path: "location" } },
+    //     { path: "casuals", populate: { path: "location" } },
+    //   ];
+    // }
 
     let populateOptions = [
       {
