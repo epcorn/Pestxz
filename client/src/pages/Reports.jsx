@@ -13,7 +13,7 @@ const Reports = () => {
   const [state, setState] = useState({ value: "all", genrate: false, visible: false })
   const { user } = useSelector(store => store.helper);
 
-  const { data: reports, isLoading: reportLoading } = useDailyServiceReportQuery(state.value, { skip: !state.genrate });
+  const { data: reports, isFetching, isLoading: reportLoading } = useDailyServiceReportQuery(state.value, { skip: !state.genrate });
   const { data: client } = useGetSingleClientQuery(user?.client, { skip: !user?.client })
 
   console.log(reports)
@@ -25,7 +25,9 @@ const Reports = () => {
   }, [reports, reportLoading]);
 
   const handleGenerate = () => {
-    setState(prev => ({ ...prev, genrate: true, visible: true }))
+    if (!isFetching) {
+      setState(prev => ({ ...prev, genrate: true, visible: true }))
+    }
   };
 
   const handleDownload = () => {
@@ -38,7 +40,7 @@ const Reports = () => {
     });
   };
 
-  console.log(state.genrate)
+  console.log(state.genrate, isFetching)
   return (
     <div className="flex flex-col justify-center items-center h-96">
       <div className="">
@@ -51,13 +53,14 @@ const Reports = () => {
           }}
         >
           <option value="all">All</option>
+          <option value="weekly">Weekly</option>
           <option value="today">Today</option>
         </select>
 
         <Button
           onClick={handleGenerate}
-          label={reportLoading ? "Generating..." : "Generate"}
-          disabled={reportLoading}
+          label={isFetching ? "Generating..." : "Generate"}
+          disabled={isFetching}
         />
       </div>
 
@@ -85,7 +88,7 @@ const Reports = () => {
               <Button
                 onClick={handleDownload}
                 label="Download"
-                disabled={reportLoading || !reports?.files?.[0]?.url}
+                disabled={isFetching}
               />
             </div>
           )}

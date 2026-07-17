@@ -113,8 +113,8 @@ const SingleLocation = () => {
           {/* ===== FLOATING STICKY SUMMARY BAR (unchanged behavior) ===== */}
           <div
             className={`fixed z-10 top-21 right-0 xl:right-5 w-full lg:left-60 lg:w-[calc(100vw-15rem)] xl:w-[calc(80vw-1.25rem)] flex items-center gap-3 p-2 bg-slate-700 shadow-lg rounded-b-lg transition-all duration-500 origin-top ${show
-                ? "opacity-100 scale-100 translate-y-0 pointer-events-auto"
-                : "opacity-0 scale-95 -translate-y-4 pointer-events-none"
+              ? "opacity-100 scale-100 translate-y-0 pointer-events-auto"
+              : "opacity-0 scale-95 -translate-y-4 pointer-events-none"
               }`}
           >
             {data.client && (
@@ -341,11 +341,13 @@ const SingleLocation = () => {
                   <RegularForm serviceData={data?.location?.service} id={data?.location?._id} locationName={data?.location?.floor} type={'regular'} setRegular={setRegular} today={today} />
                 </div>
 
-                <div className="bg-slate-500 rounded-2xl p-4">
+                <div className="bg-slate-500 rounded-2xl p-4 ">
                   <h2 className="font-bold text-lg text-white px-1 mb-2">
                     All Premise Services
                   </h2>
-                  <AllPremise today={date} />
+                  <div className="overflow-auto w-full">
+                    <AllPremise today={date} />
+                  </div>
                 </div>
               </div>
             )}
