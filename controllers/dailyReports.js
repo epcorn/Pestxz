@@ -241,9 +241,10 @@ export const dailyServiceReport = async (req, res) => {
             )
           : null;
         const { date, time } = dateTimeSplitter(regs.serviceDate);
-        
+
         return {
-          serviceDate: `${date} \n ${time}`,
+          serviceDate: date,
+          serviceTime: time,
           frequency: regs.frequency,
           userName: regs.userName,
           location: `${loc.floor}, ${loc.location}, ${loc.subLocation}`,
@@ -280,15 +281,16 @@ export const dailyServiceReport = async (req, res) => {
         }
 
         row.getCell(1).value = dataItem.serviceDate;
-        row.getCell(2).value = dataItem.frequency;
-        row.getCell(3).value = dataItem.userName;
-        row.getCell(4).value = dataItem.location;
-        row.getCell(5).value = dataItem.serviceName;
+        row.getCell(2).value = dataItem.serviceTime;
+        row.getCell(3).value = dataItem.frequency;
+        row.getCell(4).value = dataItem.userName;
+        row.getCell(5).value = dataItem.location;
+        row.getCell(6).value = dataItem.serviceName;
         if (req.user.type === "PestEmployee") {
-          row.getCell(6).value = scopeRichText;
-          row.getCell(6).alignment = { wrapText: true, vertical: "middle" };
+          row.getCell(7).value = scopeRichText;
+          row.getCell(7).alignment = { wrapText: true, vertical: "middle" };
         }
-        row.getCell(7).value = dataItem.images;
+        row.getCell(8).value = dataItem.images;
 
         row.commit();
         currRow++;

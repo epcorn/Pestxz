@@ -40,7 +40,7 @@ function AdminDashboard() {
   const { data: clientsData = [] } = useAllClientsQuery();
   const { data: adminDash, isLoading: admindashLoading } = useAdminDashboardQuery(
     selectedClient?._id || "select",
-    { skip: user?.role !== "Admin", refetchOnReconnect: true }
+    { skip: !['TeamLeader', 'BranchAdmin', "Admin"].includes(user?.role), refetchOnReconnect: true }
   );
   const clients = clientsData?.clients
 
@@ -52,7 +52,7 @@ function AdminDashboard() {
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, [assignId]);
-console.log(adminDash)
+  console.log(adminDash)
   const handleToggle = (val) => {
     setToggle(val);
     sessionStorage.setItem("adminDashboardToggle", val);
@@ -390,7 +390,7 @@ function Row({ item, index, isRegular, assignId, assignRef, setAssignId, navigat
       {/* Column 3 */}
       <td className="px-4 py-4 text-gray-600 text-xs whitespace-nowrap">
         {isRegular ?
-           <div className="font-semibold">
+          <div className="font-semibold">
             {item?.regularService?.[0]?.completedAt.split("T")[0]}
           </div> : <div>{item.createdAt.split("T")[0]}</div>
         }
