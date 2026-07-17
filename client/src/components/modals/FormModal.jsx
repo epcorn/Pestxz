@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import Button from "../Button";
 
-const FormModal = ({ title, formBody, submitLabel, onSubmit, handleClose, disabled, isLoading, open }) => {
+const FormModal = ({ title, formBody, height, submitLabel, onSubmit, handleClose, disabled, isLoading, open }) => {
   const [mounted, setMounted] = useState(open);
   const [visible, setVisible] = useState(open);
 
@@ -23,14 +23,14 @@ const FormModal = ({ title, formBody, submitLabel, onSubmit, handleClose, disabl
       document.body.classList.remove("overflow-y-hidden")
     }
 
-    return()=> document.body.classList.remove("overflow-y-hidden")
+    return () => document.body.classList.remove("overflow-y-hidden")
   }, [mounted])
 
   if (!mounted) return null;
 
   return (
     <div className={`fixed inset-0 flex justify-center z-50 items-center transition-colors ${visible ? "visible bg-black/20" : "invisible"}`}>
-      <div className={`bg-white rounded-xl max-w-4xl max-h-[90dvh] flex flex-col shadow p-2 md:p-5 m-3 transition-opacity duration-300 ${visible ? "opacity-100 scale-100" : "opacity-0 scale-125"}`}>
+      <div className={`bg-white rounded-xl max-w-4xl max-h-[90dvh] ${height} flex flex-col shadow p-2 md:p-5 m-3 transition-opacity duration-300 ${visible ? "opacity-100 scale-100" : "opacity-0 scale-125"}`}>
         <h2 className="text-2xl font-medium text-center text-green-500 mb-3 shrink-0">
           {title}
         </h2>

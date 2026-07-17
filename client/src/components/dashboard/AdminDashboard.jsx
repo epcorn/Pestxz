@@ -40,7 +40,7 @@ function AdminDashboard() {
   const { data: clientsData = [] } = useAllClientsQuery();
   const { data: adminDash, isLoading: admindashLoading } = useAdminDashboardQuery(
     selectedClient?._id || "select",
-    { skip: !['TeamLeader', 'BranchAdmin', "Admin"].includes(user?.role), refetchOnReconnect: true }
+    { skip: !['TeamLeader', 'BranchAdmin', "Admin"].includes(user?.role), refetchOnReconnect: true, pollingInterval: 30000, skipPollingIfUnfocused: true }
   );
   const clients = clientsData?.clients
 
