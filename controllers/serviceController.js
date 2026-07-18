@@ -536,7 +536,6 @@ export const addProductService = async (req, res) => {
     version,
     serviceDate,
   } = req.body;
-
   try {
     const location = await Location.findById(locationId);
     if (!location) return res.status(404).json({ msg: "Location not found" });
@@ -546,7 +545,8 @@ export const addProductService = async (req, res) => {
       a.getUTCMonth() === b.getUTCMonth() &&
       a.getUTCDate() === b.getUTCDate();
 
-    const today = new Date();
+    const today = new Date(serviceDate);
+    console.log(serviceDate, today);
 
     const locationProduct = location.product.find(
       (p) =>
@@ -567,7 +567,6 @@ export const addProductService = async (req, res) => {
       const target = locationProduct.schedule.find(
         (s) => isSameUTCDay(new Date(s.date), today) && !s.completed,
       );
-      console.log("target: ", target);
 
       if (target) {
         target.completed = true;
@@ -575,6 +574,7 @@ export const addProductService = async (req, res) => {
         target.completedAt = today;
         target.completedBy = req.user.name;
       }
+      console.log("target: ", target);
     }
 
     await ProductService.create({
@@ -597,6 +597,8 @@ export const addProductService = async (req, res) => {
       location: locationId,
       client: location.client,
       success: true,
+      createdAt: today,
+      updatedAt: today,
     });
 
     location.markModified("product");
