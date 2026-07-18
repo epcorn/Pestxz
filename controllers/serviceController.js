@@ -3,7 +3,7 @@ import Client from "../models/clientModel.js";
 import Location from "../models/locationModel.js";
 import moment from "moment";
 import exceljs from "exceljs";
-import { sendEmail, uploadFile } from "../utils/helperFunction.js";
+import { removeOldQr, sendEmail, uploadFile } from "../utils/helperFunction.js";
 import Casual from "../models/casualServiceModel.js";
 import ProductService from "../models/productService.js";
 import mongoose from "mongoose";
@@ -355,9 +355,7 @@ export const newRegularService = async (req, res) => {
           usedCalibration:
             usedCalibration?.[scope.scopeId]?.[con.consumableId] || "1",
           action: action?.[scope.scopeId]?.[con.consumableId] || "Done",
-          comment:
-            comment?.[scope.scopeId]?.[con.consumableId] ||
-            "Completed",
+          comment: comment?.[scope.scopeId]?.[con.consumableId] || "Completed",
         })),
       })),
       image: imageLink,
@@ -543,12 +541,22 @@ export const addProductService = async (req, res) => {
     const location = await Location.findById(locationId);
     if (!location) return res.status(404).json({ msg: "Location not found" });
 
+    const isSameUTCDay = (a, b) =>
+      a.getUTCFullYear() === b.getUTCFullYear() &&
+      a.getUTCMonth() === b.getUTCMonth() &&
+      a.getUTCDate() === b.getUTCDate();
+
+    const today = new Date();
+
     const locationProduct = location.product.find(
       (p) =>
         p.serialNo?.toString().trim() === serialNo?.toString().trim() &&
-        p.productId?.toString() === product.id?.toString(),
+        p.productId?.toString() === product.id?.toString() &&
+        p.schedule?.some(
+          (sc) => isSameUTCDay(new Date(sc.date), today) && !sc.completed,
+        ),
     );
-
+    console.log("location product:", locationProduct);
     if (!locationProduct) {
       return res
         .status(404)
@@ -556,20 +564,18 @@ export const addProductService = async (req, res) => {
     }
 
     if (Array.isArray(locationProduct.schedule)) {
-      const target = serviceDate
-        ? locationProduct.schedule.find((s) => s.date === serviceDate)
-        : locationProduct.schedule.find((s) => !s.completed);
+      const target = locationProduct.schedule.find(
+        (s) => isSameUTCDay(new Date(s.date), today) && !s.completed,
+      );
+      console.log("target: ", target);
 
       if (target) {
         target.completed = true;
         target.status = "Done";
-        target.completedAt = new Date();
+        target.completedAt = today;
         target.completedBy = req.user.name;
       }
     }
-
-    location.markModified("product");
-    await location.save();
 
     await ProductService.create({
       quality: { status: quality.status, image: quality.image },
@@ -586,12 +592,15 @@ export const addProductService = async (req, res) => {
       servicedBy: {
         name: req.user.name,
         id: req.user._id,
-        date: new Date(),
+        date: today,
       },
       location: locationId,
       client: location.client,
       success: true,
     });
+
+    location.markModified("product");
+    await location.save();
 
     return res.status(201).json({
       msg: `Product service ${product.name}`,
@@ -599,6 +608,31 @@ export const addProductService = async (req, res) => {
       user: req.user.name,
     });
   } catch (error) {
+    try {
+      const imagesurls = [quality.image];
+      if (typeof quality.image === "string") {
+        imagesurls.push(quality.image);
+      }
+      if (Array.isArray(calibration)) {
+        calibration.forEach((cal) => {
+          if (
+            typeof cal.image === "string" &&
+            cal.image !== "" &&
+            cal.image.trim()
+          ) {
+            imagesurls.push(cal.image);
+          }
+        });
+      }
+      const uniqueImgs = [...new Set(imagesurls)];
+
+      for (let imgs of uniqueImgs) {
+        await removeOldQr(imgs);
+      }
+      console.log(`images cleared ${uniqueImgs.length}`);
+    } catch (error) {
+      console.log("error in removing old urls: ", error);
+    }
     console.error("error occurred: ", error);
     return res.status(500).json({ msg: "Internal server error" });
   }

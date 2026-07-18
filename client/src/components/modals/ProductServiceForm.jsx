@@ -15,7 +15,6 @@ import { socket } from '../../socket'
 import InputRow from '../InputRow'
 
 
-// const storageKey = `${id}_${product.serialNo}`;
 
 function ProductServiceForm({ products, currentUser, today }) {
 
@@ -23,19 +22,23 @@ function ProductServiceForm({ products, currentUser, today }) {
   const [submittedIds, setSubmittedIds] = React.useState([])
   const dates = useSelector(selectDates)
 
-  const todayLocal = today.toLocaleDateString('sv-SE');
+  const todayLocal = new Date(today).toLocaleDateString('en-IN');
+
   const queue = products?.filter(p => {
-    if (submittedIds.includes(p._id)) return false;
+    const key = `${p._id}_${todayLocal}`;
+    if (submittedIds.includes(key)) return false;
+
     return p.schedule?.some(sc => {
       if (!sc.date) return false;
-      const scheduleLocalDate = new Date(sc.date).toLocaleDateString('sv-SE');
+      const scheduleLocalDate = new Date(sc.date).toLocaleDateString('en-IN');
       return scheduleLocalDate === todayLocal && !sc.completed;
     });
   }) || [];
 
+  console.log(queue)
 
   const handleSubmitted = (pid) => {
-    setSubmittedIds(prev => [...prev, pid])
+    setSubmittedIds(prev => [...prev, `${pid}_${todayLocal}`])
   }
 
   return (
@@ -51,6 +54,7 @@ function ProductServiceForm({ products, currentUser, today }) {
             <ProductServiceCard
               key={product._id}
               id={id}
+              today={today}
               product={product}
               currentUser={currentUser}
               onSubmitted={handleSubmitted}
@@ -74,7 +78,7 @@ function ProductServiceForm({ products, currentUser, today }) {
 
 export default ProductServiceForm
 
-function ProductServiceCard({ product, currentUser, onSubmitted, id }) {
+function ProductServiceCard({ product, today, currentUser, onSubmitted, id }) {
   const dispatch = useDispatch()
   const { isModalOpen } = useSelector(store => store.helper)
   const pid = product._id;
@@ -143,6 +147,7 @@ function ProductServiceCard({ product, currentUser, onSubmitted, id }) {
         name: product.versionName,
         id: product.versionId,
       },
+      serviceDate: today,
       code: product.code,
       serialNo: product.serialNo,
       calibration: (product.calibrations || []).map((cal, i) => {
@@ -160,7 +165,6 @@ function ProductServiceCard({ product, currentUser, onSubmitted, id }) {
     }
     const saveLocal = localStorage.setItem(`${id}_${product.serialNo}`, JSON.stringify(payload));
 
-    console.log(data, payload)
     try {
       const res = await addProducts(payload).unwrap()
       onSubmitted(pid)
