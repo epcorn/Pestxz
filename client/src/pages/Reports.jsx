@@ -14,9 +14,9 @@ const Reports = () => {
     genrate: false,
     visible: false,
   });
-  const [dates, setDates] = useState({ todays: "", startdate: "", enddate: "" })
+  const [dates, setDates] = useState({ todays: "" })
   const { user } = useSelector((store) => store.helper);
-
+  console.log(dates)
   const {
     data: reports,
     isFetching,
@@ -51,12 +51,7 @@ const Reports = () => {
   };
   const handleChangedates = (e) => {
     const value = e.target.value;
-    const name = e.target.name
-    if (state.value === "weekly") {
-      setDates(prev => ({ ...prev, todays: "", [name]: value }))
-    }
-    if (state.value === "todays")
-      setDates({ [name]: value })
+    setDates({ todays: value })
 
   }
 
@@ -110,8 +105,6 @@ const Reports = () => {
         ) : (
           ""
         )}
-
-
 
         <Button
           onClick={handleGenerate}

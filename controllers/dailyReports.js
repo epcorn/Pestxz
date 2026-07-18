@@ -129,9 +129,8 @@ export const dailyServiceReport = async (req, res) => {
     // }
 
     const { value = "all" } = req.params;
-    const { todays, startdate, enddate } = req.query;
-
-    console.log(value, todays);
+    const { todays } = req.query;
+    console.log(todays);
     const today = new Date();
     const todayStart = new Date(todays);
     todayStart.setUTCHours(0, 0, 0, 0);
@@ -153,13 +152,29 @@ export const dailyServiceReport = async (req, res) => {
 
       console.log("todaystart: ", todayStart, todayEnd, value);
     } else if (value === "weekly") {
-      const year = today.getFullYear();
-      const month = today.getMonth();
-      const monthstart = new Date(year, month, 1);
-      const monthend = new Date(year, month + 1, 1);
-      const matchCondition = {
-        updatedAt: { $gte: monthstart, $lte: monthend },
+      const weekStart = new Date(
+        Date.UTC(
+          todayStart.getUTCFullYear(),
+          todayStart.getUTCMonth(),
+          todayStart.getUTCDate(),
+        ),
+      );
+      const weekEnd = new Date(weekStart);
+      weekEnd.setUTCDate(weekEnd.getUTCDate() + 7);
+      matchCondition = {
+        updatedAt: { $gte: weekStart, $lt: weekEnd },
       };
+      console.log("week start:", weekStart, weekEnd);
+    } else if (value === "monthly") {
+      const monthStart = new Date(
+        Date.UTC(todayStart.getUTCFullYear(), todayStart.getUTCMonth(), 1),
+      );
+      const monthEnd = new Date(
+        Date.UTC(todayStart.getUTCFullYear(), todayStart.getUTCMonth() + 1, 1),
+      );
+
+      matchCondition = { updatedAt: { $gte: monthStart, $lt: monthEnd } };
+      console.log("month start:", monthStart, monthEnd);
     }
     // else {
     //   populateOptions = [

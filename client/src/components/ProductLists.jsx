@@ -132,15 +132,15 @@ export function ExpandedProductLists({ productData, isModalOpen, dispatch, toggl
           <p className='p-5 text-2xl font-semibold text-center '>No previous records found</p>
           : productData?.map(pr => (
             <div key={pr._id} className="grid grid-cols-3 gap-4  bg-gray-50 outline rounded p-2 ">
-              <div>
-                <span className="font-bold block">Service Date</span>
+              <div className='text-center'>
+                <span className="font-bold block">Serviced Date</span>
                 <span className="font-mono wrap-break-word">{serviceDate(pr.servicedBy.date)}</span>
               </div>
               <div className='text-center'>
                 <span className="font-bold  block">Serviced By</span>
                 <span>{pr.servicedBy.name}</span>
               </div>
-              <div>
+              <div className='text-center'>
                 <span className="font-bold block">Equipment's Quality</span>
                 <span className="font-mono underline text-blue-600 font-bold"
                   onClick={(e) => {
