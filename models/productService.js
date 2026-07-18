@@ -10,7 +10,7 @@ const productServiceSchema = mongoose.Schema(
       name: { type: String, default: "" },
       id: { type: mongoose.Schema.Types.ObjectId, ref: "Product" },
     },
-    serialNo: { type: String, required: true, unique: true },
+    serialNo: { type: String, required: true },
     version: {
       name: { type: String, default: "" },
       id: { type: mongoose.Schema.Types.ObjectId, ref: "Product" },

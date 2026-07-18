@@ -32,6 +32,14 @@ import ProductServiceForm from "../components/modals/ProductServiceForm";
 import ProductLists from "../components/ProductLists";
 
 
+
+const getLocalString = (date) => {
+  const offset = date.getTimezoneOffset();
+  const localDate = new Date(date.getTime() - offset * 60 * 1000);
+  return localDate.toISOString().slice(0, 16); // Extracts "YYYY-MM-DDTHH:mm"
+};
+
+
 const SingleLocation = () => {
   const { id } = useParams();
   const { user, isModalOpen } = useSelector((store) => store.helper);
@@ -39,7 +47,8 @@ const SingleLocation = () => {
   const [toggleLists, setToggleLists] = useState("");
   const dispatch = useDispatch();
   const [show, setShow] = useState(false);
-  const [date, setDate] = useState("2026-07-16")
+  // const [date, setDate] = useState(getLocalString(new Date()));
+  const [date, setDate] = useState('2026-06-03T14:43');
 
   let today = new Date(date);
 
@@ -131,7 +140,7 @@ const SingleLocation = () => {
             <label htmlFor="date-picker">Change todays Date</label>
             <input
               id="date-picker"
-              type="date"
+              type="datetime-local"
               value={date} // Add value for controlled input stability
               onChange={(e) => setDate(e.target.value)}
               className="outline px-2 py-1"
@@ -331,11 +340,11 @@ const SingleLocation = () => {
 
             {/* ===== PRODUCT SERVICE FORM ===== */}
             {DBUser?.rights?.scan_Scheduled && data?.location?.product?.length > 0 && (
-              <ProductServiceForm products={data?.location?.product} today={today} />
+              <ProductServiceForm products={data?.location?.product} today={date} />
             )}
 
             {/* ===== REGULAR SERVICE FORM + PREMISE HISTORY ===== */}
-            {DBUser && DBUser?.rights?.scan_Scheduled && (
+            {data?.location?.service.length > 0 && DBUser && DBUser?.rights?.scan_Scheduled && (
               <div className="space-y-6">
                 <div className="bg-neutral-50 rounded-xl border border-neutral-200 shadow-inner p-1">
                   <RegularForm serviceData={data?.location?.service} id={data?.location?._id} locationName={data?.location?.floor} type={'regular'} setRegular={setRegular} today={today} />

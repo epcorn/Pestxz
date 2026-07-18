@@ -23,8 +23,6 @@ import {
   SingleUnschedule
 } from "./pages";
 import { ProtectedRoute } from "./components";
-import NewDashboard from "./pages/NewDashboard";
-import Welcome from "./pages/OperatorDashboard";
 import { useSelector } from "react-redux";
 import { useEffect } from "react";
 import { socket } from "./socket";
@@ -51,7 +49,7 @@ const Router = createBrowserRouter(
       <Route index={true} path="/" element={<Landing />} />
       <Route path="" element={<MainLayout />}>
         <Route path="" element={<ProtectedRoute />}>
-          {/* <Route path="dashboard/stats" element={<NewDashboard />} /> */}
+
           <Route path="dashboard/scan" element={<QrScanner />} />
           <Route
             index={true} path="dashboard/stats" element={<Dashboard />}

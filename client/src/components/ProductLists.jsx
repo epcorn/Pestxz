@@ -71,11 +71,11 @@ function ProductLists({ data }) {
                       <td className="px-4 py-3 border-r border-gray-200">{d.servicedBy?.name}</td>
                       <td className="px-4 py-3 whitespace-nowrap">
                         <div className="flex flex-wrap gap-1.5">
-                          {d.calibration?.map(c => {
-                            const modalKey = `${c?._id}-calibration`
+                          {d.calibration?.map((c, i) => {
+                            const modalKey = `${i}-calibration`
 
                             return (
-                              <React.Fragment key={c._id}>
+                              <React.Fragment key={i}>
                                 <div
                                   onClick={(e) => { e.stopPropagation(); dispatch(toggleModal({ name: modalKey, status: true })) }}
                                   className="inline-flex items-center gap-1 cursor-pointer border border-gray-300 rounded px-2 py-0.5 text-xs bg-gray-50 text-gray-700 hover:bg-gray-200 transition-colors"
@@ -155,17 +155,17 @@ export function ExpandedProductLists({ productData, isModalOpen, dispatch, toggl
               <div className='col-span-full outline p-0.5 grid grid-rows-2 gap-y-2'>
                 <span className="font-bold block col-span-full ">Calibration Count</span>
                 <div className='flex flex-wrap gap-2'>
-                  {pr?.calibration.map(cal => (
-                    <React.Fragment key={cal._id}>
+                  {pr?.calibration.map((cal, i) => (
+                    <React.Fragment key={cal.name}>
                       <p className='px-2 outline cursor-pointer '
                         onClick={(e) => {
                           e.stopPropagation();
-                          dispatch(toggleModal({ name: `${cal._id}-cal`, status: true }))
+                          dispatch(toggleModal({ name: `${cal.name}-cal`, status: true }))
                         }}>
                         <span>{cal.name}: </span>
                         <strong>{cal.status}</strong>
                       </p>
-                      {isModalOpen?.[`${cal._id}-cal`] && <ImagesModal name={`${cal._id}-cal`} image={cal.image} />}
+                      {isModalOpen?.[`${cal.name}-cal`] && <ImagesModal name={`${cal.name}-cal`} image={cal.image} />}
                     </React.Fragment>
                   ))}
                 </div>
