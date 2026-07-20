@@ -34,6 +34,7 @@ const SingleClient = () => {
   const [selectedQr, setSelectedQr] = useState([]);
   const dispatch = useDispatch();
   const { id } = useParams();
+  const [date, setDate] = useState('2026-06-20')
 
   const { data: me } = useGetSingleUserQuery(user._id, { skip: !user._id });
   const limit = 15;
@@ -52,8 +53,8 @@ const SingleClient = () => {
 
   function GetSchedulesForLocation({ service }) {
 
-    const dates = service.flatMap(ser => ser.schedule.filter(sch => sch.date.split("T")[0] === new Date('2026-06-20').toISOString().split("T")[0]))
-    console.log(dates);
+    const dates = service.flatMap(ser => ser.schedule.filter(sch => sch.date.split("T")[0] === new Date(date).toISOString().split("T")[0]))
+
     const completed = dates.filter(d => d.completed && d.status === "Done")
 
     return (
@@ -298,7 +299,9 @@ const SingleClient = () => {
               {data.client.address}
             </div>
           </div>
-
+          <div>
+            <input type="date" name="" id="" value={date} onChange={(e) => setDate(e.target.value)} />
+          </div>
           <div className="overflow-auto border border-neutral-300 rounded-lg max-h-[500px] my-2">
             <table className="w-full border-collapse whitespace-nowrap bg-white">
               <thead className="sticky top-0 bg-gray-300 z-10 shadow-[inset_0_-1px_0_rgba(0,0,0,0.1)]">
@@ -338,7 +341,7 @@ const SingleClient = () => {
                     Status
                   </th>
                   <th className="font-bold text-center border border-neutral-300 w-28 px-3">
-                    Location Qr / Product Qr
+                    Loc Qr / Product Qr
                   </th>
                   <th className="font-bold text-center border border-neutral-300 px-4">
                     Action

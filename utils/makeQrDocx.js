@@ -106,6 +106,7 @@ export const makeQrFile = async (req, res) => {
     const QR_HEIGHT = 270;
 
     const qrUrls = Array.isArray(data?.qrs) ? data.qrs : [];
+    const limit = data.limit;
 
     if (qrUrls.length === 0) {
       return res.status(400).json({ error: "No QR codes provided" });
