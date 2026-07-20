@@ -225,22 +225,22 @@ const SingleLocation = () => {
               {/* ===== TAB CONTENT ===== */}
               <div className="mt-4">
                 {toggleLists === "allComp" && (
-                  <div className="bg-white rounded-2xl border border-red-100 overflow-hidden shadow-sm">
-                    <h2 className="text-lg font-bold px-5 py-3 bg-red-50 flex justify-between items-center">
+                  <div className="bg-white rounded-2xl border overflow-hidden shadow-sm">
+                    <h2 className="text-lg font-bold px-5 py-3 border-b bg-red-100 flex justify-between items-center">
                       <span>All Complaints ({data.complaints?.length})</span>
                       <IoIosArrowDown className={`${isModalOpen?.allComp ? "rotate-180" : ""} transition-all`} />
                     </h2>
 
-                    {data.complaints?.length > 0 ? (
-                      <div>
-                        <div className="hidden md:grid grid-cols-12 bg-neutral-100 border-b border-neutral-200 text-sm font-bold uppercase tracking-wider text-neutral-600 py-3 px-4 text-center">
-                          <div className="col-span-2 text-left">Complaint No.</div>
-                          <div className="col-span-2">Date</div>
-                          <div className="col-span-4 text-left">Service</div>
-                          <div className="col-span-2">Raised By</div>
-                          <div className="col-span-2">Status</div>
-                        </div>
+                    <div className="outline m-2 rounded-b-lg">
+                      <div className="hidden md:grid grid-cols-12 bg-neutral-100 border-b text-sm font-bold uppercase tracking-wider text-neutral-600 py-3 px-4 text-center">
+                        <div className="col-span-2 text-left">Complaint No.</div>
+                        <div className="col-span-2">Date</div>
+                        <div className="col-span-4 text-left">Service</div>
+                        <div className="col-span-2">Raised By</div>
+                        <div className="col-span-2">Status</div>
+                      </div>
 
+                      {data.complaints?.length > 0 ? (
                         <div className="divide-y divide-neutral-200">
                           {data.complaints?.map((complaint) => (
                             <Link
@@ -281,16 +281,16 @@ const SingleLocation = () => {
                             </Link>
                           ))}
                         </div>
-                      </div>
-                    ) : (
-                      <p className="text-center text-neutral-500 py-6">No Complaints found...</p>
-                    )}
+                      ) : (
+                        <p className="text-center text-neutral-500 py-6">No Complaints found...</p>
+                      )}
+                    </div>
                   </div>
                 )}
 
                 {toggleLists === "allProducts" && (
-                  <div className="bg-white rounded-2xl border border-blue-100 overflow-hidden shadow-sm">
-                    <h2 className="text-lg font-bold px-5 py-3 bg-blue-50 flex justify-between items-center">
+                  <div className="bg-white rounded-2xl border overflow-hidden shadow-sm">
+                    <h2 className="text-lg font-bold px-5 py-3 border-b bg-blue-50 flex justify-between items-center">
                       <span>All Porducts Services Done ({data?.productsService?.length || 0})</span>
                       <IoIosArrowDown className={`${isModalOpen?.allReg ? "rotate-180" : ""} transition-all`} />
                     </h2>
@@ -301,8 +301,8 @@ const SingleLocation = () => {
                 )}
 
                 {toggleLists === "allReg" && (
-                  <div className="bg-white rounded-2xl border border-blue-100 overflow-hidden shadow-sm">
-                    <h2 className="text-lg font-bold px-5 py-3 bg-blue-50 flex justify-between items-center">
+                  <div className="bg-white rounded-2xl border overflow-hidden shadow-sm">
+                    <h2 className="text-lg font-bold px-5 py-3 border-b bg-blue-50 flex justify-between items-center">
                       <span>All Scheduled Services Done ({data?.regularService.length || 0})</span>
                       <IoIosArrowDown className={`${isModalOpen?.allReg ? "rotate-180" : ""} transition-all`} />
                     </h2>
@@ -313,8 +313,8 @@ const SingleLocation = () => {
                 )}
 
                 {toggleLists === "allUnsch" && (
-                  <div className="bg-white rounded-2xl border border-blue-100 overflow-hidden shadow-sm">
-                    <h2 className="text-base md:text-lg font-bold px-5 py-3 bg-blue-50 flex justify-between items-center">
+                  <div className="bg-white rounded-2xl border  overflow-hidden shadow-sm">
+                    <h2 className="text-base md:text-lg font-bold border-b px-5 py-3 bg-blue-50 flex justify-between items-center">
                       <span>All Un-Scheduled Services ({data?.unscheduled.length || 0})</span>
                       <IoIosArrowDown className={`${isModalOpen?.allReg ? "rotate-180" : ""} transition-all`} />
                     </h2>
@@ -325,8 +325,8 @@ const SingleLocation = () => {
                 )}
 
                 {toggleLists === "allCasual" && (
-                  <div className="bg-white rounded-2xl border border-blue-100 overflow-hidden shadow-sm">
-                    <h2 className="text-base md:text-lg font-bold px-5 py-3 bg-blue-50 flex justify-between items-center">
+                  <div className="bg-white rounded-2xl border  overflow-hidden shadow-sm">
+                    <h2 className="text-base md:text-lg border-b font-bold px-5 py-3 bg-blue-50 flex justify-between items-center">
                       <span>All Casual Services ({data?.casuals?.length || 0})</span>
                       <IoIosArrowDown className={`${isModalOpen?.allCasual ? "rotate-180" : ""} transition-all`} />
                     </h2>

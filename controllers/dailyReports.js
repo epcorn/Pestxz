@@ -129,10 +129,11 @@ export const dailyServiceReport = async (req, res) => {
     // }
 
     const { value = "all" } = req.params;
-    const today = new Date();
-    const todayStart = new Date("2026-06-13");
-    todayStart.setUTCHours(0, 0, 0, 0);
-    const todayEnd = new Date("2026-06-13");
+    const { today } = req.query;
+
+    const todayStart = new Date(today);
+    todayStart?.setUTCHours(0, 0, 0, 0);
+    const todayEnd = new Date(today);
     todayEnd.setUTCHours(23, 59, 59, 999);
 
     const isPestEmployee = req.user.type === "PestEmployee";
@@ -148,16 +149,21 @@ export const dailyServiceReport = async (req, res) => {
         updatedAt: { $gte: todayStart, $lte: todayEnd },
       };
 
-      console.log("todaystart: ", todayStart,todayEnd, value);
+      console.log("todaystart: ", todayStart, todayEnd, value);
     } else if (value === "weekly") {
-      const year = today.getFullYear();
-      const month = today.getMonth();
-      const monthstart = new Date(year, month, 1);
-      const monthend = new Date(year, month + 1, 1);
-      const matchCondition = {
-        updatedAt: { $gte: monthstart, $lte: monthend },
-      };
-    } 
+      const weekStart = new Date(
+        Date.UTC(
+          todayStart.getUTCFullYear(),
+          todayStart.getUTCMonth(),
+          todayStart.getUTCDate(),
+        ),
+      );
+      const weekEnd = new Date(weekStart);
+      weekEnd.setUTCDate(weekEnd.getUTCDate() + 7);
+
+      matchCondition = { updatedAt: { $gte: weekStart, $lt: weekEnd } }; // no `const`
+      console.log("week start:", weekStart, weekEnd);
+    }
     // else {
     //   populateOptions = [
     //     { path: "services", populate: { path: "location" } },

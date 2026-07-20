@@ -87,7 +87,7 @@ function UnscheduledForm({ existing, locationId, type, id }) {
         <input
           type="file"
           multiple
-          required
+          required={false}
           accept="image/*"
           {...register("image")}
           className="mt-0.5 block w-full text-sm text-slate-500
@@ -110,6 +110,7 @@ function UnscheduledForm({ existing, locationId, type, id }) {
       title='Report Un-Scheduled work'
       disabled={unScLoading}
       submitLabel={type === "raise" ? "Report" : unScLoading ? "Reporting..." : ""}
+      isLoading={unScLoading}
       onSubmit={handleSubmit(submit)}
       handleClose={() => dispatch(toggleModal({ name: "unscheduled", status: false }))}
     />

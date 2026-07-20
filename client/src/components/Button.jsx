@@ -10,7 +10,7 @@ const Button = ({
   height,
   isLoading,
   width,
-  text
+  text,
 }) => {
 
   return (
