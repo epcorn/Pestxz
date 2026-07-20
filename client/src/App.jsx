@@ -59,13 +59,13 @@ const Router = createBrowserRouter(
           <Route path="/complaint/:id" element={<SingleComplaint />} />
           <Route path="/unschedule/:id" element={<SingleUnschedule />} />
         </Route>
-        <Route path="" element={<ProtectedRoute roles={["Admin", "Supervisor", "TeamLeader", "BranchAdmin"]} />}>
+        <Route path="" element={<ProtectedRoute roles={["Admin", "Supervisor", "TeamLeader", "Operator", "BranchAdmin"]} />}>
           <Route path="dashboard/clients" element={<Clients />} />
           <Route path="dashboard/services" element={<Services />} />
           <Route path="dashboard/client/:id" element={<SingleClient />} />
         </Route>
 
-        <Route path="" element={<ProtectedRoute roles={["Admin", "ClientAdmin"]} />} > 
+        <Route path="" element={<ProtectedRoute roles={["Admin", "ClientAdmin"]} />} >
           <Route path="dashboard/users" element={<Users />} />
           <Route path="dashboard/reports" element={<Reports />} />
           <Route path="dashboard/locations" element={<Locations />} />
