@@ -14,19 +14,21 @@ const Reports = () => {
     genrate: false,
     visible: false,
   });
-  const [dates, setDates] = useState({ todays: "" })
+  const [date, setDate] = useState("2026-07-20")
   const { user } = useSelector((store) => store.helper);
-  console.log(dates)
+
   const {
     data: reports,
     isFetching,
     isLoading: reportLoading,
-  } = useDailyServiceReportQuery({ value: state.value, dates }, { skip: !state.genrate });
+  } = useDailyServiceReportQuery({ value: state.value, today: date }, {
+    skip: state.genrate === false,
+  });
   const { data: client } = useGetSingleClientQuery(user?.client, {
     skip: !user?.client,
   });
 
-  // console.log(reports);
+  console.log(reports);
   useEffect(() => {
     if (reports && !reportLoading) {
       setState((prev) => ({ ...prev, genrate: false }));
@@ -83,24 +85,15 @@ const Reports = () => {
           <option value="today">Todays</option>
         </select>
 
-        {state.value === "weekly" ? (
-          <div className="space-y-2">
-            <div className="space-x-2">
-              <label htmlFor="startdate">choose start date</label>
-              <input className="outline" onChange={handleChangedates} type="date" name="startdate" id="startdate" />
-            </div>
-            <div className="space-x-2">
-              <label htmlFor="end">choose end date</label>
-              <input className="outline" onChange={handleChangedates} type="date" name="enddate" id="enddate" />
-            </div>
-          </div>
-        ) : (
-          ""
-        )}
-        {state.value === "today" ? (
-          <div className="font-bold space-x-2">
-            <label htmlFor="date">choose today date:</label>
-            <input type="date" onChange={handleChangedates} name="todays" id="date" />
+        {state.value !== "all" ? (
+          <div className="flex flex-col *:not-first:outline p-2 gap-1">
+            <label htmlFor="select-date">select date</label>
+            <input
+              type="date"
+              id="select-date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+            />
           </div>
         ) : (
           ""
@@ -146,7 +139,7 @@ const Reports = () => {
         </>
       )}
       {!state.visible && client?.reportURL !== "" && (
-        <div className="text-center mt-2 hidden">
+        <div className="text-center mt-2">
           <Button
             onClick={() =>
               saveAs(

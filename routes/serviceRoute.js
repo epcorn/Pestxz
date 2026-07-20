@@ -16,7 +16,7 @@ import { dailyServiceReport } from "../controllers/dailyReports.js";
 const router = express.Router();
 
 router.get("/allComplaints", getAllComplaints);
-router.get("/dailyServiceReport/:value", dailyServiceReport);
+router.get("/dailyServiceReport/:value?", dailyServiceReport);
 
 router.post("/casual/", casualServices);
 router.get("/casual", getCasualServices);
@@ -29,7 +29,7 @@ router
   .get(getSingleComplaint)
   .put(updateComplaint);
 
-router.route("/product").post(addProductService)
+router.route("/product").post(addProductService);
 
 router.put("/assign-work", assignWork);
 router.get("/assign-work", getAllAssignedWork);

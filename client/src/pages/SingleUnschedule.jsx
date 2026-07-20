@@ -103,7 +103,7 @@ function SingleUnschedule() {
                 small
                 label="View Images"
                 disabled={!unscheduled?.image?.length}
-                color={unscheduled?.image?.length ? "bg-neutral-900 text-white hover:bg-neutral-800 transition font-bold text-xs px-3 py-1 rounded" : "bg-neutral-100 text-neutral-400 border border-neutral-200 cursor-not-allowed text-xs px-3 py-1 rounded"}
+                color={unscheduled?.image?.length ? "bg-blue-900 text-white hover:bg-blue-800 transition font-bold text-xs px-3 py-1 rounded" : "bg-neutral-600 text-neutral-700 border border-neutral-200 cursor-not-allowed text-xs px-3 py-1 rounded"}
                 onClick={() => dispatch(toggleModal({ name: "unscimage", status: true }))}
               />
             </div>

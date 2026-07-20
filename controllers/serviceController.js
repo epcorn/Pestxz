@@ -501,6 +501,7 @@ export const casualServices = async (req, res) => {
           serviceId,
           serviceName,
           scopes: scopeReadings,
+          completed: true,
         },
       ],
       user: { name: req.user.name, id: req.user._id },

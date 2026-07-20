@@ -129,12 +129,11 @@ export const dailyServiceReport = async (req, res) => {
     // }
 
     const { value = "all" } = req.params;
-    const { todays } = req.query;
-    console.log(todays);
-    const today = new Date();
-    const todayStart = new Date(todays);
-    todayStart.setUTCHours(0, 0, 0, 0);
-    const todayEnd = new Date(todays);
+    const { today } = req.query;
+
+    const todayStart = new Date(today);
+    todayStart?.setUTCHours(0, 0, 0, 0);
+    const todayEnd = new Date(today);
     todayEnd.setUTCHours(23, 59, 59, 999);
 
     const isPestEmployee = req.user.type === "PestEmployee";
@@ -161,20 +160,9 @@ export const dailyServiceReport = async (req, res) => {
       );
       const weekEnd = new Date(weekStart);
       weekEnd.setUTCDate(weekEnd.getUTCDate() + 7);
-      matchCondition = {
-        updatedAt: { $gte: weekStart, $lt: weekEnd },
-      };
-      console.log("week start:", weekStart, weekEnd);
-    } else if (value === "monthly") {
-      const monthStart = new Date(
-        Date.UTC(todayStart.getUTCFullYear(), todayStart.getUTCMonth(), 1),
-      );
-      const monthEnd = new Date(
-        Date.UTC(todayStart.getUTCFullYear(), todayStart.getUTCMonth() + 1, 1),
-      );
 
-      matchCondition = { updatedAt: { $gte: monthStart, $lt: monthEnd } };
-      console.log("month start:", monthStart, monthEnd);
+      matchCondition = { updatedAt: { $gte: weekStart, $lt: weekEnd } }; // no `const`
+      console.log("week start:", weekStart, weekEnd);
     }
     // else {
     //   populateOptions = [

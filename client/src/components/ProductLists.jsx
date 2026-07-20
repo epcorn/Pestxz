@@ -106,7 +106,7 @@ function ProductLists({ data }) {
                 );
               })
             ) : (
-              <tr>
+              <tr className='h-52'>
                 <td colSpan="8" className="px-4 py-8 text-center text-gray-400 italic">
                   No Product serviced yet...
                 </td>
