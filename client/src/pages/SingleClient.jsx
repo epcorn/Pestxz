@@ -26,7 +26,7 @@ import Pagination from "./Pagination";
 
 
 const SingleClient = () => {
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState(() => { const savedPage = sessionStorage.getItem("clientLocationPage"); return savedPage ? Number(savedPage) : 1 });
   const [state, setState] = useState({ loading: false, text: "" });
   const { isModalOpen, user } = useSelector((store) => store.helper);
   const [locationDetails, setLocationDetails] = useState({});
@@ -34,6 +34,7 @@ const SingleClient = () => {
   const [selectedQr, setSelectedQr] = useState([]);
   const dispatch = useDispatch();
   const { id } = useParams();
+  const [date, setDate] = useState('2026-06-20')
   const [date, setDate] = useState('2026-06-20')
 
   const { data: me } = useGetSingleUserQuery(user._id, { skip: !user._id });
@@ -96,10 +97,14 @@ const SingleClient = () => {
 
   const handleQrDownload = async (id, location) => {
     try {
-      console.log(id, location);
+      const qrs = [location.qr];
+      const res = await makeQrDOCX({ qrs, client: data.clientName }).unwrap();
+      console.log(res)
+      saveAs(res?.qr, `QR-${data?.clientName}.docx`);
       saveAs(location?.qr, `QR-${location.location}`);
       await qrCountInc(id).unwrap();
     } catch (error) {
+      console.log(error)
       throw new Error("download error");
     }
   };
@@ -491,7 +496,7 @@ const SingleClient = () => {
               </tbody>
             </table>
           </div>
-          <Pagination page={page} setPage={setPage} totalPages={data?.pages} />
+          <Pagination page={page} setPage={setPage} totalPages={data?.pages} sessionKey="clientLocationPage" />
         </div>
       )}
     </>
@@ -670,4 +675,17 @@ function ProductQrModal({ data, dispatch, toggleModal, makeQrDOCX, modalKey, cli
       </div>
     </div>
   );
+}
+
+
+function GetSchedulesForLocation({ service, date }) {
+  const dates = service?.flatMap(ser => ser?.schedule?.filter(sch => sch?.date?.split("T")[0] === new Date(date).toISOString().split("T")[0]))
+
+  const completed = dates?.filter(d => d?.completed && d.status === "Done")
+
+  return (
+    <>
+      <div>{completed.length}/{dates?.length}</div>
+    </>
+  )
 }

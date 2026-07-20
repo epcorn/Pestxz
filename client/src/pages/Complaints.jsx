@@ -19,7 +19,7 @@ import { socket } from "../socket";
 import Pagination from "./Pagination";
 
 const Complaints = () => {
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState(() => sessionStorage.getItem("complaintPage") || 1);
   const [myClient, setMyClient] = useState(null)
   const [tempSearch, setTempSearch] = useState("");
   const [search, setSearch] = useState("");
@@ -136,7 +136,7 @@ const Complaints = () => {
           <>
             <ComplaintTable data={complaints} user={user} />
 
-            <Pagination page={page} setPage={setPage} totalPages={data?.pages} />
+            <Pagination page={page} setPage={setPage} totalPages={data?.pages} sessionKey="complaintPage" />
           </>
         )}
       </div >
