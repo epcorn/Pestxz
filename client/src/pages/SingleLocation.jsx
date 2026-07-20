@@ -99,7 +99,7 @@ const SingleLocation = () => {
             <Headers header={'Location'} user={DBUser} />
             <div className="mt-2 grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
               {user.type === "PestEmployee" && (
-                <div className="bg-neutral-50 rounded-lg px-3 py-2 border border-neutral-200">
+                <div className="col-span-full bg-neutral-50 rounded-lg px-3 py-2 border border-neutral-200">
                   <p className="text-[11px] uppercase tracking-wide text-neutral-400 font-semibold">Client</p>
                   <p className="text-neutral-800 font-medium truncate">{data.client}</p>
                 </div>

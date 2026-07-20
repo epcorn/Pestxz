@@ -8,7 +8,6 @@ import {
   useAllLocationsQuery,
   useDeleteLocationMutation,
   useLazyAllLocationsQuery,
-  useLazyBackFillSchedulesQuery,
   useMakeQrDocxMutation,
   useQrCounterMutation,
 } from "../redux/locationSlice";
@@ -50,8 +49,7 @@ const SingleClient = () => {
     useUpdateClientMutation();
   const [qrCountInc] = useQrCounterMutation();
   const [makeQrDOCX, { isLoading: docQrLoading }] = useMakeQrDocxMutation();
-  const [triggerBackFill, { data: backfill, isLoading: backFillLoading }] =
-    useLazyBackFillSchedulesQuery();
+
 
   // handle edit model
   const handleEditModal = (location) => {
@@ -79,10 +77,6 @@ const SingleClient = () => {
   };
 
   const services = data?.locations?.map((loc) => loc.service || []) || [];
-  const handleBackfill = async () => {
-    const res = await triggerBackFill().unwrap();
-    toast.success(res.msg || "Done");
-  };
 
   const handleQrDownload = async (id, location) => {
     try {
@@ -289,16 +283,6 @@ const SingleClient = () => {
               </span>
               {data.client.address}
             </div>
-          </div>
-
-          {/* for testing purpose  */}
-          <div className="hidden">
-            <Button
-              label={"Add schedules"}
-              onClick={handleBackfill}
-              isLoading={backFillLoading}
-              disabled={backFillLoading}
-            />
           </div>
 
           <div className="overflow-auto border border-neutral-300 rounded-lg max-h-[500px] my-2">

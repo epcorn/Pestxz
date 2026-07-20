@@ -58,11 +58,7 @@ export const locationSlice = apiSlice.injectEndpoints({
       }),
       invalidatesTags: ["Location"],
     }),
-    backFillSchedules: builder.query({
-      query: () => ({
-        url: `/api/location/backfill-schedules`,
-      }),
-    }),
+ 
     makeQrDocx: builder.mutation({
       query: (data) => ({
         url: `/api/location/makeQrDoc`,
@@ -104,9 +100,7 @@ export const {
   useDeleteLocationMutation,
   useMakeQrDocxMutation,
   useSingleLocationDetailsQuery,
-  useBackFillSchedulesQuery,
   useQrCounterMutation,
-  useLazyBackFillSchedulesQuery,
   useUnscheduledReportMutation,
   useGetUnscheduledReportsQuery,
   useStatusUnscheduleMutation,
