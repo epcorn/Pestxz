@@ -547,7 +547,6 @@ export const addProductService = async (req, res) => {
       a.getUTCDate() === b.getUTCDate();
 
     const today = new Date(serviceDate);
-    console.log(serviceDate, today);
 
     const locationProduct = location.product.find(
       (p) =>

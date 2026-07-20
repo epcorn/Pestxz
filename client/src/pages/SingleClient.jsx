@@ -50,6 +50,20 @@ const SingleClient = () => {
   const [qrCountInc] = useQrCounterMutation();
   const [makeQrDOCX, { isLoading: docQrLoading }] = useMakeQrDocxMutation();
 
+  function GetSchedulesForLocation({ service }) {
+
+    const dates = service.flatMap(ser => ser.schedule.filter(sch => sch.date.split("T")[0] === new Date('2026-06-20').toISOString().split("T")[0]))
+    console.log(dates);
+    const completed = dates.filter(d => d.completed && d.status === "Done")
+
+    return (
+      <>
+        <div>{completed.length}/{dates?.length}</div>
+      </>
+    )
+  }
+
+  // console.log(schedules);
 
   // handle edit model
   const handleEditModal = (location) => {
@@ -150,11 +164,11 @@ const SingleClient = () => {
 
   return (
     <>
-      {isLoading || isFetching ? (
+      {/* {isFetching ? (
         <Loading />
       ) : (
         error && <AlertMessage>{error?.data?.msg || error.error}</AlertMessage>
-      )}
+      )} */}
       {!error && data?.client && (
         <div className="max-h-full overflow-auto flex flex-col">
           <div className="border-b border-neutral-200 max-h-full ">
@@ -321,6 +335,9 @@ const SingleClient = () => {
                     Services / [Products]
                   </th>
                   <th className="font-bold text-center border border-neutral-300 w-28 px-3">
+                    Status
+                  </th>
+                  <th className="font-bold text-center border border-neutral-300 w-28 px-3">
                     Location Qr / Product Qr
                   </th>
                   <th className="font-bold text-center border border-neutral-300 px-4">
@@ -386,6 +403,13 @@ const SingleClient = () => {
                         </div>
                       )}
                     </td>
+
+                    <td className="px-3 border border-neutral-200 text-center">
+                      <div>
+                        <GetSchedulesForLocation service={location?.service} />
+                      </div>
+                    </td>
+
                     <td className="px-3 border border-neutral-200 text-center">
                       <div className="flex justify-center items-center gap-1">
                         <Button

@@ -40,7 +40,7 @@ const Clients = () => {
 
       <NewClientModal />
       {(isLoading || isFetching) ? (
-        <div className="py-12 flex justify-center items-center">
+        <div className="py-12 h-96 flex justify-center items-center">
           <Loading />
         </div>
       ) : error ? (
