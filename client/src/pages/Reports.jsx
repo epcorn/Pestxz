@@ -59,15 +59,7 @@ const Reports = () => {
 
   return (
     <div className="flex flex-col gap-5 justify-center items-center h-96">
-      {state.value === "weekly" &&
-        <>
-          <p>choosen date: {dates?.enddate}</p>
-          <p>choosen date: {dates?.startdate}</p>
-        </>
-      }
-      {state.value === "today" &&
-        <p className="text-center outline ">choosen date: {dates?.todays}</p>
-      }
+      
       <div className="">
         <select
           name="date"
@@ -82,7 +74,7 @@ const Reports = () => {
           }}>
           <option value="all">All</option>
           <option value="weekly">Weekly</option>
-          <option value="today">Todays</option>
+          <option value="custom">Custom</option>
         </select>
 
         {state.value !== "all" ? (

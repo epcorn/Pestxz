@@ -144,7 +144,7 @@ export const dailyServiceReport = async (req, res) => {
     let uploadURL;
     let matchCondition;
 
-    if (value === "today") {
+    if (value === "custom") {
       matchCondition = {
         updatedAt: { $gte: todayStart, $lte: todayEnd },
       };
