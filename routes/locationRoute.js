@@ -2,7 +2,6 @@ import express from "express";
 import {
   addLocation,
   assignLocation,
-  backfillSchedules,
   deleteLocation,
   getAllLocations,
   getLocationDetails,
@@ -16,7 +15,6 @@ import { makeQrFile } from "../utils/makeQrDocx.js";
 import { getUnscheduledReports, statusUnscheduled, unScheduleReport } from "../controllers/unScheduleController.js";
 const router = express.Router();
 
-router.get("/backfill-schedules", backfillSchedules);
 router.post("/makeQrDoc", makeQrFile);
 
 router.post("/unSchedule", unScheduleReport)

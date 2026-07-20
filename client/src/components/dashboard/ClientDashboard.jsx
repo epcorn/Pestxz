@@ -253,25 +253,27 @@ const ClientDashboard = () => {
               )
             })}
           </div>
-          <div className="flex flex-col">
-            <h3 className="text-center font-semibold">Product Service ({products?.total})</h3>
-            <div className="flex gap-3 outline-2 rounded pb-1 px-1 outline-fuchsia-700">
-              {productsView.scheduleCount.map(({ count, label }, i) => (
-                <StatCard key={i} value={count} textColor={'text-fuchsia-600'} color={'border-l-fuchsia-600'} title={label} />
-              ))}
+          <div className="flex flex-col md:flex-row gap-5 mt-2">
+            <div className="w-full flex flex-col">
+              <h3 className="text-center font-semibold">Product Service ({products?.total})</h3>
+              <div className="flex gap-3 outline-2 rounded pb-1 px-1 outline-fuchsia-700">
+                {productsView.scheduleCount.map(({ count, label }, i) => (
+                  <StatCard key={i} value={count} textColor={'text-fuchsia-600'} color={'border-l-fuchsia-600'} title={label} />
+                ))}
+              </div>
             </div>
-          </div>
-          <div className="flex flex-col">
-            <h3 className="text-center font-semibold">Regular Service ({services?.total})</h3>
-            <div className="flex gap-3 outline-2 rounded pb-1 px-1 outline-amber-700">
-              {servicesView.scheduleCount.map(({ count, label }, i) => label !== "Invalid" && (
-                <StatCard key={i} value={count} textColor={'text-amber-600'} color={'border-l-amber-600'} title={label} />
-              ))}
+            <div className="w-full flex flex-col">
+              <h3 className="text-center font-semibold">Regular Service ({services?.total})</h3>
+              <div className="flex gap-3 outline-2 rounded pb-1 px-1 outline-amber-700">
+                {servicesView.scheduleCount.map(({ count, label }, i) => label !== "Invalid" && (
+                  <StatCard key={i} value={count} textColor={'text-amber-600'} color={'border-l-amber-600'} title={label} />
+                ))}
+              </div>
             </div>
           </div>
 
-          <div className="my-2">
             {/* Multiline Chart */}
+          <div className="my-2">
             <div className="rounded-2xl shadow-md p-4 bg-white min-w-0">
               <h3 className="h4 text-center mb-2 hidden">Multiline Chart</h3>
               <div className="w-full overflow-x-auto">
@@ -356,8 +358,8 @@ const ClientDashboard = () => {
 
             </div>
             <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
-              {["Regular", "Complaint"].includes(toggle) && 
-              <ComplaintTable data={complaints} user={user} toggle={toggle} />}
+              {["Regular", "Complaint"].includes(toggle) &&
+                <ComplaintTable data={complaints} user={user} toggle={toggle} />}
               {toggle === "Unscheduled" && <UnScheduledList work={unschedule} />}
               {toggle === "Casual" && <UnScheduledList />}
             </div>

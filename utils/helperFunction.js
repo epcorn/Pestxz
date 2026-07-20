@@ -82,12 +82,15 @@ export const qrCodeGenerator = async ({ link, floor, location }) => {
       .jpeg()
       .toBuffer();
 
+    // fs.writeFileSync("./tmp/qr.jpeg", buf);
     return buf;
   } catch (error) {
     console.log("QR Error", error);
     return false;
   }
 };
+
+
 
 //using sharp
 export const productQrCodeGenerator = async ({
@@ -98,7 +101,6 @@ export const productQrCodeGenerator = async ({
 }) => {
   const loc = location.substring(0, 25);
   const subLoc = location.substring(25);
-
   try {
     const width = 220; // was 100 — bigger for reliable scanning at print size
     const qrSize = 220;
@@ -297,10 +299,9 @@ export const removeOldQr = async (url) => {
 };
 
 export function dateTimeSplitter(date) {
-
-    const getDate = new Date(date).toISOString()
-    const [acDate, acTime] = getDate.split("T")
-    return { date: acDate, time: acTime.split(".")[0] }
+  const getDate = new Date(date).toISOString();
+  const [acDate, acTime] = getDate.split("T");
+  return { date: acDate, time: acTime.split(".")[0] };
 }
 // GENERATE SCHEDULE
 export const generateSchedule = (start, end, frequency, preffDay) => {
