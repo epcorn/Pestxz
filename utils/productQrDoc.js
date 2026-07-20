@@ -100,6 +100,7 @@ const runWithConcurrencyLimit = async (items, limit, worker) => {
 
 export const makeQrFile = async (req, res) => {
   const data = req.body;
+  const limit = data.limit;
 
   try {
     const QR_WIDTH = 220;
@@ -161,9 +162,9 @@ export const makeQrFile = async (req, res) => {
         spacing: { after: 400 },
       }),
     ];
-    console.log("limit", data?.limit);
+
     // Chunk images into rows of 3
-    for (let i = 0; i < qrBuffers.length; i += data?.limit || 3) {
+    for (let i = 0; i < qrBuffers.length; i += limit || 3) {
       const rowImages = [];
 
       for (let j = 0; j < 3; j++) {
@@ -239,7 +240,7 @@ export const makeQrFile = async (req, res) => {
       }),
     });
   } catch (error) {
-    console.error("makeQrFile error:", error);
+    console.error("productQrFile error:", error);
     res.status(500).json({ error: error.message });
   }
 };

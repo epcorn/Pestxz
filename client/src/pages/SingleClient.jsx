@@ -26,7 +26,7 @@ import Pagination from "./Pagination";
 
 
 const SingleClient = () => {
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState(() => { const savedPage = sessionStorage.getItem("clientLocationPage"); return savedPage ? Number(savedPage) : 1 });
   const [state, setState] = useState({ loading: false, text: "" });
   const { isModalOpen, user } = useSelector((store) => store.helper);
   const [locationDetails, setLocationDetails] = useState({});
@@ -34,6 +34,7 @@ const SingleClient = () => {
   const [selectedQr, setSelectedQr] = useState([]);
   const dispatch = useDispatch();
   const { id } = useParams();
+  const [date, setDate] = useState('2026-06-20')
 
   const { data: me } = useGetSingleUserQuery(user._id, { skip: !user._id });
   const limit = 15;
@@ -49,6 +50,7 @@ const SingleClient = () => {
     useUpdateClientMutation();
   const [qrCountInc] = useQrCounterMutation();
   const [makeQrDOCX, { isLoading: docQrLoading }] = useMakeQrDocxMutation();
+
 
 
   // handle edit model
@@ -80,10 +82,14 @@ const SingleClient = () => {
 
   const handleQrDownload = async (id, location) => {
     try {
-      console.log(id, location);
+      const qrs = [location.qr];
+      const res = await makeQrDOCX({ qrs, client: data.clientName }).unwrap();
+      console.log(res)
+      saveAs(res?.qr, `QR-${data?.clientName}.docx`);
       saveAs(location?.qr, `QR-${location.location}`);
       await qrCountInc(id).unwrap();
     } catch (error) {
+      console.log(error)
       throw new Error("download error");
     }
   };
@@ -150,11 +156,11 @@ const SingleClient = () => {
 
   return (
     <>
-      {isLoading || isFetching ? (
+      {/* {isFetching ? (
         <Loading />
       ) : (
         error && <AlertMessage>{error?.data?.msg || error.error}</AlertMessage>
-      )}
+      )} */}
       {!error && data?.client && (
         <div className="max-h-full overflow-auto flex flex-col">
           <div className="border-b border-neutral-200 max-h-full ">
@@ -284,7 +290,9 @@ const SingleClient = () => {
               {data.client.address}
             </div>
           </div>
-
+          <div>
+            <input type="date" name="" id="" value={date} onChange={(e) => setDate(e.target.value)} />
+          </div>
           <div className="overflow-auto border border-neutral-300 rounded-lg max-h-[500px] my-2">
             <table className="w-full border-collapse whitespace-nowrap bg-white">
               <thead className="sticky top-0 bg-gray-300 z-10 shadow-[inset_0_-1px_0_rgba(0,0,0,0.1)]">
@@ -321,7 +329,10 @@ const SingleClient = () => {
                     Services / [Products]
                   </th>
                   <th className="font-bold text-center border border-neutral-300 w-28 px-3">
-                    Location Qr / Product Qr
+                    Status
+                  </th>
+                  <th className="font-bold text-center border border-neutral-300 w-28 px-3">
+                    Loc Qr / Product Qr
                   </th>
                   <th className="font-bold text-center border border-neutral-300 px-4">
                     Action
@@ -386,6 +397,13 @@ const SingleClient = () => {
                         </div>
                       )}
                     </td>
+
+                    <td className="px-3 border border-neutral-200 text-center">
+                      <div>
+                        <GetSchedulesForLocation date={date} service={location?.service} />
+                      </div>
+                    </td>
+
                     <td className="px-3 border border-neutral-200 text-center">
                       <div className="flex justify-center items-center gap-1">
                         <Button
@@ -462,7 +480,7 @@ const SingleClient = () => {
               </tbody>
             </table>
           </div>
-          <Pagination page={page} setPage={setPage} totalPages={data?.pages} />
+          <Pagination page={page} setPage={setPage} totalPages={data?.pages} sessionKey="clientLocationPage" />
         </div>
       )}
     </>
@@ -641,4 +659,17 @@ function ProductQrModal({ data, dispatch, toggleModal, makeQrDOCX, modalKey, cli
       </div>
     </div>
   );
+}
+
+
+function GetSchedulesForLocation({ service, date }) {
+  const dates = service?.flatMap(ser => ser?.schedule?.filter(sch => sch?.date?.split("T")[0] === new Date(date).toISOString().split("T")[0]))
+
+  const completed = dates?.filter(d => d?.completed && d.status === "Done")
+
+  return (
+    <>
+      <div>{completed.length}/{dates?.length}</div>
+    </>
+  )
 }

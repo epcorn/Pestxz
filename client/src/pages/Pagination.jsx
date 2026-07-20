@@ -1,13 +1,13 @@
 import React from 'react';
 
-function Pagination({ page, totalPages, setPage }) {
+function Pagination({ page, totalPages, setPage, sessionKey = "" }) {
   const getPaginationRange = (currentPage, totalPagesCount) => {
-    // If there are no pages, return an empty range immediately
+
     if (!totalPagesCount || totalPagesCount <= 0) {
       return { range: [], showLeftEllipsis: false, showRightEllipsis: false };
     }
 
-    const maxVisiblePages = 5; 
+    const maxVisiblePages = 5;
     let start = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
     let end = Math.min(totalPagesCount, start + maxVisiblePages - 1);
 
@@ -28,17 +28,21 @@ function Pagination({ page, totalPages, setPage }) {
   // Only show pagination controls if there is more than 1 page total
   if (!totalPages || totalPages <= 0) return null;
 
+  const handlePageChange = (newPage) => {
+    setPage(newPage);
+    sessionStorage.setItem(sessionKey, newPage);
+  };
+
   return (
     <nav className="mb-1">
       <ul className="list-style-none flex items-center justify-center gap-1 mt-2">
         {/* Previous Button */}
         <li>
           <button
-            className={`px-3 py-1.5 text-sm rounded transition-all ${
-              page === 1 ? "bg-neutral-300 text-neutral-500 cursor-not-allowed" : "bg-neutral-700 text-white hover:bg-blue-400"
-            }`}
+            className={`px-3 py-1.5 text-sm rounded transition-all ${page === 1 ? "bg-neutral-300 text-neutral-500 cursor-not-allowed" : "bg-neutral-700 text-white hover:bg-blue-400"
+              }`}
             disabled={page === 1}
-            onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
+            onClick={() => handlePageChange(Math.max(page - 1, 1))}
           >
             Prev
           </button>
@@ -50,7 +54,7 @@ function Pagination({ page, totalPages, setPage }) {
             <li>
               <button
                 className="px-3 py-1.5 text-sm rounded bg-neutral-700 text-white hover:bg-blue-400"
-                onClick={() => setPage(1)}
+                onClick={() => handlePageChange(1)}
               >
                 1
               </button>
@@ -63,10 +67,9 @@ function Pagination({ page, totalPages, setPage }) {
         {visiblePages.map((item) => (
           <li key={item}>
             <button
-              className={`relative block rounded px-3 py-1.5 text-sm transition-all duration-300 ${
-                page === item ? "bg-blue-400 font-bold" : "bg-neutral-700"
-              } text-white hover:bg-blue-400`}
-              onClick={() => setPage(item)}
+              className={`relative block rounded px-3 py-1.5 text-sm transition-all duration-300 ${page === item ? "bg-blue-400 font-bold" : "bg-neutral-700"
+                } text-white hover:bg-blue-400`}
+              onClick={() => handlePageChange(item)}
             >
               {item}
             </button>
@@ -80,7 +83,7 @@ function Pagination({ page, totalPages, setPage }) {
             <li>
               <button
                 className="px-3 py-1.5 text-sm rounded bg-neutral-700 text-white hover:bg-blue-400"
-                onClick={() => setPage(totalPages)}
+                onClick={() => handlePageChange(totalPages)}
               >
                 {totalPages}
               </button>
@@ -91,11 +94,10 @@ function Pagination({ page, totalPages, setPage }) {
         {/* Next Button */}
         <li>
           <button
-            className={`px-3 py-1.5 text-sm rounded transition-all ${
-              page === totalPages ? "bg-neutral-300 text-neutral-500 cursor-not-allowed" : "bg-neutral-700 text-white hover:bg-blue-400"
-            }`}
+            className={`px-3 py-1.5 text-sm rounded transition-all ${page === totalPages ? "bg-neutral-300 text-neutral-500 cursor-not-allowed" : "bg-neutral-700 text-white hover:bg-blue-400"
+              }`}
             disabled={page === totalPages}
-            onClick={() => setPage((prev) => Math.min(prev + 1, totalPages))}
+            onClick={() => handlePageChange((prev) => Math.min(prev + 1, totalPages))}
           >
             Next
           </button>

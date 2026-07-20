@@ -172,7 +172,7 @@ function ProductServiceCard({ product, today, currentUser, onSubmitted, id }) {
       toast.success(res.msg || "Product service successfull")
     } catch (error) {
       console.error('error saving product service', error)
-      toast.error(error.msg || "Product service error, try again")
+      toast.error(error.msg || error.data.msg || "Product service error, try again")
     }
   }
 
