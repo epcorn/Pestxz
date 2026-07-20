@@ -51,6 +51,7 @@ const SingleClient = () => {
   const [qrCountInc] = useQrCounterMutation();
   const [makeQrDOCX, { isLoading: docQrLoading }] = useMakeQrDocxMutation();
 
+
   function GetSchedulesForLocation({ service }) {
 
     const dates = service.flatMap(ser => ser.schedule.filter(sch => sch.date.split("T")[0] === new Date(date).toISOString().split("T")[0]))
@@ -299,6 +300,7 @@ const SingleClient = () => {
               {data.client.address}
             </div>
           </div>
+
           <div>
             <input type="date" name="" id="" value={date} onChange={(e) => setDate(e.target.value)} />
           </div>
