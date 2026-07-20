@@ -33,7 +33,7 @@ const navList = [
     icon: <FaBuilding className="w-6 h-6" />,
     name: "Clients",
     to: "/clients",
-    role: ["Admin", "Supervisor", "TeamLeader", "BranchAdmin",],
+    role: ["Admin", "Supervisor", "TeamLeader", "Operator", "BranchAdmin",],
   },
   {
     icon: <BsDatabaseFillAdd className="w-6 h-6" />,

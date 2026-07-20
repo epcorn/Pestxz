@@ -35,7 +35,6 @@ const SingleClient = () => {
   const dispatch = useDispatch();
   const { id } = useParams();
   const [date, setDate] = useState('2026-06-20')
-  const [date, setDate] = useState('2026-06-20')
 
   const { data: me } = useGetSingleUserQuery(user._id, { skip: !user._id });
   const limit = 15;
