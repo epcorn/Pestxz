@@ -222,7 +222,6 @@ export const dailyServiceReport = async (req, res) => {
         { $project: { _id: 0, label: "$_id", count: 1 } },
       ]);
 
-      const status = { missed: 0, done: 0, pending: 0 };
       serviceStatusAgg.forEach((s) => {
         const key = s.label?.trim()?.toLowerCase();
         if (key && key in status) {
