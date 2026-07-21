@@ -12,14 +12,18 @@ import {
 import { getAllService } from "../controllers/adminController.js";
 import { convertSvgToPngBuffer } from "../utils/helperFunction.js";
 import { makeQrFile } from "../utils/makeQrDocx.js";
-import { getUnscheduledReports, statusUnscheduled, unScheduleReport } from "../controllers/unScheduleController.js";
+import {
+  getUnscheduledReports,
+  statusUnscheduled,
+  unScheduleReport,
+} from "../controllers/unScheduleController.js";
 const router = express.Router();
 
 router.post("/makeQrDoc", makeQrFile);
 
-router.post("/unSchedule", unScheduleReport)
-router.get("/getUnscheduledReports/:id", getUnscheduledReports)
-router.patch("/statusUnschedule/:id", statusUnscheduled)
+router.post("/unSchedule", unScheduleReport);
+router.get("/getUnscheduledReports/:id", getUnscheduledReports);
+router.patch("/statusUnschedule/:id", statusUnscheduled);
 
 router.get("/allServices", getAllService);
 router.get("/client/:id?", getAllLocations);

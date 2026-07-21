@@ -10,6 +10,7 @@ import {
 } from "../utils/helperFunction.js";
 import fs from "fs";
 import path from "path";
+import Location from "../models/locationModel.js";
 
 export const dailyServiceReport = async (req, res) => {
   try {
@@ -144,12 +145,15 @@ export const dailyServiceReport = async (req, res) => {
     let uploadURL;
     let matchCondition;
 
+    let scheduleDateMatch = {};
+
     if (value === "custom") {
       matchCondition = {
         updatedAt: { $gte: todayStart, $lte: todayEnd },
       };
-
-      console.log("todaystart: ", todayStart, todayEnd, value);
+      scheduleDateMatch = {
+        "service.schedule.date": { $gte: todayStart, $lte: todayEnd },
+      };
     } else if (value === "weekly") {
       const weekStart = new Date(
         Date.UTC(
@@ -162,15 +166,11 @@ export const dailyServiceReport = async (req, res) => {
       weekEnd.setUTCDate(weekEnd.getUTCDate() + 7);
 
       matchCondition = { updatedAt: { $gte: weekStart, $lt: weekEnd } }; // no `const`
-      console.log("week start:", weekStart, weekEnd);
+
+      scheduleDateMatch = {
+        "service.schedule.date": { $gte: weekStart, $lt: weekEnd },
+      };
     }
-    // else {
-    //   populateOptions = [
-    //     { path: "services", populate: { path: "location" } },
-    //     { path: "unschedules", populate: { path: "location" } },
-    //     { path: "casuals", populate: { path: "location" } },
-    //   ];
-    // }
 
     let populateOptions = [
       {
@@ -206,8 +206,29 @@ export const dailyServiceReport = async (req, res) => {
       value === "all" ? "All" : todayStart.toISOString().split("T")[0];
     const generatedFiles = [];
 
+    const status = { missed: 0, done: 0, pending: 0 };
+
     for (let clientDoc of clients) {
       const client = clientDoc.toObject({ virtuals: true });
+
+      const serviceStatusAgg = await Location.aggregate([
+        { $match: { client: clientDoc._id } },
+        { $unwind: "$service" },
+        { $unwind: "$service.schedule" },
+        ...(value !== "all" ? [{ $match: scheduleDateMatch }] : []),
+        {
+          $group: { _id: "$service.schedule.status", count: { $sum: 1 } },
+        },
+        { $project: { _id: 0, label: "$_id", count: 1 } },
+      ]);
+
+      const status = { missed: 0, done: 0, pending: 0 };
+      serviceStatusAgg.forEach((s) => {
+        const key = s.label?.trim()?.toLowerCase();
+        if (key && key in status) {
+          status[key] = s.count;
+        }
+      });
 
       if (client.reportUrl) {
         await removeOldQr(client.reportUrl);
@@ -323,12 +344,12 @@ export const dailyServiceReport = async (req, res) => {
         row.commit();
         currRow++;
       });
-      const row = regularWorksheet.getRow(4);
-      row.getCell(10).value = todayStart;
-      row.getCell(11).value = status.done;
-      row.getCell(12).value = status.missed;
-      row.getCell(13).value = status.pending;
-      row.getCell(14).value = clients.locations.length;
+      console.log(status);
+      const row = regularWorksheet.getRow(7);
+      row.getCell(12).value = status.done;
+      row.getCell(13).value = status.missed;
+      row.getCell(14).value = status.pending;
+      row.getCell(15).value = client?.locations?.length;
 
       // --- Complaints ---
       const complaintData = complaints.map((com) => {
