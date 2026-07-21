@@ -14,7 +14,7 @@ const Reports = () => {
     genrate: false,
     visible: false,
   });
-  const [date, setDate] = useState("2026-07-20")
+  const [date, setDate] = useState("")
   const { user } = useSelector((store) => store.helper);
 
   const {

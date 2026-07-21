@@ -179,6 +179,9 @@ export const dailyServiceReport = async (req, res) => {
         populate: { path: "location" },
       },
       {
+        path: "locations",
+      },
+      {
         path: "unschedules",
         match: matchCondition,
         populate: { path: "location" },
@@ -188,6 +191,11 @@ export const dailyServiceReport = async (req, res) => {
         match: matchCondition,
         populate: { path: "location" },
       },
+      // {
+      //   path: "productservices",
+      //   match: matchCondition,
+      //   populate: { path: "location" },
+      // },
     ];
 
     const clients = await Client.find(clientQuery)
@@ -227,7 +235,7 @@ export const dailyServiceReport = async (req, res) => {
       const complaints = client.services.filter(
         (ser) => ser.type === "Complaint",
       );
-
+      const status = { missed: 0, done: 0, pending: 0 };
       const regularData = regulars.map((reg) => {
         const regs = reg.regularService[0];
         const loc = reg.location;
@@ -252,6 +260,13 @@ export const dailyServiceReport = async (req, res) => {
             )
           : null;
         const { date, time } = dateTimeSplitter(regs.serviceDate);
+
+        regs.schedule.forEach((sch) => {
+          const key = sch.status.toLowerCase();
+          if (key && key in status) {
+            status[key] += 1;
+          }
+        });
 
         return {
           serviceDate: date,
@@ -301,11 +316,19 @@ export const dailyServiceReport = async (req, res) => {
           row.getCell(7).value = scopeRichText;
           row.getCell(7).alignment = { wrapText: true, vertical: "middle" };
         }
-        row.getCell(8).value = dataItem.images;
+        req.user.type === "PestEmployee"
+          ? (row.getCell(8).value = dataItem.images)
+          : (row.getCell(7).value = dataItem.images);
 
         row.commit();
         currRow++;
       });
+      const row = regularWorksheet.getRow(4);
+      row.getCell(10).value = todayStart;
+      row.getCell(11).value = status.done;
+      row.getCell(12).value = status.missed;
+      row.getCell(13).value = status.pending;
+      row.getCell(14).value = clients.locations.length;
 
       // --- Complaints ---
       const complaintData = complaints.map((com) => {
@@ -401,6 +424,7 @@ export const dailyServiceReport = async (req, res) => {
       msg: `Report generated for ${value}`,
       files: generatedFiles,
       uploadURL,
+      clients,
     });
   } catch (error) {
     console.log(error);

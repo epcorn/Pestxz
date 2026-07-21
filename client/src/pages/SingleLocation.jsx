@@ -63,7 +63,7 @@ const SingleLocation = () => {
   }, [])
 
   const { data: DBUser } = useGetSingleUserQuery(user._id, { skip: !user?._id })
-  const { data, isLoading, error } = useSingleLocationDetailsQuery(id);
+  const { data, isLoading, error } = useSingleLocationDetailsQuery(id, { skip: !id });
   const [regularService, { isLoading: regularLoading }] =
     useRegularServiceMutation();
 

@@ -1,5 +1,5 @@
 import React from 'react';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { List } from 'react-window';
 import { useAllLocationsQuery } from '../../redux/locationSlice';
 
@@ -7,6 +7,7 @@ const ROW_HEIGHT = 60; // adjust to match your padding/line-height
 
 function AllPremise({ today }) {
   const { id } = useParams();
+  const navigate = useNavigate();
 
   const { data: locations = {}, isLoading } = useAllLocationsQuery({ id }, { skip: !id });
 
@@ -41,7 +42,8 @@ function AllPremise({ today }) {
     else if (partialDone) rowBg = "bg-yellow-100 text-yellow-800";
 
     return {
-      key: p._id || index,
+      key: p._id,
+      id: p._id,
       index: index + 1,
       location: `${p.floor ? `${p.floor}, ` : ""}${p.location}${p.subLocation ? `, ${p.subLocation}` : ""}`,
       serviceNames: servicesToday.map(s => s.serviceName).join(", "),
@@ -59,6 +61,7 @@ function AllPremise({ today }) {
     return (
       <div
         style={style}
+        onClick={() => navigate(`/location/${r.id}`)}
         className={`flex items-center border-b border-slate-300 ${r.rowBg} hover:bg-slate-50/80 transition-colors text-sm text-slate-700`}
       >
         <div className="py-3 px-2 text-center font-medium w-[8%]">{r.index}</div>

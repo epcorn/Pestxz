@@ -34,10 +34,10 @@ const SingleClient = () => {
   const [selectedQr, setSelectedQr] = useState([]);
   const dispatch = useDispatch();
   const { id } = useParams();
-  const [date, setDate] = useState('2026-06-20')
+  const [date, setDate] = useState('2026-06-06')
 
   const { data: me } = useGetSingleUserQuery(user._id, { skip: !user._id });
-  const limit = 15;
+  const limit = 30;
   const { data, isLoading, isFetching, error } = useAllLocationsQuery({
     id,
     limit,
