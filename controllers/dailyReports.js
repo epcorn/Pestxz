@@ -206,7 +206,6 @@ export const dailyServiceReport = async (req, res) => {
       value === "all" ? "All" : todayStart.toISOString().split("T")[0];
     const generatedFiles = [];
 
-    const status = { missed: 0, done: 0, pending: 0 };
 
     for (let clientDoc of clients) {
       const client = clientDoc.toObject({ virtuals: true });
@@ -222,11 +221,11 @@ export const dailyServiceReport = async (req, res) => {
         { $project: { _id: 0, label: "$_id", count: 1 } },
       ]);
 
-      const status = { missed: 0, done: 0, pending: 0 };
+      const stats = { missed: 0, done: 0, pending: 0 };
       serviceStatusAgg.forEach((s) => {
         const key = s.label?.trim()?.toLowerCase();
-        if (key && key in status) {
-          status[key] = s.count;
+        if (key && key in stats) {
+          stats[key] = s.count;
         }
       });
 
@@ -337,11 +336,11 @@ export const dailyServiceReport = async (req, res) => {
         row.commit();
         currRow++;
       });
-      console.log(status);
+      console.log(stats);
       const row = regularWorksheet.getRow(7);
-      row.getCell(12).value = status.done;
-      row.getCell(13).value = status.missed;
-      row.getCell(14).value = status.pending;
+      row.getCell(12).value = stats.done;
+      row.getCell(13).value = stats.missed;
+      row.getCell(14).value = stats.pending;
       row.getCell(15).value = client?.locations?.length;
 
       // --- Complaints ---
