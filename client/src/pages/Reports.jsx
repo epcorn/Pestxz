@@ -134,7 +134,7 @@ const Reports = () => {
         </>
       )}
       {!state.visible && client?.reportURL !== "" && (
-        <div className="text-center mt-2">
+        <div className="text-center mt-2 hidden">
           <Button
             onClick={() =>
               saveAs(
