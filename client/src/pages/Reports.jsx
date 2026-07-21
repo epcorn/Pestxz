@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Button } from "../components";
+import { Button, LoadingSpinner } from "../components";
 import { useDailyServiceReportQuery } from "../redux/serviceSlice";
 import { useEffect } from "react";
 import { toast } from "react-toastify";
@@ -14,7 +14,7 @@ const Reports = () => {
     genrate: false,
     visible: false,
   });
-  const [date, setDate] = useState("2026-07-20")
+  const [date, setDate] = useState("")
   const { user } = useSelector((store) => store.helper);
 
   const {
@@ -52,6 +52,7 @@ const Reports = () => {
     });
   };
 
+  // if (reportLoading) return 
   return (
     <div className="flex flex-col justify-center items-center h-96">
       <div className="">
@@ -92,7 +93,9 @@ const Reports = () => {
         />
       </div>
 
-      {reports?.msg && (
+      {isFetching ? <div className="w-full h-full bg-black/30 fixed inset-0 content-center text-center">
+        <LoadingSpinner />
+      </div> : reports?.msg && (
         <>
           <div className="text-center text-3xl font-bold mt-4">
             {reports.msg}

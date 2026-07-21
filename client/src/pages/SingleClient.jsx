@@ -34,10 +34,10 @@ const SingleClient = () => {
   const [selectedQr, setSelectedQr] = useState([]);
   const dispatch = useDispatch();
   const { id } = useParams();
-  const [date, setDate] = useState('2026-06-20')
+  const [date, setDate] = useState('2026-06-06')
 
   const { data: me } = useGetSingleUserQuery(user._id, { skip: !user._id });
-  const limit = 15;
+  const limit = 30;
   const { data, isLoading, isFetching, error } = useAllLocationsQuery({
     id,
     limit,
@@ -52,6 +52,20 @@ const SingleClient = () => {
   const [makeQrDOCX, { isLoading: docQrLoading }] = useMakeQrDocxMutation();
 
 
+  function GetSchedulesForLocation({ service }) {
+
+    const dates = service.flatMap(ser => ser.schedule.filter(sch => sch.date.split("T")[0] === new Date(date).toISOString().split("T")[0]))
+
+    const completed = dates.filter(d => d.completed && d.status === "Done")
+
+    return (
+      <>
+        <div>{completed.length}/{dates?.length}</div>
+      </>
+    )
+  }
+
+  // console.log(schedules);
 
   // handle edit model
   const handleEditModal = (location) => {
@@ -290,6 +304,7 @@ const SingleClient = () => {
               {data.client.address}
             </div>
           </div>
+
           <div>
             <input type="date" name="" id="" value={date} onChange={(e) => setDate(e.target.value)} />
           </div>
@@ -400,7 +415,7 @@ const SingleClient = () => {
 
                     <td className="px-3 border border-neutral-200 text-center">
                       <div>
-                        <GetSchedulesForLocation date={date} service={location?.service} />
+                        <GetSchedulesForLocation service={location?.service} />
                       </div>
                     </td>
 
