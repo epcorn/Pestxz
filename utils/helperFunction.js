@@ -90,8 +90,6 @@ export const qrCodeGenerator = async ({ link, floor, location }) => {
   }
 };
 
-
-
 //using sharp
 export const productQrCodeGenerator = async ({
   link,
@@ -240,6 +238,7 @@ export const uploadFile = async ({ filePath }) => {
       folder: "Pestxz",
       quality: 30,
       resource_type: "auto",
+      timeout: 120000,
     });
 
     fs.unlinkSync(filePath);
