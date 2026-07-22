@@ -275,69 +275,75 @@ export const newRegularService = async (req, res) => {
   const { id } = req.params;
 
   try {
-    const location = await Location.findById(id);
-    if (!location) return res.status(404).json({ msg: "Location not found" });
-
-    let imageLink = [];
-    if (req.files?.image) {
-      const file = Array.isArray(req.files.image)
-        ? req.files.image
-        : [req.files.image];
-
-      const fileUpload = file.slice(0, 2);
-      for (const file of fileUpload) {
-        const link = await uploadFile({ filePath: file.tempFilePath });
-        imageLink.push(link);
-      }
-    }
-
+    // --- parse body first, cheap, no DB hit yet ---
     const service = JSON.parse(req.body.service);
     const usedCalibration = JSON.parse(req.body.usedCalibration || "{}");
     const action = JSON.parse(req.body.action || "{}");
     const comment = JSON.parse(req.body.comment || "{}");
     const serviceDate = req.body.serviceDate;
 
-    const locationService = location.service.find(
-      (s) =>
-        s.serviceId?.toString().trim() === service.serviceId?.toString().trim(),
-    );
+    // --- parallelize image uploads instead of sequential await ---
+    let imageLink = [];
+    if (req.files?.image) {
+      const files = (
+        Array.isArray(req.files.image) ? req.files.image : [req.files.image]
+      ).slice(0, 2);
 
-    // ── De-duplicated conditional check ──
-    if (!locationService || !Array.isArray(locationService.schedule)) {
-      return res
-        .status(400)
-        .json({ msg: "Service schedule data not found for this location" });
+      imageLink = await Promise.all(
+        files.map((file) => uploadFile({ filePath: file.tempFilePath })),
+      );
     }
 
-    const target = locationService.schedule.find((s) => {
-      if (!s.date) return false;
+    // --- day range for matching schedule.date regardless of stored time component ---
+    const dayStart = new Date(serviceDate);
+    dayStart.setUTCHours(0, 0, 0, 0);
+    const dayEnd = new Date(dayStart);
+    dayEnd.setUTCDate(dayEnd.getUTCDate() + 1);
 
-      const dateString =
-        typeof s.date.toISOString === "function"
-          ? s.date.toISOString().split("T")[0]
-          : String(s.date).split("T")[0];
-      // console.log(dateString, new Date(serviceDate).toISOString().split("T")[0]);
-      return (
-        dateString === new Date(serviceDate).toISOString().split("T")[0] &&
-        !s.completed
-      );
-    });
+    // --- single atomic update: matches only if a pending schedule slot exists ---
+    const updatedLocation = await Location.findOneAndUpdate(
+      {
+        _id: id,
+        service: {
+          $elemMatch: {
+            serviceId: service.serviceId,
+            schedule: {
+              $elemMatch: {
+                date: { $gte: dayStart, $lt: dayEnd },
+                completed: false,
+              },
+            },
+          },
+        },
+      },
+      {
+        $set: {
+          "service.$[svc].schedule.$[sch].completed": true,
+          "service.$[svc].schedule.$[sch].status": "Done",
+          "service.$[svc].schedule.$[sch].completedAt": serviceDate,
+          "service.$[svc].schedule.$[sch].completedBy": req.user.name,
+        },
+      },
+      {
+        arrayFilters: [
+          { "svc.serviceId": service.serviceId },
+          { "sch.date": { $gte: dayStart, $lt: dayEnd }, "sch.completed": false },
+        ],
+        new: true, // return updated doc so we can read the updated schedule below
+      },
+    );
 
-    // Safeguard guard clause to prevent tracking empty/ghost services
-    if (!target) {
+    if (!updatedLocation) {
+      // Either location doesn't exist, service isn't on it, or that date's
+      // slot is already completed (e.g. a duplicate simultaneous click).
       return res.status(400).json({
         msg: "No matching pending schedule date found or date already completed.",
       });
     }
 
-    // Update target parameters safely
-    target.completed = true;
-    target.status = "Done";
-    target.completedAt = serviceDate;
-    target.completedBy = req.user.name;
-
-    location.markModified("service");
-    await location.save();
+    const locationService = updatedLocation.service.find(
+      (s) => s.serviceId?.toString() === service.serviceId?.toString(),
+    );
 
     const regularService = {
       serviceId: service.serviceId,
@@ -368,15 +374,15 @@ export const newRegularService = async (req, res) => {
     await Service.create({
       type: "Regular",
       regularService: [regularService],
-      client: location.client,
+      client: updatedLocation.client,
       location: id,
       createdAt: new Date(serviceDate),
       updatedAt: new Date(serviceDate),
     });
 
     return res.status(201).json({
-      msg: `Service Done on ${location.floor}`,
-      client: location.client,
+      msg: `Service Done on ${updatedLocation.floor}`,
+      client: updatedLocation.client,
       user: req.user.name,
       url: `/`,
     });
