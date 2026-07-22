@@ -266,15 +266,62 @@ export const dailyServiceReport = async (req, res) => {
       const complaintWorksheet = workbook.getWorksheet("Complaints");
       const unschWorksheet = workbook.getWorksheet("Unscheduled-Work");
 
-      let currRow = 4;
-      let compRow = 4;
-      let unschCount = 4;
-
       const regulars = client.services.filter((ser) => ser.type === "Regular");
       const complaints = client.services.filter(
         (ser) => ser.type === "Complaint",
       );
-      const status = { missed: 0, done: 0, pending: 0 };
+
+      const complaintStats = {
+        total: 0,
+        reopen: 0,
+        closed: 0,
+        open: 0,
+        closeReq: 0,
+        inprogress: 0,
+      };
+
+      let currRow = 4;
+      let compRow = 4;
+      let unschCount = 4;
+
+      // overview writting
+      const regRow = overviewWorkSheet.getRow(4);
+      regRow.getCell(1).value = regStats.done;
+      regRow.getCell(2).value = regStats.missed;
+      regRow.getCell(3).value = regStats.pending;
+      // regRow.getCell(4).value = client?.locations?.length;
+      const prRow = overviewWorkSheet.getRow(4);
+      prRow.getCell(12).value = prodStats.done;
+      prRow.getCell(13).value = prodStats.missed;
+      prRow.getCell(14).value = prodStats.pending;
+      // prRow.getCell(4).value = client?.locations?.length;
+
+      complaints.forEach((comp) => {
+        const details = comp.complaintDetails || {};
+        complaintStats.total += 1;
+        complaintStats.reopen += details.reopenCount || 0;
+        switch (details.status) {
+          case "Open":
+            complaintStats.open += 1;
+            break;
+          case "In Progress":
+            complaintStats.inprogress += 1;
+            break;
+          case "Close Req":
+            complaintStats.closeReq += 1;
+            break;
+          case "Close":
+            complaintStats.closed += 1;
+            break;
+        }
+      });
+      const compOveRow = overviewWorkSheet.getRow(4);
+      compOveRow.getCell(6).value = complaintStats.total;
+      compOveRow.getCell(7).value = complaintStats.open;
+      compOveRow.getCell(8).value = complaintStats.closed;
+      compOveRow.getCell(9).value = complaintStats.reopen;
+      compOveRow.getCell(10).value = complaintStats.closeReq;
+
       const regularData = regulars.map((reg) => {
         const regs = reg.regularService[0];
         const loc = reg.location;
@@ -299,13 +346,6 @@ export const dailyServiceReport = async (req, res) => {
             )
           : null;
         const { date, time } = dateTimeSplitter(regs.serviceDate);
-
-        regs.schedule.forEach((sch) => {
-          const key = sch.status.toLowerCase();
-          if (key && key in status) {
-            status[key] += 1;
-          }
-        });
 
         return {
           serviceDate: date,
@@ -362,17 +402,6 @@ export const dailyServiceReport = async (req, res) => {
         row.commit();
         currRow++;
       });
-      const regRow = overviewWorkSheet.getRow(2);
-      regRow.getCell(1).value = regStats.done;
-      regRow.getCell(2).value = regStats.missed;
-      regRow.getCell(3).value = regStats.pending;
-      // regRow.getCell(4).value = client?.locations?.length;
-
-      const prRow = overviewWorkSheet.getRow(4);
-      prRow.getCell(1).value = prodStats.done;
-      prRow.getCell(2).value = prodStats.missed;
-      prRow.getCell(3).value = prodStats.pending;
-      // prRow.getCell(4).value = client?.locations?.length;
 
       // --- Complaints ---
       const complaintData = complaints.map((com) => {
