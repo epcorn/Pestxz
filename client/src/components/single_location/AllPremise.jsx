@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { List } from 'react-window';
 import { useAllLocationsQuery } from '../../redux/locationSlice';
 
@@ -61,7 +61,7 @@ function AllPremise({ today }) {
     return (
       <div
         style={style}
-        onClick={() => navigate(`/location/${r.id}`)}
+        onClick={() => navigate(`/location/${r.id}`, { replace: true })}
         className={`flex items-center border-b border-slate-300 ${r.rowBg} hover:opacity-80 transition-colors text-sm text-slate-700`}
       >
         <div className="py-3 px-2 text-center font-medium w-[8%]">{r.index}</div>
