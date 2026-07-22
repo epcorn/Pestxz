@@ -250,6 +250,16 @@ export const uploadFile = async ({ filePath }) => {
   }
 };
 
+export async function uploadWithRetry(filePath, retries = 1) {
+  for (let i = 0; i <= retries; i++) {
+    try {
+      return await uploadFile({ filePath });
+    } catch (err) {
+      if (i === retries) throw err;
+    }
+  }
+}
+
 export const sendEmail = async ({
   attachment,
   dynamicData,
