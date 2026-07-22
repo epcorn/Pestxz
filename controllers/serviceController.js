@@ -393,7 +393,6 @@ export const newRegularService = async (req, res) => {
       .json({ msg: "Server error, try again later", error });
   }
 };
-
 export const assignWork = async (req, res) => {
   const { value, label, complaintId } = req.body;
   try {

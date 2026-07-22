@@ -215,7 +215,7 @@ function RegularForm({ serviceData, id, type, locationName, setRegular, today })
                     })}
                     className="outline file:bg-gray-700 file:p-2 file:text-white flex-1"
                   />
-                  <div className="grid gap-2 text-lg">
+                  <div className="grid gap-2 p-2 text-lg mt-2 h-72 overflow-auto">
                     {ser.scopes?.map((sc) => (
                       <div
                         key={sc.scopeName}
@@ -228,7 +228,7 @@ function RegularForm({ serviceData, id, type, locationName, setRegular, today })
                           return (
                             <div
                               key={con.consumableName}
-                              className=" mb-2 flex flex-wrap gap-x-3 gap-y-1 outline"
+                              className=" mb-2 flex flex-wrap gap-x-3 gap-y-2"
                             >
                               <input
                                 defaultValue={con.consumableName}
