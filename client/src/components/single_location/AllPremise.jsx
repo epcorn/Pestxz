@@ -1,5 +1,5 @@
 import React from 'react';
-import { Navigate, useNavigate, useParams } from 'react-router-dom';
+import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
 import { List } from 'react-window';
 import { useAllLocationsQuery } from '../../redux/locationSlice';
 
@@ -59,25 +59,27 @@ function AllPremise({ today }) {
   const Row = ({ index, style, rows }) => {
     const r = rows[index];
     return (
-      <div
-        style={style}
-        onClick={() => navigate(`/location/${r.id}`, { replace: true })}
-        className={`flex items-center border-b border-slate-300 ${r.rowBg} hover:opacity-80 transition-colors text-sm text-slate-700`}
-      >
-        <div className="py-3 px-2 text-center font-medium w-[8%]">{r.index}</div>
-        <div className="py-3 px-2 w-[30%]">{r.location}</div>
-        <div className="py-3 px-2 font-medium w-[32%]">{r.serviceNames}</div>
-        <div className="text-center py-3 px-2 w-[30%]">
-          <div className="flex flex-col gap-0.5">
-            <span className={`text-xs font-bold uppercase tracking-wider ${r.allDone ? "text-green-600" : r.partialDone ? "text-gray-600" : "text-red-600"}`}>
-              {r.allDone ? "Completed" : r.partialDone ? "Partially Done" : "Pending"}
-            </span>
-            <span className="text-xs text-slate-500 font-semibold">
-              {r.completedCount} / {r.totalCount} services
-            </span>
+      <Link to={`/location/${r.id}`} replace>
+        <div
+          style={style}
+          // onClick={() => navigate(`/location/${r.id}`, { replace: true })}
+          className={`flex items-center border-b border-slate-300 ${r.rowBg} hover:opacity-80 transition-colors text-sm text-slate-700`}
+        >
+          <div className="py-3 px-2 text-center font-medium w-[8%]">{r.index}</div>
+          <div className="py-3 px-2 w-[30%]">{r.location}</div>
+          <div className="py-3 px-2 font-medium w-[32%]">{r.serviceNames}</div>
+          <div className="text-center py-3 px-2 w-[30%]">
+            <div className="flex flex-col gap-0.5">
+              <span className={`text-xs font-bold uppercase tracking-wider ${r.allDone ? "text-green-600" : r.partialDone ? "text-gray-600" : "text-red-600"}`}>
+                {r.allDone ? "Completed" : r.partialDone ? "Partially Done" : "Pending"}
+              </span>
+              <span className="text-xs text-slate-500 font-semibold">
+                {r.completedCount} / {r.totalCount} services
+              </span>
+            </div>
           </div>
         </div>
-      </div>
+      </Link>
     );
   };
 
