@@ -9,13 +9,14 @@ import { useAllUserQuery } from "../redux/adminSlice";
 import ImagesModal from "../components/modals/ImagesModal";
 import Headers from "../components/Headers";
 import Pagination from "./Pagination";
+import { GetSchedulesForLocation } from "./SingleClient";
 
 const Locations = () => {
   const [page, setPage] = useState(1);
   const dispatch = useDispatch();
   const { user, isModalOpen } = useSelector((store) => store.helper);
 
-  const limit = 10;
+  const limit = 30;
   const { data, isLoading, isFetching, error } = useAllLocationsQuery(
     { id: user?.type, limit: limit, page },
     { skip: user?.role !== "ClientAdmin" }
@@ -56,7 +57,8 @@ const Locations = () => {
             <tr className="bg-gray-300 border-b border-gray-200 text-xs font-semibold uppercase tracking-wider sticky top-0 text-gray-600">
               <th className="p-3 border-r border-gray-200 w-32">Floor</th>
               <th className="p-3 border-r border-gray-200">Location</th>
-              <th className="p-3 border-r border-gray-200">Services & Products</th>
+              <th className="p-3 border-r border-gray-200">Status</th>
+              <th className="p-3 border-r border-gray-200">Services & [Products]</th>
               <th className="p-3 text-center w-36">QR Code</th>
             </tr>
           </thead>
@@ -90,13 +92,17 @@ const Locations = () => {
                       {location.subLocation && <span className="text-gray-500 text-xs block">{location.subLocation}</span>}
                     </td>
 
+                    <td className="p-3 border-r border-gray-200 leading-relaxed">
+                      <GetSchedulesForLocation service={location?.service} />
+                    </td>
+
                     {/* Linked Parameters Info Items */}
                     <td className="p-3 border-r border-gray-200 leading-relaxed">
                       <div className="text-gray-700">
                         {location.service?.map((item) => item.serviceName).join(", ") || "—"}
                       </div>
                       {location.product && location.product.length > 0 && (
-                        <div className="text-xs text-gray-500 mt-1">
+                        <div className="text-sm text-gray-700 font-semibold mt-1">
                           [{location.product.map((p) => p.productName).join(", ")}]
                         </div>
                       )}

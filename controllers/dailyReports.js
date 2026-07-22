@@ -191,11 +191,11 @@ export const dailyServiceReport = async (req, res) => {
         match: matchCondition,
         populate: { path: "location" },
       },
-      // {
-      //   path: "productservices",
-      //   match: matchCondition,
-      //   populate: { path: "location" },
-      // },
+      {
+        path: "productservices",
+        match: matchCondition,
+        populate: { path: "location" },
+      },
     ];
 
     const clients = await Client.find(clientQuery)
@@ -205,7 +205,6 @@ export const dailyServiceReport = async (req, res) => {
     const sufix =
       value === "all" ? "All" : todayStart.toISOString().split("T")[0];
     const generatedFiles = [];
-
 
     for (let clientDoc of clients) {
       const client = clientDoc.toObject({ virtuals: true });
@@ -221,13 +220,32 @@ export const dailyServiceReport = async (req, res) => {
         { $project: { _id: 0, label: "$_id", count: 1 } },
       ]);
 
-      const stats = { missed: 0, done: 0, pending: 0 };
+      const regStats = { missed: 0, done: 0, pending: 0, location: 0 };
       serviceStatusAgg.forEach((s) => {
         const key = s.label?.trim()?.toLowerCase();
-        if (key && key in stats) {
-          stats[key] = s.count;
+        if (key && key in regStats) {
+          regStats[key] = s.count;
         }
       });
+
+      const prodStatusAgg = await Location.aggregate([
+        { $match: { client: clientDoc._id } },
+        { $unwind: "$product" },
+        { $unwind: "$product.schedule" },
+        ...(value !== "all" ? [{ $match: scheduleDateMatch }] : []),
+        {
+          $group: { _id: "$product.schedule.status", count: { $sum: 1 } },
+        },
+        { $project: { _id: 0, label: "$_id", count: 1 } },
+      ]);
+      const prodStats = { missed: 0, done: 0, pending: 0, location: 0 };
+      prodStatusAgg.forEach((s) => {
+        const key = s.label?.trim()?.toLowerCase();
+        if (key && key in prodStats) {
+          prodStats[key] = s.count;
+        }
+      });
+      console.log("prodStats", prodStats);
 
       if (client.reportUrl) {
         await removeOldQr(client.reportUrl);
@@ -243,6 +261,7 @@ export const dailyServiceReport = async (req, res) => {
       }
       // ✅ Fresh workbook per client so rows don't bleed across clients
 
+      const overviewWorkSheet = workbook.getWorksheet("Overview");
       const regularWorksheet = workbook.getWorksheet("Regular service");
       const complaintWorksheet = workbook.getWorksheet("Complaints");
       const unschWorksheet = workbook.getWorksheet("Unscheduled-Work");
@@ -343,12 +362,17 @@ export const dailyServiceReport = async (req, res) => {
         row.commit();
         currRow++;
       });
-      console.log(stats);
-      const row = regularWorksheet.getRow(7);
-      row.getCell(12).value = stats.done;
-      row.getCell(13).value = stats.missed;
-      row.getCell(14).value = stats.pending;
-      row.getCell(15).value = client?.locations?.length;
+      const regRow = overviewWorkSheet.getRow(2);
+      regRow.getCell(1).value = regStats.done;
+      regRow.getCell(2).value = regStats.missed;
+      regRow.getCell(3).value = regStats.pending;
+      // regRow.getCell(4).value = client?.locations?.length;
+
+      const prRow = overviewWorkSheet.getRow(4);
+      prRow.getCell(1).value = prodStats.done;
+      prRow.getCell(2).value = prodStats.missed;
+      prRow.getCell(3).value = prodStats.pending;
+      // prRow.getCell(4).value = client?.locations?.length;
 
       // --- Complaints ---
       const complaintData = complaints.map((com) => {
