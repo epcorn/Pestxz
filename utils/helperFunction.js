@@ -236,7 +236,7 @@ export const uploadFile = async ({ filePath }) => {
     const result = await cloudinary.uploader.upload(filePath, {
       use_filename: true,
       folder: "Pestxz",
-      quality: 30,
+      quality: 30,  
       resource_type: "auto",
       timeout: 120000,
     });
