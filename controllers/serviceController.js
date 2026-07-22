@@ -3,7 +3,12 @@ import Client from "../models/clientModel.js";
 import Location from "../models/locationModel.js";
 import moment from "moment";
 import exceljs from "exceljs";
-import { removeOldQr, sendEmail, uploadFile } from "../utils/helperFunction.js";
+import {
+  removeOldQr,
+  sendEmail,
+  uploadFile,
+  uploadWithRetry,
+} from "../utils/helperFunction.js";
 import Casual from "../models/casualServiceModel.js";
 import ProductService from "../models/productService.js";
 import mongoose from "mongoose";
@@ -290,7 +295,7 @@ export const newRegularService = async (req, res) => {
       ).slice(0, 2);
 
       imageLink = await Promise.all(
-        files.map((file) => uploadFile({ filePath: file.tempFilePath })),
+        files.map((file) => uploadWithRetry(file.tempFilePath)),
       );
     }
 
@@ -327,7 +332,10 @@ export const newRegularService = async (req, res) => {
       {
         arrayFilters: [
           { "svc.serviceId": service.serviceId },
-          { "sch.date": { $gte: dayStart, $lt: dayEnd }, "sch.completed": false },
+          {
+            "sch.date": { $gte: dayStart, $lt: dayEnd },
+            "sch.completed": false,
+          },
         ],
         new: true, // return updated doc so we can read the updated schedule below
       },

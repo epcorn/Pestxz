@@ -90,8 +90,6 @@ export const qrCodeGenerator = async ({ link, floor, location }) => {
   }
 };
 
-
-
 //using sharp
 export const productQrCodeGenerator = async ({
   link,
@@ -250,6 +248,16 @@ export const uploadFile = async ({ filePath }) => {
     return false;
   }
 };
+
+export async function uploadWithRetry(filePath, retries = 1) {
+  for (let i = 0; i <= retries; i++) {
+    try {
+      return await uploadFile({ filePath });
+    } catch (err) {
+      if (i === retries) throw err;
+    }
+  }
+}
 
 export const sendEmail = async ({
   attachment,
