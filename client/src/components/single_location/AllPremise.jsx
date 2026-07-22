@@ -38,8 +38,8 @@ function AllPremise({ today }) {
     const partialDone = completedCount > 0 && completedCount < totalCount;
 
     let rowBg = "";
-    if (allDone) rowBg = "bg-green-100 text-green-800";
-    else if (partialDone) rowBg = "bg-yellow-100 text-yellow-800";
+    if (allDone) rowBg = "bg-green-300 font-semibold text-green-800";
+    else if (partialDone) rowBg = "bg-yellow-300 text-yellow-800";
 
     return {
       key: p._id,
@@ -62,17 +62,17 @@ function AllPremise({ today }) {
       <div
         style={style}
         onClick={() => navigate(`/location/${r.id}`)}
-        className={`flex items-center border-b border-slate-300 ${r.rowBg} hover:bg-slate-50/80 transition-colors text-sm text-slate-700`}
+        className={`flex items-center border-b border-slate-300 ${r.rowBg} hover:opacity-80 transition-colors text-sm text-slate-700`}
       >
         <div className="py-3 px-2 text-center font-medium w-[8%]">{r.index}</div>
         <div className="py-3 px-2 w-[30%]">{r.location}</div>
         <div className="py-3 px-2 font-medium w-[32%]">{r.serviceNames}</div>
         <div className="text-center py-3 px-2 w-[30%]">
           <div className="flex flex-col gap-0.5">
-            <span className={`text-xs font-semibold uppercase tracking-wider ${r.allDone ? "text-green-600" : r.partialDone ? "text-yellow-600" : "text-red-500"}`}>
+            <span className={`text-xs font-bold uppercase tracking-wider ${r.allDone ? "text-green-600" : r.partialDone ? "text-gray-600" : "text-red-600"}`}>
               {r.allDone ? "Completed" : r.partialDone ? "Partially Done" : "Pending"}
             </span>
-            <span className="text-xs text-slate-500 font-medium">
+            <span className="text-xs text-slate-500 font-semibold">
               {r.completedCount} / {r.totalCount} services
             </span>
           </div>

@@ -86,7 +86,7 @@ function ProductServiceCard({ product, today, currentUser, onSubmitted, id }) {
   const { handleSubmit, register, setValue, watch, formState: { isSubmitting, isSubmitSuccessful } } = useForm({
     defaultValues: {
       quality: { status: 'ok', image: '' },
-      calibration: (product.calibrations || []).map(cal => ({ status: 'ok', image: '', size: "" })),
+      calibration: (product.calibrations || []).map(cal => ({ status: productCalibrationVal1?.[cal] || 'ok', image: '', size: "" })),
     },
   })
 
@@ -157,13 +157,14 @@ function ProductServiceCard({ product, today, currentUser, onSubmitted, id }) {
         }
         return {
           name: cal,
-          status: data.calibration?.[i]?.status || 'ok',
+          status: data.calibration?.[i]?.status,
           image: data.calibration?.[i]?.image || '',
           size: data.calibration?.[i].size || "",
         }
       }),
     }
     const saveLocal = localStorage.setItem(`${id}_${product.serialNo}`, JSON.stringify(payload));
+    console.log(payload)
 
     try {
       const res = await addProducts(payload).unwrap()

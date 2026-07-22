@@ -556,11 +556,9 @@ export const addProductService = async (req, res) => {
           (sc) => isSameUTCDay(new Date(sc.date), today) && !sc.completed,
         ),
     );
-    
+
     if (!locationProduct) {
-      return res
-        .status(404)
-        .json({ msg: "today is not a service day" });
+      return res.status(404).json({ msg: "today is not a service day" });
     }
 
     if (Array.isArray(locationProduct.schedule)) {
