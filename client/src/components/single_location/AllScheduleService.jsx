@@ -53,7 +53,14 @@ function AllScheduleService({ data }) {
                         <span className="text-xs font-bold uppercase md:hidden text-neutral-700">Images</span>
                         {service.regularService[0].image ? (
                           <div className="relative inline-block">
-                            <Button
+                            <img src={service?.regularService[0].image} className="h-16" alt="" onMouseEnter={() =>
+                              dispatch(
+                                toggleModal({
+                                  name: `ReImage-${index}`,
+                                  status: true,
+                                }),
+                              )} />
+                            {/* <Button
                               label="Show"
                               small
                               height="h-7"
@@ -66,7 +73,7 @@ function AllScheduleService({ data }) {
                                   }),
                                 )
                               }
-                            />
+                            /> */}
                             {isModalOpen[`ReImage-${index}`] && (
                               <ImagesModal
                                 image={service?.regularService[0].image}

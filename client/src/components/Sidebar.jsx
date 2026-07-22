@@ -124,7 +124,7 @@ const Sidebar = () => {
                   <strong className="text-xl md:text-2xl text-slate-800 leading-tight">
                     {client?.name}
                   </strong>
-                  <p className="text-sm text-gray-400">
+                  <p className="text-xs text-gray-400">
                     {client.address}
                   </p>
                   <div className="w-full pt-1 hidden lg:block">

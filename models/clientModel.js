@@ -62,6 +62,12 @@ clientSchema.virtual("locations", {
   foreignField: "client",
   justOne: false,
 });
+clientSchema.virtual("productservices", {
+  ref: "ProductService",
+  localField: "_id",
+  foreignField: "client",
+  justOne: false,
+});
 
 const Client = mongoose.model("Client", clientSchema);
 export default Client;

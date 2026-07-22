@@ -306,9 +306,8 @@ const SingleLocation = () => {
                       <span>All Scheduled Services Done ({data?.regularService.length || 0})</span>
                       <IoIosArrowDown className={`${isModalOpen?.allReg ? "rotate-180" : ""} transition-all`} />
                     </h2>
-                    <div className="p-2">
-                      <AllScheduleService data={data?.regularService} today={today} />
-                    </div>
+                    <AllScheduleService data={data?.regularService} today={today} />
+
                   </div>
                 )}
 

@@ -34,7 +34,7 @@ const SingleClient = () => {
   const [selectedQr, setSelectedQr] = useState([]);
   const dispatch = useDispatch();
   const { id } = useParams();
-  const [date, setDate] = useState('2026-06-06')
+  const [date, setDate] = useState('2026-06-13')
 
   const { data: me } = useGetSingleUserQuery(user._id, { skip: !user._id });
   const limit = 30;
@@ -52,18 +52,18 @@ const SingleClient = () => {
   const [makeQrDOCX, { isLoading: docQrLoading }] = useMakeQrDocxMutation();
 
 
-  function GetSchedulesForLocation({ service }) {
+  // export function GetSchedulesForLocation({ service }) {
 
-    const dates = service.flatMap(ser => ser.schedule.filter(sch => sch.date.split("T")[0] === new Date(date).toISOString().split("T")[0]))
+  //     const dates = service.flatMap(ser => ser?.schedule?.filter(sch => sch?.date?.split("T")[0] === new Date(date).toISOString().split("T")[0]))
 
-    const completed = dates.filter(d => d.completed && d.status === "Done")
+  //     const completed = dates?.filter(d => d?.completed && d.status === "Done")
 
-    return (
-      <>
-        <div>{completed.length}/{dates?.length}</div>
-      </>
-    )
-  }
+  //     return (
+  //       <>
+  //         <div>{completed.length}/{dates?.length}</div>
+  //       </>
+  //     )
+  //   }
 
   // console.log(schedules);
 
@@ -179,7 +179,7 @@ const SingleClient = () => {
         <div className="max-h-full overflow-auto flex flex-col">
           <div className="border-b border-neutral-200 max-h-full ">
             {/* Header Section */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-1">
               <div>
                 <div className="flex items-center gap-5">
                   <h2 className="text-2xl font-bold text-neutral-900 tracking-tight">
@@ -305,8 +305,9 @@ const SingleClient = () => {
             </div>
           </div>
 
-          <div>
-            <input type="date" name="" id="" value={date} onChange={(e) => setDate(e.target.value)} />
+          <div className="flex justify-between">
+            <input className="outline mx-2" type="date" name="" id="" value={date} onChange={(e) => setDate(e.target.value)} />
+            <p className="outline bg-white rounded w-fit  px-2 py-1">Total locations: {data.totalLocations}</p>
           </div>
           <div className="overflow-auto border border-neutral-300 rounded-lg max-h-[500px] my-2">
             <table className="w-full border-collapse whitespace-nowrap bg-white">
@@ -338,7 +339,7 @@ const SingleClient = () => {
                     Floor
                   </th>
                   <th className="font-bold text-left border border-neutral-300 px-4">
-                    Location
+                    Location 
                   </th>
                   <th className="font-bold text-center border border-neutral-300 w-32 px-3">
                     Services / [Products]
@@ -495,7 +496,9 @@ const SingleClient = () => {
               </tbody>
             </table>
           </div>
+
           <Pagination page={page} setPage={setPage} totalPages={data?.pages} sessionKey="clientLocationPage" />
+
         </div>
       )}
     </>
@@ -601,7 +604,7 @@ function ProductQrModal({ data, dispatch, toggleModal, makeQrDOCX, modalKey, cli
             <div className="min-w-0">
               <p className="text-sm font-medium text-blue-900 line-clamp-2 break-words">
                 {data.floor}, {data.location}
-                {data.subLocation && ` (${data.subLocation}) cfrgt rgthy`}
+                {data.subLocation && ` (${data.subLocation})`}
               </p>
             </div>
             <Button
@@ -677,7 +680,7 @@ function ProductQrModal({ data, dispatch, toggleModal, makeQrDOCX, modalKey, cli
 }
 
 
-function GetSchedulesForLocation({ service, date }) {
+export function GetSchedulesForLocation({ service, date = new Date() }) {
   const dates = service?.flatMap(ser => ser?.schedule?.filter(sch => sch?.date?.split("T")[0] === new Date(date).toISOString().split("T")[0]))
 
   const completed = dates?.filter(d => d?.completed && d.status === "Done")
