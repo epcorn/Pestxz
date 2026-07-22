@@ -64,6 +64,7 @@ const locationSchema = new mongoose.Schema(
     service: [serviceEntrySchema],
     product: [productEntrySchema],
     changes: [Object],
+
     client: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Client",

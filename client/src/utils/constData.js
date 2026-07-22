@@ -71,6 +71,7 @@ export const timeList = [
 
 export const productCalibrationVal1 = {
   "Dead Rat Found": "Not-Found",
+  "Dead Lizard Found": "Not-Found",
 };
 export const productCalibrationVal2 = {
   "Glue Board": "Replaced",
@@ -78,6 +79,7 @@ export const productCalibrationVal2 = {
   Bait: "Refilled",
   "Bait-1": "Refilled",
   "Dead Rat Found": "Found",
+  "Dead Lizard Found": "Found",
   "Liquid Refill": "Refilled",
   "Spray Refill": "Refilled",
   Tubelight: "Replaced",

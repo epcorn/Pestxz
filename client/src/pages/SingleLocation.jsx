@@ -48,7 +48,7 @@ const SingleLocation = () => {
   const dispatch = useDispatch();
   const [show, setShow] = useState(false);
   // const [date, setDate] = useState(getLocalString(new Date()));
-  const [date, setDate] = useState('2026-06-03T14:43');
+  const [date, setDate] = useState('2026-06-13T16:43');
 
   let today = new Date(date);
 
@@ -71,7 +71,7 @@ const SingleLocation = () => {
     setRegular(false);
     reset();
   };
-
+console.log(data)
   const servicesIds = data?.location?.service?.map(s => s.serviceId);
 
   const tabs = [
@@ -93,7 +93,6 @@ const SingleLocation = () => {
 
       {data && (
         <div className="pb-10">
-
           {/* ===== HEADER ===== */}
           <div className="bg-white z-10 shadow-sm px-5 pb-4 mb-6 rounded-b-2xl">
             <Headers header={'Location'} user={DBUser} />

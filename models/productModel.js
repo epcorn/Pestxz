@@ -9,7 +9,7 @@ const productSchema = new mongoose.Schema({
       calibration: [{ type: String, default: "" }],
     },
   ],
-  specification: { type: String },
+specification: { type: String },
 });
 
 const Product = mongoose.model("Product", productSchema);
