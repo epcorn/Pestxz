@@ -14,7 +14,7 @@ const Reports = () => {
     genrate: false,
     visible: false,
   });
-  const [date, setDate] = useState("")
+  const [date, setDate] = useState("");
   const { user } = useSelector((store) => store.helper);
 
   const {
@@ -28,7 +28,6 @@ const Reports = () => {
     skip: !user?.client,
   });
 
-  console.log(reports);
   useEffect(() => {
     if (reports && !reportLoading) {
       setState((prev) => ({ ...prev, genrate: false }));
