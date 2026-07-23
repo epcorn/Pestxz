@@ -239,6 +239,7 @@ export const dailyServiceReport = async (req, res) => {
         if (key && key in regStats) regStats[key] = s.count;
       });
 
+      
       const prodStatusAgg = await Location.aggregate([
         { $match: { client: client._id } },
         { $unwind: "$product" },
