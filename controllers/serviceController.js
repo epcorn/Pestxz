@@ -348,6 +348,8 @@ export const newRegularService = async (req, res) => {
         msg: "No matching pending schedule date found or date already completed.",
       });
     }
+    const rawCount = Number(req?.body?.pestCount) || 0;
+    const sanitizedPestCount = Math.min(Math.max(rawCount, 0), 15);
 
     const locationService = updatedLocation.service.find(
       (s) => s.serviceId?.toString() === service.serviceId?.toString(),
@@ -372,13 +374,14 @@ export const newRegularService = async (req, res) => {
           comment: comment?.[scope.scopeId]?.[con.consumableId] || "Completed",
         })),
       })),
+      pestCount: sanitizedPestCount,
       image: imageLink,
       userName: req.user.name,
       role: req.user.role,
       status: "Done",
       completedAt: serviceDate,
     };
-
+  
     await Service.create({
       type: "Regular",
       regularService: [regularService],
@@ -416,13 +419,14 @@ export const assignWork = async (req, res) => {
       service.complaintDetails.assignedTo = {
         userId: value,
         userName: label,
-        assignedAt: new Date(),
+        date: new Date(),
         status: true,
       };
       service.complaintDetails.assignedBy = {
         userId: req.user._id,
         userName: req.user.name,
         role: req.user.role,
+        date: new Date(),
       };
     }
 
@@ -605,6 +609,7 @@ export const addProductService = async (req, res) => {
         id: req.user._id,
         date: today,
       },
+
       location: locationId,
       client: location.client,
       success: true,

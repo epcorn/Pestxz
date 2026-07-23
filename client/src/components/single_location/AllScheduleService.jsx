@@ -22,6 +22,7 @@ function AllScheduleService({ data }) {
                 <tr>
                   <th className="p-3 border-r border-neutral-300 font-bold">Type</th>
                   <th className="p-3 border-r border-neutral-300 font-bold">Images</th>
+                  <th className="p-3 max-w-16 border-r border-neutral-300 font-bold">Pest Count</th>
                   <th className="p-3 border-r border-neutral-300 font-bold">Date</th>
                   <th colSpan="2" className="p-3 border-r border-neutral-300 font-bold">Service</th>
                   <th className="p-3 font-bold">Attend By</th>
@@ -85,7 +86,10 @@ function AllScheduleService({ data }) {
                           <span className="text-xs font-semibold text-neutral-700">No Image</span>
                         )}
                       </td>
-
+                      <td className="md:border-r md:border-neutral-300 md:p-3 flex justify-between items-center md:table-cell">
+                        <span className="text-xs font-bold uppercase md:hidden text-neutral-700">Pest Count</span>
+                        <span className="font-bold text-sm text-neutral-900">{service?.regularService?.[0]?.pestCount || 0}</span>
+                      </td>
                       {/* DATE */}
                       <td className="md:border-r md:border-neutral-300 md:p-3 flex justify-between items-center md:table-cell text-right md:text-left">
                         <span className="text-xs font-bold uppercase md:hidden text-neutral-700">Date</span>

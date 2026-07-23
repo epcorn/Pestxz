@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
 import { useCasualServiceMutation, useRegularServiceMutation } from "../../redux/serviceSlice";
 import { formatShortDate } from "../../utils/helperFunctions";
@@ -8,6 +7,8 @@ import { useDispatch, useSelector } from "react-redux";
 import { toggleModal } from "../../redux/helperSlice";
 import { useUnscheduledReportMutation } from "../../redux/locationSlice";
 import { socket } from "../../socket";
+import InputSelect from "../InputSelect";
+import { Controller, useForm } from "react-hook-form";
 
 const getStorageKey = (id, name) => `pestxz_saved_services_${id}_${name}`;
 
@@ -30,7 +31,7 @@ function RegularForm({ serviceData, id, type, locationName, setRegular, today })
   const [casualService, { isLoading: submitLoading }] = useCasualServiceMutation();
   const [updateUnscheduled, { isLoading: unScLoading }] = useUnscheduledReportMutation()
 
-  const { register, reset, setValue, getValues, watch } = useForm();
+  const { register, reset, control, setValue, getValues, watch } = useForm({ defaultValues: { pestCount: 0 } });
   const STORAGE_KEY = getStorageKey(id, locationName);
   const todays = todayShort(today); //before today=
 
@@ -112,6 +113,13 @@ function RegularForm({ serviceData, id, type, locationName, setRegular, today })
         form.append("type", "update");
         form.append("unscheduledId", id); // id prop IS the unscheduled doc's _id here
       }
+      const rawCount = values?.pestCount?.[ser.serviceName];
+      const countValue = typeof rawCount === "object" && rawCount !== null
+        ? (rawCount.value ?? 0)
+        : (rawCount ?? 0);
+
+      // Append clean numeric value to FormData
+      form.append("pestCount", countValue);
 
       const files = values?.image?.[ser.serviceName];
       if (files) {
@@ -141,7 +149,7 @@ function RegularForm({ serviceData, id, type, locationName, setRegular, today })
     }
   };
 
-
+  const pestOptions = Array.from({ length: 16 }).map((_, i) => ({ label: i, value: i }))
 
   const servicesForToday = isRegular ? serviceData?.filter((ser) =>
     ser?.schedule?.some((s) => formatShortDate(s.date) === todays && !s.completed)) : serviceData;
@@ -170,7 +178,7 @@ function RegularForm({ serviceData, id, type, locationName, setRegular, today })
     <div className={`${isRegular ? "" : "fixed inset-0 z-90 w-full h-dvh grid place-items-center bg-black/50"}`}>
       <div className={`w-full max-h-[80dvh] bg-gray-200 overflow-auto outline-4 outline-gray-800 rounded-lg ${isRegular ? "w-full" : "max-w-3xl"}`}>
         <div className="">
-          <div className="flex sticky top-0 bg-white border-b-2 justify-between items-center p-3">
+          <div className="flex sticky top-0 bg-white border-b-2 justify-between items-center z-10 p-3">
             <h2 className="text-lg md:text-xl font-bold">{isRegular ? "Regular Service Form" : isUnschedule ? "Unscheduled Service" : "Casual Service Form"}</h2>
             <p className="leading-none outline-2 text-red-600 rounded-full cursor-pointer w-6 h-6 text-center content-center font-bold " onClick={() => dispatch(toggleModal({ name: type, status: false }))}>X</p>
           </div>
@@ -204,18 +212,45 @@ function RegularForm({ serviceData, id, type, locationName, setRegular, today })
                       }
                     </div>
                   </div>
-                  <label htmlFor="" className="text-sm font-semibold mr-2">Images:</label>
-                  <input
-                    type="file"
-                    multiple
-                    accept="image/*"
-                    {...register(`image.${ser.serviceName}`, {
-                      validate: (files) =>
-                        !files || files.length <= 2 || "Max 2 images allowed",
-                    })}
-                    className="outline file:bg-gray-700 file:p-2 file:text-white flex-1"
-                  />
-                  <div className="grid gap-2 p-2 text-lg mt-2 h-72 overflow-auto">
+                  <div className="flex justify-between items-center">
+                    <div className="flex flex-col gap-1">
+                      <label htmlFor="" className="text-sm font-semibold mr-2">Images:</label>
+                      <input
+                        type="file"
+                        multiple
+                        accept="image/*"
+                        {...register(`image.${ser.serviceName}`, {
+                          validate: (files) =>
+                            !files || files.length <= 2 || "Max 2 images allowed",
+                        })}
+                        className="outline file:bg-gray-700 file:p-2 file:text-white flex-1"
+                      />
+                    </div>
+                    <div>
+                      <Controller
+                        name={`pestCount.${ser.serviceName}`}
+                        control={control}
+                        defaultValue={0}
+                        render={({ field: { onChange, value }, fieldState: { error } }) => (
+                          <div className="max-w-32">
+                            <InputSelect
+                              label="Pest Count"
+                              options={pestOptions}
+                              value={value}
+                              onChange={onChange} // Pass down React Hook Form's handler
+                              required={true}
+                            />
+                            {error && (
+                              <span className="text-red-500 text-sm mt-1 block">
+                                {error.message}
+                              </span>
+                            )}
+                          </div>
+                        )}
+                      />
+                    </div>
+                  </div>
+                  <div className="grid gap-2 text-lg">
                     {ser.scopes?.map((sc) => (
                       <div
                         key={sc.scopeName}
@@ -228,7 +263,7 @@ function RegularForm({ serviceData, id, type, locationName, setRegular, today })
                           return (
                             <div
                               key={con.consumableName}
-                              className=" mb-2 flex flex-wrap gap-x-3 gap-y-2"
+                              className=" mb-2 flex flex-wrap gap-x-3 gap-y-1 outline"
                             >
                               <input
                                 defaultValue={con.consumableName}

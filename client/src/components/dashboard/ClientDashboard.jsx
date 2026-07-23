@@ -42,12 +42,11 @@ const regMapped = {
   Invalid: "Invalid",
 }
 
-// month.product = { Done, Pending, Missed } -> [{ label, count }]
 // matches the shape products.scheduleCount already has.
 const nestedToScheduleCount = (statusCounts) =>
   Object.entries(statusCounts || {})
     .map(([label, count]) => ({ label, count: count || 0 }))
-    .filter((row) => row.count > 0);
+
 const keyMapping = {
   total: "Total Complaints",
   open: "Open Complaints",
@@ -85,12 +84,11 @@ const colorMap = {
 const ClientDashboard = () => {
   const dispatch = useDispatch();
   const [toggle, setToggle] = useState(sessionStorage.getItem("ClientDashboardToggle") || "Complaint");
-  const [selectedMonth, setSelectedMonth] = useState("overall"); // "overall" or stringified monthlyData index
+  const [selectedMonth, setSelectedMonth] = useState("overall");
   const navigate = useNavigate()
   const [statusFilter, setStatusFilter] = useState("");
   const { user } = useSelector((store) => store.helper);
 
-  // clientDash === the adminDashboard() endpoint response, scoped to this client
   // This is the ONLY source for stat-card strips and charts below.
   const { data: clientDash, isLoading: clgLoading, error: clgError } = useAdminDashboardQuery(user.client, {
     skip: !user.client,
@@ -104,13 +102,16 @@ const ClientDashboard = () => {
 
   // Filter data efficiently using useMemo
   const complaints = useMemo(() => {
-    if (statusFilter.length > 0) {
-      return clientDash?.all.filter(cl => cl.complaintDetails.status === statusFilter)
+    const all = Array.isArray(clientDash?.all) ? clientDash.all : [];
+    const latest = Array.isArray(clientDash?.latestComplaints) ? clientDash.latestComplaints : [];
+
+    if (statusFilter && statusFilter?.length > 0) {
+      return all?.filter(cl => cl?.complaintDetails?.status === statusFilter);
     }
-    if (!clientDash?.latestComplaints) return [];
-    return clientDash.latestComplaints.filter(lat => lat.type === toggle);
+    return latest?.filter(lat => lat?.type === toggle);
   }, [toggle, clientDash, statusFilter]);
 
+  console.log(complaints)
   const handleCards = (value) => {
     const map = {
       open: "Open",
@@ -137,6 +138,7 @@ const ClientDashboard = () => {
       })
     }
   }
+  if (statusFilter) console.log(statusFilter)
   const handleChange = (e) => {
     if (e.target.value) {
       setToggle(e.target.value)
@@ -188,13 +190,10 @@ const ClientDashboard = () => {
       scheduleCount: nestedToScheduleCount(activeMonth?.regular),
     };
 
-  console.log(productsView);
-
   const prObj = Object.fromEntries((productsView?.scheduleCount ?? []).map(p => ([prMapped[p.label], p.count])))
   const regObj = Object.fromEntries((servicesView?.scheduleCount ?? []).map(p => ([regMapped[p.label], p.count])))
 
   const statsStrips = { ...complaintStats }
-
   return (
     <section className="p-2 bg-slate-50/50 min-h-screen font-sans">
       {clgLoading ? (
@@ -219,9 +218,9 @@ const ClientDashboard = () => {
             </div>
 
             {/* Overall / monthly toggle */}
-            <div className="bg-white border border-slate-300 rounded-lg px-2 shrink-0">
+            <div className="bg-white border w-fit ml-auto border-slate-300 rounded-lg px-2 shrink-0">
               <select
-                className="px-2 py-1.5 text-sm font-semibold text-slate-700 focus:outline-0 bg-transparent cursor-pointer"
+                className="px-2 py-1.5  text-sm font-semibold text-slate-700 focus:outline-0 bg-transparent cursor-pointer"
                 value={selectedMonth}
                 onChange={(e) => setSelectedMonth(e.target.value)}
               >
@@ -272,7 +271,7 @@ const ClientDashboard = () => {
             </div>
           </div>
 
-            {/* Multiline Chart */}
+          {/* Multiline Chart */}
           <div className="my-2">
             <div className="rounded-2xl shadow-md p-4 bg-white min-w-0">
               <h3 className="h4 text-center mb-2 hidden">Multiline Chart</h3>

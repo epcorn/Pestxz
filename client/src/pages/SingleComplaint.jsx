@@ -125,7 +125,7 @@ const SingleComplaint = () => {
             {/* Location */}
             <div className="col-span-1 sm:col-span-2 md:col-span-1">
               <span className="font-bold text-neutral-400 uppercase tracking-wider text-[10px] block mb-0.5">Location</span>
-              <span className="text-neutral-700 font-medium line-clamp-1">
+              <span className="text-neutral-700 font-medium line-clamp-3">
                 {[location?.location?.floor, location?.location?.location, location?.location?.subLocation]
                   .filter(Boolean)
                   .join(", ") || "N/A"}
@@ -143,7 +143,6 @@ const SingleComplaint = () => {
                 ))}
               </div>
             </div>
-
           </div>
 
           {/* Compact Comment Section */}
@@ -158,7 +157,7 @@ const SingleComplaint = () => {
       </div>
 
       {/* FOOTER ACTIONS AREA */}
-      <div className="flex items-center justify-end gap-3 pt-2">
+      <div className="flex items-center justify-end gap-3 pt-1">
         {/* Update Form Button Trigger */}
         {user?.type === "PestEmployee" &&
           ["Open", "Reopen", "In Progress"].includes(data?.complaintDetails?.status) && (
