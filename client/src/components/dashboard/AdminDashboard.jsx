@@ -428,10 +428,10 @@ function Row({ item, index, isRegular, assignId, assignRef, setAssignId, navigat
 }
 
 
-export function StatCard({ active, title, value, color, textColor, arrkey, onClick = () => { } }) {
+export function StatCard({ active, title = "", value, color, textColor, arrkey = "", onClick = () => { } }) {
 
   const isActive = active === arrkey || active === title;
-
+  
   return (
     <div title={title}
       className={`bg-gray-50 shadow flex-1 px-3 py-2 md:px-5 md:py-3 rounded-l-xl border border-gray-100 whitespace-nowrap border-l-4 transition-all duration-200 ease-in-out ${color} ${isActive ? "translate-y-1 shadow-md bg-white" : "translate-y-0 cursor-pointer"}`}

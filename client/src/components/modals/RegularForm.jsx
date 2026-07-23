@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
 import { useCasualServiceMutation, useRegularServiceMutation } from "../../redux/serviceSlice";
 import { formatShortDate } from "../../utils/helperFunctions";
@@ -8,6 +7,8 @@ import { useDispatch, useSelector } from "react-redux";
 import { toggleModal } from "../../redux/helperSlice";
 import { useUnscheduledReportMutation } from "../../redux/locationSlice";
 import { socket } from "../../socket";
+import InputSelect from "../InputSelect";
+import { Controller, useForm } from "react-hook-form";
 
 const getStorageKey = (id, name) => `pestxz_saved_services_${id}_${name}`;
 
@@ -30,7 +31,7 @@ function RegularForm({ serviceData, id, type, locationName, setRegular, today })
   const [casualService, { isLoading: submitLoading }] = useCasualServiceMutation();
   const [updateUnscheduled, { isLoading: unScLoading }] = useUnscheduledReportMutation()
 
-  const { register, reset, setValue, getValues, watch } = useForm();
+  const { register, reset, control, setValue, getValues, watch } = useForm({ defaultValues: { pestCount: 0 } });
   const STORAGE_KEY = getStorageKey(id, locationName);
   const todays = todayShort(today); //before today=
 
@@ -112,6 +113,13 @@ function RegularForm({ serviceData, id, type, locationName, setRegular, today })
         form.append("type", "update");
         form.append("unscheduledId", id); // id prop IS the unscheduled doc's _id here
       }
+      const rawCount = values?.pestCount?.[ser.serviceName];
+      const countValue = typeof rawCount === "object" && rawCount !== null
+        ? (rawCount.value ?? 0)
+        : (rawCount ?? 0);
+
+      // Append clean numeric value to FormData
+      form.append("pestCount", countValue);
 
       const files = values?.image?.[ser.serviceName];
       if (files) {
@@ -141,7 +149,7 @@ function RegularForm({ serviceData, id, type, locationName, setRegular, today })
     }
   };
 
-
+  const pestOptions = Array.from({ length: 16 }).map((_, i) => ({ label: i, value: i }))
 
   const servicesForToday = isRegular ? serviceData?.filter((ser) =>
     ser?.schedule?.some((s) => formatShortDate(s.date) === todays && !s.completed)) : serviceData;
@@ -170,128 +178,156 @@ function RegularForm({ serviceData, id, type, locationName, setRegular, today })
     <div className={`${isRegular ? "" : "fixed inset-0 z-90 w-full h-dvh grid place-items-center bg-black/50"}`}>
       <div className={`w-full max-h-[80dvh] bg-gray-200 overflow-auto outline-4 outline-gray-800 rounded-lg ${isRegular ? "w-full" : "max-w-3xl"}`}>
         <div className="">
-          <div className="flex sticky top-0 bg-white border-b-2 justify-between items-center p-3">
+          <div className="flex sticky top-0 bg-white border-b-2 justify-between items-center z-10 p-3">
             <h2 className="text-lg md:text-xl font-bold">{isRegular ? "Regular Service Form" : isUnschedule ? "Unscheduled Service" : "Casual Service Form"}</h2>
             <p className="leading-none outline-2 text-red-600 rounded-full cursor-pointer w-6 h-6 text-center content-center font-bold " onClick={() => dispatch(toggleModal({ name: type, status: false }))}>X</p>
           </div>
 
-          {serviceData.length === 0 ? <div className="text-center font-semibold my-5 bg-gray-200 ">No Services Found on Location</div> : <form className="space-y-6 bg-green-200">
-            {servicesForToday?.map((ser, i) => {
-              const todaySchedule = isRegular ? ser.schedule?.find(
-                (s) => formatShortDate(s.date) === todays && !s.completed) : null;
-              return (
-                <div
-                  key={i}
-                  className="outline outline-gray-400 rounded p-2 bg-white/70 shadow text-xs md:textbase"
-                >
-                  <div className="flex justify-between mb-4">
-                    <div className="flex gap-x-4 gap-y-2 items-center flex-wrap">
-                      <p className="text-sm md:text-lg bg-white font-semibold outline px-2 py-1 rounded outline-gray-400">
-                        <span className="outline px-1.5 leading-none rounded-full text-gray-700 font-semibold mr-2 text-sm">{i + 1}</span> Service:{" "}
-                        <span className="text-base text-gray-500">{ser.serviceName}</span>
-                      </p>
-                      {(isRegular) &&
-                        <>
-                          <p className="text-sm md:text-lg bg-white font-semibold outline px-2 py-1 rounded outline-gray-400">
-                            Frequency:{" "}
-                            <span className="text-base text-gray-500">{ser.frequency}</span>
-                          </p>
-                          <p className="text-sm md:text-lg bg-white font-semibold outline px-2 py-1 rounded outline-gray-400">
-                            Date:{" "}
-                            <span className="text-base text-blue-600">{todaySchedule?.date.split("T")[0]}</span>
-                          </p>
-                        </>
-                      }
+          {serviceData.length === 0 ? <div className="text-center font-semibold my-5 bg-gray-200 ">No Services Found on Location</div> :
+            <form className="space-y-6 bg-green-200">
+              {servicesForToday?.map((ser, i) => {
+                const todaySchedule = isRegular ? ser.schedule?.find(
+                  (s) => formatShortDate(s.date) === todays && !s.completed) : null;
+                return (
+                  <div
+                    key={i}
+                    className="outline outline-gray-400 rounded p-2 bg-white/70 shadow text-xs md:textbase"
+                  >
+                    <div className="flex justify-between mb-4">
+                      <div className="flex gap-x-4 gap-y-2 items-center flex-wrap">
+                        <p className="text-sm md:text-lg bg-white font-semibold outline px-2 py-1 rounded outline-gray-400">
+                          <span className="outline px-1.5 leading-none rounded-full text-gray-700 font-semibold mr-2 text-sm">{i + 1}</span> Service:{" "}
+                          <span className="text-base text-gray-500">{ser.serviceName}</span>
+                        </p>
+                        {(isRegular) &&
+                          <>
+                            <p className="text-sm md:text-lg bg-white font-semibold outline px-2 py-1 rounded outline-gray-400">
+                              Frequency:{" "}
+                              <span className="text-base text-gray-500">{ser.frequency}</span>
+                            </p>
+                            <p className="text-sm md:text-lg bg-white font-semibold outline px-2 py-1 rounded outline-gray-400">
+                              Date:{" "}
+                              <span className="text-base text-blue-600">{todaySchedule?.date.split("T")[0]}</span>
+                            </p>
+                          </>
+                        }
+                      </div>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <div className="flex flex-col gap-1">
+                        <label htmlFor="" className="text-sm font-semibold mr-2">Images:</label>
+                        <input
+                          type="file"
+                          multiple
+                          accept="image/*"
+                          {...register(`image.${ser.serviceName}`, {
+                            validate: (files) =>
+                              !files || files.length <= 2 || "Max 2 images allowed",
+                          })}
+                          className="outline file:bg-gray-700 file:p-2 file:text-white flex-1"
+                        />
+                      </div>
+                      <div>
+                        <Controller
+                          name={`pestCount.${ser.serviceName}`}
+                          control={control}
+                          defaultValue={0}
+                          render={({ field: { onChange, value }, fieldState: { error } }) => (
+                            <div className="max-w-32">
+                              <InputSelect
+                                label="Pest Count"
+                                options={pestOptions}
+                                value={value}
+                                onChange={onChange} // Pass down React Hook Form's handler
+                                required={true}
+                              />
+                              {error && (
+                                <span className="text-red-500 text-sm mt-1 block">
+                                  {error.message}
+                                </span>
+                              )}
+                            </div>
+                          )}
+                        />
+                      </div>
+                    </div>
+                    <div className="grid gap-2 text-lg">
+                      {ser?.scopes?.map((sc) => (
+                        <div
+                          key={sc?.scopeName}
+                          className="mt-2 outline-4 outline-gray-400 p-3 rounded bg-white"
+                        >
+                          <h4 className="font-bold mb-3 underline ">Scope: {sc.scopeName}</h4>
+                          {sc.consumables?.map((con, i) => {
+                            const actionVal = watchAction?.action?.[ser.serviceName]?.[sc.scopeName]?.[con.consumableName];
+
+                            return (
+                              <div
+                                key={con.consumableName}
+                                className=" mb-2 flex flex-wrap gap-x-3 gap-y-1 outline"
+                              >
+                                <input
+                                  defaultValue={con.consumableName}
+                                  disabled
+                                  className="flex-1 outline-2 max-w-fit outline-gray-700 p-2 bg-gray-100 col-span-2 font-bold"
+                                />
+                                <input
+                                  defaultValue={con.calibration || 0}
+                                  disabled
+                                  className="max-w-20 outline-2 outline-gray-400 p-2 bg-gray-100"
+                                />
+                                <input
+                                  placeholder="Used"
+                                  {...register(`usedCalibration.${ser.serviceName}.${sc.scopeName}.${con.consumableName}`)}
+                                  className="max-w-20 outline-2 p-2 focus:outline-2 focus:outline-gray-800"
+                                />
+                                <select
+                                  {...register(`action.${ser.serviceName}.${sc.scopeName}.${con.consumableName}`)}
+                                  className="outline-2 outline-gray-900 p-2 focus:outline-2 focus:outline-gray-800"
+                                >
+                                  <option>Done</option>
+                                  <option>Not Done</option>
+                                  <option>Partial Done</option>
+                                </select>
+                                <textarea
+                                  rows={1}
+                                  placeholder={actionVal === "Partial Done" ? "Comment Required..." : "comment..."}
+                                  {...register(`comment.${ser.serviceName}.${sc.scopeName}.${con.consumableName}`)}
+                                  className={`flex-1 outline-2 p-2 focus:outline-2 focus:outline-gray-800 ${actionVal === "Partial Done"
+                                    ? "outline-orange-400 bg-orange-50"
+                                    : "outline-gray-400"
+                                    }`}
+                                />
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="text-right mt-5 space-x-3">
+                      <button
+                        type="button"
+                        onClick={() => saveLocally(ser.serviceName)}
+                        className="px-3 py-2 hidden border rounded"
+                      >
+                        Save Progress
+                      </button>
+                      {!isRegular &&
+                        <Button color={'bg-red-400'} label={'Close'} onClick={() => dispatch(toggleModal({ name: type, status: false }))} />
+                      }<button
+                        type="button"
+                        disabled={isRegular ? isLoading : submitLoading}
+                        onClick={() => submitSingleService(ser, todaySchedule)}
+                        className="bg-green-600 px-5 py-2 text-white rounded disabled:cursor-not-allowed disabled:opacity-35"
+                      >
+                        {(isRegular ? isLoading : submitLoading) ? "Submitting..." : "Complete Service"}
+                      </button>
                     </div>
                   </div>
-                  <label htmlFor="" className="text-sm font-semibold mr-2">Images:</label>
-                  <input
-                    type="file"
-                    multiple
-                    accept="image/*"
-                    {...register(`image.${ser.serviceName}`, {
-                      validate: (files) =>
-                        !files || files.length <= 2 || "Max 2 images allowed",
-                    })}
-                    className="outline file:bg-gray-700 file:p-2 file:text-white flex-1"
-                  />
-                  <div className="grid gap-2 text-lg">
-                    {ser.scopes?.map((sc) => (
-                      <div
-                        key={sc.scopeName}
-                        className="mt-2 outline-4 outline-gray-400 p-3 rounded bg-white"
-                      >
-                        <h4 className="font-bold mb-3 underline ">Scope: {sc.scopeName}</h4>
-                        {sc.consumables?.map((con, i) => {
-                          const actionVal = watchAction?.action?.[ser.serviceName]?.[sc.scopeName]?.[con.consumableName];
-
-                          return (
-                            <div
-                              key={con.consumableName}
-                              className=" mb-2 flex flex-wrap gap-x-3 gap-y-1 outline"
-                            >
-                              <input
-                                defaultValue={con.consumableName}
-                                disabled
-                                className="flex-1 outline-2 max-w-fit outline-gray-700 p-2 bg-gray-100 col-span-2 font-bold"
-                              />
-                              <input
-                                defaultValue={con.calibration || 0}
-                                disabled
-                                className="max-w-20 outline-2 outline-gray-400 p-2 bg-gray-100"
-                              />
-                              <input
-                                placeholder="Used"
-                                {...register(`usedCalibration.${ser.serviceName}.${sc.scopeName}.${con.consumableName}`)}
-                                className="max-w-20 outline-2 p-2 focus:outline-2 focus:outline-gray-800"
-                              />
-                              <select
-                                {...register(`action.${ser.serviceName}.${sc.scopeName}.${con.consumableName}`)}
-                                className="outline-2 outline-gray-900 p-2 focus:outline-2 focus:outline-gray-800"
-                              >
-                                <option>Done</option>
-                                <option>Not Done</option>
-                                <option>Partial Done</option>
-                              </select>
-                              <textarea
-                                rows={1}
-                                placeholder={actionVal === "Partial Done" ? "Comment Required..." : "comment..."}
-                                {...register(`comment.${ser.serviceName}.${sc.scopeName}.${con.consumableName}`)}
-                                className={`flex-1 outline-2 p-2 focus:outline-2 focus:outline-gray-800 ${actionVal === "Partial Done"
-                                  ? "outline-orange-400 bg-orange-50"
-                                  : "outline-gray-400"
-                                  }`}
-                              />
-                            </div>
-                          );
-                        })}
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="text-right mt-5 space-x-3">
-                    <button
-                      type="button"
-                      onClick={() => saveLocally(ser.serviceName)}
-                      className="px-3 py-2 hidden border rounded"
-                    >
-                      Save Progress
-                    </button>
-                    {!isRegular &&
-                      <Button color={'bg-red-400'} label={'Close'} onClick={() => dispatch(toggleModal({ name: type, status: false }))} />
-                    }<button
-                      type="button"
-                      disabled={isRegular ? isLoading : submitLoading}
-                      onClick={() => submitSingleService(ser, todaySchedule)}
-                      className="bg-green-600 px-5 py-2 text-white rounded disabled:cursor-not-allowed disabled:opacity-35"
-                    >
-                      {(isRegular ? isLoading : submitLoading) ? "Submitting..." : "Complete Service"}
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </form>}
+                );
+              })}
+            </form>}
         </div>
       </div>
     </div>

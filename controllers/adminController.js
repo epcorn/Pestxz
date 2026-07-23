@@ -621,7 +621,7 @@ export const adminDashboard = async (req, res) => {
       .map(withClientName);
 
     return res.json({
-      all: allComplaints.map(withClientName),
+      all: allComplaints,
       latestComplaints,
       summary: {
         complaints: complaintData,

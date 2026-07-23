@@ -6,7 +6,8 @@ import { InputRow, InputSelect } from "..";
 import { toggleModal } from "../../redux/helperSlice";
 import { useAllLocationsQuery } from "../../redux/locationSlice";
 import {
-  useNewComplaintMutation, useUpdateComplaintMutation,
+  useNewComplaintMutation,
+  useUpdateComplaintMutation,
 } from "../../redux/serviceSlice";
 import {
   clientAdminStatus,
@@ -19,9 +20,16 @@ import { useAllClientsQuery } from "../../redux/clientSlice";
 import { useAllUserQuery } from "../../redux/adminSlice";
 import { useGetSingleUserQuery } from "../../redux/userSlice";
 
-const ComplaintModal = ({ locationId, mode = "create" }) => {
+const defaultComments = [
+  "Done",
+  "not Done",
+  "Incompleted",
+  "Incompleted",
+  "Incompleted",
+];
 
-  const [selectClient, setSelectClient] = useState("")
+const ComplaintModal = ({ locationId, mode = "create" }) => {
+  const [selectClient, setSelectClient] = useState("");
   const isCreate = mode === "create";
   const isUpdate = mode === "update";
   const isReview = mode === "review";
@@ -32,11 +40,16 @@ const ComplaintModal = ({ locationId, mode = "create" }) => {
   const { isModalOpen, user } = useSelector((store) => store.helper);
 
   const { data: DBUser } = useGetSingleUserQuery(user._id, { skip: !user._id });
-  const { data: clientsData } = useAllClientsQuery({ limit: 50, page: 1 }, { skip: user.type !== "PestEmployee" });
+  const { data: clientsData } = useAllClientsQuery(
+    { limit: 50, page: 1 },
+    { skip: user.type !== "PestEmployee" },
+  );
 
-  const clientOptions = clientsData?.clients?.map(c => ({ label: c.name, value: c._id }))
-  const [addComplaint, { isLoading: addLoading }] =
-    useNewComplaintMutation();
+  const clientOptions = clientsData?.clients?.map((c) => ({
+    label: c.name,
+    value: c._id,
+  }));
+  const [addComplaint, { isLoading: addLoading }] = useNewComplaintMutation();
 
   const [updateComplaint, { isLoading: updateLoading }] =
     useUpdateComplaintMutation();
@@ -68,10 +81,10 @@ const ComplaintModal = ({ locationId, mode = "create" }) => {
         ? user?.type
         : locationId;
 
-  const { data: clientLocations } = useAllLocationsQuery(
-    { id: locationQueryId },
-  );
-  console.log(locationId, locationQueryId, clientLocations)
+  const { data: clientLocations } = useAllLocationsQuery({
+    id: locationQueryId,
+  });
+  console.log(locationId, locationQueryId, clientLocations);
   // SET INITIAL FLOOR
   useEffect(() => {
     if (!clientLocations?.floors?.length) return;
@@ -80,7 +93,6 @@ const ComplaintModal = ({ locationId, mode = "create" }) => {
     }
   }, [clientLocations, floor]);
 
-
   // LOCATION OPTIONS
   const locationOptions = useMemo(() => {
     if (!clientLocations?.locations) return [];
@@ -88,8 +100,9 @@ const ComplaintModal = ({ locationId, mode = "create" }) => {
     return clientLocations.locations
       .filter((item) => !floor || item.floor === floor)
       .map((item) => ({
-        label: `${item.location}${item.subLocation ? `, ${item.subLocation}` : ""
-          }`,
+        label: `${item.location}${
+          item.subLocation ? `, ${item.subLocation}` : ""
+        }`,
         value: item._id,
       }));
   }, [clientLocations, floor]);
@@ -99,16 +112,15 @@ const ComplaintModal = ({ locationId, mode = "create" }) => {
     if (!locationId || !clientLocations?.locations) return;
 
     const currentLocation = clientLocations.locations.find(
-      (loc) => loc._id?.toString() === locationId?.toString()
+      (loc) => loc._id?.toString() === locationId?.toString(),
     );
     if (!currentLocation) return;
     setFloor(currentLocation.floor);
 
     setValue("location", {
-      label: `${currentLocation.location}${currentLocation.subLocation
-        ? `, ${currentLocation.subLocation}`
-        : ""
-        }`,
+      label: `${currentLocation.location}${
+        currentLocation.subLocation ? `, ${currentLocation.subLocation}` : ""
+      }`,
       value: currentLocation._id,
     });
   }, [locationId, clientLocations, setValue]);
@@ -121,13 +133,11 @@ const ComplaintModal = ({ locationId, mode = "create" }) => {
     }
   }, [floor, locationId, setValue]);
 
-  const currentSelectedId =
-    selectedLocation?.value || locationId;
+  const currentSelectedId = selectedLocation?.value || locationId;
 
-  const targetedLocationRecord =
-    clientLocations?.locations?.find(
-      (loc) => loc._id?.toString() === currentSelectedId?.toString()
-    );
+  const targetedLocationRecord = clientLocations?.locations?.find(
+    (loc) => loc._id?.toString() === currentSelectedId?.toString(),
+  );
   // SERVICES
   const serviceOptions = useMemo(() => {
     const rawServices = targetedLocationRecord?.service || [];
@@ -138,12 +148,7 @@ const ComplaintModal = ({ locationId, mode = "create" }) => {
           return s.trim().replace(/,$/, "");
         }
         if (typeof s === "object") {
-          return (
-            s.serviceName ||
-            s.service ||
-            s.name ||
-            ""
-          )
+          return (s.serviceName || s.service || s.name || "")
             .trim()
             .replace(/,$/, "");
         }
@@ -151,7 +156,6 @@ const ComplaintModal = ({ locationId, mode = "create" }) => {
       })
       .filter(Boolean);
   }, [targetedLocationRecord]);
-
 
   const submit = async (data) => {
     if (images.length > 2) {
@@ -167,8 +171,8 @@ const ComplaintModal = ({ locationId, mode = "create" }) => {
       if (isCreate) {
         form.set("comment", data.comment);
 
-        const selectedServices = data.service.map(s => s.value)
-        selectedServices.forEach(s => form.append("service", s))
+        const selectedServices = data.service.map((s) => s.value);
+        selectedServices.forEach((s) => form.append("service", s));
 
         const locationToUse = data?.location?.value;
         if (!locationToUse) {
@@ -182,7 +186,7 @@ const ComplaintModal = ({ locationId, mode = "create" }) => {
           user: user.name,
           comment: data.comment,
           url: res.url,
-        })
+        });
       }
       // UPDATE
       if (isUpdate) {
@@ -194,22 +198,22 @@ const ComplaintModal = ({ locationId, mode = "create" }) => {
           user: user.name,
           status: status.label,
           url: res.url,
-        })
-        console.log("complaint emmited")
+        });
+        console.log("complaint emmited");
       }
 
       // REVIEW
       if (isReview) {
         form.set("status", data.status?.value || data.status);
         form.set("comment", data.comment);
-        res = await updateComplaint({ id: locationId, form, }).unwrap();
+        res = await updateComplaint({ id: locationId, form }).unwrap();
         toast.success(res?.msg || "Success");
 
         socket.emit("complaint-updated", {
           user: user.name,
           url: res.url,
-        })
-        console.log("complaint emmited")
+        });
+        console.log("complaint emmited");
       }
 
       dispatch(toggleModal({ name: "complaint", status: false }));
@@ -219,17 +223,14 @@ const ComplaintModal = ({ locationId, mode = "create" }) => {
     } catch (error) {
       console.log(error);
 
-      toast.error(
-        error?.data?.msg ||
-        error?.error ||
-        "Something went wrong"
-      );
+      toast.error(error?.data?.msg || error?.error || "Something went wrong");
     }
   };
 
+  const status = watch("status");
 
   const reviewFormBody = (
-    <div className="grid gap-y-3 mb-4">
+    <div className="grid gap-y-3 mb-4 ml-1">
       <div>
         <Controller
           name="status"
@@ -261,7 +262,7 @@ const ComplaintModal = ({ locationId, mode = "create" }) => {
         />
       </div>
 
-      <div>
+      <div className={`${status?.value === "Reopen" ? "block" : "hidden"}`}>
         <label className="text-md font-medium leading-6 mr-2 text-gray-900">
           Images
         </label>
@@ -270,9 +271,7 @@ const ComplaintModal = ({ locationId, mode = "create" }) => {
           type="file"
           multiple
           accept="image/*"
-          onChange={(e) =>
-            setImages(Array.from(e.target.files))
-          }
+          onChange={(e) => setImages(Array.from(e.target.files))}
           className="mt-0.5 block w-full text-sm text-slate-500
           file:mr-4 file:py-2 file:px-4
           file:rounded-md file:border-0
@@ -281,6 +280,14 @@ const ComplaintModal = ({ locationId, mode = "create" }) => {
           hover:file:bg-zinc-200"
         />
       </div>
+
+      <div className="flex gap-x-1 max-w-96 overflow-x-auto p-2">
+        {defaultComments.map((d) => (
+          <p className="text-sm whitespace-nowrap outline rounded-2xl px-2">
+            {d}
+          </p>
+        ))}
+      </div>
     </div>
   );
 
@@ -288,7 +295,7 @@ const ComplaintModal = ({ locationId, mode = "create" }) => {
     <div className="grid grid-cols-2 gap-3 mb-4">
       {DBUser.rights.raise && (
         <>
-          {!locationId && user.type === "PestEmployee" &&
+          {!locationId && user.type === "PestEmployee" && (
             <div>
               <Controller
                 name="client"
@@ -309,7 +316,8 @@ const ComplaintModal = ({ locationId, mode = "create" }) => {
               <p className="text-xs text-red-500 pl-1 mt-1">
                 {errors.client?.message}
               </p>
-            </div>}
+            </div>
+          )}
 
           <div className="mr-2 mt-2">
             <label className="block text-md font-medium leading-6 text-gray-900">
@@ -319,8 +327,7 @@ const ComplaintModal = ({ locationId, mode = "create" }) => {
             <select
               value={floor}
               onChange={(e) => setFloor(e.target.value)}
-              className="mr-2 mt-0.5 w-full py-1 px-2 border-2 rounded-md outline-none transition border-neutral-300 focus:border-black"
-            >
+              className="mr-2 mt-0.5 w-full py-1 px-2 border-2 rounded-md outline-none transition border-neutral-300 focus:border-black">
               {clientLocations?.floors?.map((item, index) => (
                 <option key={index} value={item}>
                   {item}
@@ -378,9 +385,7 @@ const ComplaintModal = ({ locationId, mode = "create" }) => {
           type="file"
           multiple
           accept="image/*"
-          onChange={(e) =>
-            setImages(Array.from(e.target.files))
-          }
+          onChange={(e) => setImages(Array.from(e.target.files))}
           className="mt-1 block w-full text-sm text-slate-500
           file:mr-4 file:py-2 file:px-4 outline  rounded
           file:rounded-md file:border-0
@@ -440,8 +445,8 @@ const ComplaintModal = ({ locationId, mode = "create" }) => {
                 user.role === "ClientAdmin"
                   ? clientAdminStatus
                   : watch("comment")?.value === "All job done"
-                    ? jobStatus.filter(s => s.value === "Close Req")
-                    : jobStatus.filter(s => s.value === "In Progress")
+                    ? jobStatus.filter((s) => s.value === "Close Req")
+                    : jobStatus.filter((s) => s.value === "In Progress")
               }
               onChange={field.onChange}
               value={field.value}
@@ -464,9 +469,7 @@ const ComplaintModal = ({ locationId, mode = "create" }) => {
           type="file"
           multiple
           accept="image/*"
-          onChange={(e) =>
-            setImages(Array.from(e.target.files))
-          }
+          onChange={(e) => setImages(Array.from(e.target.files))}
           className="mt-0.5 block w-full text-sm text-slate-500
           file:mr-4 file:py-2 file:px-4
           file:rounded-md file:border-0
@@ -489,25 +492,17 @@ const ComplaintModal = ({ locationId, mode = "create" }) => {
             : "Reopen Complaint"
       }
       formBody={
-        isCreate
-          ? clientFormBody
-          : isUpdate
-            ? operatorFormBody
-            : reviewFormBody
+        isCreate ? clientFormBody : isUpdate ? operatorFormBody : reviewFormBody
       }
       submitLabel={
-        isCreate
-          ? "Add Complaint"
-          : isUpdate
-            ? "Update"
-            : "Reopen/Close"
+        isCreate ? "Add Complaint" : isUpdate ? "Update" : "Reopen/Close"
       }
       handleClose={() =>
         dispatch(
           toggleModal({
             name: "complaint",
             status: false,
-          })
+          }),
         )
       }
       disabled={addLoading || updateLoading}
