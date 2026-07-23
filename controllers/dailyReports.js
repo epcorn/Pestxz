@@ -1,17 +1,3 @@
-import { populate } from "dotenv";
-import Client from "../models/clientModel.js";
-import Service from "../models/serviceModel.js";
-import exceljs from "exceljs";
-import {
-  dateTimeSplitter,
-  removeOldQr,
-  sendEmail,
-  uploadFile,
-} from "../utils/helperFunction.js";
-import fs from "fs";
-import path from "path";
-import Location from "../models/locationModel.js";
-
 export const dailyServiceReport = async (req, res) => {
   // const id = req.user.client ? req.user.client : null;
   // const date = new Date();
@@ -129,10 +115,10 @@ export const dailyServiceReport = async (req, res) => {
   // }
 
   try {
-    const { value = "all" } = req.params;
+    const { value = "monthly" } = req.params;
     const { today } = req.query;
 
-    const todayStart = new Date(today);
+    const todayStart = today ? new Date(today) : new Date();
     todayStart?.setUTCHours(0, 0, 0, 0);
     const todayEnd = new Date(today);
     todayEnd.setUTCHours(23, 59, 59, 999);
@@ -144,39 +130,64 @@ export const dailyServiceReport = async (req, res) => {
 
     let matchCondition = {};
     let scheduleDateMatch = {};
+    let prodScheduleDateMatch = {};
 
     if (value === "custom") {
-      matchCondition = { updatedAt: { $gte: todayStart, $lte: todayEnd } };
+      matchCondition = {
+        updatedAt: { $gte: todayStart, $lte: todayEnd },
+      };
       scheduleDateMatch = {
         "service.schedule.date": { $gte: todayStart, $lte: todayEnd },
       };
+      prodScheduleDateMatch = {
+        "product.schedule.date": { $gte: todayStart, $lte: todayEnd },
+      };
     } else if (value === "weekly") {
-      const weekStart = new Date(
-        Date.UTC(
-          todayStart.getUTCFullYear(),
-          todayStart.getUTCMonth(),
-          todayStart.getUTCDate(),
-        ),
-      );
-      const weekEnd = new Date(weekStart);
-      weekEnd.setUTCDate(weekEnd.getUTCDate() + 7);
-      matchCondition = { updatedAt: { $gte: weekStart, $lt: weekEnd } };
+      const weekEnd = new Date(todayStart);
+      const weekStart = new Date(todayStart);
+      weekStart.setUTCDate(weekStart.getUTCDate() - 7);
+      matchCondition = {
+        updatedAt: { $gte: weekStart, $lt: weekEnd },
+      };
       scheduleDateMatch = {
         "service.schedule.date": { $gte: weekStart, $lt: weekEnd },
       };
+      prodScheduleDateMatch = {
+        "product.schedule.date": { $gte: weekStart, $lte: weekEnd },
+      };
     } else if (value === "fortnightly") {
-      const weekStart = new Date(
-        Date.UTC(
-          todayStart.getUTCFullYear(),
-          todayStart.getUTCMonth(),
-          todayStart.getUTCDate(),
-        ),
-      );
-      const weekEnd = new Date(weekStart);
-      weekEnd.setUTCDate(weekEnd.getUTCDate() + 15);
-      matchCondition = { updatedAt: { $gte: weekStart, $lt: weekEnd } };
+      const fortnightEnd = new Date(todayStart); // Exclusive boundary
+      const fortnightStart = new Date(todayStart);
+      fortnightStart.setUTCDate(fortnightStart.getUTCDate() - 14); //
+      matchCondition = {
+        updatedAt: { $gte: fortnightStart, $lt: fortnightEnd },
+      };
       scheduleDateMatch = {
-        "service.schedule.date": { $gte: weekStart, $lt: weekEnd },
+        "service.schedule.date": { $gte: fortnightStart, $lt: fortnightEnd },
+      };
+      prodScheduleDateMatch = {
+        "product.schedule.date": { $gte: fortnightStart, $lte: fortnightEnd },
+      };
+    } else if (value === "monthly") {
+      // 1. Get the year and month of the PREVIOUS month
+      const prevMonthYear =
+        todayStart.getUTCMonth() === 0
+          ? todayStart.getUTCFullYear() - 1
+          : todayStart.getUTCFullYear();
+      const prevMonthIndex =
+        todayStart.getUTCMonth() === 0 ? 11 : todayStart.getUTCMonth() - 1;
+      const monthStart = new Date(Date.UTC(prevMonthYear, prevMonthIndex, 1));
+      const monthEnd = new Date(
+        Date.UTC(todayStart.getUTCFullYear(), todayStart.getUTCMonth(), 1),
+      );
+      matchCondition = {
+        updatedAt: { $gte: monthStart, $lt: monthEnd },
+      };
+      scheduleDateMatch = {
+        "service.schedule.date": { $gte: monthStart, $lt: monthEnd },
+      };
+      prodScheduleDateMatch = {
+        "product.schedule.date": { $gte: monthStart, $lte: monthEnd },
       };
     }
 
@@ -243,7 +254,7 @@ export const dailyServiceReport = async (req, res) => {
         { $match: { client: client._id } },
         { $unwind: "$product" },
         { $unwind: "$product.schedule" },
-        ...(value !== "all" ? [{ $match: scheduleDateMatch }] : []),
+        ...(value !== "all" ? [{ $match: prodScheduleDateMatch }] : []),
         { $group: { _id: "$product.schedule.status", count: { $sum: 1 } } },
         { $project: { _id: 0, label: "$_id", count: 1 } },
       ]);
@@ -253,6 +264,30 @@ export const dailyServiceReport = async (req, res) => {
         const key = s.label?.trim()?.toLowerCase();
         if (key && key in prodStats) prodStats[key] = s.count;
       });
+
+      // --- Complaint status rollup (mirrors adminDashboard) ---
+      const complaints =
+        client.services?.filter((s) => s.type === "Complaint") || [];
+      const complaintData = complaints.reduce(
+        (acc, complaint) => {
+          const { status, reopenCount = 0 } = complaint.complaintDetails || {};
+          if (status === "Open") acc.open++;
+          else if (status === "In Progress") acc.inProgress++;
+          else if (status === "Close Req") acc.closeReq++;
+          else if (status === "Close") acc.closed++;
+          acc.reopenCount += reopenCount;
+          acc.total++;
+          return acc;
+        },
+        {
+          total: 0,
+          open: 0,
+          closeReq: 0,
+          closed: 0,
+          inProgress: 0,
+          reopenCount: 0,
+        },
+      );
 
       if (client.reportUrl) {
         await removeOldQr(client.reportUrl);
@@ -273,15 +308,22 @@ export const dailyServiceReport = async (req, res) => {
 
       // Populate Overview
       if (overviewWorkSheet) {
-        const regRow = overviewWorkSheet.getRow(4);
-        regRow.getCell(1).value = regStats.done;
-        regRow.getCell(2).value = regStats.missed;
-        regRow.getCell(3).value = regStats.pending;
+        const row4 = overviewWorkSheet.getRow(4);
+        row4.getCell(1).value = regStats.done;
+        row4.getCell(2).value = regStats.missed;
+        row4.getCell(3).value = regStats.pending;
 
-        const prRow = overviewWorkSheet.getRow(4);
-        prRow.getCell(12).value = prodStats.done;
-        prRow.getCell(13).value = prodStats.missed;
-        prRow.getCell(14).value = prodStats.pending;
+        //complaints
+        row4.getCell(6).value = complaintData.total;
+        row4.getCell(7).value = complaintData.open;
+        row4.getCell(8).value = complaintData.closed;
+        row4.getCell(9).value = complaintData.reopenCount;
+        row4.getCell(10).value = complaintData.closeReq;
+
+        row4.getCell(12).value = prodStats?.done;
+        row4.getCell(13).value = prodStats?.missed;
+        row4.getCell(14).value = prodStats?.pending;
+        row4.commit();
       }
 
       // Populate Complaints directly without pre-mapping full arrays
@@ -336,13 +378,28 @@ export const dailyServiceReport = async (req, res) => {
           row.getCell(6).value = regs.serviceName;
 
           if (isPestEmployee) {
-            row.getCell(7).value = Array.isArray(regs.image)
-              ? regs.image.join(", ")
+            // Restore Scopes & Calibration for Pest Employee
+            row.getCell(7).value = Array.isArray(regs.scopes)
+              ? regs.scopes
+                  .flatMap((sc) =>
+                    Array.isArray(sc?.consumables)
+                      ? sc.consumables.map(
+                          (con) =>
+                            `${sc.scopeName || ""} -> ${con.consumableName || ""} -> ${con.calibration || 0} -> ${con.usedCalibration || 0} -> ${con.action || ""}`,
+                        )
+                      : [],
+                  )
+                  .join("\n") // Creates a line break after every single consumable iteration
               : "";
+            row.getCell(7).alignment = { wrapText: true };
+            row.getCell(8).value = Array.isArray(regs.image)
+              ? regs.image.join(", ")
+              : regs.image || "";
           } else {
+            // Image URL(s) for Non-Pest Employee
             row.getCell(7).value = Array.isArray(regs.image)
               ? regs.image.join(", ")
-              : "";
+              : regs.image || "";
           }
 
           row.commit();

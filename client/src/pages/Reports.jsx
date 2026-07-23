@@ -50,10 +50,16 @@ const Reports = () => {
       }
     });
   };
+  const handleChangedates = (e) => {
+    const value = e.target.value;
+    setDates({ todays: value })
+
+  }
 
   // if (reportLoading) return 
   return (
-    <div className="flex flex-col justify-center items-center h-96">
+    <div className="flex flex-col gap-5 justify-center items-center h-96">
+
       <div className="">
         <select
           name="date"
@@ -66,9 +72,10 @@ const Reports = () => {
               genrate: false,
             }));
           }}>
-          <option value="all">All</option>
+          <option value="monthly">monthly</option>
           <option value="weekly">Weekly</option>
-          <option value="today">Today</option>
+          <option value="fortnightly">fortnightly</option>
+          <option value="custom">Custom Date</option>
         </select>
 
         {state.value !== "all" ? (
