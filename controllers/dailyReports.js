@@ -1,3 +1,18 @@
+import { populate } from "dotenv";
+import Client from "../models/clientModel.js";
+import Service from "../models/serviceModel.js";
+import exceljs from "exceljs";
+import {
+  dateTimeSplitter,
+  removeOldQr,
+  sendEmail,
+  uploadFile,
+} from "../utils/helperFunction.js";
+import fs from "fs";
+import path from "path";
+import Location from "../models/locationModel.js";
+
+
 export const dailyServiceReport = async (req, res) => {
   // const id = req.user.client ? req.user.client : null;
   // const date = new Date();
