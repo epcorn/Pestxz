@@ -381,7 +381,7 @@ export const newRegularService = async (req, res) => {
       status: "Done",
       completedAt: serviceDate,
     };
-  
+
     await Service.create({
       type: "Regular",
       regularService: [regularService],
@@ -459,12 +459,14 @@ export const getAllAssignedWork = async (req, res) => {
 };
 
 export const casualServices = async (req, res) => {
-  const { service, usedCalibration, action, comment } = req.body;
+  const { service, usedCalibration, action, comment, pestCount } = req.body;
 
   try {
     if (!service) {
       return res.status(400).json({ msg: "Missing services data" });
     }
+    const rawCount = Number(req?.body?.pestCount) || 0;
+    const sanitizedPestCount = Math.min(Math.max(rawCount, 0), 15);
 
     const parsedService = JSON.parse(service);
     const parsedUsedCalibration = usedCalibration
@@ -521,6 +523,7 @@ export const casualServices = async (req, res) => {
           completed: true,
         },
       ],
+      pestCount: sanitizedPestCount,
       user: { name: req.user.name, id: req.user._id },
     });
 

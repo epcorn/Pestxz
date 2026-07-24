@@ -19,6 +19,11 @@ const casualSchema = new mongoose.Schema(
       name: { type: String },
       id: { type: mongoose.Schema.Types.ObjectId },
     },
+    pestCount: {
+      type: Number,
+      default: 0,
+      max: [15, "Count cannot exceed 15"],
+    },
     completedAt: { type: Date },
     type: { type: String, default: "casual" },
     status: { type: String, default: "Raise" },

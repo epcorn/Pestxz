@@ -69,7 +69,7 @@ export const unScheduleReport = async (req, res) => {
           comment: parsedComment?.[sc.scopeId]?.[con.consumableId] || "",
         })),
       }));
-
+      
       target.scopes = scopeReadings;
       target.completed = true;
       target.completedAt = new Date();
