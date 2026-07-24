@@ -152,7 +152,7 @@ function RegularForm({ serviceData, id, type, locationName, setRegular, today })
   const pestOptions = Array.from({ length: 16 }).map((_, i) => ({ label: i, value: i }))
 
   const servicesForToday = isRegular ? serviceData?.filter((ser) =>
-    ser?.schedule?.some((s) => formatShortDate(s.date) === todays && !s.completed)) : serviceData;
+    ser?.schedule?.some((s) => formatShortDate(s.date) === todays && !s.completed && s.status === "Pending")) : serviceData;
 
   if (isRegular && !servicesForToday?.length) {
     const allDates = upComing?.map(u => u[0]?.date).filter(Boolean) || [];
@@ -187,7 +187,7 @@ function RegularForm({ serviceData, id, type, locationName, setRegular, today })
             <form className="space-y-6 bg-green-200">
               {servicesForToday?.map((ser, i) => {
                 const todaySchedule = isRegular ? ser.schedule?.find(
-                  (s) => formatShortDate(s.date) === todays && !s.completed) : null;
+                  (s) => formatShortDate(s.date) === todays && !s.completed && s.status === "Pending") : null;
                 return (
                   <div
                     key={i}
