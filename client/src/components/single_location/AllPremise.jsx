@@ -1,5 +1,5 @@
 import React from 'react';
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { List } from 'react-window';
 import { useAllLocationsQuery } from '../../redux/locationSlice';
 
@@ -43,6 +43,7 @@ function AllPremise({ today }) {
 
     return {
       key: p._id || index,
+      id: p._id,
       index: index + 1,
       location: `${p.floor ? `${p.floor}, ` : ""}${p.location}${p.subLocation ? `, ${p.subLocation}` : ""}`,
       serviceNames: servicesToday.map(s => s.serviceName).join(", "),
