@@ -54,7 +54,7 @@ export const dailyServiceReport = async (req, res) => {
       prodScheduleDateMatch = {
         "product.schedule.date": { $gte: weekStart, $lte: weekEnd },
       };
-      console.log(weekStart,weekEnd)
+      console.log(weekStart, weekEnd);
     } else if (value === "fortnightly") {
       const fortnightEnd = new Date(todayStart); // Exclusive boundary
       const fortnightStart = new Date(todayStart);
@@ -134,6 +134,8 @@ export const dailyServiceReport = async (req, res) => {
       const fileName = `${clientName}_Daily_Service_Report-${sufix}.xlsx`;
       const filePath = `./tmp/reports/${fileName}`;
 
+      const regulars =
+        client.services?.filter((s) => s.type === "Regular") || [];
       // Aggregations
       const serviceStatusAgg = await Location.aggregate([
         { $match: { client: client._id } },
@@ -144,7 +146,31 @@ export const dailyServiceReport = async (req, res) => {
         { $project: { _id: 0, label: "$_id", count: 1 } },
       ]);
 
-      const regStats = { missed: 0, done: 0, pending: 0, location: 0 };
+      const regStats = {
+        missed: 0,
+        done: 0,
+        pending: 0,
+        location: 0,
+        pestCount: [],
+      };
+      const groupedPests = regulars
+        .filter((reg) => reg.regularService?.[0]?.pestCount > 0)
+        .reduce((acc, reg) => {
+          const service = reg.regularService[0];
+          const name = service.serviceName;
+          const count = service.pestCount;
+
+          acc[name] = (acc[name] || 0) + count;
+          return acc;
+        }, {});
+
+      regStats.pestCount = Object.entries(groupedPests).map(
+        ([name, count]) => ({
+          name,
+          count,
+        }),
+      );
+      
       serviceStatusAgg.forEach((s) => {
         const key = s.label?.trim()?.toLowerCase();
         if (key && key in regStats) regStats[key] = s.count;
@@ -224,6 +250,24 @@ export const dailyServiceReport = async (req, res) => {
         row4.getCell(13).value = prodStats?.missed;
         row4.getCell(14).value = prodStats?.pending;
         row4.commit();
+
+        const count = 5;
+        const row5 = overviewWorkSheet.getRow(7);
+
+        // Set a custom row height so wrapped lines actually fit and stay visible
+        row5.height = 30;
+
+        regStats.pestCount.forEach((p, i) => {
+          const cell = row5.getCell(count + i);
+          cell.value = `${p.name} --> ${p.count}`;
+          cell.alignment = {
+            wrapText: true,
+            vertical: "middle", // Vertically centers text if the row is tall
+            horizontal: "center", // Optional: keeps the stats neat
+          };
+        });
+
+        row5.commit();
       }
 
       // Populate Complaints directly without pre-mapping full arrays
@@ -271,15 +315,16 @@ export const dailyServiceReport = async (req, res) => {
           const row = regularWorksheet.getRow(currRow);
           row.getCell(1).value = date;
           row.getCell(2).value = time;
-          row.getCell(3).value = regs.frequency;
-          row.getCell(4).value = regs.userName;
-          row.getCell(5).value =
+          row.getCell(3).value = regs?.frequency;
+          row.getCell(4).value = regs?.pestCount || 0;
+          row.getCell(5).value = regs?.userName;
+          row.getCell(6).value =
             `${loc.floor || ""}, ${loc.location || ""}, ${loc.subLocation || ""}`;
-          row.getCell(6).value = regs.serviceName;
+          row.getCell(7).value = regs.serviceName;
 
           if (isPestEmployee) {
             // Restore Scopes & Calibration for Pest Employee
-            row.getCell(7).value = Array.isArray(regs.scopes)
+            row.getCell(8).value = Array.isArray(regs.scopes)
               ? regs.scopes
                   .flatMap((sc) =>
                     Array.isArray(sc?.consumables)
@@ -291,13 +336,13 @@ export const dailyServiceReport = async (req, res) => {
                   )
                   .join("\n") // Creates a line break after every single consumable iteration
               : "";
-            row.getCell(7).alignment = { wrapText: true };
-            row.getCell(8).value = Array.isArray(regs.image)
+            row.getCell(8).alignment = { wrapText: true };
+            row.getCell(9).value = Array.isArray(regs.image)
               ? regs.image.join(", ")
               : regs.image || "";
           } else {
             // Image URL(s) for Non-Pest Employee
-            row.getCell(7).value = Array.isArray(regs.image)
+            row.getCell(8).value = Array.isArray(regs.image)
               ? regs.image.join(", ")
               : regs.image || "";
           }

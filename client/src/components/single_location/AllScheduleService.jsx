@@ -88,7 +88,7 @@ function AllScheduleService({ data }) {
                       </td>
                       <td className="md:border-r md:border-neutral-300 md:p-3 flex justify-between items-center md:table-cell">
                         <span className="text-xs font-bold uppercase md:hidden text-neutral-700">Pest Count</span>
-                        <span className="font-bold text-sm text-neutral-900">{service?.regularService?.[0]?.pestCount || 0}</span>
+                        <span className="font-bold text-sm text-neutral-900">{service?.regularService?.[0]?.pestCount}</span>
                       </td>
                       {/* DATE */}
                       <td className="md:border-r md:border-neutral-300 md:p-3 flex justify-between items-center md:table-cell text-right md:text-left">
