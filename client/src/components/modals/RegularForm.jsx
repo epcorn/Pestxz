@@ -178,7 +178,7 @@ function RegularForm({ serviceData, id, type, locationName, setRegular, today })
     <div className={`${isRegular ? "" : "fixed inset-0 z-90 w-full h-dvh grid place-items-center bg-black/50"}`}>
       <div className={`w-full max-h-[80dvh] bg-gray-200 overflow-auto outline-4 outline-gray-800 rounded-lg ${isRegular ? "w-full" : "max-w-3xl"}`}>
         <div className="">
-          <div className="flex sticky top-0 bg-white border-b-2 justify-between items-center z-10 p-3">
+          <div className="flex sticky top-0 bg-white border-b-2 justify-between items-center z-1 p-3">
             <h2 className="text-lg md:text-xl font-bold">{isRegular ? "Regular Service Form" : isUnschedule ? "Unscheduled Service" : "Casual Service Form"}</h2>
             <p className="leading-none outline-2 text-red-600 rounded-full cursor-pointer w-6 h-6 text-center content-center font-bold " onClick={() => dispatch(toggleModal({ name: type, status: false }))}>X</p>
           </div>
