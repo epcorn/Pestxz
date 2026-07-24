@@ -121,10 +121,10 @@ const Sidebar = () => {
             <div className="flex flex-col lg:pl-16 w-full overflow-hidden">
               {client?.name ? (
                 <>
-                  <strong className="text-xl md:text-2xl text-slate-800 leading-tight">
+                  <strong className="text-xl md:text-2xl text-slate-800 leading-tight line-clamp-1">
                     {client?.name}
                   </strong>
-                  <p className="text-xs text-gray-400">
+                  <p className="text-xs text-gray-400 line-clamp-1">
                     {client.address}
                   </p>
                   <div className="w-full pt-1 hidden lg:block">

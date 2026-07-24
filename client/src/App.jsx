@@ -1,6 +1,7 @@
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import {
+  Navigate,
   Outlet,
   Route,
   RouterProvider,
@@ -13,12 +14,13 @@ import { useEffect, Suspense } from "react";
 import { socket } from "./socket";
 import NotificationManager from "./components/NotificationManager";
 import React from "react";
+import Dashboard from './pages/Dashboard'
 
 // 1. Lazy load ALL page components individually
 const Landing = React.lazy(() => import("./pages/Landing"));
 const MainLayout = React.lazy(() => import("./pages/MainLayout"));
 const QrScanner = React.lazy(() => import("./components/dashboard/QrScanner"));
-const Dashboard = React.lazy(() => import("./pages/Dashboard"));
+// const Dashboard = React.lazy(() => import("./pages/Dashboard"));
 const Complaints = React.lazy(() => import("./pages/Complaints"));
 const SingleLocation = React.lazy(() => import("./pages/SingleLocation"));
 const SingleComplaint = React.lazy(() => import("./pages/SingleComplaint"));
@@ -70,6 +72,7 @@ const Router = createBrowserRouter(
           <Route path="dashboard/locations" element={<Locations />} />
         </Route>
       </Route>
+      <Route path="*" element={<Navigate to={'/'} replace/>}/>
     </Route>
   )
 );
