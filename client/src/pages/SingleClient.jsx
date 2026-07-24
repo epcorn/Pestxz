@@ -339,7 +339,7 @@ const SingleClient = () => {
                     Floor
                   </th>
                   <th className="font-bold text-left border border-neutral-300 px-4">
-                    Location 
+                    Location
                   </th>
                   <th className="font-bold text-center border border-neutral-300 w-32 px-3">
                     Services / [Products]
@@ -416,7 +416,7 @@ const SingleClient = () => {
 
                     <td className="px-3 border border-neutral-200 text-center">
                       <div>
-                        <GetSchedulesForLocation service={location?.service} />
+                        <GetSchedulesForLocation service={location?.service} date={date} />
                       </div>
                     </td>
 
@@ -682,12 +682,13 @@ function ProductQrModal({ data, dispatch, toggleModal, makeQrDOCX, modalKey, cli
 
 export function GetSchedulesForLocation({ service, date = new Date() }) {
   const dates = service?.flatMap(ser => ser?.schedule?.filter(sch => sch?.date?.split("T")[0] === new Date(date).toISOString().split("T")[0]))
-
   const completed = dates?.filter(d => d?.completed && d.status === "Done")
+  const missed = dates.filter(d => d.status === "Missed")
 
+  console.log(missed.length)
   return (
     <>
-      <div>{completed.length}/{dates?.length}</div>
+      <div>{completed.length}/{dates?.length} <span className="text-red-600 font-semibold">{missed.length > 0 ? missed.length : ""}</span></div>
     </>
   )
 }
