@@ -36,6 +36,7 @@ function AllPremise({ today }) {
     const completedCount = todaySchedules?.filter(sc => sc?.completed)?.length;
     const allDone = totalCount > 0 && completedCount === totalCount;
     const partialDone = completedCount > 0 && completedCount < totalCount;
+    const missed = todaySchedules.filter(m => m.status === "Missed")
 
     let rowBg = "";
     if (allDone) rowBg = "bg-green-300 font-semibold text-green-800";
@@ -51,6 +52,7 @@ function AllPremise({ today }) {
       totalCount,
       allDone,
       partialDone,
+      missed: missed && missed.length,
       rowBg,
     };
   });
@@ -58,6 +60,7 @@ function AllPremise({ today }) {
   // Row renderer for react-window v2 — receives style + index directly
   const Row = ({ index, style, rows }) => {
     const r = rows[index];
+
     return (
       <Link to={`/location/${r.id}`} replace>
         <div
@@ -76,10 +79,12 @@ function AllPremise({ today }) {
               <span className="text-xs text-slate-500 font-semibold">
                 {r.completedCount} / {r.totalCount} services
               </span>
+              {r.missed !== 0 &&
+                < span className='text-sm text-red-600'>Missed {r.missed}</span>}
             </div>
           </div>
         </div>
-      </Link>
+      </Link >
     );
   };
 
