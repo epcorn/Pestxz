@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { dateFormat } from "../utils/helperFunctions";
 import { useGetSingleUserQuery } from "../redux/userSlice";
 import { useState, useEffect, useRef } from "react";
@@ -23,6 +23,7 @@ const ComplaintTable = ({ data, user, toggle }) => {
   const { data: DBUser } = useGetSingleUserQuery(user?._id, { skip: !user?._id });
   const isRegular = toggle === "Regular";
   const portalRef = useRef(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const handleOutsideClick = (event) => {
@@ -43,9 +44,9 @@ const ComplaintTable = ({ data, user, toggle }) => {
 
         {/* 2. Added flex flex-col to thead */}
         <thead className="flex flex-col w-full sticky top-0 z-10">
-          
+
           <tr className="bg-neutral-600 text-white text-sm font-bold uppercase tracking-wider flex w-full">
-                        
+
             <th className="pl-2 py-3 text-center flex-1">Number</th>
             {!isRegular && <th className="pl-2 py-3 text-left flex-1">Assigned To</th>}
             <th className="pl-2 py-3 text-left flex-1">Date</th>
@@ -68,13 +69,13 @@ const ComplaintTable = ({ data, user, toggle }) => {
 
             return (
               /* 6. Changed tr to use flex layout matching the thead dimensions */
-              <tr key={complaint?._id} className={`flex w-full hover:bg-neutral-50 transition-colors divide-x divide-gray-400 items-center text-xs md:text-sm`}>
+              <tr onClick={navigate(rowLink)} key={complaint?._id} className={`flex w-full hover:bg-neutral-50 transition-colors divide-x divide-gray-400 items-center text-xs md:text-sm`}>
 
                 {/* Complaint Number */}
                 <td className="pl-2 py-4 text-center flex-1">
-                  <Link to={rowLink} className="font-bold text-blue-600 hover:text-blue-800 transition-colors">
+                  <div className="font-bold text-blue-600 hover:text-blue-800 transition-colors">
                     {complaint.complaintDetails?.number || (i + 2)}
-                  </Link>
+                  </div>
                 </td>
 
                 {/* Assigned To */}
@@ -121,14 +122,14 @@ const ComplaintTable = ({ data, user, toggle }) => {
 
                 {/* Date */}
                 <td className="pl-2 py-4 flex-1">
-                  <Link to={rowLink} className="text-sm text-gray-600 hover:text-gray-900">
+                  <div className="text-sm text-gray-600 hover:text-gray-900">
                     {dateFormat(complaint.createdAt)}
-                  </Link>
+                  </div>
                 </td>
 
                 {/* Location / Client / Raised By */}
                 <td className="pl-2 py-4 flex-1">
-                  <Link to={rowLink} className="text-sm font-medium hover:opacity-85">
+                  <div className="text-sm font-medium hover:opacity-85">
                     {!isRegular ? (
                       user?.type === "PestEmployee" ? (
                         <span className="text-blue-900 whitespace-break-spaces">{complaint?.complaintDetails.clientName || "cle"}</span>
@@ -140,7 +141,7 @@ const ComplaintTable = ({ data, user, toggle }) => {
                         {`${complaint.location?.floor || ""}, ${complaint.location?.location || ""}`}
                       </span>
                     )}
-                  </Link>
+                  </div>
                 </td>
 
                 {/* Service */}
@@ -155,13 +156,13 @@ const ComplaintTable = ({ data, user, toggle }) => {
                 {/* Status / Serviced By */}
                 <td className="pl-2 py-4 text-center flex-1">
                   {isRegular ? (
-                    <Link to={rowLink} className="whitespace-nowrap text-xs font-semibold border border-gray-300 px-2 py-1 rounded-lg text-gray-600 bg-gray-50">
+                    <div className="whitespace-nowrap text-xs font-semibold border border-gray-300 px-2 py-1 rounded-lg text-gray-600 bg-gray-50">
                       {complaint.regularService?.[0]?.userName}
-                    </Link>
+                    </div>
                   ) : (
-                    <Link to={rowLink} className={`px-2 py-1 text-xs font-bold rounded-lg uppercase tracking-wide status-pill ${statusStyle[complaint.complaintDetails.status]} `}>
+                    <div className={`px-2 py-1 text-xs font-bold rounded-lg uppercase tracking-wide status-pill ${statusStyle[complaint.complaintDetails.status]} `}>
                       {complaint?.complaintDetails?.status}
-                    </Link>
+                    </div>
                   )}
                 </td>
               </tr>
