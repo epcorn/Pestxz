@@ -31,8 +31,9 @@ function CasualLists({ work = [] }) {
             <th className="p-3 font-bold text-gray-700">Index</th>
             <th className="p-3 font-bold text-gray-700">Date</th>
             <th className="p-3 font-bold text-gray-700">Completed By</th>
+            <th className="p-3 font-bold text-gray-700">Pest Count</th>
             <th className="p-3 font-bold text-gray-700">Service</th>
-            <th className="p-3 font-bold text-gray-700 max-w-3xs min-w-3xs">Image</th>
+            <th className="p-3 max-w-28 font-bold text-gray-700">Image</th>
             <th className="p-3 font-bold text-gray-700">Status</th>
           </tr>
         </thead>
@@ -40,7 +41,7 @@ function CasualLists({ work = [] }) {
           {work.map((w, i) => (
             <React.Fragment key={w._id}>
               <tr
-                className={`border-b border-b-gray-400 hover:bg-amber-100 transition-all text-xs md:text-sm *:not-last:border-r cursor-pointer ${expandedRowId === w._id ? "bg-amber-200" : ""}`}
+                className={`border-b border-b-gray-400 hover:bg-amber-100 transition-all text-xs md:text-sm *:not-last:border-r cursor-pointer ${expandedRowId === w._id ? "bg-amber-50" : ""}`}
                 onClick={() => handleRowClick(w._id)}
               >
                 <td className="p-3 text-gray-900">{i + 1}</td>
@@ -50,15 +51,21 @@ function CasualLists({ work = [] }) {
                 <td className="p-3 text-gray-900">
                   {w.user?.name || 'N/A'}
                 </td>
+                <td className="p-3 text-gray-900">
+                  {w?.pestCount || 0}
+                </td>
                 <td className="p-3 text-gray-900">{w.service.map(ser => ser.serviceName || "").join(", ")}</td>
                 <td className="p-3 text-gray-900">
-                  <Button
-                    label={`Show (${w.image?.length || 0})`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      dispatch(toggleModal({ name: `image_${w._id}`, status: !isModalOpen[`image_${w._id}`] }));
-                    }}
-                  />
+
+                  {w.image.map(img => (
+                    <img src={img} className="h-16" alt="" onMouseEnter={() =>
+                      dispatch(
+                        toggleModal({
+                          name: `image_${w._id}`,
+                          status: true,
+                        }),
+                      )} />
+                  ))}
                   {isModalOpen[`image_${w._id}`] && <ImagesModal image={w.image} name={`image_${w._id}`} />}
                 </td>
                 <td className="p-3 text-gray-900">{w?.status || "Raised"}</td>
@@ -66,7 +73,7 @@ function CasualLists({ work = [] }) {
 
               {/* Correct HTML Table Expansion */}
               {expandedRowId === w._id && (
-                <tr className="bg-amber-100 border-b border-b-gray-400">
+                <tr className="bg-gray-300 border-b border-b-gray-400">
                   <td colSpan={6} className="p-4">
                     {w.service.map(ser =>
                       <Expand key={ser._id} data={ser} user={user} dispatch={dispatch} isModalOpen={isModalOpen} toggleModal={toggleModal} />

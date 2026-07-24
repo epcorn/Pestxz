@@ -151,7 +151,7 @@ function SingleUnschedule() {
                 onClick={() => dispatch(toggleModal({ name: "unscheduled", status: true }))}
               />
               {isModalOpen.unscheduled && (
-                <RegularForm type="unscheduled" id={unscheduled?._id} serviceData={unscheduled?.service} />
+                <RegularForm type="unscheduled" id={unscheduled?._id} serviceData={unscheduled?.service} today={new Date()} />
               )}
             </div>
           )}
