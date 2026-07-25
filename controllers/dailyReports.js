@@ -1,16 +1,27 @@
-import { populate } from "dotenv";
 import Client from "../models/clientModel.js";
-import Service from "../models/serviceModel.js";
 import exceljs from "exceljs";
 import {
+  dateFormat,
   dateTimeSplitter,
   removeOldQr,
   sendEmail,
   uploadFile,
 } from "../utils/helperFunction.js";
-import fs from "fs";
+import fs from "fs/promises";
+import fsSync from "fs";
 import path from "path";
 import Location from "../models/locationModel.js";
+
+const PEST_MAP = {
+  Ratrid: "Rodein",
+  GreenShield: "Cocroaches",
+  Greenshield: "Cocroaches",
+  Mosquit: "Mosquitoes",
+  Flyban: "Fly",
+  Termite: "Termite",
+  LizzPro: "Lizard",
+  Antron: "Ant",
+};
 
 export const dailyServiceReport = async (req, res) => {
   try {
@@ -18,9 +29,12 @@ export const dailyServiceReport = async (req, res) => {
     const { today } = req.query;
 
     const todayStart = today ? new Date(today) : new Date();
-    todayStart?.setUTCHours(0, 0, 0, 0);
+    todayStart.setUTCHours(0, 0, 0, 0);
     const todayEnd = new Date(today);
     todayEnd.setUTCHours(23, 59, 59, 999);
+
+    let startDate = "";
+    let endDate = "";
 
     const isPestEmployee = req.user.type === "PestEmployee";
     const clientQuery =
@@ -32,9 +46,7 @@ export const dailyServiceReport = async (req, res) => {
     let prodScheduleDateMatch = {};
 
     if (value === "custom") {
-      matchCondition = {
-        updatedAt: { $gte: todayStart, $lte: todayEnd },
-      };
+      matchCondition = { updatedAt: { $gte: todayStart, $lte: todayEnd } };
       scheduleDateMatch = {
         "service.schedule.date": { $gte: todayStart, $lte: todayEnd },
       };
@@ -45,20 +57,19 @@ export const dailyServiceReport = async (req, res) => {
       const weekEnd = new Date(todayStart);
       const weekStart = new Date(todayStart);
       weekStart.setUTCDate(weekStart.getUTCDate() - 7);
-      matchCondition = {
-        updatedAt: { $gte: weekStart, $lt: weekEnd },
-      };
+      matchCondition = { updatedAt: { $gte: weekStart, $lt: weekEnd } };
       scheduleDateMatch = {
         "service.schedule.date": { $gte: weekStart, $lt: weekEnd },
       };
       prodScheduleDateMatch = {
-        "product.schedule.date": { $gte: weekStart, $lte: weekEnd },
+        "product.schedule.date": { $gte: weekStart, $lt: weekEnd },
       };
-      console.log(weekStart, weekEnd);
+      startDate = weekStart;
+      endDate = weekEnd;
     } else if (value === "fortnightly") {
-      const fortnightEnd = new Date(todayStart); // Exclusive boundary
+      const fortnightEnd = new Date(todayStart);
       const fortnightStart = new Date(todayStart);
-      fortnightStart.setUTCDate(fortnightStart.getUTCDate() - 14); //
+      fortnightStart.setUTCDate(fortnightStart.getUTCDate() - 14);
       matchCondition = {
         updatedAt: { $gte: fortnightStart, $lt: fortnightEnd },
       };
@@ -66,10 +77,11 @@ export const dailyServiceReport = async (req, res) => {
         "service.schedule.date": { $gte: fortnightStart, $lt: fortnightEnd },
       };
       prodScheduleDateMatch = {
-        "product.schedule.date": { $gte: fortnightStart, $lte: fortnightEnd },
+        "product.schedule.date": { $gte: fortnightStart, $lt: fortnightEnd },
       };
+      startDate = fortnightStart;
+      endDate = fortnightEnd;
     } else if (value === "monthly") {
-      // 1. Get the year and month of the PREVIOUS month
       const prevMonthYear =
         todayStart.getUTCMonth() === 0
           ? todayStart.getUTCFullYear() - 1
@@ -80,16 +92,67 @@ export const dailyServiceReport = async (req, res) => {
       const monthEnd = new Date(
         Date.UTC(todayStart.getUTCFullYear(), todayStart.getUTCMonth(), 1),
       );
-      matchCondition = {
-        updatedAt: { $gte: monthStart, $lt: monthEnd },
-      };
+      matchCondition = { updatedAt: { $gte: monthStart, $lt: monthEnd } };
       scheduleDateMatch = {
         "service.schedule.date": { $gte: monthStart, $lt: monthEnd },
       };
       prodScheduleDateMatch = {
-        "product.schedule.date": { $gte: monthStart, $lte: monthEnd },
+        "product.schedule.date": { $gte: monthStart, $lt: monthEnd },
       };
+      startDate = monthStart;
+      endDate = monthEnd;
     }
+
+    // 1. PRE-LOAD EXCEL TEMPLATE IN MEMORY (DO NOT READ DISK PER CLIENT)
+    const templatePath = isPestEmployee
+      ? "./tmp/dailyReport_Pest.xlsx"
+      : "./tmp/dailyReport_Client.xlsx";
+    const templateBuffer = await fs.readFile(templatePath);
+
+    // 2. BATCH AGGREGATIONS FOR ALL CLIENTS AT ONCE (AVOID N+1 QUERIES)
+    const [allServiceStats, allProdStats] = await Promise.all([
+      Location.aggregate([
+        { $unwind: "$service" },
+        { $unwind: "$service.schedule" },
+        ...(value !== "all" ? [{ $match: scheduleDateMatch }] : []),
+        {
+          $group: {
+            _id: { client: "$client", status: "$service.schedule.status" },
+            count: { $sum: 1 },
+          },
+        },
+      ]),
+      Location.aggregate([
+        { $unwind: "$product" },
+        { $unwind: "$product.schedule" },
+        ...(value !== "all" ? [{ $match: prodScheduleDateMatch }] : []),
+        {
+          $group: {
+            _id: { client: "$client", status: "$product.schedule.status" },
+            count: { $sum: 1 },
+          },
+        },
+      ]),
+    ]);
+
+    // Map aggregations by client ID for fast O(1) lookup
+    const serviceStatsMap = new Map();
+    allServiceStats.forEach((s) => {
+      const clientId = s._id.client?.toString();
+      if (!clientId) return;
+      if (!serviceStatsMap.has(clientId)) serviceStatsMap.set(clientId, {});
+      const key = s._id.status?.trim()?.toLowerCase();
+      if (key) serviceStatsMap.get(clientId)[key] = s.count;
+    });
+
+    const prodStatsMap = new Map();
+    allProdStats.forEach((s) => {
+      const clientId = s._id.client?.toString();
+      if (!clientId) return;
+      if (!prodStatsMap.has(clientId)) prodStatsMap.set(clientId, {});
+      const key = s._id.status?.trim()?.toLowerCase();
+      if (key) prodStatsMap.get(clientId)[key] = s.count;
+    });
 
     const populateOptions = [
       {
@@ -114,8 +177,7 @@ export const dailyServiceReport = async (req, res) => {
         populate: { path: "location" },
       },
     ];
-
-    // Use .cursor() & .lean() so Mongo yields one document at a time
+    console.log("finding clients ...");
     const clientCursor = Client.find(clientQuery)
       .select(selectFields)
       .populate(populateOptions)
@@ -125,75 +187,80 @@ export const dailyServiceReport = async (req, res) => {
     const sufix =
       value === "all" ? "All" : todayStart.toISOString().split("T")[0];
     const generatedFiles = [];
+    const dir = path.resolve("./tmp/reports");
 
-    const dir = "./tmp/reports";
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    if (!fsSync.existsSync(dir)) {
+      await fs.mkdir(dir, { recursive: true });
+    }
 
     for await (let client of clientCursor) {
-      const clientName = client.name.replace(/[\s\/]+/g, "_");
+      const clientIdStr = client._id.toString();
+      const clientName = client.name
+        .replace(/\./g, "")
+        .replace(/[\\/:\*\?"<>\|]/g, "")
+        .trim()
+        .replace(/\s+/g, "_");
       const fileName = `${clientName}_Daily_Service_Report-${sufix}.xlsx`;
-      const filePath = `./tmp/reports/${fileName}`;
+      const filePath = path.join(dir, fileName);
 
-      const regulars =
-        client.services?.filter((s) => s.type === "Regular") || [];
-      // Aggregations
-      const serviceStatusAgg = await Location.aggregate([
-        { $match: { client: client._id } },
-        { $unwind: "$service" },
-        { $unwind: "$service.schedule" },
-        ...(value !== "all" ? [{ $match: scheduleDateMatch }] : []),
-        { $group: { _id: "$service.schedule.status", count: { $sum: 1 } } },
-        { $project: { _id: 0, label: "$_id", count: 1 } },
-      ]);
+      // SINGLE PASS grouping for services by type
+      const regulars = [];
+      const complaints = [];
+      (client.services || []).forEach((s) => {
+        if (s.type === "Regular") regulars.push(s);
+        else if (s.type === "Complaint") complaints.push(s);
+      });
+
+      // Get pre-aggregated stats for this client
+      const clientServiceStats = serviceStatsMap.get(clientIdStr) || {};
+      const clientProdStats = prodStatsMap.get(clientIdStr) || {};
 
       const regStats = {
-        missed: 0,
-        done: 0,
-        pending: 0,
+        missed: clientServiceStats.missed || 0,
+        done: clientServiceStats.done || 0,
+        pending: clientServiceStats.pending || 0,
         location: 0,
         pestCount: [],
       };
-      const groupedPests = regulars
-        .filter((reg) => reg.regularService?.[0]?.pestCount > 0)
-        .reduce((acc, reg) => {
-          const service = reg.regularService[0];
-          const name = service.serviceName;
-          const count = service.pestCount;
 
-          acc[name] = (acc[name] || 0) + count;
-          return acc;
-        }, {});
+      const prodStats = {
+        missed: clientProdStats.missed || 0,
+        done: clientProdStats.done || 0,
+        pending: clientProdStats.pending || 0,
+        location: 0,
+      };
 
-      regStats.pestCount = Object.entries(groupedPests).map(
-        ([name, count]) => ({
-          name,
-          count,
-        }),
-      );
-      
-      serviceStatusAgg.forEach((s) => {
-        const key = s.label?.trim()?.toLowerCase();
-        if (key && key in regStats) regStats[key] = s.count;
-      });
+      // Group pest counts
+      const groupedPests = {};
+      for (let i = 0; i < regulars.length; i++) {
+        const reg = regulars[i];
+        const service = reg.regularService?.[0];
+        if (service && service.pestCount > 0) {
+          const {
+            serviceName: name,
+            pestCount: count,
+            serviceDate: date,
+          } = service;
+          const locationId = reg?.location?._id;
+          const compositeName = `${name}_${locationId}`;
 
-      const prodStatusAgg = await Location.aggregate([
-        { $match: { client: client._id } },
-        { $unwind: "$product" },
-        { $unwind: "$product.schedule" },
-        ...(value !== "all" ? [{ $match: prodScheduleDateMatch }] : []),
-        { $group: { _id: "$product.schedule.status", count: { $sum: 1 } } },
-        { $project: { _id: 0, label: "$_id", count: 1 } },
-      ]);
+          if (!groupedPests[compositeName]) {
+            groupedPests[compositeName] = {
+              name,
+              count: 0,
+              date,
+              floor: reg?.location?.floor,
+              locationId,
+              location: reg?.location?.location,
+              subLocation: reg?.location?.subLocation,
+            };
+          }
+          groupedPests[compositeName].count += count;
+        }
+      }
+      regStats.pestCount = Object.values(groupedPests);
 
-      const prodStats = { missed: 0, done: 0, pending: 0, location: 0 };
-      prodStatusAgg.forEach((s) => {
-        const key = s.label?.trim()?.toLowerCase();
-        if (key && key in prodStats) prodStats[key] = s.count;
-      });
-
-      // --- Complaint status rollup (mirrors adminDashboard) ---
-      const complaints =
-        client.services?.filter((s) => s.type === "Complaint") || [];
+      // Complaint rollup
       const complaintData = complaints.reduce(
         (acc, complaint) => {
           const { status, reopenCount = 0 } = complaint.complaintDetails || {};
@@ -219,71 +286,82 @@ export const dailyServiceReport = async (req, res) => {
         await removeOldQr(client.reportUrl);
       }
 
-      // ✅ LOAD EXISTING TEMPLATE FILE
+      // LOAD WORKBOOK FROM PRE-LOADED BUFFER
       const workbook = new exceljs.Workbook();
-      const templatePath = isPestEmployee
-        ? "./tmp/dailyReport_Pest.xlsx"
-        : "./tmp/dailyReport_Client.xlsx";
-
-      await workbook.xlsx.readFile(templatePath);
+      await workbook.xlsx.load(templateBuffer);
 
       const overviewWorkSheet = workbook.getWorksheet("Overview");
       const regularWorksheet = workbook.getWorksheet("Regular service");
       const complaintWorksheet = workbook.getWorksheet("Complaints");
       const unschWorksheet = workbook.getWorksheet("Unscheduled-Work");
-
+      console.log("writing to overview sheet ...");
       // Populate Overview
       if (overviewWorkSheet) {
-        const row4 = overviewWorkSheet.getRow(4);
-        row4.getCell(1).value = regStats.done;
-        row4.getCell(2).value = regStats.missed;
-        row4.getCell(3).value = regStats.pending;
+        const row1 = overviewWorkSheet.getRow(1);
+        row1.getCell(3).value =
+          `${value}-Report - From ${dateFormat(startDate).withoutTime}, To ${dateFormat(endDate).withoutTime}`;
 
-        //complaints
-        row4.getCell(6).value = complaintData.total;
-        row4.getCell(7).value = complaintData.open;
-        row4.getCell(8).value = complaintData.closed;
-        row4.getCell(9).value = complaintData.reopenCount;
-        row4.getCell(10).value = complaintData.closeReq;
+        const row2 = overviewWorkSheet.getRow(6);
+        row2.getCell(1).value = regStats.done;
+        row2.getCell(2).value = regStats.missed;
+        row2.getCell(3).value = regStats.pending;
 
-        row4.getCell(12).value = prodStats?.done;
-        row4.getCell(13).value = prodStats?.missed;
-        row4.getCell(14).value = prodStats?.pending;
+        const row3 = overviewWorkSheet.getRow(14);
+        row3.getCell(1).value = complaintData.total;
+        row3.getCell(2).value = complaintData.open;
+        row3.getCell(3).value = complaintData.closed;
+        row3.getCell(4).value = complaintData.reopenCount;
+        row3.getCell(5).value = complaintData.closeReq;
+
+        const row4 = overviewWorkSheet.getRow(10);
+        row4.getCell(1).value = prodStats.done;
+        row4.getCell(2).value = prodStats.missed;
+        row4.getCell(3).value = prodStats.pending;
         row4.commit();
 
-        const count = 5;
-        const row5 = overviewWorkSheet.getRow(7);
+        const startColumn = 7;
+        let currentRowNum = 6;
 
-        // Set a custom row height so wrapped lines actually fit and stay visible
-        row5.height = 30;
+        regStats.pestCount.forEach((p) => {
+          const currentRow = overviewWorkSheet.getRow(currentRowNum);
+          currentRow.height = 30;
 
-        regStats.pestCount.forEach((p, i) => {
-          const cell = row5.getCell(count + i);
-          cell.value = `${p.name} --> ${p.count}`;
-          cell.alignment = {
-            wrapText: true,
-            vertical: "middle", // Vertically centers text if the row is tall
-            horizontal: "center", // Optional: keeps the stats neat
-          };
+          const rowData = [
+            dateFormat(p.date).withTime || "",
+            p.floor || "",
+            p.location || "",
+            p.subLocation || "",
+            PEST_MAP[p.name] || "",
+            p.count || 0,
+          ];
+
+          rowData.forEach((val, idx) => {
+            const cell = currentRow.getCell(startColumn + idx);
+            cell.value = val;
+            cell.alignment = {
+              wrapText: true,
+              vertical: "middle",
+              horizontal: "center",
+            };
+          });
+
+          currentRow.commit();
+          currentRowNum++;
         });
-
-        row5.commit();
       }
 
-      // Populate Complaints directly without pre-mapping full arrays
+      // Populate Complaints
       if (complaintWorksheet) {
         let compRow = 4;
-        const complaints =
-          client.services?.filter((s) => s.type === "Complaint") || [];
-
-        for (const com of complaints) {
+        for (let i = 0; i < complaints.length; i++) {
+          const com = complaints[i];
           const comp = com.complaintDetails || {};
           const updt = com.complaintUpdate?.at(-1) || {};
           const loc = com.location || {};
 
           const row = complaintWorksheet.getRow(compRow);
           row.getCell(1).value = updt.date
-            ? new Date(updt.date).toLocaleString()
+            ? dateFormat(updt.date).withoutTime
             : "N/A";
           row.getCell(2).value = comp.number || "N/A";
           row.getCell(3).value = Array.isArray(comp.service)
@@ -300,31 +378,31 @@ export const dailyServiceReport = async (req, res) => {
         }
       }
 
-      // Populate Regular Services directly
+      // Populate Regular Services
       if (regularWorksheet) {
+        console.log("writing to regular sheet ...");
         let currRow = 4;
-        const regulars =
-          client.services?.filter((s) => s.type === "Regular") || [];
-
-        for (const reg of regulars) {
+        for (let i = 0; i < regulars.length; i++) {
+          const reg = regulars[i];
           const regs = reg.regularService?.[0];
           if (!regs) continue;
           const loc = reg.location || {};
-          const { date, time } = dateTimeSplitter(regs.serviceDate);
+          const data = { reg, regs, loc };
 
           const row = regularWorksheet.getRow(currRow);
-          row.getCell(1).value = date;
-          row.getCell(2).value = time;
+          row.height = 30;
+          row.getCell(1).value = dateFormat(regs.serviceDate).withoutTime;
+          row.getCell(2).value = dateFormat(regs.serviceDate).onlyTime;
           row.getCell(3).value = regs?.frequency;
           row.getCell(4).value = regs?.pestCount || 0;
           row.getCell(5).value = regs?.userName;
-          row.getCell(6).value =
-            `${loc.floor || ""}, ${loc.location || ""}, ${loc.subLocation || ""}`;
-          row.getCell(7).value = regs.serviceName;
+          row.getCell(6).value = loc?.floor;
+          row.getCell(7).value = loc?.location;
+          row.getCell(8).value = loc?.subLocation;
+          row.getCell(9).value = regs?.serviceName;
 
           if (isPestEmployee) {
-            // Restore Scopes & Calibration for Pest Employee
-            row.getCell(8).value = Array.isArray(regs.scopes)
+            row.getCell(10).value = Array.isArray(regs?.scopes)
               ? regs.scopes
                   .flatMap((sc) =>
                     Array.isArray(sc?.consumables)
@@ -334,17 +412,16 @@ export const dailyServiceReport = async (req, res) => {
                         )
                       : [],
                   )
-                  .join("\n") // Creates a line break after every single consumable iteration
+                  .join("\n")
               : "";
-            row.getCell(8).alignment = { wrapText: true };
-            row.getCell(9).value = Array.isArray(regs.image)
-              ? regs.image.join(", ")
-              : regs.image || "";
+            row.getCell(10).alignment = { wrapText: true };
+            row.getCell(11).value = Array.isArray(regs?.image)
+              ? regs?.image.join(", ")
+              : regs?.image || "";
           } else {
-            // Image URL(s) for Non-Pest Employee
-            row.getCell(8).value = Array.isArray(regs.image)
-              ? regs.image.join(", ")
-              : regs.image || "";
+            row.getCell(10).value = Array.isArray(regs?.image)
+              ? regs?.image.join(", ")
+              : regs?.image || "";
           }
 
           row.commit();
@@ -355,14 +432,16 @@ export const dailyServiceReport = async (req, res) => {
       // Populate Unscheduled Work
       if (unschWorksheet) {
         let unschCount = 4;
-        for (const unsc of client.unschedules || []) {
+        const unschedules = client.unschedules || [];
+        for (let i = 0; i < unschedules.length; i++) {
+          const unsc = unschedules[i];
           const loc = unsc.location || {};
           const row = unschWorksheet.getRow(unschCount);
           row.getCell(1).value = unsc.createdAt
-            ? new Date(unsc.createdAt).toLocaleString()
+            ? dateFormat(unsc.createdAt).withoutTime
             : "";
           row.getCell(2).value = unsc.updatedAt
-            ? new Date(unsc.updatedAt).toLocaleString()
+            ? dateFormat(unsc.updatedAt).withTime
             : "";
           row.getCell(3).value =
             `${loc.floor || ""}, ${loc.location || ""}, ${loc.subLocation || ""}`;
@@ -376,23 +455,28 @@ export const dailyServiceReport = async (req, res) => {
         }
       }
 
-      // Save output report file
+      // Save file
+      console.log("writing to excel ...");
       await workbook.xlsx.writeFile(filePath);
 
+      console.log("uploading excel ...");
       const uploadURL = await uploadFile({ filePath });
       if (uploadURL) {
         await Client.findByIdAndUpdate(client._id, { reportURL: uploadURL });
         generatedFiles.push({ client: client.name, url: uploadURL });
       }
 
-      // Clean up generated file on disk
-      if (fs.existsSync(filePath)) {
-        fs.unlinkSync(filePath);
-      }
-
-      // Force garbage collector if exposed
-      if (global.gc) {
-        global.gc();
+      // Async cleanup
+      console.log("cleaning excel ...");
+      if (fsSync.existsSync(filePath)) {
+        try {
+          await fs.unlink(filePath);
+        } catch (err) {
+          // 2. Ignore ENOENT (file already deleted/moved by uploadFile or OneDrive)
+          if (err.code !== "ENOENT") {
+            console.error("Unexpected cleanup error:", err);
+          }
+        }
       }
     }
 

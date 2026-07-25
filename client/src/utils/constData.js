@@ -95,3 +95,14 @@ export const productCalibrationVal2 = {
   size: "Replaced",
   Size: "Replaced",
 };
+
+export const PEST_MAP = {
+  Ratrid: "Rodein",
+  GreenShield: "Cocroaches",
+  Greenshield: "Cocroaches",
+  Mosquit: "Mosquitoes",
+  Flyban: "Fly",
+  Termite: "Termite",
+  LizzPro: "Lizard",
+  Antron: "Ant",
+};

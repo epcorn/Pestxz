@@ -100,9 +100,8 @@ const ComplaintModal = ({ locationId, mode = "create" }) => {
     return clientLocations.locations
       .filter((item) => !floor || item.floor === floor)
       .map((item) => ({
-        label: `${item.location}${
-          item.subLocation ? `, ${item.subLocation}` : ""
-        }`,
+        label: `${item.location}${item.subLocation ? `, ${item.subLocation}` : ""
+          }`,
         value: item._id,
       }));
   }, [clientLocations, floor]);
@@ -118,9 +117,8 @@ const ComplaintModal = ({ locationId, mode = "create" }) => {
     setFloor(currentLocation.floor);
 
     setValue("location", {
-      label: `${currentLocation.location}${
-        currentLocation.subLocation ? `, ${currentLocation.subLocation}` : ""
-      }`,
+      label: `${currentLocation.location}${currentLocation.subLocation ? `, ${currentLocation.subLocation}` : ""
+        }`,
       value: currentLocation._id,
     });
   }, [locationId, clientLocations, setValue]);
@@ -281,9 +279,9 @@ const ComplaintModal = ({ locationId, mode = "create" }) => {
         />
       </div>
 
-      <div className="flex gap-x-1 max-w-96 overflow-x-auto p-2">
+      <div className="flex hidden gap-x-1 max-w-96 overflow-x-auto p-2">
         {defaultComments.map((d) => (
-          <p className="text-sm whitespace-nowrap outline rounded-2xl px-2">
+          <p key={d} className="text-sm whitespace-nowrap outline rounded-2xl px-2">
             {d}
           </p>
         ))}

@@ -110,6 +110,8 @@ serviceSchema.index({
   "complaintDetails.status": -1,
 });
 serviceSchema.index({ "complaintDetails.status": 1 });
+serviceSchema.index({ client: 1, type: 1, updatedAt: -1 });
+serviceSchema.index({ type: 1, "regularService.pestCount": 1 });
 
 serviceSchema.pre("save", function (next) {
   if (this.type === "Regular") {

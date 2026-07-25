@@ -72,7 +72,7 @@ const Sidebar = () => {
   const [active, setActive] = useState("");
   const dispatch = useDispatch();
   const match = useMatch("/:firstRoute/:secondRoute/*");
-  const { secondRoute } = match.params;
+  const { secondRoute } = match?.params || {};
 
   const { user } = useSelector((store) => store.helper);
   const navigate = useNavigate();
@@ -93,7 +93,9 @@ const Sidebar = () => {
   };
 
   useEffect(() => {
-    setActive(`/${secondRoute}`);
+    if (secondRoute) {
+      setActive(`/${secondRoute}`);
+    } else { setActive("") }
   }, [secondRoute]);
 
   const handleNavigate = (to) => {

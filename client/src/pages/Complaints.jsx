@@ -7,7 +7,7 @@ import { useDispatch } from "react-redux";
 import { toggleModal } from "../redux/helperSlice";
 import { ComplaintModal } from "../components/modals";
 import { AiOutlineClose, AiOutlineSearch } from "react-icons/ai";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAllLocationsQuery } from "../redux/locationSlice";
 import { useAllClientsQuery } from "../redux/clientSlice";
 import { useAllUserQuery } from "../redux/adminSlice";
@@ -17,6 +17,8 @@ import Headers from "../components/Headers";
 import { useGetSingleUserQuery } from "../redux/userSlice";
 import { socket } from "../socket";
 import Pagination from "./Pagination";
+import { IoIosArrowDown } from "react-icons/io";
+
 
 const Complaints = () => {
   const [page, setPage] = useState(() => sessionStorage.getItem("complaintPage") || 1);
@@ -34,7 +36,7 @@ const Complaints = () => {
     useAllLocationsQuery({
       id: user.type === "ClientEmployee" ? user.client : myClient
     },
-      { skip: user.type === "ClientEmployee" ? !user?.client : !myClient, refetchOnFocus: true, }
+      { skip: user.type === "ClientEmployee" ? !user?.client : !myClient, }
     );
 
   const { data, isLoading, isFetching, error } = useAllComplaintsQuery({
@@ -42,7 +44,7 @@ const Complaints = () => {
     page,
     client: location.client || "",
     location: location?.floor || "All",
-  }, { refetchOnReconnect: true, refetchOnFocus: true, });
+  });
 
   const pages = Array.from({ length: data?.pages }, (_, index) => index + 1);
 
@@ -103,11 +105,11 @@ const Complaints = () => {
                   ))}
                 </select>
               }
-              <select
+              {/* <select
                 value={location.floor}
                 onChange={(e) => setLocation(prev => ({ ...prev, floor: e.target.value }))}
-
-                className="mr-2 mt-0.5 w-40 py-0.5 h-8.5 px-2 border-2 rounded-md outline-none transition border-neutral-300 focus:border-black disabled:bg-slate-100 bg-white"
+                size={5}
+                className="mr-2 mt-0.5 w-40 py-0.5 h-8.5 px-2 border-2 rounded-md outline-none transition border-neutral-300 focus:border-black disabled:bg-slate-100 bg-white fixed-height-select"
               >
                 <option value="">Location</option>
                 {clientLocations?.floors.map((item, index) => (
@@ -115,7 +117,10 @@ const Complaints = () => {
                     {item}
                   </option>
                 ))}
-              </select>
+              </select> */}
+              <>
+                <FloorSelect value={location?.floor} onChange={(val) => setLocation(prev => ({ ...prev, floor: val }))} floors={clientLocations?.floors} />
+              </>
 
 
               <Button type="submit" label="Search" color="bg-black" height="h-8" />
@@ -145,7 +150,55 @@ const Complaints = () => {
 };
 export default Complaints;
 
+const FloorSelect = ({ value, onChange, floors }) => {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
 
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  return (
+    <div className="relative mr-2 mt-0.5 w-40" ref={ref}>
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="flex outline-2 outline-neutral-300 rounded-md bg-white items-center pr-2 w-full">
+
+        <div className="w-full py-0.5 h-8.5 px-2 focus:outline-0 rounded-md  transition bg-white text-left"
+        >
+          {value || "Location"}
+        </div>
+        <IoIosArrowDown />
+
+      </button>
+
+      {open && (
+        <ul className="absolute z-20 mt-1 w-full max-h-48 overflow-y-auto border-2 border-neutral-300 rounded-md bg-white shadow-lg">
+          <li
+            onClick={() => { onChange(""); setOpen(false); }}
+            className="px-2 py-1 cursor-pointer hover:bg-neutral-100 text-gray-400"
+          >
+            Location
+          </li>
+          {floors?.map((item, index) => (
+            <li
+              key={index}
+              onClick={() => { onChange(item); setOpen(false); }}
+              className="px-2 py-1 cursor-pointer hover:bg-neutral-100"
+            >
+              {item}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+};
 
 export function AssignWork({ complaintId, currentAssgndVal = null, show }) {
   const { user } = useSelector((store) => store.helper);
@@ -213,7 +266,7 @@ export function AssignWork({ complaintId, currentAssgndVal = null, show }) {
 
   return (
     <div
-      className="absolute left-0 -top-2 mt-1 bg-white rounded-md shadow-lg border border-gray-100 min-w-[180px] z-50 p-1"
+      className="absolute left-0 -top-2 mt-1 bg-white rounded-md shadow-lg border border-gray-100 min-w-[150px] z-0 p-1"
       onClick={(e) => e.stopPropagation()}
     >
       <div className="hidden text-[10px] uppercase font-bold tracking-wider text-gray-400 px-2 py-1 select-none">

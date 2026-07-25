@@ -364,43 +364,88 @@ export const clientAdminDashboard = async (req, res) => {
 
 export const adminDashboard = async (req, res) => {
   const { id } = req.params;
-  const clientFilter =
-    id && id !== "select" ? { client: new mongoose.Types.ObjectId(id) } : {};
+  const isSpecificClient = id && id !== "select";
+  
+  const clientMatch = isSpecificClient
+    ? { client: new mongoose.Types.ObjectId(id) }
+    : {};
 
-  // Build match stage for Aggregations
-  const clientMatchStage =
-    id && id !== "select"
-      ? { $match: { client: new mongoose.Types.ObjectId(id) } }
-      : { $match: {} };
+  const clientMatchStage = isSpecificClient
+    ? { $match: { client: new mongoose.Types.ObjectId(id) } }
+    : { $match: {} };
 
   try {
-    const populateOpts = [
+    const populateLocationAndClient = [
       { path: "location", select: "floor subLocation location" },
-      { path: "client", select: "name -_id" },
+      { path: "client", select: "name" },
     ];
 
     const [
-      complaints,
+      latestComplaints,
       allComplaints,
+      regularPestCount,
+      complaintMetrics,
       productDashboard,
       serviceDashboard,
       monthlyScheduleStats,
     ] = await Promise.all([
-      // 1. Fetch complaints filter
-      Service.find(clientFilter)
-        .sort("-updatedAt")
-        .populate(populateOpts)
+      // 1. Fetch ONLY latest 15 complaints directly with MongoDB limit & projection
+      Service.find({ ...clientMatch, type: "Complaint" })
+        .sort({ updatedAt: -1 })
+        .limit(15)
+        .populate(populateLocationAndClient)
         .lean(),
 
-      // 2. All complaints
-      Service.find({ type: "Complaint", ...clientFilter })
-        .populate([
-          { path: "location", select: "floor subLocation location" },
-          { path: "client", select: "name" },
-        ])
+      // 2. All complaints (light projection)
+      Service.find({ type: "Complaint", ...clientMatch })
+        .populate(populateLocationAndClient)
         .lean(),
 
-      // 3. Optimized Product Metrics Facet
+      // 3. Regular pest counts (project only needed fields)
+      Service.find({
+        type: "Regular",
+        ...clientMatch,
+        "regularService.pestCount": { $ne: 0 },
+      })
+        .select("regularService.pestCount regularService.serviceName location client")
+        .populate(populateLocationAndClient)
+        .lean(),
+
+      // 4. Compute complaint summary stats directly in MongoDB (replaces in-memory .reduce)
+      Service.aggregate([
+        { $match: { type: "Complaint", ...clientMatch } },
+        {
+          $group: {
+            _id: null,
+            total: { $sum: 1 },
+            open: {
+              $sum: {
+                $cond: [{ $eq: ["$complaintDetails.status", "Open"] }, 1, 0],
+              },
+            },
+            inProgress: {
+              $sum: {
+                $cond: [{ $eq: ["$complaintDetails.status", "In Progress"] }, 1, 0],
+              },
+            },
+            closeReq: {
+              $sum: {
+                $cond: [{ $eq: ["$complaintDetails.status", "Close Req"] }, 1, 0],
+              },
+            },
+            closed: {
+              $sum: {
+                $cond: [{ $eq: ["$complaintDetails.status", "Close"] }, 1, 0],
+              },
+            },
+            reopenCount: {
+              $sum: { $ifNull: ["$complaintDetails.reopenCount", 0] },
+            },
+          },
+        },
+      ]),
+
+      // 5. Optimized Product Metrics Facet
       Location.aggregate([
         clientMatchStage,
         {
@@ -418,7 +463,7 @@ export const adminDashboard = async (req, res) => {
         },
       ]),
 
-      // 4. Optimized Service Metrics Facet
+      // 6. Optimized Service Metrics Facet
       Location.aggregate([
         clientMatchStage,
         {
@@ -436,7 +481,7 @@ export const adminDashboard = async (req, res) => {
         },
       ]),
 
-      // 5. Monthly breakdown mapping array before unwinding
+      // 7. Monthly breakdown mapping
       Location.aggregate([
         clientMatchStage,
         {
@@ -476,23 +521,21 @@ export const adminDashboard = async (req, res) => {
         },
         { $unwind: "$combinedSchedules" },
         {
-          $project: {
-            status: "$combinedSchedules.status",
-            isProduct: "$combinedSchedules.isProduct",
-            date: "$combinedSchedules.date",
-          },
-        },
-        {
           $match: {
-            date: { $exists: true, $ne: null },
+            "combinedSchedules.date": { $exists: true, $ne: null },
           },
         },
         {
           $group: {
             _id: {
-              yearMonth: { $dateToString: { format: "%Y-%m", date: "$date" } },
-              isProduct: "$isProduct",
-              status: "$status",
+              yearMonth: {
+                $dateToString: {
+                  format: "%Y-%m",
+                  date: "$combinedSchedules.date",
+                },
+              },
+              isProduct: "$combinedSchedules.isProduct",
+              status: "$combinedSchedules.status",
             },
             count: { $sum: 1 },
           },
@@ -500,7 +543,7 @@ export const adminDashboard = async (req, res) => {
       ]),
     ]);
 
-    // --- Process Counter Stats ---
+    // Process counters
     const statuses = ["Done", "Pending", "Missed"];
 
     const productData = {
@@ -509,7 +552,7 @@ export const adminDashboard = async (req, res) => {
         label,
         count:
           productDashboard?.[0]?.scheduleCount?.find(
-            (item) => item.label === label,
+            (item) => item.label === label
           )?.count || 0,
       })),
     };
@@ -520,36 +563,35 @@ export const adminDashboard = async (req, res) => {
         label,
         count:
           serviceDashboard?.[0]?.scheduleCount?.find(
-            (item) => item.label === label,
+            (item) => item.label === label
           )?.count || 0,
       })),
     };
 
-    // --- Process Complaint Metrics ---
-    const complaintData = complaints
-      .filter((c) => c.type === "Complaint")
-      .reduce(
-        (acc, complaint) => {
-          const { status, reopenCount = 0 } = complaint.complaintDetails || {};
-          if (status === "Open") acc.open++;
-          else if (status === "In Progress") acc.inProgress++;
-          else if (status === "Close Req") acc.closeReq++;
-          else if (status === "Close") acc.closed++;
-          acc.reopenCount += reopenCount;
-          acc.total++;
-          return acc;
-        },
-        {
-          total: 0,
-          open: 0,
-          closeReq: 0,
-          closed: 0,
-          inProgress: 0,
-          reopenCount: 0,
-        },
-      );
+    // Flatten regular pest services
+    const flattenedServices = regularPestCount.map((reg) => ({
+      clientId: reg.client?._id,
+      client: reg.client?.name,
+      locationId: reg.location?._id,
+      floor: reg.location?.floor,
+      subLocation: reg.location?.subLocation,
+      location: reg.location?.location,
+      serviceName: reg.regularService?.[0]?.serviceName,
+      pestCount: reg.regularService?.[0]?.pestCount,
+    }));
 
-    // --- Process Monthly Trends Chart ---
+    // Complaint metrics extracted from MongoDB aggregation
+    const complaintData = complaintMetrics[0] || {
+      total: 0,
+      open: 0,
+      closeReq: 0,
+      closed: 0,
+      inProgress: 0,
+      reopenCount: 0,
+    };
+    delete complaintData._id;
+
+    // Process Monthly Trends
     const monthlyMap = {};
     const ensureMonth = (dateStr) => {
       if (!monthlyMap[dateStr]) {
@@ -574,11 +616,10 @@ export const adminDashboard = async (req, res) => {
       return monthlyMap[dateStr];
     };
 
-    // Populate monthly schedule distributions
     monthlyScheduleStats.forEach((item) => {
       if (!item._id.yearMonth || !item._id.isProduct) return;
       const month = ensureMonth(item._id.yearMonth);
-      const type = item._id.isProduct; // "product" or "regular"
+      const type = item._id.isProduct;
       const status = item._id.status?.trim();
 
       if (month[type] && month[type][status] !== undefined) {
@@ -586,43 +627,35 @@ export const adminDashboard = async (req, res) => {
       }
     });
 
-    // Populate monthly complaints/service occurrences
-    complaints.forEach((item) => {
+    // Populate monthly complaint trends from allComplaints
+    allComplaints.forEach((item) => {
       const date = new Date(item.createdAt);
       if (isNaN(date.getTime())) return;
       const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
       const month = ensureMonth(key);
 
-      if (item.type === "Complaint") {
-        month.complaints++;
-        const status = item.complaintDetails?.status;
-        if (status === "Open") month.open++;
-        else if (status === "In Progress") month.inProgress++;
-        else if (status === "Close Req") month.closeReq++;
-        else if (status === "Close") month.closed++;
-        month.reopenCount += item.complaintDetails?.reopenCount || 0;
-      } else {
-        month.regulars++;
-      }
+      month.complaints++;
+      const status = item.complaintDetails?.status;
+      if (status === "Open") month.open++;
+      else if (status === "In Progress") month.inProgress++;
+      else if (status === "Close Req") month.closeReq++;
+      else if (status === "Close") month.closed++;
+      month.reopenCount += item.complaintDetails?.reopenCount || 0;
     });
 
     const monthlyData = Object.entries(monthlyMap)
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([, value]) => value);
 
-    const withClientName = (item) => ({
+    const formattedLatestComplaints = latestComplaints.map((item) => ({
       ...item,
       clientName: item.client?.name || item.complaintDetails?.clientName || "-",
-    });
-
-    const latestComplaints = complaints
-      .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
-      .slice(0, 15)
-      .map(withClientName);
+    }));
 
     return res.json({
       all: allComplaints,
-      latestComplaints,
+      latestComplaints: formattedLatestComplaints,
+      flattenedServices,
       summary: {
         complaints: complaintData,
         products: productData,
