@@ -134,9 +134,17 @@ function AdminDashboard() {
       Close: activeMonth?.closed || 0,
     };
 
-  const pestCounts = adminDash?.flattenedServices
-  const groupbyPest = pestCounts.reduce((acc, item) => { const key = item.serviceName; acc[key] = (acc[key] || 0) + 1; return acc; }, {})
-  const groupedByLocation = Object.groupBy(pestCounts, (id) => id.locationId)
+  const pestCounts = Array.isArray(adminDash?.flattenedServices)
+    ? adminDash.flattenedServices
+    : [];
+  const groupbyPest = pestCounts.reduce((acc, item) => {
+    const key = item?.serviceName;
+    if (key) {
+      acc[key] = (acc[key] || 0) + 1;
+    }
+    return acc;
+  }, {});
+  const groupedByLocation = Object?.groupBy(pestCounts, (id) => id.locationId)
   console.log(groupbyPest);
 
 
