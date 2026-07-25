@@ -63,7 +63,7 @@ const SingleComplaint = () => {
   const complaintUpdate = data.complaintUpdate.toReversed()
 
   return (
-    <div className={`max-w-7xl mx-auto px-2 sm:px-3 lg:px-8 py-4 space-y-6 ${data.complaintDetails.finalClosed ? "bg-red-200 *:bg-red-50 **:bg-red-50 cursor-not-allowed" : ""}`}>
+    <div className={`max-w-7xl mx-auto px-2 sm:px-3 lg:px-8 py-4 space-y-0 ${data.complaintDetails.finalClosed ? "bg-red-200 *:bg-red-50 **:bg-red-50 cursor-not-allowed" : ""}`}>
 
       <div className="bg-neutral-50 rounded-lg border border-neutral-200 shadow-xs overflow-hidden">
         <div className="p-3 sm:p-4 text-xs">
@@ -94,7 +94,7 @@ const SingleComplaint = () => {
                 <div>
                   <span className="font-bold text-neutral-400 uppercase tracking-wider text-[10px] block mb-0.5">Assigned By</span>
                   <p className="font-semibold text-neutral-800 break-all">{details?.assignedBy.userName || "—"}</p>
-                  <p className="font-semibold text-neutral-800 break-all">{new Date(details?.assignedBy.date).toLocaleString() || "—"}</p>
+                  <p className="font-semibold text-neutral-800 break-all">{dateFormat(details?.assignedBy.date).toLocaleString() || "—"}</p>
                 </div>
               </>
             )}
@@ -160,7 +160,7 @@ const SingleComplaint = () => {
       <div className="flex items-center justify-end gap-3 pt-1">
         {/* Update Form Button Trigger */}
         {user?.type === "PestEmployee" &&
-          ["Open", "Reopen", "In Progress"].includes(data?.complaintDetails?.status) && (
+          ["Open", "Reopen", "Close Req", "In Progress"].includes(data?.complaintDetails?.status) && (
             <>
               <Button
                 label="Update Complaint"
@@ -172,7 +172,7 @@ const SingleComplaint = () => {
 
         {/* Review Approval Actions Trigger */}
         {DBUser?.rights?.close &&
-          ["Close Req", "Close"].includes(data?.complaintDetails?.status) &&
+          ["Close"].includes(data?.complaintDetails?.status) &&
           !data?.complaintDetails?.finalClosed && (
             <>
               <Button
@@ -217,13 +217,16 @@ const SingleComplaint = () => {
                     <div onClick={(e) => e.stopPropagation()}>
                       {complaint?.image?.length > 0 ? (
                         <div className="relative inline-block">
-                          <Button
+                          {/* <Button
                             label={`Show (${complaint.image.length})`}
                             small
                             height="h-7"
                             color="bg-green-600 text-xs text-white px-2.5 py-0.5 rounded-md hover:bg-green-700 transition"
                             onClick={() => dispatch(toggleModal({ name: `PEImages-${i}`, status: true }))}
-                          />
+                          /> */}
+                          {complaint?.image?.map(img => (
+                            <img key={img} className="h-20" src={img || ""} alt={img || ""} />
+                          ))}
                           {isModalOpen[`PEImages-${i}`] && (
                             <ImagesModal image={complaint.image} name={`PEImages-${i}`} />
                           )}

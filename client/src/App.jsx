@@ -66,13 +66,13 @@ const Router = createBrowserRouter(
           <Route path="dashboard/client/:id" element={<SingleClient />} />
         </Route>
 
-        <Route path="" element={<ProtectedRoute roles={["Admin", "ClientAdmin"]} />} > 
+        <Route path="" element={<ProtectedRoute roles={["Admin", "ClientAdmin"]} />} >
           <Route path="dashboard/users" element={<Users />} />
           <Route path="dashboard/reports" element={<Reports />} />
           <Route path="dashboard/locations" element={<Locations />} />
         </Route>
+        <Route path="*" element={<Navigate to={'/'} replace />} />
       </Route>
-      <Route path="*" element={<Navigate to={'/'} replace/>}/>
     </Route>
   )
 );

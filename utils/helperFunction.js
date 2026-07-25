@@ -18,6 +18,26 @@ export const capitalLetter = (name) => {
     .join(" ");
 };
 
+export const dateFormat = (date) => {
+  const d = new Date(date);
+
+  return {
+    withTime: d.toLocaleString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    }),
+    withoutTime: d.toLocaleString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    }),
+    onlyTime: d.toLocaleString("en-IN", { hour: "2-digit", minute: "2-digit" }),
+  };
+};
+
 export const generateToken = (res, userId) => {
   const token = jwt.sign({ userId }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_LIFETIME,

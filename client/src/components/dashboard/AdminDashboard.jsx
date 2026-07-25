@@ -6,6 +6,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { AssignWork } from "../../pages/Complaints";
 import PieChart from "./PieChart";
 import MultiLineChart from "./MultiLineChart";
+import { PEST_MAP } from "../../utils/constData";
 
 const prMapped = {
   Done: "Done Products Services",
@@ -19,16 +20,16 @@ const regMapped = {
   Invalid: "Invalid",
 };
 
-// month.product = { Done, Pending, Missed } -> [{ label, count }]
-// so it matches the exact shape products.scheduleCount already has.
 const nestedToScheduleCount = (statusCounts) =>
-  Object.entries(statusCounts || {})
-    .map(([label, count]) => ({ label, count: count || 0 }))
+  Object.entries(statusCounts || {}).map(([label, count]) => ({
+    label,
+    count: count || 0,
+  }));
 
 function AdminDashboard() {
   const [assignId, setAssignId] = useState(null);
   const [toggle, setToggle] = useState(
-    () => sessionStorage.getItem("adminDashboardToggle") || "Complaint"
+    () => sessionStorage.getItem("adminDashboardToggle") || "Complaint",
   );
   // "overall" or a stringified index into monthlyData
   const [selectedMonth, setSelectedMonth] = useState("overall");
@@ -38,11 +39,12 @@ function AdminDashboard() {
 
   const { user } = useSelector((store) => store.helper);
   const { data: clientsData = [] } = useAllClientsQuery();
-  const { data: adminDash, isLoading: admindashLoading } = useAdminDashboardQuery(
-    selectedClient?._id || "select",
-    { skip: !['TeamLeader', 'BranchAdmin', "Admin"].includes(user?.role), refetchOnReconnect: true, pollingInterval: 30000, skipPollingIfUnfocused: true }
-  );
-  const clients = clientsData?.clients
+  const clients = clientsData?.clients;
+
+  const { data: adminDash, isLoading: admindashLoading } =
+    useAdminDashboardQuery(selectedClient?._id || "select", {
+      skip: !["TeamLeader", "BranchAdmin", "Admin"].includes(user?.role),
+    });
 
   useEffect(() => {
     if (!assignId) return;
@@ -52,7 +54,7 @@ function AdminDashboard() {
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, [assignId]);
-  console.log(adminDash)
+
   const handleToggle = (val) => {
     setToggle(val);
     sessionStorage.setItem("adminDashboardToggle", val);
@@ -60,11 +62,13 @@ function AdminDashboard() {
   const isRegular = toggle === "Regular";
 
   const clientReq = useMemo(
-    () => adminDash?.latestComplaints?.filter((item) => item.type === toggle) ?? [],
-    [adminDash, toggle]
+    () =>
+      adminDash?.latestComplaints?.filter((item) => item.type === toggle) ?? [],
+    [adminDash, toggle],
   );
 
-  const { products, services, complaints, monthlyData } = adminDash?.summary || {};
+  const { products, services, complaints, monthlyData } =
+    adminDash?.summary || {};
 
   const isOverall = selectedMonth === "overall";
   const activeMonth = !isOverall ? monthlyData?.[Number(selectedMonth)] : null;
@@ -75,7 +79,6 @@ function AdminDashboard() {
     }
   }, [monthlyData]);
 
-  // ---- Complaint stat cards: overall summary vs. one month's slice ----
   const complaintStats = isOverall
     ? {
       open: complaints?.open || 0,
@@ -93,8 +96,9 @@ function AdminDashboard() {
       total: activeMonth?.complaints || 0,
       reopenCount: activeMonth?.reopenCount || 0,
     };
-  const { open, inProgress, closed, total, closeReq, reopenCount } = complaintStats;
-  // ---- Products / Services blocks: same {total, scheduleCount} shape either way ----
+  const { open, inProgress, closed, total, closeReq, reopenCount } =
+    complaintStats;
+
   const productsView = isOverall
     ? products
     : {
@@ -110,10 +114,16 @@ function AdminDashboard() {
     };
 
   const prObj = Object.fromEntries(
-    (productsView?.scheduleCount ?? []).map((p) => [prMapped[p.label], p.count])
+    (productsView?.scheduleCount ?? []).map((p) => [
+      prMapped[p.label],
+      p.count,
+    ]),
   );
   const regObj = Object.fromEntries(
-    (servicesView?.scheduleCount ?? []).map((p) => [regMapped[p.label], p.count])
+    (servicesView?.scheduleCount ?? []).map((p) => [
+      regMapped[p.label],
+      p.count,
+    ]),
   );
 
   const pieChartComplaints = isOverall
@@ -124,13 +134,20 @@ function AdminDashboard() {
       Close: activeMonth?.closed || 0,
     };
 
+  const pestCounts = adminDash?.flattenedServices
+  const groupbyPest = pestCounts.reduce((acc, item) => { const key = item.serviceName; acc[key] = (acc[key] || 0) + 1; return acc; }, {})
+  const groupedByLocation = Object.groupBy(pestCounts, (id) => id.locationId)
+  console.log(groupbyPest);
+
+
   return (
     <section className="p-2 md:p-3 bg-gray-50 min-h-screen">
-
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-200 pb-5">
         <div>
-          <p className="text-xs text-gray-400 uppercase font-bold tracking-wider">System Overview</p>
+          <p className="text-xs text-gray-400 uppercase font-bold tracking-wider">
+            System Overview
+          </p>
           <h3 className="h3 font-black text-gray-800 mt-1">
             {selectedClient?.name || `All Clients Data (${clients?.length})`}
           </h3>
@@ -139,9 +156,9 @@ function AdminDashboard() {
         {user.role === "Admin" && (
           <div className="bg-white border border-gray-200 rounded-xl px-4 py-2.5 shadow-xs self-end sm:self-auto">
             <div className="flex items-center gap-2.5">
-              <label htmlFor="client-select" className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
-
-              </label>
+              <label
+                htmlFor="client-select"
+                className="text-[10px] font-bold uppercase tracking-wider text-gray-400"></label>
               <select
                 id="client-select"
                 onChange={(e) => {
@@ -151,7 +168,9 @@ function AdminDashboard() {
                 className="outline-none text-xs sm:text-sm font-semibold bg-transparent cursor-pointer text-gray-700">
                 <option value="">Choose Clients</option>
                 {clients?.map((d) => (
-                  <option key={d._id} value={d._id}>{d.name}</option>
+                  <option key={d._id} value={d._id}>
+                    {d.name}
+                  </option>
                 ))}
               </select>
             </div>
@@ -165,41 +184,81 @@ function AdminDashboard() {
         <select
           className="px-2 py-1 focus:outline-0"
           value={selectedMonth}
-          onChange={(e) => setSelectedMonth(e.target.value)}
-        >
+          onChange={(e) => setSelectedMonth(e.target.value)}>
           <option value="overall">Overall</option>
           {monthlyData?.map(({ month }, i) => (
-            <option key={month + i} value={i}>{month}</option>
+            <option key={month + i} value={i}>
+              {month}
+            </option>
           ))}
         </select>
       </div>
 
       {/* Stat cards */}
       <div className="space-y-4">
-        <h3 className="text-gray-600 hidden font-semibold text-center mb-2">Complaints</h3>
+        <h3 className="text-gray-600 hidden font-semibold text-center mb-2">
+          Complaints
+        </h3>
 
         {/* Container for all layout blocks */}
-        <div className={`flex flex-col gap-3 ${admindashLoading ? "animate-pulse" : ""}`}>
-
+        <div
+          className={`flex flex-col gap-3 ${admindashLoading ? "animate-pulse" : ""}`}>
           {/* Complaints Section */}
           <div className="flex flex-wrap gap-y-1 gap-x-2">
-            <StatCard title="Open Complaints" value={open || 0} color="border-l-red-500" textColor="text-red-500" />
-            <StatCard title="In Progress" value={inProgress || 0} color="border-l-amber-500" textColor="text-amber-500 animate-pulse" />
-            <StatCard title="Closed Complaints" value={closed || 0} color="border-l-green-500" textColor="text-green-500" />
-            <StatCard title="Total Complaints" value={total || 0} color="border-l-blue-500" textColor="text-blue-500" />
-            <StatCard title="Re Opened" value={reopenCount || 0} color="border-l-blue-500" textColor="text-blue-500" />
-            <StatCard title="Close Req" value={closeReq || 0} color="border-l-blue-500" textColor="text-blue-500" />
+            <StatCard
+              title="Open Complaints"
+              value={open || 0}
+              color="border-l-red-500"
+              textColor="text-red-500"
+            />
+            <StatCard
+              title="In Progress"
+              value={inProgress || 0}
+              color="border-l-amber-500"
+              textColor="text-amber-500 animate-pulse"
+            />
+            <StatCard
+              title="Closed Complaints"
+              value={closed || 0}
+              color="border-l-green-500"
+              textColor="text-green-500"
+            />
+            <StatCard
+              title="Total Complaints"
+              value={total || 0}
+              color="border-l-blue-500"
+              textColor="text-blue-500"
+            />
+            <StatCard
+              title="Re Opened"
+              value={reopenCount || 0}
+              color="border-l-blue-500"
+              textColor="text-blue-500"
+            />
+            <StatCard
+              title="Close Req"
+              value={closeReq || 0}
+              color="border-l-blue-500"
+              textColor="text-blue-500"
+            />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-
             {/* Products Section */}
             {productsView?.scheduleCount?.length > 0 && (
               <div title="products" className="bg-white">
-                <h3 className="font-semibold text-gray-600 text-center">Products ({products?.total})</h3>
+                <h3 className="font-semibold text-gray-600 text-center">
+                  Products ({products?.total})
+                </h3>
                 <div className="flex flex-wrap gap-x-2 gap-y-1 outline-2 outline-indigo-600 pb-1 rounded-md">
                   {productsView.scheduleCount.map(({ label, count }, i) => (
-                    <StatCard key={i} title={label} value={count} color="border-l-indigo-600" textColor="text-indigo-700" />
+                    <StatCard
+                      key={i}
+                      title={label}
+                      value={count}
+                      color="border-l-indigo-600"
+                      textColor="text-indigo-700"
+                    />
                   ))}
                 </div>
               </div>
@@ -208,12 +267,21 @@ function AdminDashboard() {
             {/* Services Section */}
             {servicesView?.scheduleCount?.length > 0 && (
               <div title="service" className="bg-white">
-                <h3 className="font-semibold text-gray-600 text-center">Services ({services.total})</h3>
+                <h3 className="font-semibold text-gray-600 text-center">
+                  Services ({services.total})
+                </h3>
                 <div className="flex flex-wrap gap-x-2 gap-y-1 rounded-md outline-2 outline-fuchsia-700 pb-1">
-                  {servicesView.scheduleCount.map(({ label, count }) =>
-                    label !== "Invalid" && (
-                      <StatCard key={label} title={label} value={count || 0} color="border-l-fuchsia-600" textColor="text-fuchsia-700" />
-                    )
+                  {servicesView.scheduleCount.map(
+                    ({ label, count }) =>
+                      label !== "Invalid" && (
+                        <StatCard
+                          key={label}
+                          title={label}
+                          value={count || 0}
+                          color="border-l-fuchsia-600"
+                          textColor="text-fuchsia-700"
+                        />
+                      ),
                   )}
                 </div>
               </div>
@@ -222,15 +290,13 @@ function AdminDashboard() {
         </div>
       </div>
 
-
       {/* charts  */}
       <div className="my-2">
         <div className="grid grid-cols-1 lg:grid-cols-6 gap-4 ">
-
           {/* Multiline Chart — always shows the full monthly trend regardless of toggle */}
           <div className="lg:col-span-6 rounded-2xl shadow-md p-2 bg-white min-w-0">
-
-            <div className={`w-full overflow-x-auto ${admindashLoading ? "animate-pulse" : ""}`}>
+            <div
+              className={`w-full overflow-x-auto ${admindashLoading ? "animate-pulse" : ""}`}>
               <MultiLineChart
                 values={monthlyData}
                 weekly={adminDash?.weekly}
@@ -241,24 +307,35 @@ function AdminDashboard() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-2 mt-4">
-
           {/* Product/Service Pie */}
-          <div className={`rounded-2xl shadow-md p-4 bg-white flex items-center justify-center min-w-0 ${admindashLoading ? "animate-pulse" : ""}`}>
+          <div
+            className={`rounded-2xl shadow-md p-4 bg-white flex items-center justify-center min-w-0 ${admindashLoading ? "animate-pulse" : ""}`}>
             <PieChart values={prObj} modelKey="Product Service" />
           </div>
 
           {/* Complaint Pie */}
-          <div className={`rounded-2xl shadow-md p-4 bg-white flex items-center justify-center min-w-0 ${admindashLoading ? "animate-pulse" : ""}`}>
+          <div
+            className={`rounded-2xl shadow-md p-4 bg-white flex items-center justify-center min-w-0 ${admindashLoading ? "animate-pulse" : ""}`}>
             <PieChart values={pieChartComplaints} modelKey="Complaints" />
           </div>
 
           {/* Regular Pie */}
-          <div className={`rounded-2xl shadow-md p-4 bg-white flex items-center justify-center min-w-0 ${admindashLoading ? "animate-pulse" : ""}`}>
+          <div
+            className={`rounded-2xl shadow-md p-4 bg-white flex items-center justify-center min-w-0 ${admindashLoading ? "animate-pulse" : ""}`}>
             <PieChart values={regObj} modelKey="Regular Service" />
           </div>
         </div>
       </div>
 
+      {/* pest counts  */}
+      <div className="my-5">
+        <h3>Pest Counts </h3>
+        <div className="flex gap-2">
+          {Object.entries(groupbyPest).map(([name, count]) => (
+            <StatCard title={PEST_MAP[name]} value={count} color='text-rose-500 bg-green-200 border-rose-700' />
+          ))}
+        </div>
+      </div>
       {/* Table */}
       <div className="bg-white rounded-2xl shadow-xs border border-gray-200 overflow-hidden">
         {/* Tabs */}
@@ -278,16 +355,29 @@ function AdminDashboard() {
 
         <div className="w-full overflow-x-auto border border-gray-200">
           <table className="w-full min-w-[900px] border-collapse bg-white text-left text-sm text-gray-500">
-
             {/* Column headers */}
             <thead className="bg-gray-400 border-b border-gray-200 text-xs font-bold uppercase text-gray-600 tracking-wider ">
-              <tr >
-                <th scope="col" className="px-2 py-3 text-center">{isRegular ? "Number" : "Complaint No"}</th>
-                {!isRegular && <th scope="col" className="px-4 py-3">Assigned to</th>}
-                <th scope="col" className="px-4 py-3">Date</th>
-                <th scope="col" className="px-4 py-3">{isRegular ? "Serviced by" : "Updated by"}</th>
-                <th scope="col" className="px-4 py-3">Client</th>
-                <th scope="col" className="px-4 py-3">Status</th>
+              <tr>
+                <th scope="col" className="px-2 py-3 text-center">
+                  {isRegular ? "Number" : "Complaint No"}
+                </th>
+                {!isRegular && (
+                  <th scope="col" className="px-4 py-3">
+                    Assigned to
+                  </th>
+                )}
+                <th scope="col" className="px-4 py-3">
+                  Date
+                </th>
+                <th scope="col" className="px-4 py-3">
+                  {isRegular ? "Serviced by" : "Updated by"}
+                </th>
+                <th scope="col" className="px-4 py-3">
+                  Client
+                </th>
+                <th scope="col" className="px-4 py-3">
+                  Status
+                </th>
               </tr>
             </thead>
 
@@ -295,13 +385,17 @@ function AdminDashboard() {
             <tbody className="divide-y divide-gray-100 bg-white">
               {admindashLoading ? (
                 <tr>
-                  <td colSpan={isRegular ? 6 : 7} className="p-8 text-center text-gray-400 text-sm">
+                  <td
+                    colSpan={isRegular ? 6 : 7}
+                    className="p-8 text-center text-gray-400 text-sm">
                     Loading records...
                   </td>
                 </tr>
               ) : clientReq.length === 0 ? (
                 <tr>
-                  <td colSpan={isRegular ? 6 : 7} className="p-8 text-center text-gray-400 text-sm">
+                  <td
+                    colSpan={isRegular ? 6 : 7}
+                    className="p-8 text-center text-gray-400 text-sm">
                     No recent matching records found.
                   </td>
                 </tr>
@@ -323,14 +417,21 @@ function AdminDashboard() {
           </table>
         </div>
       </div>
-    </section >
+    </section>
   );
 }
 
 export default AdminDashboard;
 
-
-function Row({ item, index, isRegular, assignId, assignRef, setAssignId, navigate }) {
+function Row({
+  item,
+  index,
+  isRegular,
+  assignId,
+  assignRef,
+  setAssignId,
+  navigate,
+}) {
   const latestUpdate = item?.complaintUpdate?.at(-1);
   const cd = item?.complaintDetails;
 
@@ -339,7 +440,7 @@ function Row({ item, index, isRegular, assignId, assignRef, setAssignId, navigat
     "In Progress": "bg-amber-100",
     Close: "bg-green-100",
     "Close Req": "bg-gray-100",
-    "Reopen": "bg-blue-100"
+    Reopen: "bg-blue-100",
   };
   const statusStyle = {
     Open: "bg-red-50 text-red-700 ring-red-600/10",
@@ -349,9 +450,14 @@ function Row({ item, index, isRegular, assignId, assignRef, setAssignId, navigat
 
   return (
     <tr
-      onClick={() => navigate(isRegular ? `/location/${item?.location?._id}` : `/complaint/${item?._id}`)}
-      className={`hover:bg-gray-50/80 transition-colors cursor-pointer text-sm  transition-all text-xs`}
-    >
+      onClick={() =>
+        navigate(
+          isRegular
+            ? `/location/${item?.location?._id}`
+            : `/complaint/${item?._id}`,
+        )
+      }
+      className={`hover:bg-gray-50/80 transition-colors cursor-pointer text-sm  transition-all text-xs`}>
       {/* Column 1 */}
       <td className="px-2 text-center py-4 font-bold text-blue-600 whitespace-nowrap">
         {isRegular ? index + 1 : cd?.number || "—"}
@@ -366,8 +472,7 @@ function Row({ item, index, isRegular, assignId, assignRef, setAssignId, navigat
             onClick={(e) => {
               e.stopPropagation();
               setAssignId((prev) => (prev === item._id ? null : item._id));
-            }}
-          >
+            }}>
             <p className="text-sm font-semibold">
               {cd?.assignedTo?.userName || <span className="">Assign</span>}
             </p>
@@ -379,7 +484,10 @@ function Row({ item, index, isRegular, assignId, assignRef, setAssignId, navigat
             {assignId === item._id && (
               <AssignWork
                 complaintId={item._id}
-                currentAssgndVal={{ label: cd?.assignedTo?.userName, value: cd?.assignedTo?.userName }}
+                currentAssgndVal={{
+                  label: cd?.assignedTo?.userName,
+                  value: cd?.assignedTo?.userName,
+                }}
                 show={() => setAssignId(null)}
               />
             )}
@@ -389,13 +497,18 @@ function Row({ item, index, isRegular, assignId, assignRef, setAssignId, navigat
 
       {/* Column 3 */}
       <td className="px-4 py-4 text-gray-600 text-xs whitespace-nowrap">
-        {isRegular ?
+        {isRegular ? (
           <div className="font-semibold">
             {item?.regularService?.[0]?.completedAt.split("T")[0]}
-          </div> : <div>{item.createdAt.split("T")[0]}</div>
-        }
+          </div>
+        ) : (
+          <div>{item.createdAt.split("T")[0]}</div>
+        )}
         <p className="text-gray-400 mt-0.5">
-          {new Date(item.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+          {new Date(item.createdAt).toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          })}
         </p>
       </td>
 
@@ -403,7 +516,9 @@ function Row({ item, index, isRegular, assignId, assignRef, setAssignId, navigat
       <td className="px-4 py-4 font-medium text-gray-700 truncate">
         {isRegular
           ? item?.regularService?.[0]?.userName || "—"
-          : cd?.status === "Open" ? cd?.userName : latestUpdate?.userName || "—"}
+          : cd?.status === "Open"
+            ? cd?.userName
+            : latestUpdate?.userName || "—"}
       </td>
 
       {/* Column 5 & 6 (Merged via colSpan to dynamically align with client header) */}
@@ -418,7 +533,8 @@ function Row({ item, index, isRegular, assignId, assignRef, setAssignId, navigat
             {item?.regularService?.[0]?.action || "Done"}
           </span>
         ) : (
-          <span className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs font-bold ring-1 ring-inset uppercase tracking-wide ${statusStyle[cd?.status] ?? ""}`}>
+          <span
+            className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs font-bold ring-1 ring-inset uppercase tracking-wide ${statusStyle[cd?.status] ?? ""}`}>
             {cd?.status || "—"}
           </span>
         )}
@@ -427,18 +543,28 @@ function Row({ item, index, isRegular, assignId, assignRef, setAssignId, navigat
   );
 }
 
-
-export function StatCard({ active, title = "", value, color, textColor, arrkey = "", onClick = () => { } }) {
-
+export function StatCard({
+  active,
+  title = "",
+  value,
+  color,
+  textColor,
+  arrkey = "",
+  onClick = () => { },
+}) {
   const isActive = active === arrkey || active === title;
-  
+
   return (
-    <div title={title}
+    <div
+      title={title}
       className={`bg-gray-50 shadow flex-1 px-3 py-2 md:px-5 md:py-3 rounded-l-xl border border-gray-100 whitespace-nowrap border-l-4 transition-all duration-200 ease-in-out ${color} ${isActive ? "translate-y-1 shadow-md bg-white" : "translate-y-0 cursor-pointer"}`}
-      onClick={() => onClick(arrkey || title)}
-    >
-      <p className="text-[9px] md:text-xs uppercase tracking-wide text-gray-400 font-semibold">{title}</p>
-      <p className={`text-lg md:text-2xl font-bold leading-tight ${textColor}`}>{value}</p>
+      onClick={() => onClick(arrkey || title)}>
+      <p className="text-[9px] md:text-xs uppercase tracking-wide text-gray-400 font-semibold">
+        {title}
+      </p>
+      <p className={`text-lg md:text-2xl font-bold leading-tight ${textColor}`}>
+        {value}
+      </p>
     </div>
   );
 }
