@@ -57,27 +57,56 @@ const keyMapping = {
 }
 
 const colorMap = {
-  open: { text: "text-red-600", border: "border-l-red-500", },
-  inProgress: { text: "text-amber-600", border: "border-l-amber-500", },
-  closeReq: { text: "text-orange-600", border: "border-l-orange-500", },
-  closed: { text: "text-green-600", border: "border-l-green-500", },
-  total: { text: "text-blue-600", border: "border-l-blue-500", },
-  reopenCount: { text: "text-blue-600", border: "border-l-blue-500", },
+  open: {
+    text: "text-red-600",
+    border: "border-l-red-500",
+  },
+  inProgress: {
+    text: "text-amber-600",
+    border: "border-l-amber-500",
+  },
+  closeReq: {
+    text: "text-orange-600",
+    border: "border-l-orange-500",
+  },
+  closed: {
+    text: "text-emerald-600",
+    border: "border-l-emerald-500",
+  },
+  total: {
+    text: "text-blue-600",
+    border: "border-l-blue-500",
+  },
+  reopenCount: {
+    text: "text-cyan-600",
+    border: "border-l-cyan-500",
+  },
+
   "Done Regular Services": {
-    text: "text-blue-600", border: "border-l-blue-500",
+    text: "text-emerald-600",
+    border: "border-l-emerald-500",
   },
   "Pending Regular Services": {
-    text: "text-sky-500", border: "border-l-sky-400",
+    text: "text-yellow-600",
+    border: "border-l-yellow-500",
   },
   "Missed Regular Services": {
-    text: "text-indigo-700", border: "border-l-indigo-700",
+    text: "text-rose-600",
+    border: "border-l-rose-500",
   },
-  Invalid: { text: "text-gray-500", border: "border-l-gray-400 hidden", },
-  "Done Products Services": { text: "text-violet-600", border: "border-l-violet-500", },
+
+  "Done Products Services": {
+    text: "text-violet-600",
+    border: "border-l-violet-500",
+  },
   "Pending Products Services": {
-    text: "text-fuchsia-400", border: "border-l-fuchsia-300",
+    text: "text-fuchsia-600",
+    border: "border-l-fuchsia-500",
   },
-  "Missed Products Services": { text: "text-purple-700", border: "border-l-purple-700", },
+  "Missed Products Services": {
+    text: "text-purple-700",
+    border: "border-l-purple-700",
+  },
 };
 
 
@@ -106,12 +135,13 @@ const ClientDashboard = () => {
     const latest = Array.isArray(clientDash?.latestComplaints) ? clientDash.latestComplaints : [];
 
     if (statusFilter && statusFilter?.length > 0) {
-      return all?.filter(cl => cl?.complaintDetails?.status === statusFilter);
+      return latest?.filter(cl => cl?.complaintDetails?.status === statusFilter) || [];
     }
-    return latest?.filter(lat => lat?.type === toggle);
+
+    if (toggle === "Complaint") { return clientDash?.latestComplaints || [] }
+    if (toggle === "Regular") { return clientDash?.latestServices || [] }
   }, [toggle, clientDash, statusFilter]);
 
-  console.log(complaints)
   const handleCards = (value) => {
     const map = {
       open: "Open",
@@ -150,12 +180,11 @@ const ClientDashboard = () => {
   const isOverall = selectedMonth === "overall";
   const activeMonth = !isOverall ? monthlyData?.[Number(selectedMonth)] : null;
 
-  // Reset to "overall" if the selected month no longer exists (e.g. data refetched with fewer months)
   useEffect(() => {
     if (!isOverall && !monthlyData?.[Number(selectedMonth)]) {
       setSelectedMonth("overall");
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
   }, [monthlyData]);
 
   const complaintStats = isOverall
@@ -194,6 +223,7 @@ const ClientDashboard = () => {
   const regObj = Object.fromEntries((servicesView?.scheduleCount ?? []).map(p => ([regMapped[p.label], p.count])))
 
   const statsStrips = { ...complaintStats }
+
   return (
     <section className="p-2 bg-slate-50/50 min-h-screen font-sans">
       {clgLoading ? (
@@ -354,7 +384,6 @@ const ClientDashboard = () => {
                   );
                 })}
               </div>
-
             </div>
             <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
               {["Regular", "Complaint"].includes(toggle) &&

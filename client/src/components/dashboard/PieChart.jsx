@@ -5,7 +5,7 @@ import { Doughnut } from 'react-chartjs-2'
 ChartJS.register(ArcElement, Tooltip, Legend);
 
 function PieChart({ values, line = false, modelKey }) {
-  const filteredKeys = Object.keys(values ?? []).filter(key => !["allcomplaints", "Pending", "Invalid", "total", "completed"].includes(key))
+  const filteredKeys = Object.keys(values ?? []).filter(key => !["allcomplaints", "Invalid", "total", "completed"].includes(key))
   const chartDataValues = filteredKeys.map(key => values[key])
 
   const keyMapping = {
@@ -58,7 +58,7 @@ function PieChart({ values, line = false, modelKey }) {
       "Missed": "#EC4899BF",
     }
   };
-  
+
   const newKeys = filteredKeys.map(f => keyMapping[f] || f)
   const chartType = modelKey?.split(" ")?.[0].toLowerCase();
 
@@ -66,8 +66,8 @@ function PieChart({ values, line = false, modelKey }) {
   const backgroundColor = newKeys.map(
     key => statusColors?.[chartType]?.[key] || "#9CA3AF"
   );
-  
-  const borderColor = backgroundColor?.map(p=> p.slice(0,7));
+
+  const borderColor = backgroundColor?.map(p => p.slice(0, 7));
 
   const data = {
     labels: newKeys,
@@ -84,13 +84,14 @@ function PieChart({ values, line = false, modelKey }) {
 
   const options = {
     responsive: true,
-    maintainAspectRatio: false, 
+    maintainAspectRatio: false,
     plugins: {
       legend: { display: true, position: "bottom", labels: { font: { size: 10 }, color: "black" } },
-      tooltip: { position: "nearest" }, 
+      tooltip: { position: "nearest" },
       title: { display: true, text: `Status of ${modelKey}` }
     }
   }
+
 
   return (
     <div style={{ width: '100%', maxWidth: 400, height: 260, position: 'relative', margin: '0 auto' }}>

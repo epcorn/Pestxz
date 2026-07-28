@@ -11,6 +11,7 @@ import fs from "fs/promises";
 import fsSync from "fs";
 import path from "path";
 import Location from "../models/locationModel.js";
+import { generateHtmlReport } from "../utils/html.js";
 
 const PEST_MAP = {
   Ratrid: "Rodein",
@@ -110,6 +111,7 @@ export const dailyServiceReport = async (req, res) => {
     const templateBuffer = await fs.readFile(templatePath);
 
     // 2. BATCH AGGREGATIONS FOR ALL CLIENTS AT ONCE (AVOID N+1 QUERIES)
+    
     const [allServiceStats, allProdStats] = await Promise.all([
       Location.aggregate([
         { $unwind: "$service" },
@@ -177,7 +179,7 @@ export const dailyServiceReport = async (req, res) => {
         populate: { path: "location" },
       },
     ];
-    console.log("finding clients ...");
+
     const clientCursor = Client.find(clientQuery)
       .select(selectFields)
       .populate(populateOptions)
@@ -192,6 +194,7 @@ export const dailyServiceReport = async (req, res) => {
     if (!fsSync.existsSync(dir)) {
       await fs.mkdir(dir, { recursive: true });
     }
+    let dats = {};
 
     for await (let client of clientCursor) {
       const clientIdStr = client._id.toString();
@@ -210,6 +213,17 @@ export const dailyServiceReport = async (req, res) => {
         if (s.type === "Regular") regulars.push(s);
         else if (s.type === "Complaint") complaints.push(s);
       });
+      dats = { regulars };
+      (async () => {
+        try {
+          const html = await generateHtmlReport(regulars);
+
+          await fs.writeFile("report.html", html);
+          console.log("report.html created successfully");
+        } catch (error) {
+          console.log(error);
+        }
+      })();
 
       // Get pre-aggregated stats for this client
       const clientServiceStats = serviceStatsMap.get(clientIdStr) || {};
@@ -483,6 +497,7 @@ export const dailyServiceReport = async (req, res) => {
     return res.json({
       msg: `Report generated for ${value}`,
       files: generatedFiles,
+      dats,
     });
   } catch (error) {
     console.error("Report generation error:", error);

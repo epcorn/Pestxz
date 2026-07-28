@@ -3,6 +3,7 @@ import {
   addFrequency,
   addService,
   adminDashboard,
+  adminDashboardMonthlyTrend,
   clientAdminDashboard,
   deleteService,
   editService,
@@ -27,6 +28,7 @@ router.route("/freq").post(addFrequency).get(getFrequency);
 router.delete("/freq/:id", removeFrequency);
 router.get("/clientAdminDashboard", clientAdminDashboard);
 router.get("/adminDashboard/:id?", adminDashboard);
+router.get("/dashMonthlytrend/:id?", adminDashboardMonthlyTrend);
 
 router.route("/singleService/:id").put(editService).delete(deleteService);
 router.route("/singleUser/:id").put(passwordChange).delete(deleteUser);

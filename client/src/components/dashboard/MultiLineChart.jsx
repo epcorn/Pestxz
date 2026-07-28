@@ -10,8 +10,10 @@ import {
   Legend,
 } from 'chart.js';
 import { Line } from 'react-chartjs-2';
+import zoomPlugin from 'chartjs-plugin-zoom';
 
 ChartJS.register(
+  zoomPlugin,
   CategoryScale,
   LinearScale,
   PointElement,
@@ -21,33 +23,16 @@ ChartJS.register(
   Legend
 );
 
-// Color helper for dynamic admin charts
-const getColor = (index, alpha = 1) => {
-  const colors = [
-    `rgba(54, 162, 235, ${alpha})`,   // Blue
-    `rgba(255, 159, 64, ${alpha})`,   // Orange
-    `rgba(153, 102, 255, ${alpha})`,  // Purple
-    `rgba(90, 184, 201, ${alpha})`,   // Teal
-    `rgba(255, 99, 132, ${alpha})`,   // Red
-    `rgba(75, 192, 192, ${alpha})`,   // Green
-  ];
-  return colors[index % colors.length];
-};
+function MultiLineChart({ values = [] }) {
+  const safeValues = Array.isArray(values) ? values : [];
 
-const keyMapping = {
-  "complaints": "Total Complaints",
-  "regulars": "Total Services",
-  "productCompleted": "Total Product Service Done",
-}
-
-function MultiLineChart({ values = [], selectedMonth, admin = [], toggle }) {
-  // console.log(values)
-  // --- 1. VALUES CHART CONFIGURATION ---
-  const valuesLabels = values?.map(item => {
-    const text = item.month.split(" ") || ''
-    const text1 = text?.[0]?.slice(0, 3)
-    const text2 = text?.[1]?.slice(2, 4)
-    return `${text1}-${text2}`
+  // Format month labels (e.g. "January 2026" -> "Jan-26")
+  const valuesLabels = safeValues.map((item) => {
+    if (!item?.month) return "";
+    const parts = item.month.split(" ");
+    const monthShort = parts[0]?.slice(0, 3) || "";
+    const yearShort = parts[1]?.slice(2, 4) || "";
+    return `${monthShort}-${yearShort}`;
   });
 
   const valuesData = {
@@ -55,55 +40,36 @@ function MultiLineChart({ values = [], selectedMonth, admin = [], toggle }) {
     datasets: [
       {
         label: 'Total Complaints',
-        data: values.map(item => item.complaints ?? 0),
-        borderColor: '#FB2C36',
-        backgroundColor: '#FB2C3633',
-        tension: 0.4,
+        data: safeValues.map((item) => item.totalComplaints ?? 0),
+        borderColor: '#2563EB',      // Blue
+        backgroundColor: '#2563EB33',
+        tension: 0.3,
       },
       {
         label: 'Closed Complaints',
-        data: values.map(item => item.closed ?? 0),
-        borderColor: '#00C950',
-        backgroundColor: '#00C95033',
-        tension: 0.2,
+        data: safeValues.map((item) => item.closedComplaints ?? 0),
+        borderColor: '#16A34A',      // Green
+        backgroundColor: '#16A34A33',
+        tension: 0.3,
       },
       {
-        label: 'Regular Services',
-        data: values.map(item => item?.regularDone),
-        borderColor: 'rgba(255, 206, 86, 1)',
-        backgroundColor: 'rgba(255, 206, 86, 0.2)',
-        tension: 0.2,
+        label: 'Regular Services Done',
+        data: safeValues.map((item) => item.totalRegularDone ?? 0),
+        borderColor: '#F59E0B',      // Amber/Orange
+        backgroundColor: '#F59E0B33',
+        tension: 0.3,
       },
       {
-        label: 'Product Services',
-        data: values.map(item => item?.productDone),
-        borderColor: 'rgba(255, 99, 132, 1)',
-        backgroundColor: 'rgba(255, 99, 132, 0.2)',
-        tension: 0.2,
+        label: 'Product Services Done',
+        data: safeValues.map((item) => item.totalProductDone ?? 0),
+        borderColor: '#8B5CF6',      // Purple
+        backgroundColor: '#8B5CF633',
+        tension: 0.3,
       },
     ],
   };
 
-  // --- 2. ADMIN CHART CONFIGURATION ---
-  const adminLabels = admin?.map(item => item.month || '');
-  const selectedData = admin?.[selectedMonth] ?? {}
-  const adminKeys = Object?.keys(selectedData)?.filter(key => ['complaints', 'regulars', 'productCompleted']?.includes(key));
-
-  const adminDatasets = adminKeys?.map((key, index) => ({
-    label: keyMapping?.[key] || (key.charAt(0)?.toUpperCase() + key?.slice(1)),
-    data: admin.map(item => item?.[key] ?? 0),
-    borderColor: getColor(index, 1),
-    backgroundColor: getColor(index, 0.2),
-    tension: 0.3,
-  }));
-
-  const adminData = {
-    labels: adminLabels,
-    datasets: adminDatasets,
-  };
-
-  // --- 3. SHARED OPTIONS CONFIG ---
-  const getOptions = (titleText) => ({
+  const chartOptions = {
     responsive: true,
     maintainAspectRatio: false,
     interaction: {
@@ -111,39 +77,37 @@ function MultiLineChart({ values = [], selectedMonth, admin = [], toggle }) {
       intersect: false,
     },
     plugins: {
+      zoom: {
+        pan: {
+          enabled: true,
+          mode: "x",
+        },
+        zoom: {
+          wheel: { enabled: true },
+          pinch: { enabled: true },
+          mode: "x",
+        },
+      },
       legend: {
         position: 'top',
         labels: { font: { size: 11 }, color: 'black' },
       },
       title: {
         display: true,
-        text: titleText,
+        text: 'Monthly Trends Overview',
         font: { size: 14, weight: 'bold' },
-        padding: { bottom: 10 }
+        padding: { bottom: 10 },
       },
     },
     scales: {
       y: { beginAtZero: true },
     },
-  });
+  };
 
   return (
-    <>
-      {/* Values Data Chart */}
-      {toggle === "values" && (
-        <div className="relative w-full h-[300px]">
-          <Line data={valuesData} options={getOptions('Admin Metrics Overview')} />
-        </div>
-      )}
-
-      {/* Admin Data Chart */}
-      {toggle === "admin" && (
-        <div className="relative w-full h-[300px]">
-          <Line data={adminData} options={getOptions('Total Metrics Overview')} />
-        </div>
-      )}
-    </>
-
+    <div className="relative w-full h-[300px]">
+      <Line data={valuesData} options={chartOptions} />
+    </div>
   );
 }
 

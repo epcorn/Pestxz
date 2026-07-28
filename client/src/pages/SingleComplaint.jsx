@@ -94,7 +94,7 @@ const SingleComplaint = () => {
                 <div>
                   <span className="font-bold text-neutral-400 uppercase tracking-wider text-[10px] block mb-0.5">Assigned By</span>
                   <p className="font-semibold text-neutral-800 break-all">{details?.assignedBy.userName || "—"}</p>
-                  <p className="font-semibold text-neutral-800 break-all">{dateFormat(details?.assignedBy.date).toLocaleString() || "—"}</p>
+                  <p className="font-semibold text-neutral-800 break-all">{dateFormat(details?.assignedBy?.date)}</p>
                 </div>
               </>
             )}

@@ -35,7 +35,7 @@ export const nagative = (res, id) => {
 export const dateFormat = (date) => {
   return new Date(date).toLocaleDateString("en-IN", {
     day: "numeric",
-    month: "numeric",
+    month: "short",
     year: "numeric",
     hour: "2-digit",
     minute: "2-digit",

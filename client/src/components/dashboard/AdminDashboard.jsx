@@ -1,12 +1,13 @@
 import React, { useMemo, useState, useEffect, useRef } from "react";
 import { useSelector } from "react-redux";
 import { useAllClientsQuery } from "../../redux/clientSlice";
-import { useAdminDashboardQuery } from "../../redux/adminSlice";
+import { useAdminDashboardQuery, useDashboardMonthlyTrendQuery } from "../../redux/adminSlice";
 import { Link, useNavigate } from "react-router-dom";
 import { AssignWork } from "../../pages/Complaints";
 import PieChart from "./PieChart";
 import MultiLineChart from "./MultiLineChart";
 import { PEST_MAP } from "../../utils/constData";
+import { dateFormat } from "../../utils/helperFunctions";
 
 const prMapped = {
   Done: "Done Products Services",
@@ -32,7 +33,7 @@ function AdminDashboard() {
     () => sessionStorage.getItem("adminDashboardToggle") || "Complaint",
   );
   // "overall" or a stringified index into monthlyData
-  const [selectedMonth, setSelectedMonth] = useState("overall");
+  const [selectedState, setSelectedState] = useState({ month: "overall", startDate: "" });
   const [selectedClient, setSelectedClient] = useState(null);
   const assignRef = useRef(null);
   const navigate = useNavigate();
@@ -42,9 +43,10 @@ function AdminDashboard() {
   const clients = clientsData?.clients;
 
   const { data: adminDash, isLoading: admindashLoading } =
-    useAdminDashboardQuery(selectedClient?._id || "select", {
+    useAdminDashboardQuery({ id: selectedClient?._id || "select", filter: selectedState.month, startDate: selectedState.month !== "overall" ? selectedState.startDate : "" }, {
       skip: !["TeamLeader", "BranchAdmin", "Admin"].includes(user?.role),
     });
+  const { data: monthlyTrend, isLoading: monthlytrendLoading } = useDashboardMonthlyTrendQuery(selectedClient?.id ? selectedClient?.id : null)
 
   useEffect(() => {
     if (!assignId) return;
@@ -62,90 +64,55 @@ function AdminDashboard() {
   const isRegular = toggle === "Regular";
 
   const clientReq = useMemo(
-    () =>
-      adminDash?.latestComplaints?.filter((item) => item.type === toggle) ?? [],
+    () => {
+      if (toggle === "Complaint") return adminDash?.latestComplaints ?? [];
+      if (isRegular) return adminDash?.latestServices ?? [];
+      return [];
+    },
     [adminDash, toggle],
   );
 
-  const { products, services, complaints, monthlyData } =
+  const { products, services, complaints, pestCounts } =
     adminDash?.summary || {};
 
-  const isOverall = selectedMonth === "overall";
-  const activeMonth = !isOverall ? monthlyData?.[Number(selectedMonth)] : null;
-
-  useEffect(() => {
-    if (!isOverall && !monthlyData?.[Number(selectedMonth)]) {
-      setSelectedMonth("overall");
-    }
-  }, [monthlyData]);
-
-  const complaintStats = isOverall
-    ? {
-      open: complaints?.open || 0,
-      inProgress: complaints?.inProgress || 0,
-      closed: complaints?.closed || 0,
-      closeReq: complaints?.closeReq || 0,
-      total: complaints?.total || 0,
-      reopenCount: complaints?.reopenCount || 0,
-    }
-    : {
-      open: activeMonth?.open || 0,
-      inProgress: activeMonth?.inProgress || 0,
-      closeReq: activeMonth?.closeReq || 0,
-      closed: activeMonth?.closed || 0,
-      total: activeMonth?.complaints || 0,
-      reopenCount: activeMonth?.reopenCount || 0,
-    };
+  const complaintStats = {
+    open: complaints?.open || 0,
+    inProgress: complaints?.inProgress || 0,
+    closed: complaints?.closed || 0,
+    closeReq: complaints?.closeReq || 0,
+    total: complaints?.total || 0,
+    reopenCount: complaints?.reopenCount || 0,
+  }
   const { open, inProgress, closed, total, closeReq, reopenCount } =
     complaintStats;
 
-  const productsView = isOverall
-    ? products
-    : {
-      total: products.total,
-      scheduleCount: nestedToScheduleCount(activeMonth?.product),
-    };
-
-  const servicesView = isOverall
-    ? services
-    : {
-      total: products.total,
-      scheduleCount: nestedToScheduleCount(activeMonth?.regular),
-    };
-
   const prObj = Object.fromEntries(
-    (productsView?.scheduleCount ?? []).map((p) => [
-      prMapped[p.label],
+    (products?.scheduleCount ?? []).map((p) => [
+      prMapped[p.label] || p.label,
       p.count,
     ]),
   );
+
   const regObj = Object.fromEntries(
-    (servicesView?.scheduleCount ?? []).map((p) => [
-      regMapped[p.label],
+    (services?.scheduleCount ?? []).map((p) => [
+      regMapped[p.label] || p.label,
       p.count,
     ]),
   );
 
-  const pieChartComplaints = isOverall
-    ? complaints
-    : {
-      Open: activeMonth?.open || 0,
-      "In Progress": activeMonth?.inProgress || 0,
-      Close: activeMonth?.closed || 0,
-    };
+  const pieChartComplaints = {
+    "Open": complaints?.open || 0,
+    "In Progress": complaints?.inProgress || 0,
+    "Close Req": complaints?.closeReq || 0,
+    "Closed": complaints?.closed || 0,
+  };
 
-  const pestCounts = Array.isArray(adminDash?.flattenedServices)
-    ? adminDash.flattenedServices
-    : [];
-  const groupbyPest = pestCounts.reduce((acc, item) => {
-    const key = item?.serviceName;
-    if (key) {
-      acc[key] = (acc[key] || 0) + 1;
-    }
-    return acc;
-  }, {});
-  const groupedByLocation = Object?.groupBy(pestCounts, (id) => id.locationId)
-  console.log(groupbyPest);
+  const multichartdata = {
+    totalComplaints: complaints?.total,
+    closedComplaint: complaints?.closed,
+    totalRegular: services?.scheduleCount?.find(s => s.label === "Done").count ?? 0,
+    totalProduct: products?.scheduleCount?.find(s => s.label === "Done")?.count ?? 0,
+  }
 
 
   return (
@@ -188,18 +155,22 @@ function AdminDashboard() {
 
 
       {/* overall / monthly toggle */}
-      <div className="ml-auto bg-white outline outline-gray-600 rounded w-fit px-2 mt-2">
+      <div className="ml-auto bg-white outline outline-gray-600 rounded w-fit px-2 my-2 flex gap-2">
         <select
           className="px-2 py-1 focus:outline-0"
-          value={selectedMonth}
-          onChange={(e) => setSelectedMonth(e.target.value)}>
+          value={selectedState.month}
+          onChange={(e) => setSelectedState(prev => ({ ...prev, month: e.target.value }))}>
           <option value="overall">Overall</option>
-          {monthlyData?.map(({ month }, i) => (
-            <option key={month + i} value={i}>
-              {month}
-            </option>
-          ))}
+          <option value="monthly">Monthly</option>
+          <option value="weekly">Weekly</option>
+          <option value="custom">Custom</option>
         </select>
+        {selectedState?.month !== "overall" &&
+          <div className="flex flex-col">
+            <label htmlFor="" className="text-xs">Choose Start Date</label>
+            <input type="date" onChange={(e) => setSelectedState(prev => ({ ...prev, startDate: e.target.value }))} />
+          </div>
+        }
       </div>
 
       {/* Stat cards */}
@@ -253,13 +224,13 @@ function AdminDashboard() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {/* Products Section */}
-            {productsView?.scheduleCount?.length > 0 && (
+            {products?.scheduleCount?.length > 0 && (
               <div title="products" className="bg-white">
                 <h3 className="font-semibold text-gray-600 text-center">
                   Products ({products?.total})
                 </h3>
                 <div className="flex flex-wrap gap-x-2 gap-y-1 outline-2 outline-indigo-600 pb-1 rounded-md">
-                  {productsView.scheduleCount.map(({ label, count }, i) => (
+                  {products?.scheduleCount?.map(({ label, count }, i) => (
                     <StatCard
                       key={i}
                       title={label}
@@ -273,13 +244,13 @@ function AdminDashboard() {
             )}
 
             {/* Services Section */}
-            {servicesView?.scheduleCount?.length > 0 && (
+            {services?.scheduleCount?.length > 0 && (
               <div title="service" className="bg-white">
                 <h3 className="font-semibold text-gray-600 text-center">
                   Services ({services.total})
                 </h3>
                 <div className="flex flex-wrap gap-x-2 gap-y-1 rounded-md outline-2 outline-fuchsia-700 pb-1">
-                  {servicesView.scheduleCount.map(
+                  {services?.scheduleCount?.map(
                     ({ label, count }) =>
                       label !== "Invalid" && (
                         <StatCard
@@ -306,8 +277,7 @@ function AdminDashboard() {
             <div
               className={`w-full overflow-x-auto ${admindashLoading ? "animate-pulse" : ""}`}>
               <MultiLineChart
-                values={monthlyData}
-                weekly={adminDash?.weekly}
+                values={monthlyTrend}
                 toggle="values"
               />
             </div>
@@ -336,12 +306,13 @@ function AdminDashboard() {
       </div>
 
       {/* pest counts  */}
-      <div className="my-5">
-        <h3>Pest Counts </h3>
+      <div className="my-5 w-full outline outline-neutral-500 rounded-lg p-2">
+        <h3 className="text-lg font-semibold ">Pest Counts </h3>
+
         <div className="flex gap-2">
-          {Object.entries(groupbyPest).map(([name, count]) => (
-            <StatCard title={PEST_MAP[name]} value={count} color='text-rose-500 bg-green-200 border-rose-700' />
-          ))}
+          {pestCounts && Object.keys(pestCounts).length > 0 ? Object.entries(pestCounts)?.map(([name, count]) => (
+            <StatCard key={name} title={PEST_MAP[name]} value={count} color='text-rose-500 bg-green-200 border-rose-700' />
+          )) : <div className="text-center content-center w-full "><p>No Pest Activity Recorded {selectedState?.month}</p></div>}
         </div>
       </div>
       {/* Table */}
@@ -399,7 +370,7 @@ function AdminDashboard() {
                     Loading records...
                   </td>
                 </tr>
-              ) : clientReq.length === 0 ? (
+              ) : clientReq?.length === 0 ? (
                 <tr>
                   <td
                     colSpan={isRegular ? 6 : 7}
@@ -408,7 +379,7 @@ function AdminDashboard() {
                   </td>
                 </tr>
               ) : (
-                clientReq.map((item, i) => (
+                clientReq?.map((item, i) => (
                   <Row
                     key={item._id}
                     item={item}
@@ -442,6 +413,7 @@ function Row({
 }) {
   const latestUpdate = item?.complaintUpdate?.at(-1);
   const cd = item?.complaintDetails;
+  const regs = item?.regularService?.[0]
 
   const bgStyle = {
     Open: "bg-red-100",
@@ -486,7 +458,7 @@ function Row({
             </p>
             {cd?.assignedBy?.userName && (
               <span className="px-2 py-0.5 rounded bg-gray-100 text-gray-600 text-[.6rem] md:text-xs font-bold capitalize outline">
-                {cd.assignedBy.userName}
+                {cd?.assignedBy?.userName}
               </span>
             )}
             {assignId === item._id && (
@@ -504,26 +476,20 @@ function Row({
       )}
 
       {/* Column 3 */}
-      <td className="px-4 py-4 text-gray-600 text-xs whitespace-nowrap">
+      <td className="px-4 py-4 text-gray-600 text-sm whitespace-nowrap">
         {isRegular ? (
           <div className="font-semibold">
-            {item?.regularService?.[0]?.completedAt.split("T")[0]}
+            {dateFormat(regs?.completedAt)}
           </div>
         ) : (
-          <div>{item.createdAt.split("T")[0]}</div>
+          <div>{dateFormat(item.createdAt)}</div>
         )}
-        <p className="text-gray-400 mt-0.5">
-          {new Date(item.createdAt).toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit",
-          })}
-        </p>
       </td>
 
       {/* Column 4 */}
       <td className="px-4 py-4 font-medium text-gray-700 truncate">
         {isRegular
-          ? item?.regularService?.[0]?.userName || "—"
+          ? regs?.userName || "—"
           : cd?.status === "Open"
             ? cd?.userName
             : latestUpdate?.userName || "—"}
@@ -531,14 +497,14 @@ function Row({
 
       {/* Column 5 & 6 (Merged via colSpan to dynamically align with client header) */}
       <td className="px-4 py-4 text-sm font-normal text-gray-900 truncate">
-        {item?.clientName || cd?.clientName || "—"}
+        {item?.client?.name || cd?.clientName || "—"}
       </td>
 
       {/* Column 7 */}
       <td className="px-4 py-4 whitespace-nowrap">
         {isRegular ? (
           <span className="inline-flex items-center rounded-md bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-700 ring-1 ring-inset ring-blue-700/10">
-            {item?.regularService?.[0]?.action || "Done"}
+            {regs?.pestCount ?? 0}
           </span>
         ) : (
           <span
