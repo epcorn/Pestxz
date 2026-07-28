@@ -78,7 +78,7 @@ const SingleClient = () => {
     setLocationDetails(null);
     dispatch(toggleModal({ name: "location", status: true }));
   };
-
+console.log(data)
   const handleDelete = async () => {
     try {
       await deleteLocation(isModalOpen.delete.id).unwrap();
@@ -685,7 +685,6 @@ export function GetSchedulesForLocation({ service, date = new Date() }) {
   const completed = dates?.filter(d => d?.completed && d.status === "Done")
   const missed = dates.filter(d => d.status === "Missed")
 
-  console.log(missed.length)
   return (
     <>
       <div>{completed.length}/{dates?.length} <span className="text-red-600 font-semibold">{missed.length > 0 ? missed.length : ""}</span></div>

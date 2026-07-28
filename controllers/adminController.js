@@ -240,6 +240,283 @@ export const deleteService = async (req, res) => {
   }
 };
 
+const getDateRange = (filter, startDate) => {
+  const now = startDate ? new Date(startDate) : new Date();
+  let start = new Date(now);
+  let end = new Date(now);
+
+  switch (filter?.toLowerCase()) {
+    case "daily": {
+      start.setHours(0, 0, 0, 0);
+      end = new Date(start);
+      end.setDate(end.getDate() + 1);
+      break;
+    }
+    case "weekly": {
+      start.setDate(now.getDate() - now.getDay());
+      start.setHours(0, 0, 0, 0);
+      end = new Date(start);
+      end.setDate(end.getDate() + 7);
+      break;
+    }
+    case "monthly": {
+      start = new Date(now.getFullYear(), now.getMonth(), 1);
+      end = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+      break;
+    }
+    case "yearly": {
+      start = new Date(now.getFullYear(), 0, 1);
+      end = new Date(now.getFullYear() + 1, 0, 1);
+      break;
+    }
+    case "overall":
+    default: {
+      return { dateFilter: {}, scheduleDateFilter: {} };
+    }
+  }
+
+  return {
+    dateFilter: { createdAt: { $gte: start, $lt: end } },
+    scheduleDateFilter: { "combinedSchedules.date": { $gte: start, $lt: end } },
+  };
+};
+
+export async function adminDashboard(req, res) {
+  const { id } = req.params;
+  const { filter = "overall", startDate } = req.query;
+  const isSpecificClient = id && id !== "select";
+
+  const clientMatch = isSpecificClient
+    ? { client: new mongoose.Types.ObjectId(id) }
+    : {};
+
+  const clientMatchStage = isSpecificClient
+    ? { $match: { client: new mongoose.Types.ObjectId(id) } }
+    : { $match: {} };
+
+  // Calculate clean start & end date range based on filter and startDate
+  const { dateFilter, scheduleDateFilter } = getDateRange(filter, startDate);
+
+  try {
+    const populateLocationAndClient = [
+      { path: "location", select: "floor subLocation location" },
+      { path: "client", select: "name" },
+    ];
+
+    const [
+      latestComplaints,
+      latestServices,
+      pestCountData,
+      complaintMetrics,
+      productDashboard,
+      serviceDashboard,
+    ] = await Promise.all([
+      // 1. Complaints List
+      Service.find({ ...clientMatch, ...dateFilter, type: "Complaint" })
+        .sort({ updatedAt: -1 })
+        .limit(30)
+        .populate(populateLocationAndClient)
+        .lean(),
+
+      // 2. Regular Services List
+      Service.find({ ...clientMatch, ...dateFilter, type: "Regular" })
+        .sort({ createdAt: -1 })
+        .limit(30)
+        .populate(populateLocationAndClient)
+        .lean(),
+
+      // 3. Pest Count Aggregation by Pest Name
+      Service.aggregate([
+        { $match: { type: "Regular", ...dateFilter, ...clientMatch } },
+        { $unwind: "$regularService" },
+        { $match: { "regularService.pestCount": { $gt: 0 } } },
+        {
+          $group: {
+            _id: "$regularService.serviceName",
+            totalCount: { $sum: "$regularService.pestCount" },
+          },
+        },
+      ]),
+
+      // 4. Complaint Status Summary Metrics
+      Service.aggregate([
+        { $match: { type: "Complaint", ...dateFilter, ...clientMatch } },
+        {
+          $group: {
+            _id: null,
+            total: { $sum: 1 },
+            open: {
+              $sum: {
+                $cond: [{ $eq: ["$complaintDetails.status", "Open"] }, 1, 0],
+              },
+            },
+            inProgress: {
+              $sum: {
+                $cond: [
+                  { $eq: ["$complaintDetails.status", "In Progress"] },
+                  1,
+                  0,
+                ],
+              },
+            },
+            closeReq: {
+              $sum: {
+                $cond: [
+                  { $eq: ["$complaintDetails.status", "Close Req"] },
+                  1,
+                  0,
+                ],
+              },
+            },
+            closed: {
+              $sum: {
+                $cond: [{ $eq: ["$complaintDetails.status", "Close"] }, 1, 0],
+              },
+            },
+            reopenCount: {
+              $sum: { $ifNull: ["$complaintDetails.reopenCount", 0] },
+            },
+          },
+        },
+      ]),
+
+      // 5. Product Metrics
+      Location.aggregate([
+        clientMatchStage,
+        {
+          $facet: {
+            totalProducts: [{ $unwind: "$product" }, { $count: "count" }],
+            scheduleCount: [
+              { $unwind: "$product" },
+              { $unwind: "$product.schedule" },
+              {
+                $match: scheduleDateFilter["combinedSchedules.date"]
+                  ? {
+                      "product.schedule.date":
+                        scheduleDateFilter["combinedSchedules.date"],
+                    }
+                  : {},
+              },
+              {
+                $group: { _id: "$product.schedule.status", count: { $sum: 1 } },
+              },
+              { $project: { _id: 0, label: "$_id", count: 1 } },
+            ],
+          },
+        },
+      ]),
+
+      // 6. Service Metrics
+      Location.aggregate([
+        clientMatchStage,
+        {
+          $facet: {
+            totalServices: [{ $unwind: "$service" }, { $count: "count" }],
+            scheduleCount: [
+              { $unwind: "$service" },
+              { $unwind: "$service.schedule" },
+              {
+                $match: scheduleDateFilter["combinedSchedules.date"]
+                  ? {
+                      "service.schedule.date":
+                        scheduleDateFilter["combinedSchedules.date"],
+                    }
+                  : {},
+              },
+              {
+                $group: { _id: "$service.schedule.status", count: { $sum: 1 } },
+              },
+              { $project: { _id: 0, label: "$_id", count: 1 } },
+            ],
+          },
+        },
+      ]),
+    ]);
+
+    // Format Product & Service Counts
+    const statuses = ["Done", "Pending", "Missed"];
+
+    const productData = {
+      total: productDashboard?.[0]?.totalProducts?.[0]?.count || 0,
+      scheduleCount: statuses.map((label) => ({
+        label,
+        count:
+          productDashboard?.[0]?.scheduleCount?.find(
+            (item) => item.label === label,
+          )?.count || 0,
+      })),
+    };
+
+    const serviceData = {
+      total: serviceDashboard?.[0]?.totalServices?.[0]?.count || 0,
+      scheduleCount: statuses.map((label) => ({
+        label,
+        count:
+          serviceDashboard?.[0]?.scheduleCount?.find(
+            (item) => item.label === label,
+          )?.count || 0,
+      })),
+    };
+
+    // Format Complaint Metrics
+    const complaintData = complaintMetrics[0] || {
+      total: 0,
+      open: 0,
+      closeReq: 0,
+      closed: 0,
+      inProgress: 0,
+      reopenCount: 0,
+    };
+    delete complaintData._id;
+
+    // Format Pest Counts into key-value map (e.g., { Mosquito: 12, Cockroach: 5 })
+    const pestCounts = {};
+    pestCountData.forEach((item) => {
+      if (item._id) pestCounts[item._id] = item.totalCount;
+    });
+
+    return res.json({
+      summary: {
+        complaints: complaintData,
+        products: productData,
+        services: serviceData,
+        pestCounts,
+      },
+      latestComplaints,
+      latestServices,
+    });
+  } catch (error) {
+    console.error("Admin Dashboard Error:", error);
+    return res.status(500).json({ msg: "Server error, try again later" });
+  }
+}
+
+export const runnerData = async (req, res) => {
+  const { lat, lon } = req.query;
+  const appId = process.env.OPENWEATHER_APIKEY;
+  try {
+    console.log(lat, lon, appId);
+    if (!lat || !lon || !appId)
+      return res.status(400).json({ msg: "information not provided" });
+
+    const resp = await fetch(
+      `https://pestindex.vercel.app/pestxz?appid=${appId}&lat=${lat}&lon=${lon}`,
+    );
+
+    if (!resp.ok) {
+      return res
+        .status(resp.status)
+        .json({ msg: "failed fetching internal server error" });
+    }
+    const data = await resp.json();
+
+    res.status(200).json(data);
+  } catch (error) {
+    console.log(error.message);
+    res.status(500).json({ msg: "Server error", error });
+  }
+};
+
 export const clientAdminDashboard = async (req, res) => {
   const { id } = req.body;
   try {
@@ -362,10 +639,10 @@ export const clientAdminDashboard = async (req, res) => {
   }
 };
 
-export const adminDashboard = async (req, res) => {
+export const adminDashboardMonthlyTrend = async (req, res) => {
   const { id } = req.params;
   const isSpecificClient = id && id !== "select";
-  
+
   const clientMatch = isSpecificClient
     ? { client: new mongoose.Types.ObjectId(id) }
     : {};
@@ -375,322 +652,143 @@ export const adminDashboard = async (req, res) => {
     : { $match: {} };
 
   try {
-    const populateLocationAndClient = [
-      { path: "location", select: "floor subLocation location" },
-      { path: "client", select: "name" },
-    ];
-
-    const [
-      latestComplaints,
-      allComplaints,
-      regularPestCount,
-      complaintMetrics,
-      productDashboard,
-      serviceDashboard,
-      monthlyScheduleStats,
-    ] = await Promise.all([
-      // 1. Fetch ONLY latest 15 complaints directly with MongoDB limit & projection
-      Service.find({ ...clientMatch, type: "Complaint" })
-        .sort({ updatedAt: -1 })
-        .limit(15)
-        .populate(populateLocationAndClient)
-        .lean(),
-
-      // 2. All complaints (light projection)
-      Service.find({ type: "Complaint", ...clientMatch })
-        .populate(populateLocationAndClient)
-        .lean(),
-
-      // 3. Regular pest counts (project only needed fields)
-      Service.find({
-        type: "Regular",
-        ...clientMatch,
-        "regularService.pestCount": { $ne: 0 },
-      })
-        .select("regularService.pestCount regularService.serviceName location client")
-        .populate(populateLocationAndClient)
-        .lean(),
-
-      // 4. Compute complaint summary stats directly in MongoDB (replaces in-memory .reduce)
+    const [complaints, regular, product] = await Promise.all([
+      // 1. Complaints Trend
       Service.aggregate([
-        { $match: { type: "Complaint", ...clientMatch } },
-        {
-          $group: {
-            _id: null,
-            total: { $sum: 1 },
-            open: {
-              $sum: {
-                $cond: [{ $eq: ["$complaintDetails.status", "Open"] }, 1, 0],
-              },
-            },
-            inProgress: {
-              $sum: {
-                $cond: [{ $eq: ["$complaintDetails.status", "In Progress"] }, 1, 0],
-              },
-            },
-            closeReq: {
-              $sum: {
-                $cond: [{ $eq: ["$complaintDetails.status", "Close Req"] }, 1, 0],
-              },
-            },
-            closed: {
-              $sum: {
-                $cond: [{ $eq: ["$complaintDetails.status", "Close"] }, 1, 0],
-              },
-            },
-            reopenCount: {
-              $sum: { $ifNull: ["$complaintDetails.reopenCount", 0] },
-            },
-          },
-        },
-      ]),
-
-      // 5. Optimized Product Metrics Facet
-      Location.aggregate([
-        clientMatchStage,
-        {
-          $facet: {
-            totalProducts: [{ $unwind: "$product" }, { $count: "count" }],
-            scheduleCount: [
-              { $unwind: "$product" },
-              { $unwind: "$product.schedule" },
-              {
-                $group: { _id: "$product.schedule.status", count: { $sum: 1 } },
-              },
-              { $project: { _id: 0, label: "$_id", count: 1 } },
-            ],
-          },
-        },
-      ]),
-
-      // 6. Optimized Service Metrics Facet
-      Location.aggregate([
-        clientMatchStage,
-        {
-          $facet: {
-            totalServices: [{ $unwind: "$service" }, { $count: "count" }],
-            scheduleCount: [
-              { $unwind: "$service" },
-              { $unwind: "$service.schedule" },
-              {
-                $group: { _id: "$service.schedule.status", count: { $sum: 1 } },
-              },
-              { $project: { _id: 0, label: "$_id", count: 1 } },
-            ],
-          },
-        },
-      ]),
-
-      // 7. Monthly breakdown mapping
-      Location.aggregate([
-        clientMatchStage,
-        {
-          $facet: {
-            productSchedules: [
-              { $unwind: "$product" },
-              { $unwind: "$product.schedule" },
-              {
-                $project: {
-                  _id: 0,
-                  status: "$product.schedule.status",
-                  date: "$product.schedule.date",
-                  isProduct: { $literal: "product" },
-                },
-              },
-            ],
-            serviceSchedules: [
-              { $unwind: "$service" },
-              { $unwind: "$service.schedule" },
-              {
-                $project: {
-                  _id: 0,
-                  status: "$service.schedule.status",
-                  date: "$service.schedule.date",
-                  isProduct: { $literal: "regular" },
-                },
-              },
-            ],
-          },
-        },
-        {
-          $project: {
-            combinedSchedules: {
-              $concatArrays: ["$productSchedules", "$serviceSchedules"],
-            },
-          },
-        },
-        { $unwind: "$combinedSchedules" },
         {
           $match: {
-            "combinedSchedules.date": { $exists: true, $ne: null },
+            type: "Complaint",
+            ...clientMatch,
           },
         },
         {
           $group: {
             _id: {
-              yearMonth: {
-                $dateToString: {
-                  format: "%Y-%m",
-                  date: "$combinedSchedules.date",
-                },
-              },
-              isProduct: "$combinedSchedules.isProduct",
-              status: "$combinedSchedules.status",
+              year: { $year: "$createdAt" },
+              month: { $month: "$createdAt" },
             },
-            count: { $sum: 1 },
+            totalComplaints: { $sum: 1 },
+            closedComplaints: {
+              $sum: {
+                $cond: [{ $eq: ["$complaintDetails.status", "Close"] }, 1, 0],
+              },
+            },
+          },
+        },
+        {
+          $sort: {
+            "_id.year": 1,
+            "_id.month": 1,
+          },
+        },
+      ]),
+
+      // 2. Regular Services Done Trend
+      Location.aggregate([
+        clientMatchStage,
+        { $unwind: "$service" },
+        { $unwind: "$service.schedule" },
+        {
+          $match: {
+            "service.schedule.status": "Done",
+          },
+        },
+        {
+          $group: {
+            _id: {
+              year: { $year: "$service.schedule.date" },
+              month: { $month: "$service.schedule.date" },
+            },
+            totalRegularDone: { $sum: 1 },
+          },
+        },
+        {
+          $sort: {
+            "_id.year": 1,
+            "_id.month": 1,
+          },
+        },
+      ]),
+
+      // 3. Product Services Done Trend
+      Location.aggregate([
+        clientMatchStage,
+        { $unwind: "$product" },
+        { $unwind: "$product.schedule" },
+        {
+          $match: {
+            "product.schedule.status": "Done",
+          },
+        },
+        {
+          $group: {
+            _id: {
+              year: { $year: "$product.schedule.date" },
+              month: { $month: "$product.schedule.date" },
+            },
+            totalProductDone: { $sum: 1 },
+          },
+        },
+        {
+          $sort: {
+            "_id.year": 1,
+            "_id.month": 1,
           },
         },
       ]),
     ]);
 
-    // Process counters
-    const statuses = ["Done", "Pending", "Missed"];
+    const dashboardMap = {};
 
-    const productData = {
-      total: productDashboard?.[0]?.totalProducts?.[0]?.count || 0,
-      scheduleCount: statuses.map((label) => ({
-        label,
-        count:
-          productDashboard?.[0]?.scheduleCount?.find(
-            (item) => item.label === label
-          )?.count || 0,
-      })),
-    };
+    const ensureMonth = (year, month) => {
+      const key = `${year}-${String(month).padStart(2, "0")}`;
 
-    const serviceData = {
-      total: serviceDashboard?.[0]?.totalServices?.[0]?.count || 0,
-      scheduleCount: statuses.map((label) => ({
-        label,
-        count:
-          serviceDashboard?.[0]?.scheduleCount?.find(
-            (item) => item.label === label
-          )?.count || 0,
-      })),
-    };
-
-    // Flatten regular pest services
-    const flattenedServices = regularPestCount.map((reg) => ({
-      clientId: reg.client?._id,
-      client: reg.client?.name,
-      locationId: reg.location?._id,
-      floor: reg.location?.floor,
-      subLocation: reg.location?.subLocation,
-      location: reg.location?.location,
-      serviceName: reg.regularService?.[0]?.serviceName,
-      pestCount: reg.regularService?.[0]?.pestCount,
-    }));
-
-    // Complaint metrics extracted from MongoDB aggregation
-    const complaintData = complaintMetrics[0] || {
-      total: 0,
-      open: 0,
-      closeReq: 0,
-      closed: 0,
-      inProgress: 0,
-      reopenCount: 0,
-    };
-    delete complaintData._id;
-
-    // Process Monthly Trends
-    const monthlyMap = {};
-    const ensureMonth = (dateStr) => {
-      if (!monthlyMap[dateStr]) {
-        const [year, month] = dateStr.split("-");
-        const dateObj = new Date(parseInt(year), parseInt(month) - 1);
-        monthlyMap[dateStr] = {
-          month: dateObj.toLocaleString("default", {
+      if (!dashboardMap[key]) {
+        dashboardMap[key] = {
+          month: new Date(year, month - 1).toLocaleDateString("en-IN", {
             month: "long",
             year: "numeric",
           }),
-          complaints: 0,
-          regulars: 0,
-          open: 0,
-          closeReq: 0,
-          inProgress: 0,
-          closed: 0,
-          reopenCount: 0,
-          product: { Done: 0, Pending: 0, Missed: 0 },
-          regular: { Done: 0, Pending: 0, Missed: 0 },
+          totalComplaints: 0,
+          closedComplaints: 0,
+          totalRegularDone: 0,
+          totalProductDone: 0,
         };
       }
-      return monthlyMap[dateStr];
+      return dashboardMap[key];
     };
 
-    monthlyScheduleStats.forEach((item) => {
-      if (!item._id.yearMonth || !item._id.isProduct) return;
-      const month = ensureMonth(item._id.yearMonth);
-      const type = item._id.isProduct;
-      const status = item._id.status?.trim();
-
-      if (month[type] && month[type][status] !== undefined) {
-        month[type][status] += item.count;
+    // Populate aggregated data into map
+    complaints.forEach((item) => {
+      if (item._id?.year && item._id?.month) {
+        const month = ensureMonth(item._id.year, item._id.month);
+        month.totalComplaints = item.totalComplaints;
+        month.closedComplaints = item.closedComplaints;
       }
     });
 
-    // Populate monthly complaint trends from allComplaints
-    allComplaints.forEach((item) => {
-      const date = new Date(item.createdAt);
-      if (isNaN(date.getTime())) return;
-      const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
-      const month = ensureMonth(key);
-
-      month.complaints++;
-      const status = item.complaintDetails?.status;
-      if (status === "Open") month.open++;
-      else if (status === "In Progress") month.inProgress++;
-      else if (status === "Close Req") month.closeReq++;
-      else if (status === "Close") month.closed++;
-      month.reopenCount += item.complaintDetails?.reopenCount || 0;
+    regular.forEach((item) => {
+      if (item._id?.year && item._id?.month) {
+        const month = ensureMonth(item._id.year, item._id.month);
+        month.totalRegularDone = item.totalRegularDone;
+      }
     });
 
-    const monthlyData = Object.entries(monthlyMap)
+    product.forEach((item) => {
+      if (item._id?.year && item._id?.month) {
+        const month = ensureMonth(item._id.year, item._id.month);
+        month.totalProductDone = item.totalProductDone;
+      }
+    });
+
+    // Convert map to sorted array
+    const trendData = Object.entries(dashboardMap)
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([, value]) => value);
 
-    const formattedLatestComplaints = latestComplaints.map((item) => ({
-      ...item,
-      clientName: item.client?.name || item.complaintDetails?.clientName || "-",
-    }));
-
-    return res.json({
-      all: allComplaints,
-      latestComplaints: formattedLatestComplaints,
-      flattenedServices,
-      summary: {
-        complaints: complaintData,
-        products: productData,
-        services: serviceData,
-        monthlyData,
-      },
-    });
+    return res.status(200).json(trendData);
   } catch (error) {
-    console.error("Admin Dashboard Error:", error);
+    console.error("Admin Dashboard Monthly Trend Error:", error);
     return res.status(500).json({ msg: "Server error, try again later" });
-  }
-};
-
-export const runnerData = async (req, res) => {
-  const { lat, lon } = req.query;
-  const appId = process.env.OPENWEATHER_APIKEY;
-  try {
-    console.log(lat, lon, appId);
-    if (!lat || !lon || !appId)
-      return res.status(400).json({ msg: "information not provided" });
-
-    const resp = await fetch(
-      `https://pestindex.vercel.app/pestxz?appid=${appId}&lat=${lat}&lon=${lon}`,
-    );
-
-    if (!resp.ok) {
-      return res
-        .status(resp.status)
-        .json({ msg: "failed fetching internal server error" });
-    }
-    const data = await resp.json();
-
-    res.status(200).json(data);
-  } catch (error) {
-    console.log(error.message);
-    res.status(500).json({ msg: "Server error", error });
   }
 };

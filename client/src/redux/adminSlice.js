@@ -84,12 +84,30 @@ export const adminSlice = apiSlice.injectEndpoints({
       providesTags: ["Complaint", "assign", "Casual"],
     }),
     adminDashboard: builder.query({
+      query: ({ id, filter, startDate } = {}) => {
+        const params = new URLSearchParams();
+        if (filter) params.append("filter", filter);
+        if (startDate) params.append("startDate", startDate);
+
+        const queryString = params.toString();
+        const baseUrl =
+          id && id !== "select"
+            ? `/api/admin/adminDashboard/${id}`
+            : `/api/admin/adminDashboard`;
+
+        return {
+          url: queryString ? `${baseUrl}?${queryString}` : baseUrl,
+        };
+      },
+      providesTags: ["Complaint", "assign", "Casual"],
+    }),
+    dashboardMonthlyTrend: builder.query({
       query: (id) => ({
         url: id
-          ? `/api/admin/adminDashboard/${id}`
-          : `/api/admin/adminDashboard`,
+          ? `/api/admin/dashMonthlytrend/${id}`
+          : `/api/admin/dashMonthlytrend`,
       }),
-      providesTags: ["Complaint", "assign", "Casual"],
+      providesTags: ["Complaint", "Casual"],
     }),
     runnerData: builder.query({
       query: ({ lat, lon }) => ({
@@ -121,6 +139,7 @@ export const {
   useDeleteUserMutation,
   useClientAdminDashboardQuery,
   useAdminDashboardQuery,
+  useDashboardMonthlyTrendQuery,
   useRunnerDataQuery,
   useImgUploaderMutation,
 } = adminSlice;

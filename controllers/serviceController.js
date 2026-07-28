@@ -415,7 +415,7 @@ export const assignWork = async (req, res) => {
       return res.status(403).json({
         msg: `Already assigned to ${service.complaintDetails.assignedTo.userName}`,
       });
-    if (service.status !== "Open") {
+    if (service?.status !== "Open") {
       service.complaintDetails.assignedTo = {
         userId: value,
         userName: label,

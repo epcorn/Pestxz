@@ -63,7 +63,7 @@ const ComplaintTable = ({ data, user, toggle }) => {
                 {/* Complaint Number */}
                 <td className="px-2 py-4 text-center">
                   <div className="font-bold text-blue-600 hover:text-blue-800 transition-colors">
-                    {complaint.complaintDetails?.number || (i + 2)}
+                    {complaint.complaintDetails?.number || (i + 1)}
                   </div>
                 </td>
 
