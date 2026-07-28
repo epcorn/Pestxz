@@ -160,8 +160,6 @@ export const unScheduleReport = async (req, res) => {
         service: parsedServices,
         type: "Unscheduled",
         pestCount: data.pestCount,
-        createdAt: data.serviceDate,
-        updatedAt: data.serviceDate,
       });
 
       const serviceNamesReported = unschedule.service
