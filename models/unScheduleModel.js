@@ -14,7 +14,6 @@ const unScheduleSchema = new mongoose.Schema(
         action: { type: Object, default: {} },
         comment: { type: Object, default: {} },
         completionImages: { type: [String], default: [] },
-        completed: { type: Boolean, default: false },
       },
     ],
     pestCount: {
@@ -22,6 +21,7 @@ const unScheduleSchema = new mongoose.Schema(
       default: 0,
       max: [15, "Count cannot exceed 15"],
     },
+    status: { type: String, default: "Pending" },
     comment: { type: String },
     image: { type: [String], default: [] },
     raisedBy: { id: { type: String }, user: { type: String } },

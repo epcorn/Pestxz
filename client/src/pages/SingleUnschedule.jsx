@@ -11,6 +11,7 @@ import { socket } from '../socket';
 import ImagesModal from '../components/modals/ImagesModal';
 import Headers from '../components/Headers';
 import RegularForm from '../components/modals/RegularForm';
+import { dateFormat } from '../utils/helperFunctions';
 
 function SingleUnschedule() {
   const { id } = useParams();
@@ -20,7 +21,7 @@ function SingleUnschedule() {
 
   const { user, isModalOpen } = useSelector(store => store.helper);
   const { data: unscheduled = {}, isLoading: unscLoading } = useGetUnscheduledReportsQuery(id, { skip: !id });
-  const [updateStatus] = useStatusUnscheduleMutation();
+  const [updateStatus, { isLoading: statusLoading }] = useStatusUnscheduleMutation();
   const { data: DBUser } = useGetSingleUserQuery(user._id, { skip: !user?._id });
 
   const handleApprove = async () => {
@@ -48,7 +49,7 @@ function SingleUnschedule() {
   }
 
   return (
-    <section className="space-y-4 md:space-y-6 max-w-6xl mx-auto p-3 md:p-4">
+    <section className="space-y-4 md:space-y-6 max-w-6xl mx-auto px-3 md:px-4">
       <Headers header="Unscheduled Work Report" user={user} />
 
       {/* ── MAIN DETAILS CARD ── */}
@@ -77,7 +78,7 @@ function SingleUnschedule() {
             <div className="text-sm font-bold text-neutral-950">
               <span>{unscheduled?.raisedBy?.user || "N/A"}</span>
               <span className="block text-xs font-medium text-neutral-600 mt-0.5">
-                {unscheduled?.createdAt ? new Date(unscheduled.createdAt).toLocaleString() : ""}
+                {dateFormat(unscheduled.createdAt)}
               </span>
             </div>
           </div>
@@ -137,8 +138,8 @@ function SingleUnschedule() {
           {/* Action Management Buttons */}
           {status === "Pending" && (user.role === "Admin" || user.role === "ClientAdmin") && (
             <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
-              <Button color="bg-red-700 hover:bg-red-800 text-white font-bold px-3 py-1 rounded transition shadow-sm text-xs" label="Deny" onClick={handleDeny} />
-              <Button color="bg-green-700 hover:bg-green-800 text-white font-bold px-3 py-1 rounded transition shadow-sm text-xs" label="Approve" onClick={handleApprove} />
+              <Button color="bg-red-700 hover:bg-red-800 text-white font-bold px-3 py-1 rounded transition shadow-sm text-xs" label="Deny" disabled={statusLoading} onClick={handleDeny} />
+              <Button color="bg-green-700 hover:bg-green-800 text-white font-bold px-3 py-1 rounded transition shadow-sm text-xs" label="Approve" disabled={statusLoading} onClick={handleApprove} />
             </div>
           )}
 
@@ -174,7 +175,7 @@ function SingleUnschedule() {
               <tbody className="divide-y divide-neutral-200">
                 <tr className="hover:bg-neutral-50/50 transition-colors">
                   <td className="p-3 text-neutral-900 font-semibold align-top border-r border-neutral-300">
-                    {unscheduled?.updatedAt ? new Date(unscheduled.updatedAt).toLocaleString() : "—"}
+                    {dateFormat(unscheduled.updatedAt)}
                   </td>
                   <td className="p-3 text-neutral-900 align-top border-r border-neutral-300">
                     {status === "Approved" ? (
@@ -193,11 +194,11 @@ function SingleUnschedule() {
                           </div>
                         ))}
                       </div>
-                    ) : (
+                    ) : status === "Rejected" ? (
                       <p className="text-sm font-bold text-red-900">
                         ✕ Rejected by: <span className="font-extrabold">{unscheduled?.approval?.name}</span>
                       </p>
-                    )}
+                    ) : "Approval pending"}
                   </td>
                   <td className="p-3 align-top">
                     {services?.length > 0 ? (

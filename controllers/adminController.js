@@ -7,6 +7,8 @@ import Service from "../models/serviceModel.js";
 import { capitalLetter, uploadFile } from "../utils/helperFunction.js";
 import Product from "../models/productModel.js";
 import ProductService from "../models/productService.js";
+import Casual from "../models/casualServiceModel.js";
+import { Unscheduled } from "../models/unScheduleModel.js";
 
 export const imageUploader = async (req, res) => {
   try {
@@ -306,6 +308,10 @@ export async function adminDashboard(req, res) {
     const [
       latestComplaints,
       latestServices,
+      casualServices,
+      casualCounts,
+      unscheduledServices,
+      unscheduledCounts,
       pestCountData,
       complaintMetrics,
       productDashboard,
@@ -324,6 +330,20 @@ export async function adminDashboard(req, res) {
         .limit(30)
         .populate(populateLocationAndClient)
         .lean(),
+
+      Casual.find({ ...clientMatch, ...dateFilter })
+        .sort({ createdAt: -1 })
+        .limit(30)
+        .populate(populateLocationAndClient)
+        .lean(),
+      Casual.countDocuments({ ...clientMatch, ...dateFilter }),
+      Unscheduled.find({ ...clientMatch, ...dateFilter })
+        .sort({
+          createdAt: -1,
+        })
+        .populate(populateLocationAndClient)
+        .limit(30),
+      Unscheduled.countDocuments({ ...clientMatch, ...dateFilter }),
 
       // 3. Pest Count Aggregation by Pest Name
       Service.aggregate([
@@ -481,7 +501,11 @@ export async function adminDashboard(req, res) {
         products: productData,
         services: serviceData,
         pestCounts,
+        casualCounts,
+        unscheduledCounts,
       },
+      latestCasuals: casualServices,
+      latestUnschedules: unscheduledServices,
       latestComplaints,
       latestServices,
     });

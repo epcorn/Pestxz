@@ -459,7 +459,8 @@ export const getAllAssignedWork = async (req, res) => {
 };
 
 export const casualServices = async (req, res) => {
-  const { service, usedCalibration, action, comment, pestCount } = req.body;
+  const { service, usedCalibration, serviceDate, action, comment, pestCount } =
+    req.body;
 
   try {
     if (!service) {
@@ -525,6 +526,8 @@ export const casualServices = async (req, res) => {
       ],
       pestCount: sanitizedPestCount,
       user: { name: req.user.name, id: req.user._id },
+      createdAt: new Date(serviceDate),
+      updatedAt: new Date(serviceDate),
     });
 
     return res.status(200).json({ msg: `casual service created by `, url: `` });

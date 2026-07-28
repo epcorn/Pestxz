@@ -83,6 +83,11 @@ function RegularForm({ serviceData, id, type, locationName, setRegular, today })
   const submitSingleService = async (ser, todaySchedule) => {
     try {
       saveLocally(ser.serviceName);
+      const serviceDate =
+        todaySchedule?.date ||
+        ser?.serviceDate ||
+        ser?.date ||
+        (today ? new Date(today).toISOString() : new Date().toISOString());
 
       const values = getValues();
       const partialWithoutComment = [];
@@ -108,7 +113,7 @@ function RegularForm({ serviceData, id, type, locationName, setRegular, today })
       form.append("usedCalibration", JSON.stringify(buildPayload("usedCalibration", ser, values)));
       form.append("action", JSON.stringify(buildPayload("action", ser, values)));
       form.append("comment", JSON.stringify(buildPayload("comment", ser, values)));
-      if (isRegular && todaySchedule) form.append("serviceDate", todaySchedule.date);
+      form.append("serviceDate", serviceDate);
       if (isUnschedule) {
         form.append("type", "update");
         form.append("unscheduledId", id); // id prop IS the unscheduled doc's _id here
@@ -125,7 +130,7 @@ function RegularForm({ serviceData, id, type, locationName, setRegular, today })
       if (files) {
         Array.from(files)?.slice(0, 2).forEach((file) => form.append("image", file));
       }
-
+      console.log(form, [...form])
       const res = isUnschedule
         ? await updateUnscheduled(form).unwrap()
         : await (isRegular ? regularService : casualService)({ id, form }).unwrap();

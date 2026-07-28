@@ -8,6 +8,7 @@ import PieChart from "./PieChart";
 import MultiLineChart from "./MultiLineChart";
 import { PEST_MAP } from "../../utils/constData";
 import { dateFormat } from "../../utils/helperFunctions";
+import UnScheduledList from "../single_location/UnScheduledList";
 
 const prMapped = {
   Done: "Done Products Services",
@@ -67,12 +68,15 @@ function AdminDashboard() {
     () => {
       if (toggle === "Complaint") return adminDash?.latestComplaints ?? [];
       if (isRegular) return adminDash?.latestServices ?? [];
-      return [];
+      // if (toggle === "Unschedules") return adminDash?.latestUnschedules
+      //   ?? [];
+      // if (toggle === "Casuals") return adminDash?.latestCasuals ?? [];
+      // return [];
     },
     [adminDash, toggle],
   );
 
-  const { products, services, complaints, pestCounts } =
+  const { products, services, complaints, pestCounts, casualCounts, unscheduledCounts } =
     adminDash?.summary || {};
 
   const complaintStats = {
@@ -99,7 +103,7 @@ function AdminDashboard() {
       p.count,
     ]),
   );
-
+  console.log(adminDash)
   const pieChartComplaints = {
     "Open": complaints?.open || 0,
     "In Progress": complaints?.inProgress || 0,
@@ -220,6 +224,18 @@ function AdminDashboard() {
               color="border-l-blue-500"
               textColor="text-blue-500"
             />
+            <StatCard
+              title="Casual Services"
+              value={casualCounts || 0}
+              color="border-l-gray-500"
+              textColor="text-gray-500"
+            />
+            <StatCard
+              title="Unscheduled Services"
+              value={unscheduledCounts || 0}
+              color="border-l-gray-500"
+              textColor="text-gray-500"
+            />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -319,7 +335,7 @@ function AdminDashboard() {
       <div className="bg-white rounded-2xl shadow-xs border border-gray-200 overflow-hidden">
         {/* Tabs */}
         <div className="bg-gray-300 px-4 py-3 flex gap-2">
-          {["Complaint", "Regular"].map((tab) => (
+          {["Complaint", "Regular", "Casuals", "Unschedules"].map((tab) => (
             <button
               key={tab}
               onClick={() => handleToggle(tab)}
@@ -327,12 +343,20 @@ function AdminDashboard() {
                 ? "bg-blue-500 text-white"
                 : "text-gray-700 hover:text-white hover:bg-gray-700"
                 }`}>
-              {tab === "Complaint" ? "Complaints" : "Services"}
+              {tab}
             </button>
           ))}
         </div>
+        {toggle === "Unschedules" &&
+          <UnScheduledList type={'Unschedule'} work={adminDash?.latestUnschedules} />
+        }
+        {toggle === "Casuals" &&
+          <UnScheduledList type={"casual"}
+            work={adminDash?.latestCasuals}
+          />
+        }
 
-        <div className="w-full overflow-x-auto border border-gray-200">
+        {!["Unschedules", "Casuals"].includes(toggle) && <div className="w-full overflow-x-auto border border-gray-200">
           <table className="w-full min-w-[900px] border-collapse bg-white text-left text-sm text-gray-500">
             {/* Column headers */}
             <thead className="bg-gray-400 border-b border-gray-200 text-xs font-bold uppercase text-gray-600 tracking-wider ">
@@ -348,14 +372,14 @@ function AdminDashboard() {
                 <th scope="col" className="px-4 py-3">
                   Date
                 </th>
+                <th scope="col" className="px-4 py-3 max-w-16">
+                  Pest Count
+                </th>
                 <th scope="col" className="px-4 py-3">
                   {isRegular ? "Serviced by" : "Updated by"}
                 </th>
                 <th scope="col" className="px-4 py-3">
                   Client
-                </th>
-                <th scope="col" className="px-4 py-3">
-                  Status
                 </th>
               </tr>
             </thead>
@@ -368,14 +392,6 @@ function AdminDashboard() {
                     colSpan={isRegular ? 6 : 7}
                     className="p-8 text-center text-gray-400 text-sm">
                     Loading records...
-                  </td>
-                </tr>
-              ) : clientReq?.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={isRegular ? 6 : 7}
-                    className="p-8 text-center text-gray-400 text-sm">
-                    No recent matching records found.
                   </td>
                 </tr>
               ) : (
@@ -394,7 +410,8 @@ function AdminDashboard() {
               )}
             </tbody>
           </table>
-        </div>
+        </div>}
+
       </div>
     </section>
   );
@@ -486,21 +503,6 @@ function Row({
         )}
       </td>
 
-      {/* Column 4 */}
-      <td className="px-4 py-4 font-medium text-gray-700 truncate">
-        {isRegular
-          ? regs?.userName || "—"
-          : cd?.status === "Open"
-            ? cd?.userName
-            : latestUpdate?.userName || "—"}
-      </td>
-
-      {/* Column 5 & 6 (Merged via colSpan to dynamically align with client header) */}
-      <td className="px-4 py-4 text-sm font-normal text-gray-900 truncate">
-        {item?.client?.name || cd?.clientName || "—"}
-      </td>
-
-      {/* Column 7 */}
       <td className="px-4 py-4 whitespace-nowrap">
         {isRegular ? (
           <span className="inline-flex items-center rounded-md bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-700 ring-1 ring-inset ring-blue-700/10">
@@ -513,6 +515,24 @@ function Row({
           </span>
         )}
       </td>
+
+      {/* Column 4 */}
+      <td className="px-4 py-4 font-medium text-gray-700 truncate">
+        {isRegular
+          ? regs?.userName || "—"
+          : cd?.status === "Open"
+            ? cd?.userName
+            : latestUpdate?.userName || "—"}
+      </td>
+
+
+      {/* Column 5 & 6 (Merged via colSpan to dynamically align with client header) */}
+      <td className="px-4 py-4 text-sm font-normal text-gray-900 truncate">
+        {item?.client?.name || cd?.clientName || "—"}
+      </td>
+
+      {/* Column 7 */}
+
     </tr>
   );
 }
@@ -524,6 +544,7 @@ export function StatCard({
   color,
   textColor,
   arrkey = "",
+  pestCount,
   onClick = () => { },
 }) {
   const isActive = active === arrkey || active === title;
@@ -536,8 +557,8 @@ export function StatCard({
       <p className="text-[9px] md:text-xs uppercase tracking-wide text-gray-400 font-semibold">
         {title}
       </p>
-      <p className={`text-lg md:text-2xl font-bold leading-tight ${textColor}`}>
-        {value}
+      <p className={`text-lg flex justify-between md:text-2xl font-bold leading-tight ${textColor}`}>
+        <span>{value}</span> {pestCount && <span>{pestCount}</span>}
       </p>
     </div>
   );

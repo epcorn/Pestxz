@@ -226,7 +226,7 @@ console.log(data)
                 {toggleLists === "allComp" && (
                   <div className="bg-white rounded-2xl border overflow-hidden shadow-sm">
                     <h2 className="text-lg font-bold px-5 py-3 border-b bg-red-100 flex justify-between items-center">
-                      <span>All Complaints ({data.complaints?.length})</span>
+                      <span>All Complaints ({data?.complaints?.length})</span>
                       <IoIosArrowDown className={`${isModalOpen?.allComp ? "rotate-180" : ""} transition-all`} />
                     </h2>
 
@@ -245,24 +245,24 @@ console.log(data)
                             <Link
                               key={complaint._id}
                               className="grid grid-cols-1 md:grid-cols-12 gap-2 md:gap-0 items-center py-4 px-4 text-sm text-neutral-700 hover:bg-neutral-50 transition-colors"
-                              to={`/complaint/${complaint._id}`}
+                              to={`/complaint/${complaint?._id}`}
                             >
                               <div className="col-span-1 md:col-span-2 flex justify-between md:block items-center">
                                 <span className="md:hidden text-xs font-bold uppercase">No:</span>
                                 <span className="text-blue-600 font-medium hover:underline">
-                                  {complaint.complaintDetails.number}
+                                  {complaint?.complaintDetails?.number}
                                 </span>
                               </div>
 
                               <div className="col-span-1 md:col-span-2 flex justify-between md:block md:text-center items-center">
                                 <span className="md:hidden text-xs font-bold uppercase">Date:</span>
-                                <span className="text-neutral-500 md:text-neutral-700">{dateFormat(complaint.createdAt)}</span>
+                                <span className="text-neutral-500 md:text-neutral-700">{dateFormat(complaint?.createdAt)}</span>
                               </div>
 
                               <div className="col-span-1 md:col-span-4 flex justify-between md:block items-center">
                                 <span className="md:hidden text-xs font-bold uppercase">Service:</span>
                                 <span className="truncate max-w-[200px] md:max-w-none text-right md:text-left">
-                                  {complaint.complaintDetails.service?.join(", ")}
+                                  {complaint?.complaintDetails?.service?.join(", ")}
                                 </span>
                               </div>
 

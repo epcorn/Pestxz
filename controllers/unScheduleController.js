@@ -69,9 +69,8 @@ export const unScheduleReport = async (req, res) => {
           comment: parsedComment?.[sc.scopeId]?.[con.consumableId] || "",
         })),
       }));
-      
+
       target.scopes = scopeReadings;
-      target.completed = true;
       target.completedAt = new Date();
       target.completionImages = imageUrl;
       target.completedBy = { user: req.user.name, id: req.user._id };
@@ -156,9 +155,13 @@ export const unScheduleReport = async (req, res) => {
         location: data.locationId,
         comment: data.comment,
         image: imageUrl,
+        status: "Done",
         raisedBy: { user: req.user.name, id: req.user._id },
         service: parsedServices,
         type: "Unscheduled",
+        pestCount: data.pestCount,
+        createdAt: data.serviceDate,
+        updatedAt: data.serviceDate,
       });
 
       const serviceNamesReported = unschedule.service
@@ -218,17 +221,16 @@ export const statusUnscheduled = async (req, res) => {
     if (data?.req === "update") {
     } else if (data.req === "approval") {
       unschedule.approval.status = data?.status;
+      unschedule.status = data?.status;
       unschedule.approval.id = req.user._id;
       unschedule.approval.name = req.user.name;
     }
 
     await unschedule.save();
-    res
-      .status(200)
-      .json({
-        msg: `Unschedule work for ${location.floor} has been ${data.status}`,
-        url: `/unschedule/${id}`,
-      });
+    res.status(200).json({
+      msg: `Unschedule work for ${location.floor} has been ${data.status}`,
+      url: `/unschedule/${id}`,
+    });
   } catch (error) {
     res.status(500).json({ msg: "server error" });
   }
