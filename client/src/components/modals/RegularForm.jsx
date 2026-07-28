@@ -83,6 +83,11 @@ function RegularForm({ serviceData, id, type, locationName, setRegular, today })
   const submitSingleService = async (ser, todaySchedule) => {
     try {
       saveLocally(ser.serviceName);
+      const serviceDate =
+        todaySchedule?.date ||
+        ser?.serviceDate ||
+        ser?.date ||
+        (today ? new Date(today).toISOString() : new Date().toISOString());
 
       const values = getValues();
       const partialWithoutComment = [];
@@ -108,7 +113,7 @@ function RegularForm({ serviceData, id, type, locationName, setRegular, today })
       form.append("usedCalibration", JSON.stringify(buildPayload("usedCalibration", ser, values)));
       form.append("action", JSON.stringify(buildPayload("action", ser, values)));
       form.append("comment", JSON.stringify(buildPayload("comment", ser, values)));
-      if (isRegular && todaySchedule) form.append("serviceDate", todaySchedule.date);
+      form.append("serviceDate", serviceDate);
       if (isUnschedule) {
         form.append("type", "update");
         form.append("unscheduledId", id); // id prop IS the unscheduled doc's _id here
@@ -125,7 +130,7 @@ function RegularForm({ serviceData, id, type, locationName, setRegular, today })
       if (files) {
         Array.from(files)?.slice(0, 2).forEach((file) => form.append("image", file));
       }
-
+      console.log(form, [...form])
       const res = isUnschedule
         ? await updateUnscheduled(form).unwrap()
         : await (isRegular ? regularService : casualService)({ id, form }).unwrap();
@@ -304,29 +309,29 @@ function RegularForm({ serviceData, id, type, locationName, setRegular, today })
                     ))}
                   </div>
 
-                    <div className="text-right mt-5 space-x-3">
-                      <button
-                        type="button"
-                        onClick={() => saveLocally(ser.serviceName)}
-                        className="px-3 py-2 hidden border rounded"
-                      >
-                        Save Progress
-                      </button>
-                      {!isRegular &&
-                        <Button color={'bg-red-400'} label={'Close'} onClick={() => dispatch(toggleModal({ name: type, status: false }))} />
-                      }<button
-                        type="button"
-                        disabled={isRegular ? isLoading : submitLoading}
-                        onClick={() => submitSingleService(ser, todaySchedule)}
-                        className="bg-green-600 px-5 py-2 text-white rounded disabled:cursor-not-allowed disabled:opacity-35"
-                      >
-                        {(isRegular ? isLoading : submitLoading) ? "Submitting..." : "Complete Service"}
-                      </button>
-                    </div>
+                  <div className="text-right mt-5 space-x-3">
+                    <button
+                      type="button"
+                      onClick={() => saveLocally(ser.serviceName)}
+                      className="px-3 py-2 hidden border rounded"
+                    >
+                      Save Progress
+                    </button>
+                    {!isRegular &&
+                      <Button color={'bg-red-400'} label={'Close'} onClick={() => dispatch(toggleModal({ name: type, status: false }))} />
+                    }<button
+                      type="button"
+                      disabled={isRegular ? isLoading : submitLoading}
+                      onClick={() => submitSingleService(ser, todaySchedule)}
+                      className="bg-green-600 px-5 py-2 text-white rounded disabled:cursor-not-allowed disabled:opacity-35"
+                    >
+                      {(isRegular ? isLoading : submitLoading) ? "Submitting..." : "Complete Service"}
+                    </button>
                   </div>
-                );
-              })}
-            </form>}
+                </div>
+              );
+            })}
+          </form>}
         </div>
       </div>
     </div>

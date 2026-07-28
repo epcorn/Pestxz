@@ -8,7 +8,7 @@ const casualSchema = new mongoose.Schema(
         serviceName: { type: String },
         scopes: [Object],
         completed: { type: Boolean, default: false },
-        completedAt: { type: Date },
+        completedAt: { type: Date, default: null },
         usedCalibration: { type: Object, default: {} },
         action: { type: Object, default: {} },
         comment: { type: Object, default: {} },

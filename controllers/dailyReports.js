@@ -111,7 +111,7 @@ export const dailyServiceReport = async (req, res) => {
     const templateBuffer = await fs.readFile(templatePath);
 
     // 2. BATCH AGGREGATIONS FOR ALL CLIENTS AT ONCE (AVOID N+1 QUERIES)
-    
+
     const [allServiceStats, allProdStats] = await Promise.all([
       Location.aggregate([
         { $unwind: "$service" },
@@ -213,7 +213,7 @@ export const dailyServiceReport = async (req, res) => {
         if (s.type === "Regular") regulars.push(s);
         else if (s.type === "Complaint") complaints.push(s);
       });
-      dats = { regulars };
+      dats = { client };
       (async () => {
         try {
           const html = await generateHtmlReport(regulars);
@@ -333,8 +333,16 @@ export const dailyServiceReport = async (req, res) => {
         row4.getCell(3).value = prodStats.pending;
         row4.commit();
 
+        const row17 = overviewWorkSheet.getRow(17);
+        row17.getCell(2).value = client?.unschedules?.length ?? 0;
+
+        const row19 = overviewWorkSheet.getRow(19);
+        row19.getCell(2).value = client?.casuals?.length ?? 0;
+
         const startColumn = 7;
         let currentRowNum = 6;
+        row17.commit();
+        row19.commit();
 
         regStats.pestCount.forEach((p) => {
           const currentRow = overviewWorkSheet.getRow(currentRowNum);
@@ -342,9 +350,9 @@ export const dailyServiceReport = async (req, res) => {
 
           const rowData = [
             dateFormat(p.date).withTime || "",
-            p.floor || "",
-            p.location || "",
-            p.subLocation || "",
+            p.floor || "-",
+            p.location || "-",
+            p.subLocation || "-",
             PEST_MAP[p.name] || "",
             p.count || 0,
           ];
@@ -443,6 +451,7 @@ export const dailyServiceReport = async (req, res) => {
         }
       }
 
+      // if()
       // Populate Unscheduled Work
       if (unschWorksheet) {
         let unschCount = 4;
@@ -457,13 +466,15 @@ export const dailyServiceReport = async (req, res) => {
           row.getCell(2).value = unsc.updatedAt
             ? dateFormat(unsc.updatedAt).withTime
             : "";
-          row.getCell(3).value =
-            `${loc.floor || ""}, ${loc.location || ""}, ${loc.subLocation || ""}`;
-          row.getCell(4).value = unsc.serviceName || "";
-          row.getCell(5).value = unsc.raisedBy?.user || "";
-          row.getCell(6).value = unsc.approval?.name || "";
-          row.getCell(7).value = unsc.comment || "";
-          row.getCell(8).value = unsc.update?.status || "";
+          row.getCell(3).value = unsc.pestCount || "-";
+          row.getCell(4).value = loc?.floor || "-";
+          row.getCell(5).value = loc?.location || "-";
+          row.getCell(6).value = loc?.subLocation || "-";
+          row.getCell(7).value = unsc.serviceName || "";
+          row.getCell(8).value = unsc.raisedBy?.user || "";
+          row.getCell(9).value = unsc.approval?.name || "";
+          row.getCell(10).value = unsc.comment || "";
+          row.getCell(11).value = unsc.update?.status || "";
           row.commit();
           unschCount++;
         }
