@@ -30,6 +30,10 @@ const unScheduleSchema = new mongoose.Schema(
       id: { type: mongoose.Schema.Types.ObjectId },
       name: { type: String, default: "" },
     },
+    completedBy: {
+      id: { type: mongoose.Schema.Types.ObjectId },
+      name: { type: String, default: "" },
+    },
     client: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Client",

@@ -42,7 +42,7 @@ function SingleUnschedule() {
   };
 
   const status = unscheduled?.approval?.status;
-  const services = unscheduled?.service?.filter(ser => ser.completed);
+  const services = unscheduled?.service?.filter(ser => ser.completed || ser?.completionImages.length > 0);
 
   if (unscLoading) {
     return <div className="p-4 text-center text-sm font-bold text-neutral-800">Loading Report...</div>;
@@ -167,7 +167,7 @@ function SingleUnschedule() {
             <table className="w-full min-w-[600px] border-collapse text-left text-sm">
               <thead>
                 <tr className="bg-neutral-100 border-b border-neutral-300 text-xs font-bold uppercase tracking-wider text-neutral-700">
-                  <th className="p-3 border-r border-neutral-300 w-1/4">Timestamp</th>
+                  <th className="p-3 border-r border-neutral-300 w-1/4">Date</th>
                   <th className="p-3 border-r border-neutral-300 w-2/4">Service Operation Updates</th>
                   <th className="p-3 w-1/4">Execution Status</th>
                 </tr>
@@ -203,7 +203,7 @@ function SingleUnschedule() {
                   <td className="p-3 align-top">
                     {services?.length > 0 ? (
                       <div className="space-y-2">
-                        {services.map(ser => (
+                        {services?.map(ser => (
                           <span key={ser._id} className="inline-flex items-center rounded bg-green-100 border border-green-300 px-2 py-0.5 text-xs font-bold text-green-900 block w-max">
                             COMPLETED
                           </span>
@@ -227,11 +227,11 @@ function SingleUnschedule() {
         <div className="space-y-3">
           <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-800">Completed Specifications Breakdown</h3>
           <div className="grid grid-cols-1 gap-4">
-            {services.map((ser, i) => (
-              <div key={ser.serviceId} className="bg-white border border-neutral-300 rounded-xl p-4 shadow-sm space-y-3">
+            {services?.map((ser, i) => (
+              <div key={ser?.serviceId} className="bg-white border border-neutral-300 rounded-xl p-4 shadow-sm space-y-3">
                 <div className="border-b border-neutral-200 pb-2 flex justify-between items-center">
                   <h4 className="font-bold text-sm text-neutral-950">
-                    ({i + 1}) {ser.serviceName}
+                    ({i + 1}) {ser?.serviceName}
                   </h4>
                   <span className="text-xs font-bold text-neutral-700 bg-neutral-100 border border-neutral-300 px-2.5 py-0.5 rounded">
                     Operator: {ser?.completedBy?.user || "—"}
@@ -245,7 +245,7 @@ function SingleUnschedule() {
                     </p>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pl-2">
-                      {sc.consumables?.map(con => (
+                      {sc?.consumables?.map(con => (
                         <div key={con.consumableId} className="bg-neutral-50 border border-neutral-200 rounded-lg p-3 grid grid-cols-2 gap-2 text-xs">
                           <div className="col-span-2 border-b border-neutral-200 pb-1 mb-1">
                             <span className="font-bold text-neutral-700 block uppercase tracking-tight text-[10px]">Consumable Material</span>

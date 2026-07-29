@@ -12,11 +12,13 @@
   "dependencies": {
     "@reduxjs/toolkit": "^2.0.0",
     "@tailwindcss/vite": "^4.2.4",
+    "@types/react": "^18.2.37",
+    "@types/react-dom": "^18.2.15",
+    "@vitejs/plugin-react": "^4.2.0",
     "@yudiel/react-qr-scanner": "^2.6.0",
     "chart.js": "^4.5.1",
     "chartjs-plugin-zoom": "^2.2.0",
     "file-saver": "^2.0.5",
-    "html5-qrcode": "^2.3.8",
     "motion": "^12.40.0",
     "react": "^18.2.0",
     "react-chartjs-2": "^5.3.1",
@@ -30,16 +32,13 @@
     "react-virtualized-auto-sizer": "^2.0.3",
     "react-window": "^2.2.7",
     "socket.io-client": "^4.8.3",
-    "tailwindcss": "^4.2.4"
+    "tailwindcss": "^4.2.4",
+    "vite": "^5.0.0"
   },
   "devDependencies": {
-    "@types/react": "^18.2.37",
-    "@types/react-dom": "^18.2.15",
-    "@vitejs/plugin-react": "^4.2.0",
     "eslint": "^8.53.0",
     "eslint-plugin-react": "^7.33.2",
     "eslint-plugin-react-hooks": "^4.6.0",
-    "eslint-plugin-react-refresh": "^0.4.4",
-    "vite": "^5.0.0"
+    "eslint-plugin-react-refresh": "^0.4.4"
   }
 }

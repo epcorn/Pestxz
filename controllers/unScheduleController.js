@@ -71,8 +71,11 @@ export const unScheduleReport = async (req, res) => {
       }));
 
       target.scopes = scopeReadings;
-      target.completedAt = new Date();
+      target.completedAt = new Date(data?.serviceDate);
       target.completionImages = imageUrl;
+
+      target.updatedAt = new Date(data.serviceDate);
+      target.pestCount = data.pestCount;
       target.completedBy = { user: req.user.name, id: req.user._id };
 
       unscheduled.update = { user: req.user.name, id: req.user._id };
@@ -160,8 +163,8 @@ export const unScheduleReport = async (req, res) => {
         service: parsedServices,
         type: "Unscheduled",
         pestCount: data.pestCount,
-        createdAt: data.serviceDate,
-        updatedAt: data.serviceDate,
+        createdAt: new Date(data.serviceDate),
+        updatedAt: new Date(data.serviceDate),
       });
 
       const serviceNamesReported = unschedule.service

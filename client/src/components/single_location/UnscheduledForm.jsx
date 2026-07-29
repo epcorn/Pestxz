@@ -11,7 +11,7 @@ import { useUnscheduledReportMutation } from '../../redux/locationSlice'
 import { socket } from '../../socket'
 
 
-function UnscheduledForm({ existing, locationId, type, id }) {
+function UnscheduledForm({ existing, locationId, type, id, today }) {
   const dispatch = useDispatch()
   const { isModalOpen, user } = useSelector(store => store.helper)
   const { register, handleSubmit, control, reset, formState: { errors } } = useForm()
@@ -36,6 +36,7 @@ function UnscheduledForm({ existing, locationId, type, id }) {
       formData.append("locationId", locationId)
       formData.append("comment", data.comment)
       formData.append("service", JSON.stringify(data.service))
+      formData.append("serviceDate", today)
 
       for (let i = 0; i < data.image.length; i++) {
         formData.append("image", data.image[i])

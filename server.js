@@ -120,7 +120,8 @@ app.use(
     abortOnLimit: true,
   }),
 );
-if (process.env.NODE_ENV !== "production") app.use(morgan("dev"));
+app.use(morgan("dev"));
+// if (process.env.NODE_ENV !== "production") app.use(morgan("dev"));
 
 // setup cron job
 app.post("/api/cron/auto-mark-missed", (req, res) => {
