@@ -24,6 +24,19 @@ const PEST_MAP = {
   Antron: "Ant",
 };
 
+// Helper to download image buffer for ExcelJS
+const fetchImageBuffer = async (url) => {
+  try {
+    const response = await fetch(url);
+    if (!response.ok) return null;
+    const arrayBuffer = await response.arrayBuffer();
+    return Buffer.from(arrayBuffer);
+  } catch (err) {
+    console.error("Failed to fetch image for Excel:", err);
+    return null;
+  }
+};
+
 export const dailyServiceReport = async (req, res) => {
   try {
     const { value = "monthly" } = req.params;
@@ -163,12 +176,13 @@ export const dailyServiceReport = async (req, res) => {
       {
         path: "services",
         match: { createdAt: { $gte: startDate, $lte: endDate } },
+        select: "type regularService complaintDetails complaintUpdate location",
         populate: {
           path: "location",
           select: "_id location floor subLocation",
         },
       },
-      { path: "locations" },
+      { path: "locations", select: "_id location floor subLocation" },
       {
         path: "unschedules",
         match: matchCondition,
@@ -264,6 +278,7 @@ export const dailyServiceReport = async (req, res) => {
             serviceName: name,
             pestCount: count,
             serviceDate: date,
+            image,
           } = service;
           const locationId = reg?.location?._id;
           const compositeName = `${name}_${locationId}`;
@@ -273,6 +288,7 @@ export const dailyServiceReport = async (req, res) => {
               name,
               count: 0,
               date,
+              image,
               floor: reg?.location?.floor,
               locationId,
               location: reg?.location?.location,
@@ -362,10 +378,11 @@ export const dailyServiceReport = async (req, res) => {
         row17.commit();
         row19.commit();
 
-        regStats?.pestCount?.forEach((p) => {
+        // Loop through top pest counts and embed images into Excel
+        for (const p of regStats?.pestCount || []) {
           const currentRow = overviewWorkSheet.getRow(currentRowNum);
-          currentRow.height = 30;
-          console.log("after: ", regStats.pestCount);
+          currentRow.height = 50; // Increased row height to fit the embedded image better
+
           const rowData = [
             dateFormat(p?.date).withTime || "",
             p?.floor || "-",
@@ -375,6 +392,7 @@ export const dailyServiceReport = async (req, res) => {
             p?.count || 0,
           ];
 
+          // Write text data to cells (Columns G through L)
           rowData.forEach((val, idx) => {
             const cell = currentRow.getCell(startColumn + idx);
             cell.value = val;
@@ -385,9 +403,41 @@ export const dailyServiceReport = async (req, res) => {
             };
           });
 
+          // Extract first image URL (if image is an array or string)
+          const imageUrl = Array.isArray(p?.image) ? p.image[0] : p?.image;
+
+          if (
+            imageUrl &&
+            typeof imageUrl === "string" &&
+            imageUrl.startsWith("http")
+          ) {
+            const imgBuffer = await fetchImageBuffer(imageUrl);
+
+            if (imgBuffer) {
+              // Determine extension (png vs jpeg/jpg)
+              const extension = imageUrl.toLowerCase().endsWith(".png")
+                ? "png"
+                : "jpeg";
+
+              const imageId = workbook.addImage({
+                buffer: imgBuffer,
+                extension,
+              });
+
+              // Embed the image in Column 13 (Column M) or whatever your image column index is
+              const imageColumnIdx = startColumn + rowData.length; // Next available column after text data
+
+              overviewWorkSheet.addImage(imageId, {
+                tl: { col: imageColumnIdx - 1, row: currentRowNum - 1 },
+                ext: { width: 55, height: 75 }, 
+                editAs: "oneCell",
+              });
+            }
+          }
+
           currentRow.commit();
           currentRowNum++;
-        });
+        }
       }
 
       // Populate Complaints
