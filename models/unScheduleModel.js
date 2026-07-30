@@ -29,6 +29,12 @@ const unScheduleSchema = new mongoose.Schema(
       status: { type: String, default: "Pending" },
       id: { type: mongoose.Schema.Types.ObjectId },
       name: { type: String, default: "" },
+      date: { type: Date, default: null },
+    },
+    completedBy: {
+      id: { type: mongoose.Schema.Types.ObjectId },
+      name: { type: String, default: "" },
+      date: { type: Date, default: null },
     },
     client: {
       type: mongoose.Schema.Types.ObjectId,

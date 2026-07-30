@@ -47,7 +47,7 @@ function SingleUnschedule() {
   if (unscLoading) {
     return <div className="p-4 text-center text-sm font-bold text-neutral-800">Loading Report...</div>;
   }
-
+  console.log(unscheduled)
   return (
     <section className="space-y-4 md:space-y-6 max-w-6xl mx-auto px-3 md:px-4">
       <Headers header="Unscheduled Work Report" user={user} />
@@ -144,7 +144,7 @@ function SingleUnschedule() {
           )}
 
           {/* Initiation Trigger button */}
-          {status === "Approved" && !services?.length && (DBUser?.rights.scan_Unscheduled || user.role === "Operator") && (
+          {unscheduled.status !== "Done" && status === "Approved" && !services?.length && (DBUser?.rights.scan_Unscheduled || user.role === "Operator") && (
             <div className="w-full sm:w-auto">
               <Button
                 label="Execute Unscheduled Work"
@@ -223,18 +223,18 @@ function SingleUnschedule() {
       </div>
 
       {/* ── COMPLETE MATERIAL SUMMARIES & BREAKDOWN ── */}
-      {services?.length > 0 && (
+      {unscheduled.status === "Done" && unscheduled?.service?.length > 0 && (
         <div className="space-y-3">
           <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-800">Completed Specifications Breakdown</h3>
           <div className="grid grid-cols-1 gap-4">
-            {services.map((ser, i) => (
-              <div key={ser.serviceId} className="bg-white border border-neutral-300 rounded-xl p-4 shadow-sm space-y-3">
+            {unscheduled?.service?.map((ser, i) => (
+              <div key={ser?.serviceId} className="bg-white border border-neutral-300 rounded-xl p-4 shadow-sm space-y-3">
                 <div className="border-b border-neutral-200 pb-2 flex justify-between items-center">
                   <h4 className="font-bold text-sm text-neutral-950">
                     ({i + 1}) {ser.serviceName}
                   </h4>
                   <span className="text-xs font-bold text-neutral-700 bg-neutral-100 border border-neutral-300 px-2.5 py-0.5 rounded">
-                    Operator: {ser?.completedBy?.user || "—"}
+                    Operator: {unscheduled?.completedBy?.name || "—"}
                   </span>
                 </div>
 

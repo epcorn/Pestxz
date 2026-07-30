@@ -45,7 +45,7 @@ function AdminDashboard() {
 
   const { data: adminDash, isLoading: admindashLoading } =
     useAdminDashboardQuery({ id: selectedClient?._id || "select", filter: selectedState.month, startDate: selectedState.month !== "overall" ? selectedState.startDate : "" }, {
-      skip: !["TeamLeader", "BranchAdmin", "Admin"].includes(user?.role),
+      skip: !["TeamLeader", "BranchAdmin", "Admin"].includes(user?.role), pollingInterval: 5000,
     });
   const { data: monthlyTrend, isLoading: monthlytrendLoading } = useDashboardMonthlyTrendQuery(selectedClient?.id ? selectedClient?.id : null)
 
@@ -323,7 +323,7 @@ function AdminDashboard() {
 
       {/* pest counts  */}
       <div className="my-5 w-full outline outline-neutral-500 rounded-lg p-2">
-        <h3 className="text-lg font-semibold ">Pest Counts </h3>
+        <h3 className="text-lg font-semibold ">Pest Activity </h3>
 
         <div className="flex gap-2">
           {pestCounts && Object.keys(pestCounts).length > 0 ? Object.entries(pestCounts)?.map(([name, count]) => (
@@ -341,7 +341,7 @@ function AdminDashboard() {
               onClick={() => handleToggle(tab)}
               className={`px-4 py-1.5 rounded-lg text-xs sm:text-sm font-bold transition-all ${toggle === tab
                 ? "bg-blue-500 text-white"
-                : "text-gray-700 hover:text-white hover:bg-gray-700"
+                : "text-gray-700 hover:text-white hover:bg-blue-700"
                 }`}>
               {tab}
             </button>

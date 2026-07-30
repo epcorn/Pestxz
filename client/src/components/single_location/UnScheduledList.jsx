@@ -9,7 +9,7 @@ const rowStyle = (approval, update) => {
       ? "outline-l-4 outline-l-green-500 bg-green-950/30"
       : "outline-l-4 outline-l-yellow-500 bg-yellow-950/30"
   }
-  if (approval.status === "Rejected") {
+  if (approval?.status === "Rejected") {
     return "outline-l-4 outline-l-red-500 bg-red-950/30"
   }
   return "outline-l-4 outline-l-cyan-500 bg-cyan-950/30"
@@ -19,10 +19,10 @@ function UnScheduledList({ work = [], type = "unschedule" }) {
   const navigate = useNavigate();
 
   // Check if the array is empty
-  if (work.length === 0) {
+  if (work?.length === 0) {
     return <div className="p-4 text-gray-500 text-center">No unscheduled work found.</div>;
   }
-  console.log(work)
+
   return (
     <div className="text-xs md:text-sm overflow-x-auto w-full">
 
@@ -51,7 +51,7 @@ function UnScheduledList({ work = [], type = "unschedule" }) {
           }
         </thead>
         <tbody>
-          {type.toString().toLowerCase() === "unschedule" ? work?.map((w, i) => (
+          {type?.toString().toLowerCase() === "unschedule" ? work?.map((w, i) => (
             <tr key={w._id} className={`border-b border-b-gray-400 hover:opacity-90 transition-all text-xs md:text-sm *:not-last:border-r  ${rowStyle(w.approval, w.update)}`}
               onClick={() => navigate(`/unschedule/${w._id}`)}>
               <td className="p-3">{i + 1}</td>
@@ -66,7 +66,7 @@ function UnScheduledList({ work = [], type = "unschedule" }) {
               </td>
               <td className="p-3">{w?.service?.map(s => (s?.serviceName)).join(", ")}</td>
               <td className="p-3 ">{w?.comment}</td>
-              <td className="p-3">{w?.approval?.status}</td>
+              <td className="p-3">{w?.status}</td>
             </tr>
           )) :
             work?.map((w, i) => (

@@ -1,7 +1,7 @@
+import { Unscheduled } from "../models/unScheduleModel.js";
 import Admin from "../models/adminModel.js";
 import Location from "../models/locationModel.js";
 import Service from "../models/serviceModel.js";
-import { Unscheduled } from "../models/unScheduleModel.js";
 import { uploadFile } from "../utils/helperFunction.js";
 
 export const unScheduleReport = async (req, res) => {
@@ -73,7 +73,15 @@ export const unScheduleReport = async (req, res) => {
       target.scopes = scopeReadings;
       target.completedAt = new Date();
       target.completionImages = imageUrl;
-      target.completedBy = { user: req.user.name, id: req.user._id };
+
+      unscheduled.updatedAt = new Date();
+      unscheduled.pestCount = data.pestCount;
+      unscheduled.status = "Done";
+      unscheduled.completedBy = {
+        name: req.user.name,
+        date: new Date(),
+        id: req.user._id,
+      };
 
       unscheduled.update = { user: req.user.name, id: req.user._id };
       await unscheduled.save();
@@ -155,7 +163,7 @@ export const unScheduleReport = async (req, res) => {
         location: data.locationId,
         comment: data.comment,
         image: imageUrl,
-        status: "Done",
+        status: "Pending",
         raisedBy: { user: req.user.name, id: req.user._id },
         service: parsedServices,
         type: "Unscheduled",
@@ -202,6 +210,7 @@ export const getUnscheduledReports = async (req, res) => {
     res.status(200).json(unschedule);
   } catch (error) {
     console.error("Server error", error);
+    res.status(500).json({ msg: "Server error", error });
   }
 };
 
@@ -215,11 +224,10 @@ export const statusUnscheduled = async (req, res) => {
     if (data?.read) {
       unschedule.read = true;
     }
-
-    if (data?.req === "update") {
-    } else if (data.req === "approval") {
+    if (data.req === "approval") {
       unschedule.approval.status = data?.status;
       unschedule.status = data?.status;
+      unschedule.approval.date = new Date();
       unschedule.approval.id = req.user._id;
       unschedule.approval.name = req.user.name;
     }
