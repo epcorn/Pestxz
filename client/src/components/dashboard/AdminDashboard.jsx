@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useEffect, useRef } from "react";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { useAllClientsQuery } from "../../redux/clientSlice";
 import { useAdminDashboardQuery, useDashboardMonthlyTrendQuery } from "../../redux/adminSlice";
 import { Link, useNavigate } from "react-router-dom";
@@ -9,6 +9,8 @@ import MultiLineChart from "./MultiLineChart";
 import { PEST_MAP } from "../../utils/constData";
 import { dateFormat } from "../../utils/helperFunctions";
 import UnScheduledList from "../single_location/UnScheduledList";
+import ImagesModal from "../modals/ImagesModal";
+import { toggleModal } from "../../redux/helperSlice";
 
 const prMapped = {
   Done: "Done Products Services",
@@ -33,19 +35,21 @@ function AdminDashboard() {
   const [toggle, setToggle] = useState(
     () => sessionStorage.getItem("adminDashboardToggle") || "Complaint",
   );
+
   // "overall" or a stringified index into monthlyData
   const [selectedState, setSelectedState] = useState({ month: "overall", startDate: "" });
   const [selectedClient, setSelectedClient] = useState(null);
   const assignRef = useRef(null);
   const navigate = useNavigate();
 
-  const { user } = useSelector((store) => store.helper);
+  const { user, isModalOpen } = useSelector((store) => store.helper);
+
   const { data: clientsData = [] } = useAllClientsQuery();
   const clients = clientsData?.clients;
 
   const { data: adminDash, isLoading: admindashLoading } =
     useAdminDashboardQuery({ id: selectedClient?._id || "select", filter: selectedState.month, startDate: selectedState.month !== "overall" ? selectedState.startDate : "" }, {
-      skip: !["TeamLeader", "BranchAdmin", "Admin"].includes(user?.role), pollingInterval: 5000,
+      skip: !["TeamLeader", "BranchAdmin", "Admin"].includes(user?.role),
     });
   const { data: monthlyTrend, isLoading: monthlytrendLoading } = useDashboardMonthlyTrendQuery(selectedClient?.id ? selectedClient?.id : null)
 
@@ -103,7 +107,7 @@ function AdminDashboard() {
       p.count,
     ]),
   );
-  console.log(adminDash)
+
   const pieChartComplaints = {
     "Open": complaints?.open || 0,
     "In Progress": complaints?.inProgress || 0,
@@ -331,6 +335,7 @@ function AdminDashboard() {
           )) : <div className="text-center content-center w-full "><p>No Pest Activity Recorded {selectedState?.month}</p></div>}
         </div>
       </div>
+
       {/* Table */}
       <div className="bg-white rounded-2xl shadow-xs border border-gray-200 overflow-hidden">
         {/* Tabs */}
@@ -347,71 +352,34 @@ function AdminDashboard() {
             </button>
           ))}
         </div>
-        {toggle === "Unschedules" &&
-          <UnScheduledList type={'Unschedule'} work={adminDash?.latestUnschedules} />
-        }
-        {toggle === "Casuals" &&
-          <UnScheduledList type={"casual"}
-            work={adminDash?.latestCasuals}
+
+        {toggle === "Unschedules" && (
+          <UnScheduledList type={"Unschedule"} work={adminDash?.latestUnschedules} />
+        )}
+
+        {toggle === "Casuals" && (
+          <UnScheduledList type={"casual"} work={adminDash?.latestCasuals} />
+        )}
+
+        {toggle === "Complaint" && (
+          <ComplaintTable
+            rows={clientReq}
+            loading={admindashLoading}
+            assignId={assignId}
+            assignRef={assignRef}
+            setAssignId={setAssignId}
+            navigate={navigate}
           />
-        }
+        )}
 
-        {!["Unschedules", "Casuals"].includes(toggle) && <div className="w-full overflow-x-auto border border-gray-200">
-          <table className="w-full min-w-[900px] border-collapse bg-white text-left text-sm text-gray-500">
-            {/* Column headers */}
-            <thead className="bg-gray-400 border-b border-gray-200 text-xs font-bold uppercase text-gray-600 tracking-wider ">
-              <tr>
-                <th scope="col" className="px-2 py-3 text-center">
-                  {isRegular ? "Number" : "Complaint No"}
-                </th>
-                {!isRegular && (
-                  <th scope="col" className="px-4 py-3">
-                    Assigned to
-                  </th>
-                )}
-                <th scope="col" className="px-4 py-3">
-                  Date
-                </th>
-                <th scope="col" className="px-4 py-3 max-w-16">
-                  Pest Count
-                </th>
-                <th scope="col" className="px-4 py-3">
-                  {isRegular ? "Serviced by" : "Updated by"}
-                </th>
-                <th scope="col" className="px-4 py-3">
-                  Client
-                </th>
-              </tr>
-            </thead>
-
-            {/* Rows Container */}
-            <tbody className="divide-y divide-gray-100 bg-white">
-              {admindashLoading ? (
-                <tr>
-                  <td
-                    colSpan={isRegular ? 6 : 7}
-                    className="p-8 text-center text-gray-400 text-sm">
-                    Loading records...
-                  </td>
-                </tr>
-              ) : (
-                clientReq?.map((item, i) => (
-                  <Row
-                    key={item._id}
-                    item={item}
-                    index={i}
-                    isRegular={isRegular}
-                    assignId={assignId}
-                    assignRef={assignRef}
-                    setAssignId={setAssignId}
-                    navigate={navigate}
-                  />
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>}
-
+        {toggle === "Regular" && (
+          <RegularServiceTable
+            rows={clientReq}
+            loading={admindashLoading}
+            navigate={navigate}
+            isModalOpen={isModalOpen}
+          />
+        )}
       </div>
     </section>
   );
@@ -419,123 +387,239 @@ function AdminDashboard() {
 
 export default AdminDashboard;
 
-function Row({
-  item,
-  index,
-  isRegular,
-  assignId,
-  assignRef,
-  setAssignId,
-  navigate,
-}) {
+// ---------------------------------------------------------------------------
+// Complaint table
+// ---------------------------------------------------------------------------
+
+const complaintStatusStyle = {
+  Open: "bg-red-50 text-red-700 ring-red-600/10",
+  "In Progress": "bg-amber-50 text-amber-800 ring-amber-600/10",
+  Close: "bg-green-50 text-green-700 ring-green-600/10",
+};
+
+function ComplaintTable({ rows, loading, assignId, assignRef, setAssignId, navigate }) {
+  return (
+    <div className="w-full overflow-x-auto border border-gray-200">
+      <table className="w-full min-w-[900px] border-collapse bg-white text-left text-sm text-gray-500">
+        <thead className="bg-gray-400 border-b border-gray-200 text-xs font-bold uppercase text-gray-600 tracking-wider">
+          <tr>
+            <th scope="col" className="px-2 py-3 text-center">Complaint No</th>
+            <th scope="col" className="px-4 py-3">Assigned to</th>
+            <th scope="col" className="px-4 py-3">Date</th>
+            <th scope="col" className="px-4 py-3">Updated by</th>
+            <th scope="col" className="px-4 py-3">Client</th>
+            <th scope="col" className="px-4 py-3 max-w-16">Status</th>
+          </tr>
+        </thead>
+
+        <tbody className="divide-y divide-gray-100 bg-white">
+          {loading ? (
+            <tr>
+              <td colSpan={6} className="p-8 text-center text-gray-400 text-sm">
+                Loading records...
+              </td>
+            </tr>
+          ) : rows?.length ? (
+            rows.map((item) => (
+              <ComplaintRow
+                key={item._id}
+                item={item}
+                assignId={assignId}
+                assignRef={assignRef}
+                setAssignId={setAssignId}
+                navigate={navigate}
+              />
+            ))
+          ) : (
+            <tr>
+              <td colSpan={6} className="p-8 text-center text-gray-400 text-sm">
+                No complaints found.
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function ComplaintRow({ item, assignId, assignRef, setAssignId, navigate }) {
   const latestUpdate = item?.complaintUpdate?.at(-1);
   const cd = item?.complaintDetails;
-  const regs = item?.regularService?.[0]
-
-  const bgStyle = {
-    Open: "bg-red-100",
-    "In Progress": "bg-amber-100",
-    Close: "bg-green-100",
-    "Close Req": "bg-gray-100",
-    Reopen: "bg-blue-100",
-  };
-  const statusStyle = {
-    Open: "bg-red-50 text-red-700 ring-red-600/10",
-    "In Progress": "bg-amber-50 text-amber-800 ring-amber-600/10",
-    Close: "bg-green-50 text-green-700 ring-green-600/10",
-  };
 
   return (
     <tr
-      onClick={() =>
-        navigate(
-          isRegular
-            ? `/location/${item?.location?._id}`
-            : `/complaint/${item?._id}`,
-        )
-      }
-      className={`hover:bg-gray-50/80 transition-colors cursor-pointer text-sm  transition-all text-xs`}>
-      {/* Column 1 */}
+      onClick={() => navigate(`/complaint/${item?._id}`)}
+      className="hover:bg-gray-50/80 transition-colors cursor-pointer text-xs">
       <td className="px-2 text-center py-4 font-bold text-blue-600 whitespace-nowrap">
-        {isRegular ? index + 1 : cd?.number || "—"}
-      </td>
-
-      {/* Column 2 (Conditional) */}
-      {!isRegular && (
-        <td className="px-4 py-4 whitespace-nowrap">
-          <div
-            ref={assignId === item._id ? assignRef : null}
-            className="relative inline-block"
-            onClick={(e) => {
-              e.stopPropagation();
-              setAssignId((prev) => (prev === item._id ? null : item._id));
-            }}>
-            <p className="text-sm font-semibold">
-              {cd?.assignedTo?.userName || <span className="">Assign</span>}
-            </p>
-            {cd?.assignedBy?.userName && (
-              <span className="px-2 py-0.5 rounded bg-gray-100 text-gray-600 text-[.6rem] md:text-xs font-bold capitalize outline">
-                {cd?.assignedBy?.userName}
-              </span>
-            )}
-            {assignId === item._id && (
-              <AssignWork
-                complaintId={item._id}
-                currentAssgndVal={{
-                  label: cd?.assignedTo?.userName,
-                  value: cd?.assignedTo?.userName,
-                }}
-                show={() => setAssignId(null)}
-              />
-            )}
-          </div>
-        </td>
-      )}
-
-      {/* Column 3 */}
-      <td className="px-4 py-4 text-gray-600 text-sm whitespace-nowrap">
-        {isRegular ? (
-          <div className="font-semibold">
-            {dateFormat(regs?.completedAt)}
-          </div>
-        ) : (
-          <div>{dateFormat(item.createdAt)}</div>
-        )}
+        {cd?.number || "—"}
       </td>
 
       <td className="px-4 py-4 whitespace-nowrap">
-        {isRegular ? (
-          <span className="inline-flex items-center rounded-md bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-700 ring-1 ring-inset ring-blue-700/10">
-            {regs?.pestCount ?? 0}
-          </span>
-        ) : (
-          <span
-            className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs font-bold ring-1 ring-inset uppercase tracking-wide ${statusStyle[cd?.status] ?? ""}`}>
-            {cd?.status || "—"}
-          </span>
-        )}
+        <div
+          ref={assignId === item._id ? assignRef : null}
+          className="relative inline-block"
+          onClick={(e) => {
+            e.stopPropagation();
+            setAssignId((prev) => (prev === item._id ? null : item._id));
+          }}>
+          <p className="text-sm font-semibold">
+            {cd?.assignedTo?.userName || <span>Assign</span>}
+          </p>
+          {cd?.assignedBy?.userName && (
+            <span className="px-2 py-0.5 rounded bg-gray-100 text-gray-600 text-[.6rem] md:text-xs font-bold capitalize outline">
+              {cd?.assignedBy?.userName}
+            </span>
+          )}
+          {assignId === item._id && (
+            <AssignWork
+              complaintId={item._id}
+              currentAssgndVal={{
+                label: cd?.assignedTo?.userName,
+                value: cd?.assignedTo?.userName,
+              }}
+              show={() => setAssignId(null)}
+            />
+          )}
+        </div>
       </td>
 
-      {/* Column 4 */}
+      <td className="px-4 py-4 text-gray-600 text-sm whitespace-nowrap">
+        {dateFormat(item.createdAt)}
+      </td>
+
+
       <td className="px-4 py-4 font-medium text-gray-700 truncate">
-        {isRegular
-          ? regs?.userName || "—"
-          : cd?.status === "Open"
-            ? cd?.userName
-            : latestUpdate?.userName || "—"}
+        {cd?.status === "Open" ? cd?.userName : latestUpdate?.userName || "—"}
       </td>
 
-
-      {/* Column 5 & 6 (Merged via colSpan to dynamically align with client header) */}
       <td className="px-4 py-4 text-sm font-normal text-gray-900 truncate">
         {item?.client?.name || cd?.clientName || "—"}
       </td>
-
-      {/* Column 7 */}
-
+      <td className="px-4 py-4 whitespace-nowrap">
+        <span
+          className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs font-bold ring-1 ring-inset uppercase tracking-wide ${complaintStatusStyle[cd?.status] ?? ""}`}>
+          {cd?.status || "—"}
+        </span>
+      </td>
     </tr>
   );
 }
+
+// ---------------------------------------------------------------------------
+// Regular service table
+// ---------------------------------------------------------------------------
+
+function RegularServiceTable({ rows, loading, navigate, isModalOpen }) {
+  return (
+    <div className="w-full overflow-x-auto border border-gray-200">
+      <table className="w-full min-w-[900px] border-collapse bg-white text-left text-sm text-gray-500">
+        <thead className="bg-gray-400 border-b border-gray-200 text-xs font-bold uppercase text-gray-600 tracking-wider">
+          <tr>
+            <th scope="col" className="px-2 py-3 text-center">Number</th>
+            <th scope="col" className="px-4 py-3">Date</th>
+            <th scope="col" className="px-4 py-3 max-w-16">Pest Count</th>
+            <th scope="col" className="px-4 py-3">Serviced by</th>
+            <th scope="col" className="px-4 py-3">Client</th>
+            <th scope="col" className="px-4 py-3">Service Name</th>
+            <th scope="col" className="px-4 py-3">Images</th>
+          </tr>
+        </thead>
+
+        <tbody className="divide-y divide-gray-100 bg-white">
+          {loading ? (
+            <tr>
+              <td colSpan={7} className="p-8 text-center text-gray-400 text-sm">
+                Loading records...
+              </td>
+            </tr>
+          ) : rows?.length ? (
+            rows.map((item, i) => (
+              <RegularServiceRow
+                key={item._id}
+                item={item}
+                index={i}
+                navigate={navigate}
+                isModalOpen={isModalOpen}
+              />
+            ))
+          ) : (
+            <tr>
+              <td colSpan={7} className="p-8 text-center text-gray-400 text-sm">
+                No regular services found.
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function RegularServiceRow({ item, index, navigate, isModalOpen }) {
+  const regs = item?.regularService?.[0];
+  const dispatch = useDispatch();
+
+  return (
+    <tr
+      onClick={() => navigate(`/location/${item?.location?._id}`)}
+      className="hover:bg-gray-50/80 transition-colors cursor-pointer text-xs">
+      <td className="px-2 text-center py-4 font-bold text-blue-600 whitespace-nowrap">
+        {index + 1}
+      </td>
+
+      <td className="px-4 py-4 text-gray-600 text-sm whitespace-nowrap">
+        <div className="font-semibold">{dateFormat(regs?.completedAt)}</div>
+      </td>
+
+      <td className="px-4 py-4 whitespace-nowrap">
+        <span className="inline-flex items-center rounded-md bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-700 ring-1 ring-inset ring-blue-700/10">
+          {regs?.pestCount ?? 0}
+        </span>
+      </td>
+
+      <td className="px-4 py-4 font-medium text-gray-700 truncate">
+        {regs?.userName || "—"}
+      </td>
+
+      <td className="px-4 py-4 text-sm font-normal text-gray-900 truncate">
+        {item?.client?.name || "—"}
+      </td>
+
+      <td className="px-4 py-4 text-sm font-normal text-gray-900 truncate">
+        {regs?.serviceName || "—"}
+      </td>
+
+      <td className="px-4 py-4 text-sm font-normal text-gray-900 truncate">
+        <div className="flex items-center gap-1">
+          {regs?.image?.map((img, i) => {
+            const modalKey = `img_${item._id}_${i}`;
+            return (
+              <div key={modalKey}>
+                <img
+                  src={img}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    dispatch(toggleModal({ name: modalKey, status: true }));
+                  }}
+                  className="max-h-16"
+                  alt=""
+                />
+                {isModalOpen?.[modalKey] && (
+                  <ImagesModal image={img} name={modalKey} />
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </td>
+    </tr>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Stat card
+// ---------------------------------------------------------------------------
 
 export function StatCard({
   active,
