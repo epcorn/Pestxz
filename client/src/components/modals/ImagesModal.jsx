@@ -21,7 +21,7 @@ function ImagesModal({ image, name }) {
       {/* Close Button Trigger Area */}
       <button
         className="absolute top-4 right-4 z-10 text-white text-xs font-semibold tracking-wider bg-white/10 hover:bg-white/20 px-3 py-2 rounded-md transition-colors border border-white/10"
-        onClick={() => dispatch(toggleModal({ name: name, status: false }))}
+        onClick={(e) => { e.preventDefault(); e.stopPropagation(); dispatch(toggleModal({ name: name, status: false })) }}
       >
         ✕ CLOSE
       </button>
