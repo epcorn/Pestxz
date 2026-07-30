@@ -270,6 +270,7 @@ export const dailyServiceReport = async (req, res) => {
           groupedPests[compositeName].count += count;
         }
       }
+      
       regStats.pestCount = Object.values(groupedPests)
         .sort((a, b) => b.count - a.count)
         .slice(0, 3);
@@ -349,10 +350,10 @@ export const dailyServiceReport = async (req, res) => {
         row17.commit();
         row19.commit();
 
-        regStats.pestCount.forEach((p) => {
+        regStats?.pestCount?.forEach((p) => {
           const currentRow = overviewWorkSheet.getRow(currentRowNum);
           currentRow.height = 30;
-
+console.log("after: ",regStats.pestCount)
           const rowData = [
             dateFormat(p.date).withTime || "",
             p.floor || "-",
@@ -505,7 +506,8 @@ export const dailyServiceReport = async (req, res) => {
           row.getCell(4).value = loc?.floor || "-";
           row.getCell(5).value = loc?.location || "-";
           row.getCell(6).value = loc?.subLocation || "-";
-          row.getCell(7).value = unsc.serviceName || "";
+          row.getCell(7).value =
+            unsc.service.map((s) => s.serviceName).join(", ") || "";
           row.getCell(8).value = unsc.raisedBy?.user || "";
           row.getCell(9).value = unsc.approval?.name || "";
           row.getCell(10).value = unsc.comment || "";
@@ -557,7 +559,6 @@ export const dailyServiceReport = async (req, res) => {
         try {
           await fs.unlink(filePath);
         } catch (err) {
-          // 2. Ignore ENOENT (file already deleted/moved by uploadFile or OneDrive)
           if (err.code !== "ENOENT") {
             console.error("Unexpected cleanup error:", err);
           }
@@ -565,6 +566,7 @@ export const dailyServiceReport = async (req, res) => {
       }
     }
 
+    console.log("excel cleaned ,, sending response...");
     return res.json({
       msg: `Report generated for ${value}`,
       files: generatedFiles,
