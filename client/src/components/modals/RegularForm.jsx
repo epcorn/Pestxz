@@ -70,10 +70,10 @@ function RegularForm({ serviceData, id, type, locationName, setRegular, today })
 
   const buildPayload = (field, ser, values) => {
     const result = {};
-    ser.scopes?.forEach((sc) => {
+    ser?.scopes?.forEach((sc) => {
       result[sc.scopeId] = {};
-      sc.consumables?.forEach((con) => {
-        result[sc.scopeId][con.consumableId] =
+      sc?.consumables?.forEach((con) => {
+        result[sc?.scopeId][con.consumableId] =
           values?.[field]?.[ser.serviceName]?.[sc.scopeName]?.[con.consumableName] || "";
       });
     });
@@ -91,8 +91,8 @@ function RegularForm({ serviceData, id, type, locationName, setRegular, today })
 
       const values = getValues();
       const partialWithoutComment = [];
-      ser.scopes?.forEach((sc) => {
-        sc.consumables?.forEach((con) => {
+      ser?.scopes?.forEach((sc) => {
+        sc?.consumables?.forEach((con) => {
           const action = values?.action?.[ser.serviceName]?.[sc.scopeName]?.[con.consumableName];
           const comment = values?.comment?.[ser.serviceName]?.[sc.scopeName]?.[con.consumableName];
           if (action === "Partial Done" && !comment?.trim()) {
@@ -178,7 +178,7 @@ function RegularForm({ serviceData, id, type, locationName, setRegular, today })
     );
   }
 
-
+  
   return (
     <div className={`${isRegular ? "" : "fixed inset-0 z-90 w-full h-dvh grid place-items-center bg-black/50"}`}>
       <div className={`w-full max-h-[80dvh] bg-gray-200 overflow-auto outline-4 outline-gray-800 rounded-lg ${isRegular ? "w-full" : "max-w-3xl"}`}>
@@ -256,13 +256,13 @@ function RegularForm({ serviceData, id, type, locationName, setRegular, today })
                     </div>
                   </div>
                   <div className="grid gap-2 text-lg">
-                    {ser.scopes?.map((sc) => (
+                    {ser?.scopes?.map((sc) => (
                       <div
                         key={sc.scopeName}
                         className="mt-2 outline-4 outline-gray-400 rounded bg-white p-1"
                       >
                         <h4 className="font-bold mb-3 px-3 underline ">Scope: {sc.scopeName}</h4>
-                        {sc.consumables?.map((con, i) => {
+                        {sc?.consumables?.map((con, i) => {
                           const actionVal = watchAction?.action?.[ser.serviceName]?.[sc.scopeName]?.[con.consumableName];
 
                           return (

@@ -1,51 +1,33 @@
-import { RiErrorWarningLine } from "react-icons/ri";
-import { IoMdTime } from "react-icons/io";
-import { GrInProgress } from "react-icons/gr";
-import { GoIssueReopened } from "react-icons/go";
-import { AiOutlineFileDone } from "react-icons/ai";
-import { motion } from 'motion/react'
-
-
-import { IoLockClosed, IoLockOpen } from "react-icons/io5";
-import { TbProgressAlert } from "react-icons/tb";
-
+import React, { useMemo, useState } from "react";
+import { motion } from "motion/react";
 import { useDispatch, useSelector } from "react-redux";
-import { useAdminDashboardQuery } from "../../redux/adminSlice";
+import { useNavigate } from "react-router-dom";
+
+import { useAdminDashboardQuery, useDashboardMonthlyTrendQuery } from "../../redux/adminSlice";
+import { useGetSingleClientQuery } from "../../redux/clientSlice";
+
 import Loading from "../Loading";
 import AlertMessage from "../AlertMessage";
 import ComplaintTable from "../ComplaintTable";
-import { useGetSingleClientQuery } from "../../redux/clientSlice";
-import { useEffect, useMemo, useState } from "react";
-import { BsGear } from "react-icons/bs";
 import PieChart from "./PieChart";
 import MultiLineChart from "./MultiLineChart";
-import { clientAdminStatus } from "../../utils/constData";
-import { useGetUnscheduledReportsQuery } from "../../redux/locationSlice";
-import { useNavigate } from "react-router-dom";
-import UnscheduledNotification from "./UnscheduledNotification";
 import { StatCard } from "./AdminDashboard";
 import UnScheduledList from "../single_location/UnScheduledList";
-import React from "react";
 
-
-//Products Services
+// Products Services
 const prMapped = {
   Done: "Done ",
   Missed: "Missed",
   Pending: "Pending",
-}
-//Regular Services
+};
+
+// Regular Services
 const regMapped = {
   Done: "Done ",
   Missed: "Missed",
   Pending: "Pending",
   Invalid: "Invalid",
-}
-
-// matches the shape products.scheduleCount already has.
-const nestedToScheduleCount = (statusCounts) =>
-  Object.entries(statusCounts || {})
-    .map(([label, count]) => ({ label, count: count || 0 }))
+};
 
 const keyMapping = {
   total: "Total Complaints",
@@ -54,93 +36,70 @@ const keyMapping = {
   closeReq: "Close Requested",
   closed: "Closed Complaints",
   reopenCount: "Re Opened",
-}
-
-const colorMap = {
-  open: {
-    text: "text-red-600",
-    border: "border-l-red-500",
-  },
-  inProgress: {
-    text: "text-amber-600",
-    border: "border-l-amber-500",
-  },
-  closeReq: {
-    text: "text-orange-600",
-    border: "border-l-orange-500",
-  },
-  closed: {
-    text: "text-emerald-600",
-    border: "border-l-emerald-500",
-  },
-  total: {
-    text: "text-blue-600",
-    border: "border-l-blue-500",
-  },
-  reopenCount: {
-    text: "text-cyan-600",
-    border: "border-l-cyan-500",
-  },
-
-  "Done Regular Services": {
-    text: "text-emerald-600",
-    border: "border-l-emerald-500",
-  },
-  "Pending Regular Services": {
-    text: "text-yellow-600",
-    border: "border-l-yellow-500",
-  },
-  "Missed Regular Services": {
-    text: "text-rose-600",
-    border: "border-l-rose-500",
-  },
-
-  "Done Products Services": {
-    text: "text-violet-600",
-    border: "border-l-violet-500",
-  },
-  "Pending Products Services": {
-    text: "text-fuchsia-600",
-    border: "border-l-fuchsia-500",
-  },
-  "Missed Products Services": {
-    text: "text-purple-700",
-    border: "border-l-purple-700",
-  },
 };
 
+const colorMap = {
+  open: { text: "text-red-600", border: "border-l-red-500" },
+  inProgress: { text: "text-amber-600", border: "border-l-amber-500" },
+  closeReq: { text: "text-orange-600", border: "border-l-orange-500" },
+  closed: { text: "text-emerald-600", border: "border-l-emerald-500" },
+  total: { text: "text-blue-600", border: "border-l-blue-500" },
+  reopenCount: { text: "text-cyan-600", border: "border-l-cyan-500" },
+};
+
+// const prMapped = {
+//   Done: "Done Products Services",
+//   Missed: "Missed Products Services",
+//   Pending: "Pending Products Services",
+// };
+// const regMapped = {
+//   Done: "Done Regular Services",
+//   Missed: "Missed Regular Services",
+//   Pending: "Pending Regular Services",
+//   Invalid: "Invalid",
+// };
 
 const ClientDashboard = () => {
-  const dispatch = useDispatch();
-  const [toggle, setToggle] = useState(sessionStorage.getItem("ClientDashboardToggle") || "Complaint");
-  const [selectedMonth, setSelectedMonth] = useState("overall");
-  const navigate = useNavigate()
+  const [toggle, setToggle] = useState(
+    sessionStorage.getItem("ClientDashboardToggle") || "Complaint"
+  );
+  const [selectedState, setSelectedState] = useState({ month: "overall", date: "" });
   const [statusFilter, setStatusFilter] = useState("");
+
+  const navigate = useNavigate();
   const { user } = useSelector((store) => store.helper);
 
-  // This is the ONLY source for stat-card strips and charts below.
-  const { data: clientDash, isLoading: clgLoading, error: clgError } = useAdminDashboardQuery(user.client, {
-    skip: !user.client,
-  });
+  const {
+    data: clientDash,
+    isLoading: clgLoading,
+    error: clgError,
+  } = useAdminDashboardQuery(
+    {
+      id: user?.client,
+      filter: selectedState?.month,
+      startDate: selectedState?.month !== "overall" ? selectedState?.date : "",
+    },
+    { skip: !user?.client }
+  );
 
-  const { data: unschedule, isLoading: unscLoading } = useGetUnscheduledReportsQuery({
-    refetchOnReconnect: true, // ✅
-  });
+  const { data: monthlyTrend } = useDashboardMonthlyTrendQuery(user?.client || null);
 
   const { data: client } = useGetSingleClientQuery(user?.client, { skip: !user?.client });
 
-  // Filter data efficiently using useMemo
+  // Filter data efficiently
   const complaints = useMemo(() => {
-    const all = Array.isArray(clientDash?.all) ? clientDash.all : [];
-    const latest = Array.isArray(clientDash?.latestComplaints) ? clientDash.latestComplaints : [];
+    const latest = Array.isArray(clientDash?.latestComplaints) ? clientDash?.latestComplaints : [];
 
-    if (statusFilter && statusFilter?.length > 0) {
-      return latest?.filter(cl => cl?.complaintDetails?.status === statusFilter) || [];
+    if (statusFilter && statusFilter.length > 0) {
+      return latest?.filter((cl) => cl?.complaintDetails?.status === statusFilter) || [];
     }
 
-    if (toggle === "Complaint") { return clientDash?.latestComplaints || [] }
-    if (toggle === "Regular") { return clientDash?.latestServices || [] }
+    if (toggle === "Complaint") return clientDash?.latestComplaints || [];
+    if (toggle === "Regular") return clientDash?.latestServices || [];
+    return [];
   }, [toggle, clientDash, statusFilter]);
+
+
 
   const handleCards = (value) => {
     const map = {
@@ -150,79 +109,48 @@ const ClientDashboard = () => {
       closed: "Close",
       "Done Regular Services": "Done",
       "Done Products Services": "Done",
-    }
-    const status = map[value]
+    };
+    const status = map[value];
 
     if (["Close", "In Progress", "Open", "Close Req"].includes(status)) {
-      setStatusFilter(status)
-      setToggle("Complaint")
+      setStatusFilter(status);
+      setToggle("Complaint");
       window.scrollTo({
-        top: document.documentElement.scrollHeight - window.innerHeight - 10, behavior: "smooth"
-      })
+        top: document.documentElement.scrollHeight - window.innerHeight - 10,
+        behavior: "smooth",
+      });
     }
-    if (["Done"].includes(value)) {
-      setStatusFilter(value)
-      setToggle("Regular")
+
+    if (value === "Done") {
+      setStatusFilter(value);
+      setToggle("Regular");
       window.scrollTo({
-        top: document.documentElement.scrollHeight - window.innerHeight - 100, behavior: "smooth"
-      })
+        top: document.documentElement.scrollHeight - window.innerHeight - 100,
+        behavior: "smooth",
+      });
     }
-  }
-  if (statusFilter) console.log(statusFilter)
-  const handleChange = (e) => {
-    if (e.target.value) {
-      setToggle(e.target.value)
-      sessionStorage.setItem("ClientDashboardToggle", e.target.value)
-    }
-  }
-  const { complaints: complaintsData, monthlyData, products, services } = clientDash?.summary || {}
+  };
 
-  const isOverall = selectedMonth === "overall";
-  const activeMonth = !isOverall ? monthlyData?.[Number(selectedMonth)] : null;
+  const { complaints: complaintsData = {}, products, services, casualCounts, unscheduledCounts } = clientDash?.summary || {};
 
-  useEffect(() => {
-    if (!isOverall && !monthlyData?.[Number(selectedMonth)]) {
-      setSelectedMonth("overall");
-    }
+  const { open, inProgress, closed, total, closeReq, reopenCount } =
+    complaintsData;
 
-  }, [monthlyData]);
+  console.log(clientDash)
 
-  const complaintStats = isOverall
-    ? {
-      open: complaintsData?.open || 0,
-      inProgress: complaintsData?.inProgress || 0,
-      closeReq: complaintsData?.closeReq || 0,
-      closed: complaintsData?.closed || 0,
-      total: complaintsData?.total || 0,
-      reopenCount: complaintsData?.reopenCount || 0,
-    }
-    : {
-      open: activeMonth?.open || 0,
-      inProgress: activeMonth?.inProgress || 0,
-      closeReq: activeMonth?.closeReq || 0,
-      closed: activeMonth?.closed || 0,
-      total: activeMonth?.complaints || 0,
-      reopenCount: activeMonth?.reopenCount || 0,
-    };
+  const prObj = Object.fromEntries(
+    (products?.scheduleCount ?? []).map((p) => [
+      prMapped[p.label] || p.label,
+      p.count,
+    ]),
+  );
 
-  const productsView = isOverall
-    ? products
-    : {
-      total: products.total,
-      scheduleCount: nestedToScheduleCount(activeMonth?.product),
-    };
-
-  const servicesView = isOverall
-    ? services
-    : {
-      total: services.total,
-      scheduleCount: nestedToScheduleCount(activeMonth?.regular),
-    };
-
-  const prObj = Object.fromEntries((productsView?.scheduleCount ?? []).map(p => ([prMapped[p.label], p.count])))
-  const regObj = Object.fromEntries((servicesView?.scheduleCount ?? []).map(p => ([regMapped[p.label], p.count])))
-
-  const statsStrips = { ...complaintStats }
+  const regObj = Object.fromEntries(
+    (services?.scheduleCount ?? []).map((p) => [
+      regMapped[p.label] || p.label,
+      p.count,
+    ]),
+  );
 
   return (
     <section className="p-2 bg-slate-50/50 min-h-screen font-sans">
@@ -232,9 +160,8 @@ const ClientDashboard = () => {
         <AlertMessage>{clgError?.data?.msg || clgError.error}</AlertMessage>
       ) : (
         <div className="max-w-7xl mx-auto">
-
-          {/* Design 2: Symmetrical Split Header */}
-          <div className="mb-3 flex flex-col md:flex-row md:items-end md:justify-between gap-4 border-b border-slate-200 pb-3 ">
+          {/* Header */}
+          <div className="mb-3 flex flex-col md:flex-row md:items-end md:justify-between gap-4 border-b border-slate-200 pb-3">
             <div className="w-full">
               <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">
                 Welcome back, {user?.name}
@@ -243,127 +170,179 @@ const ClientDashboard = () => {
                 <p className="text-slate-500 text-sm mt-1">
                   Here is your dashboard overview for today.
                 </p>
-
               </div>
             </div>
 
-            {/* Overall / monthly toggle */}
+            {/* Filter Toggle */}
             <div className="bg-white border w-fit ml-auto border-slate-300 rounded-lg px-2 shrink-0">
               <select
-                className="px-2 py-1.5  text-sm font-semibold text-slate-700 focus:outline-0 bg-transparent cursor-pointer"
-                value={selectedMonth}
-                onChange={(e) => setSelectedMonth(e.target.value)}
+                className="px-2 py-1.5 text-sm font-semibold text-slate-700 focus:outline-0 bg-transparent cursor-pointer"
+                value={selectedState.month}
+                onChange={(e) => setSelectedState((prev) => ({ ...prev, month: e.target.value }))}
               >
                 <option value="overall">Overall</option>
-                {monthlyData?.map(({ month }, i) => (
-                  <option key={month + i} value={i}>{month}</option>
-                ))}
+                <option value="monthly">Monthly</option>
+                <option value="weekly">Weekly</option>
+                <option value="custom">Custom</option>
               </select>
+              {selectedState.month !== "overall" && (
+                <input type="date" onChange={(e) => setSelectedState(prev => ({ ...prev, date: e.target.value }))}
+                />
+              )}
             </div>
           </div>
 
           {/* Stat Cards */}
-
           <div className="flex flex-wrap gap-3">
-            {Object.entries(statsStrips ?? {})?.map(([key, val]) => {
-
-              return (
-                <React.Fragment key={key}>
-                  <StatCard
-                    title={keyMapping?.[key] || key}
-                    value={val}
-                    textColor={colorMap?.[key]?.text}
-                    color={colorMap?.[key]?.border}
-                    onClick={handleCards}
-                    arrkey={key}
-                    active={statusFilter}
-                  />
-                </React.Fragment>
-              )
-            })}
+            <div
+              className={`flex flex-col gap-3 ${clgLoading ? "animate-pulse" : ""}`}>
+              {/* Complaints Section */}
+              <div className="flex flex-wrap gap-y-1 gap-x-2">
+                <StatCard
+                  title="Open Complaints"
+                  value={open || 0}
+                  color="border-l-red-500"
+                  textColor="text-red-500"
+                />
+                <StatCard
+                  title="In Progress"
+                  value={inProgress || 0}
+                  color="border-l-amber-500"
+                  textColor="text-amber-500 animate-pulse"
+                />
+                <StatCard
+                  title="Closed Complaints"
+                  value={closed || 0}
+                  color="border-l-green-500"
+                  textColor="text-green-500"
+                />
+                <StatCard
+                  title="Total Complaints"
+                  value={total || 0}
+                  color="border-l-blue-500"
+                  textColor="text-blue-500"
+                />
+                <StatCard
+                  title="Re Opened"
+                  value={reopenCount || 0}
+                  color="border-l-blue-500"
+                  textColor="text-blue-500"
+                />
+                <StatCard
+                  title="Close Req"
+                  value={closeReq || 0}
+                  color="border-l-blue-500"
+                  textColor="text-blue-500"
+                />
+                <StatCard
+                  title="Casual Services"
+                  value={casualCounts || 0}
+                  color="border-l-gray-500"
+                  textColor="text-gray-500"
+                />
+                <StatCard
+                  title="Unscheduled Services"
+                  value={unscheduledCounts || 0}
+                  color="border-l-gray-500"
+                  textColor="text-gray-500"
+                />
+              </div>
+            </div>
           </div>
+
+          {/* Service Strip Breakdown */}
           <div className="flex flex-col md:flex-row gap-5 mt-2">
             <div className="w-full flex flex-col">
               <h3 className="text-center font-semibold">Product Service ({products?.total})</h3>
               <div className="flex gap-3 outline-2 rounded pb-1 px-1 outline-fuchsia-700">
-                {productsView.scheduleCount.map(({ count, label }, i) => (
-                  <StatCard key={i} value={count} textColor={'text-fuchsia-600'} color={'border-l-fuchsia-600'} title={label} />
+                {products?.scheduleCount?.map(({ count, label }, i) => (
+                  <StatCard
+                    key={i}
+                    value={count}
+                    textColor="text-fuchsia-600"
+                    color="border-l-fuchsia-600"
+                    title={label}
+                  />
                 ))}
               </div>
             </div>
             <div className="w-full flex flex-col">
               <h3 className="text-center font-semibold">Regular Service ({services?.total})</h3>
               <div className="flex gap-3 outline-2 rounded pb-1 px-1 outline-amber-700">
-                {servicesView.scheduleCount.map(({ count, label }, i) => label !== "Invalid" && (
-                  <StatCard key={i} value={count} textColor={'text-amber-600'} color={'border-l-amber-600'} title={label} />
-                ))}
+                {services?.scheduleCount?.map(
+                  ({ count, label }, i) =>
+                    label !== "Invalid" && (
+                      <StatCard
+                        key={i}
+                        value={count}
+                        textColor="text-amber-600"
+                        color="border-l-amber-600"
+                        title={label}
+                      />
+                    )
+                )}
               </div>
             </div>
           </div>
 
-          {/* Multiline Chart */}
+          {/* Multiline Chart & Pie Charts */}
           <div className="my-2">
             <div className="rounded-2xl shadow-md p-4 bg-white min-w-0">
-              <h3 className="h4 text-center mb-2 hidden">Multiline Chart</h3>
               <div className="w-full overflow-x-auto">
-                <MultiLineChart
-                  values={monthlyData}
-                  toggle="values"
-                />
+                <MultiLineChart values={monthlyTrend} toggle="values" />
               </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-2 mt-4">
-
-              {/* Product Pie */}
               <div className="rounded-2xl shadow-md p-4 bg-white flex items-center justify-center min-w-0">
                 <PieChart values={prObj} modelKey="Product Service" />
               </div>
-              {/* Complaint Pie */}
               <div className="rounded-2xl shadow-md p-4 bg-white flex items-center justify-center min-w-0">
                 <PieChart
                   values={{
-                    Open: complaintStats.open,
-                    "In Progress": complaintStats.inProgress,
-                    "Close Req": complaintStats.closeReq,
-                    Close: complaintStats.closed,
+                    "Open": complaints?.open || 0,
+                    "In Progress": complaints?.inProgress || 0,
+                    "Close Req": complaints?.closeReq || 0,
+                    "Closed": complaints?.closed || 0,
                   }}
                   modelKey="Complaints"
                 />
               </div>
-
-              {/* Regular Pie */}
               <div className="rounded-2xl shadow-md p-4 bg-white flex items-center justify-center min-w-0">
                 <PieChart values={regObj} modelKey="Regular Service" />
               </div>
-
             </div>
           </div>
 
-
           {/* Table Section */}
           <div className="mt-12">
-            <div className="flex flex-col md:flex-row md:items-center  md:justify-between mb-5">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-5">
               <div className="order-2 md:order-1">
-                <h4 className="text-lg font-bold text-slate-800"> Latest {toggle !== "Complaint" ? toggle + " service" : toggle} Update</h4>
-                <div>
-                  {/* <p className="text-xs text-slate-400 mt-0.5">Real-time ticket logging status</p> */}
-                  {statusFilter && <div className="text-sm text-gray-700">
-                    Filtered By: <span className="font-semibold">{statusFilter}</span> <span className="underline text-cyan-600 text-sm" onClick={() => setStatusFilter("")}>Clear</span>
-                  </div>}
-                </div>
+                <h4 className="text-lg font-bold text-slate-800">
+                  Latest {toggle !== "Complaint" ? `${toggle} service` : toggle} Update
+                </h4>
+                {statusFilter && (
+                  <div className="text-sm text-gray-700">
+                    Filtered By: <span className="font-semibold">{statusFilter}</span>{" "}
+                    <span
+                      className="underline text-cyan-600 text-sm cursor-pointer"
+                      onClick={() => setStatusFilter("")}
+                    >
+                      Clear
+                    </span>
+                  </div>
+                )}
               </div>
 
               <div className="ml-auto order-1 md:order-2 flex items-center gap-2">
                 {["Complaint", "Regular", "Unscheduled", "Casual"].map((type) => {
                   const isActive = toggle === type;
-
                   return (
                     <button
                       key={type}
                       onClick={() => {
                         setToggle(type);
-                        setStatusFilter('');
+                        setStatusFilter("");
                         sessionStorage.setItem("ClientDashboardToggle", type);
                       }}
                       className={`relative text-xs font-bold px-3 py-1.5 rounded tracking-wider uppercase transition-colors duration-150 outline-none ${isActive
@@ -378,21 +357,21 @@ const ClientDashboard = () => {
                           transition={{ type: "spring", stiffness: 580, damping: 30 }}
                         />
                       )}
-
                       {type === "Regular" ? "Service" : type}
                     </button>
                   );
                 })}
               </div>
             </div>
+
             <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
-              {["Regular", "Complaint"].includes(toggle) &&
-                <ComplaintTable data={complaints} user={user} toggle={toggle} />}
-              {toggle === "Unscheduled" && <UnScheduledList work={unschedule} />}
-              {toggle === "Casual" && <UnScheduledList />}
+              {["Regular", "Complaint"].includes(toggle) && (
+                <ComplaintTable data={complaints} user={user} toggle={toggle} />
+              )}
+              {toggle === "Unscheduled" && <UnScheduledList work={clientDash?.latestUnschedules} />}
+              {toggle === "Casual" && <UnScheduledList type="casual" work={clientDash?.latestCasuals} />}
             </div>
           </div>
-
         </div>
       )}
     </section>

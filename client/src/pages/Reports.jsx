@@ -40,7 +40,7 @@ const Reports = () => {
       setState((prev) => ({ ...prev, genrate: true, visible: true }));
     }
   };
-
+console.log(reports)
   const handleDownload = () => {
     if (!reports?.files?.length) return;
 

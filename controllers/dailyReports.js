@@ -31,7 +31,7 @@ export const dailyServiceReport = async (req, res) => {
 
     const todayStart = today ? new Date(today) : new Date();
     todayStart.setUTCHours(0, 0, 0, 0);
-    const todayEnd = new Date(today);
+    const todayEnd = today ? new Date(today) : new Date();
     todayEnd.setUTCHours(23, 59, 59, 999);
 
     let startDate = "";
@@ -54,6 +54,8 @@ export const dailyServiceReport = async (req, res) => {
       prodScheduleDateMatch = {
         "product.schedule.date": { $gte: todayStart, $lte: todayEnd },
       };
+      startDate = todayStart;
+      endDate = todayEnd;
     } else if (value === "weekly") {
       const weekEnd = new Date(todayStart);
       const weekStart = new Date(todayStart);
@@ -70,7 +72,7 @@ export const dailyServiceReport = async (req, res) => {
     } else if (value === "fortnightly") {
       const fortnightEnd = new Date(todayStart);
       const fortnightStart = new Date(todayStart);
-      fortnightStart.setUTCDate(fortnightStart.getUTCDate() - 14);
+      fortnightStart.setUTCDate(fortnightStart.getUTCDate() - 15);
       matchCondition = {
         updatedAt: { $gte: fortnightStart, $lt: fortnightEnd },
       };
@@ -93,6 +95,7 @@ export const dailyServiceReport = async (req, res) => {
       const monthEnd = new Date(
         Date.UTC(todayStart.getUTCFullYear(), todayStart.getUTCMonth(), 1),
       );
+
       matchCondition = { updatedAt: { $gte: monthStart, $lt: monthEnd } };
       scheduleDateMatch = {
         "service.schedule.date": { $gte: monthStart, $lt: monthEnd },
@@ -159,7 +162,7 @@ export const dailyServiceReport = async (req, res) => {
     const populateOptions = [
       {
         path: "services",
-        match: matchCondition,
+        match: { createdAt: { $gte: startDate, $lte: endDate } },
         populate: { path: "location" },
       },
       { path: "locations" },
@@ -205,27 +208,22 @@ export const dailyServiceReport = async (req, res) => {
         .replace(/\s+/g, "_");
       const fileName = `${clientName}_Daily_Service_Report-${sufix}.xlsx`;
       const filePath = path.join(dir, fileName);
-
+      dats = { client };
       // SINGLE PASS grouping for services by type
       const regulars = [];
       const complaints = [];
-      (client.services || []).forEach((s) => {
-        if (s.type === "Regular") regulars.push(s);
-        else if (s.type === "Complaint") complaints.push(s);
-      });
-      dats = { client };
-      (async () => {
-        try {
-          const html = await generateHtmlReport(regulars);
 
-          await fs.writeFile("report.html", html);
-          console.log("report.html created successfully");
-        } catch (error) {
-          console.log(error);
+      const clientServices = client.services || [];
+      for (const s of clientServices) {
+        if (s.type === "Complaint") {
+          complaints.push(s);
         }
-      })();
+        if (s.type === "Regular") {
+          regulars.push(s);
+        }
+      }
+      console.log(regulars.length, complaints.length);
 
-      // Get pre-aggregated stats for this client
       const clientServiceStats = serviceStatsMap.get(clientIdStr) || {};
       const clientProdStats = prodStatsMap.get(clientIdStr) || {};
 
@@ -248,8 +246,8 @@ export const dailyServiceReport = async (req, res) => {
       const groupedPests = {};
       for (let i = 0; i < regulars.length; i++) {
         const reg = regulars[i];
-        const service = reg.regularService?.[0];
-        if (service && service.pestCount > 0) {
+        const service = reg?.regularService?.[0];
+        if (service && service?.pestCount > 0) {
           const {
             serviceName: name,
             pestCount: count,
@@ -308,12 +306,17 @@ export const dailyServiceReport = async (req, res) => {
       const regularWorksheet = workbook.getWorksheet("Regular service");
       const complaintWorksheet = workbook.getWorksheet("Complaints");
       const unschWorksheet = workbook.getWorksheet("Unscheduled-Work");
+      const casualWorksheet = workbook.getWorksheet("Casual-Work");
       console.log("writing to overview sheet ...");
       // Populate Overview
       if (overviewWorkSheet) {
         const row1 = overviewWorkSheet.getRow(1);
+        const displayEndDate =
+          value === "custom"
+            ? endDate
+            : new Date(endDate.getTime() - 24 * 60 * 60 * 1000);
         row1.getCell(3).value =
-          `${value}-Report - From ${dateFormat(startDate).withoutTime}, To ${dateFormat(endDate).withoutTime}`;
+          `${value}-Report - From ${dateFormat(startDate).withoutTime}, To ${dateFormat(displayEndDate).withoutTime}`;
 
         const row2 = overviewWorkSheet.getRow(6);
         row2.getCell(1).value = regStats.done;
@@ -383,18 +386,19 @@ export const dailyServiceReport = async (req, res) => {
 
           const row = complaintWorksheet.getRow(compRow);
           row.getCell(1).value = updt.date
-            ? dateFormat(updt.date).withoutTime
+            ? dateFormat(updt?.date).withoutTime
             : "N/A";
           row.getCell(2).value = comp.number || "N/A";
-          row.getCell(3).value = Array.isArray(comp.service)
-            ? comp.service.join(", ")
+          row.getCell(3).value = Array.isArray(comp?.service)
+            ? comp?.service?.join(", ")
             : "N/A";
           row.getCell(4).value = comp.assignedTo?.userName || "Unassigned";
-          row.getCell(5).value =
-            `${loc.floor || ""}, ${loc.location || ""}, ${loc.subLocation || ""}`;
-          row.getCell(6).value = comp.comment || "";
-          row.getCell(7).value = comp.status || "Open";
-          row.getCell(8).value = comp.reopenCount || 0;
+          row.getCell(5).value = loc.floor || "-";
+          row.getCell(6).value = loc.location || "-";
+          row.getCell(7).value = loc.subLocation || "-";
+          row.getCell(8).value = comp?.comment || "-";
+          row.getCell(9).value = comp?.status || "-";
+          row.getCell(10).value = comp.reopenCount || "-";
           row.commit();
           compRow++;
         }
@@ -404,7 +408,7 @@ export const dailyServiceReport = async (req, res) => {
       if (regularWorksheet) {
         console.log("writing to regular sheet ...");
         let currRow = 4;
-        for (let i = 0; i < regulars.length; i++) {
+        for (let i = 0; i < regulars?.length; i++) {
           const reg = regulars[i];
           const regs = reg.regularService?.[0];
           if (!regs) continue;
@@ -456,17 +460,18 @@ export const dailyServiceReport = async (req, res) => {
       if (unschWorksheet) {
         let unschCount = 4;
         const unschedules = client.unschedules || [];
+        console.log(unschedules.length);
         for (let i = 0; i < unschedules.length; i++) {
           const unsc = unschedules[i];
           const loc = unsc.location || {};
           const row = unschWorksheet.getRow(unschCount);
           row.getCell(1).value = unsc.createdAt
-            ? dateFormat(unsc.createdAt).withoutTime
+            ? dateFormat(unsc?.createdAt).withTime
             : "";
           row.getCell(2).value = unsc.updatedAt
-            ? dateFormat(unsc.updatedAt).withTime
+            ? dateFormat(unsc?.completedBy.date).withTime
             : "";
-          row.getCell(3).value = unsc.pestCount || "-";
+          row.getCell(3).value = unsc?.pestCount || "-";
           row.getCell(4).value = loc?.floor || "-";
           row.getCell(5).value = loc?.location || "-";
           row.getCell(6).value = loc?.subLocation || "-";
@@ -477,6 +482,31 @@ export const dailyServiceReport = async (req, res) => {
           row.getCell(11).value = unsc.update?.status || "";
           row.commit();
           unschCount++;
+        }
+      }
+      if (casualWorksheet) {
+        let casualCount = 4;
+        const casualsWork = client.casuals || [];
+        console.log(casualsWork.length);
+        for (let i = 0; i < casualsWork.length; i++) {
+          const casual = casualsWork[i];
+          const loc = casual?.location || {};
+          const row = casualWorksheet.getRow(casualCount);
+          row.getCell(1).value = casual.createdAt
+            ? dateFormat(casual?.createdAt).withTime
+            : "";
+          row.getCell(2).value = casual?.pestCount || "-";
+          row.getCell(3).value = loc?.floor || "-";
+          row.getCell(4).value = loc?.location || "-";
+          row.getCell(5).value = loc?.subLocation || "-";
+          row.getCell(6).value =
+            casual?.service?.map((s) => s?.serviceName).join(", ") || "";
+          row.getCell(7).value = casual?.user.name || "";
+          row.getCell(8).value = casual?.status || "";
+          row.getCell(9).value = casual?.image.join(", ");
+          // row.getCell(11).value =
+          row.commit();
+          casualCount++;
         }
       }
 

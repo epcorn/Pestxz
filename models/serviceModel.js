@@ -55,7 +55,7 @@ const serviceSchema = new mongoose.Schema(
         serviceId: { type: String },
         serviceName: { type: String },
         frequency: { type: String },
-        serviceDate: { type: String },
+        serviceDate: { type: Date, default: null },
         schedule: [],
         scopes: [
           {
