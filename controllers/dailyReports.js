@@ -270,7 +270,9 @@ export const dailyServiceReport = async (req, res) => {
           groupedPests[compositeName].count += count;
         }
       }
-      regStats.pestCount = Object.values(groupedPests);
+      regStats.pestCount = Object.values(groupedPests)
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 3);
 
       // Complaint rollup
       const complaintData = complaints.reduce(
@@ -413,49 +415,77 @@ export const dailyServiceReport = async (req, res) => {
           const regs = reg.regularService?.[0];
           if (!regs) continue;
           const loc = reg.location || {};
-          const data = { reg, regs, loc };
 
-          const row = regularWorksheet.getRow(currRow);
-          row.height = 30;
-          row.getCell(1).value = dateFormat(regs.serviceDate).withoutTime;
-          row.getCell(2).value = dateFormat(regs.serviceDate).onlyTime;
-          row.getCell(3).value = regs?.frequency;
-          row.getCell(4).value = regs?.pestCount || 0;
-          row.getCell(5).value = regs?.userName;
-          row.getCell(6).value = loc?.floor;
-          row.getCell(7).value = loc?.location;
-          row.getCell(8).value = loc?.subLocation;
-          row.getCell(9).value = regs?.serviceName;
+          // Build flattened scope/consumable entries
+          const scopeEntries = [];
+          if (isPestEmployee && Array.isArray(regs?.scopes)) {
+            regs.scopes.forEach((sc) => {
+              if (Array.isArray(sc?.consumables) && sc.consumables.length > 0) {
+                sc.consumables.forEach((con) => {
+                  scopeEntries.push({
+                    scopeName: sc.scopeName || "",
+                    consumableName: con.consumableName || "",
+                    calibration: con.calibration || 0,
+                    usedCalibration: con.usedCalibration || 0,
+                    action: con.action || "",
+                  });
+                });
+              }
+            });
+          }
+
+          const writeBaseColumns = (row) => {
+            row.height = 30;
+            row.getCell(1).value = dateFormat(regs.serviceDate).withoutTime;
+            row.getCell(2).value = dateFormat(regs.serviceDate).onlyTime;
+            row.getCell(3).value = regs?.frequency;
+            row.getCell(4).value = regs?.pestCount || 0;
+            row.getCell(5).value = regs?.userName;
+            row.getCell(6).value = loc?.floor;
+            row.getCell(7).value = loc?.location;
+            row.getCell(8).value = loc?.subLocation;
+            row.getCell(9).value = regs?.serviceName;
+          };
 
           if (isPestEmployee) {
-            row.getCell(10).value = Array.isArray(regs?.scopes)
-              ? regs.scopes
-                  .flatMap((sc) =>
-                    Array.isArray(sc?.consumables)
-                      ? sc.consumables.map(
-                          (con) =>
-                            `${sc.scopeName || ""} -> ${con.consumableName || ""} -> ${con.calibration || 0} -> ${con.usedCalibration || 0} -> ${con.action || ""}`,
-                        )
-                      : [],
-                  )
-                  .join("\n")
-              : "";
-            row.getCell(10).alignment = { wrapText: true };
-            row.getCell(11).value = Array.isArray(regs?.image)
-              ? regs?.image.join(", ")
-              : regs?.image || "";
+            if (scopeEntries.length > 0) {
+              // one row per scope/consumable entry
+              for (const entry of scopeEntries) {
+                const row = regularWorksheet.getRow(currRow);
+                writeBaseColumns(row);
+                row.getCell(10).value = entry.scopeName;
+                row.getCell(11).value = entry.consumableName;
+                row.getCell(12).value = entry.calibration;
+                row.getCell(13).value = entry.usedCalibration;
+                row.getCell(14).value = entry.action;
+                row.getCell(15).value = Array.isArray(regs?.image)
+                  ? regs?.image.join(", ")
+                  : regs?.image || "";
+                row.commit();
+                currRow++;
+              }
+            } else {
+              // no scopes/consumables — still write one base row
+              const row = regularWorksheet.getRow(currRow);
+              writeBaseColumns(row);
+              row.getCell(15).value = Array.isArray(regs?.image)
+                ? regs?.image.join(", ")
+                : regs?.image || "";
+              row.commit();
+              currRow++;
+            }
           } else {
+            const row = regularWorksheet.getRow(currRow);
+            writeBaseColumns(row);
             row.getCell(10).value = Array.isArray(regs?.image)
               ? regs?.image.join(", ")
               : regs?.image || "";
+            row.commit();
+            currRow++;
           }
-
-          row.commit();
-          currRow++;
         }
       }
 
-      // if()
       // Populate Unscheduled Work
       if (unschWorksheet) {
         let unschCount = 4;
@@ -471,7 +501,7 @@ export const dailyServiceReport = async (req, res) => {
           row.getCell(2).value = unsc.updatedAt
             ? dateFormat(unsc?.completedBy.date).withTime
             : "";
-          row.getCell(3).value = unsc?.pestCount || "-";
+          row.getCell(3).value = unsc?.pestCount || 0;
           row.getCell(4).value = loc?.floor || "-";
           row.getCell(5).value = loc?.location || "-";
           row.getCell(6).value = loc?.subLocation || "-";
@@ -495,7 +525,7 @@ export const dailyServiceReport = async (req, res) => {
           row.getCell(1).value = casual.createdAt
             ? dateFormat(casual?.createdAt).withTime
             : "";
-          row.getCell(2).value = casual?.pestCount || "-";
+          row.getCell(2).value = casual?.pestCount || 0;
           row.getCell(3).value = loc?.floor || "-";
           row.getCell(4).value = loc?.location || "-";
           row.getCell(5).value = loc?.subLocation || "-";
