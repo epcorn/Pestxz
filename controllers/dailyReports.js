@@ -163,23 +163,35 @@ export const dailyServiceReport = async (req, res) => {
       {
         path: "services",
         match: { createdAt: { $gte: startDate, $lte: endDate } },
-        populate: { path: "location" },
+        populate: {
+          path: "location",
+          select: "_id location floor subLocation",
+        },
       },
       { path: "locations" },
       {
         path: "unschedules",
         match: matchCondition,
-        populate: { path: "location" },
+        populate: {
+          path: "location",
+          select: "_id location floor subLocation",
+        },
       },
       {
         path: "casuals",
         match: matchCondition,
-        populate: { path: "location" },
+        populate: {
+          path: "location",
+          select: "_id location floor subLocation",
+        },
       },
       {
         path: "productservices",
         match: matchCondition,
-        populate: { path: "location" },
+        populate: {
+          path: "location",
+          select: "_id location floor subLocation",
+        },
       },
     ];
 
@@ -270,7 +282,7 @@ export const dailyServiceReport = async (req, res) => {
           groupedPests[compositeName].count += count;
         }
       }
-      
+
       regStats.pestCount = Object.values(groupedPests)
         .sort((a, b) => b.count - a.count)
         .slice(0, 3);
@@ -353,14 +365,14 @@ export const dailyServiceReport = async (req, res) => {
         regStats?.pestCount?.forEach((p) => {
           const currentRow = overviewWorkSheet.getRow(currentRowNum);
           currentRow.height = 30;
-console.log("after: ",regStats.pestCount)
+          console.log("after: ", regStats.pestCount);
           const rowData = [
-            dateFormat(p.date).withTime || "",
-            p.floor || "-",
-            p.location || "-",
-            p.subLocation || "-",
+            dateFormat(p?.date).withTime || "",
+            p?.floor || "-",
+            p?.location || "-",
+            p?.subLocation || "-",
             PEST_MAP[p.name] || "",
-            p.count || 0,
+            p?.count || 0,
           ];
 
           rowData.forEach((val, idx) => {
@@ -511,7 +523,8 @@ console.log("after: ",regStats.pestCount)
           row.getCell(8).value = unsc.raisedBy?.user || "";
           row.getCell(9).value = unsc.approval?.name || "";
           row.getCell(10).value = unsc.comment || "";
-          row.getCell(11).value = unsc.update?.status || "";
+          row.getCell(11).value =
+            unsc?.status || unsc.approval?.status || "Done";
           row.commit();
           unschCount++;
         }

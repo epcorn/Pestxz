@@ -24,6 +24,7 @@ import { Server } from "socket.io";
 import { autoMarkMissed } from "./utils/helperFunction.js";
 import Location from "./models/locationModel.js";
 import Counter from "./models/counterModel.js";
+import compression from "compression";
 
 dotenv.config();
 const app = express();
@@ -112,6 +113,7 @@ io.on("connection", (socket) => {
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+app.use(compression());
 app.use(
   fileUpload({
     useTempFiles: true,
@@ -181,9 +183,7 @@ if (process.env.NODE_ENV === "production") {
   });
 }
 
-
 app.use(notFound);
-
 
 const port = process.env.PORT || 5000;
 export const MONGOURL =
