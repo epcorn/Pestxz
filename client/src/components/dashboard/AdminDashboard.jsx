@@ -2,7 +2,7 @@ import React, { useMemo, useState, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useAllClientsQuery } from "../../redux/clientSlice";
 import { useAdminDashboardQuery, useDashboardMonthlyTrendQuery } from "../../redux/adminSlice";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { AssignWork } from "../../pages/Complaints";
 import PieChart from "./PieChart";
 import MultiLineChart from "./MultiLineChart";
@@ -11,6 +11,22 @@ import { dateFormat } from "../../utils/helperFunctions";
 import UnScheduledList from "../single_location/UnScheduledList";
 import ImagesModal from "../modals/ImagesModal";
 import { toggleModal } from "../../redux/helperSlice";
+
+// Shared color dynamic resolver
+const getStatusColors = (label, type) => {
+  const norm = label?.toLowerCase() || "";
+  if (type === "product") {
+    if (norm.includes("done")) return { border: "border-l-cyan-500", text: "text-cyan-600" };
+    if (norm.includes("pending")) return { border: "border-l-purple-500", text: "text-purple-600" };
+    if (norm.includes("missed")) return { border: "border-l-pink-500", text: "text-pink-600" };
+  }
+  if (type === "service") {
+    if (norm.includes("done")) return { border: "border-l-blue-500", text: "text-blue-600" };
+    if (norm.includes("pending")) return { border: "border-l-slate-400", text: "text-slate-600" };
+    if (norm.includes("missed")) return { border: "border-l-orange-500", text: "text-orange-600" };
+  }
+  return { border: "border-l-gray-400", text: "text-gray-600" };
+};
 
 const prMapped = {
   Done: "Done Products Services",
@@ -24,34 +40,31 @@ const regMapped = {
   Invalid: "Invalid",
 };
 
-const nestedToScheduleCount = (statusCounts) =>
-  Object.entries(statusCounts || {}).map(([label, count]) => ({
-    label,
-    count: count || 0,
-  }));
-
 function AdminDashboard() {
   const [assignId, setAssignId] = useState(null);
   const [toggle, setToggle] = useState(
     () => sessionStorage.getItem("adminDashboardToggle") || "Complaint",
   );
 
-  // "overall" or a stringified index into monthlyData
   const [selectedState, setSelectedState] = useState({ month: "overall", startDate: "" });
   const [selectedClient, setSelectedClient] = useState(null);
   const assignRef = useRef(null);
   const navigate = useNavigate();
 
   const { user, isModalOpen } = useSelector((store) => store.helper);
-
   const { data: clientsData = [] } = useAllClientsQuery();
   const clients = clientsData?.clients;
 
   const { data: adminDash, isLoading: admindashLoading } =
-    useAdminDashboardQuery({ id: selectedClient?._id || "select", filter: selectedState.month, startDate: selectedState.month !== "overall" ? selectedState.startDate : "" }, {
+    useAdminDashboardQuery({
+      id: selectedClient?._id || "select",
+      filter: selectedState.month,
+      startDate: selectedState.month !== "overall" ? selectedState.startDate : ""
+    }, {
       skip: !["TeamLeader", "BranchAdmin", "Admin"].includes(user?.role),
     });
-  const { data: monthlyTrend, isLoading: monthlytrendLoading } = useDashboardMonthlyTrendQuery(selectedClient?.id ? selectedClient?.id : null)
+
+  const { data: monthlyTrend } = useDashboardMonthlyTrendQuery(selectedClient?.id ? selectedClient?.id : null);
 
   useEffect(() => {
     if (!assignId) return;
@@ -68,31 +81,15 @@ function AdminDashboard() {
   };
   const isRegular = toggle === "Regular";
 
-  const clientReq = useMemo(
-    () => {
-      if (toggle === "Complaint") return adminDash?.latestComplaints ?? [];
-      if (isRegular) return adminDash?.latestServices ?? [];
-      // if (toggle === "Unschedules") return adminDash?.latestUnschedules
-      //   ?? [];
-      // if (toggle === "Casuals") return adminDash?.latestCasuals ?? [];
-      // return [];
-    },
-    [adminDash, toggle],
-  );
+  const clientReq = useMemo(() => {
+    if (toggle === "Complaint") return adminDash?.latestComplaints ?? [];
+    if (isRegular) return adminDash?.latestServices ?? [];
+  }, [adminDash, toggle, isRegular]);
 
   const { products, services, complaints, pestCounts, casualCounts, unscheduledCounts } =
     adminDash?.summary || {};
 
-  const complaintStats = {
-    open: complaints?.open || 0,
-    inProgress: complaints?.inProgress || 0,
-    closed: complaints?.closed || 0,
-    closeReq: complaints?.closeReq || 0,
-    total: complaints?.total || 0,
-    reopenCount: complaints?.reopenCount || 0,
-  }
-  const { open, inProgress, closed, total, closeReq, reopenCount } =
-    complaintStats;
+  const { open, inProgress, closed, total, closeReq, reopenCount } = complaints || {};
 
   const prObj = Object.fromEntries(
     (products?.scheduleCount ?? []).map((p) => [
@@ -115,14 +112,6 @@ function AdminDashboard() {
     "Closed": complaints?.closed || 0,
   };
 
-  const multichartdata = {
-    totalComplaints: complaints?.total,
-    closedComplaint: complaints?.closed,
-    totalRegular: services?.scheduleCount?.find(s => s.label === "Done").count ?? 0,
-    totalProduct: products?.scheduleCount?.find(s => s.label === "Done")?.count ?? 0,
-  }
-
-
   return (
     <section className="p-2 md:p-3 bg-gray-50 min-h-screen">
       {/* Header */}
@@ -132,16 +121,13 @@ function AdminDashboard() {
             System Overview
           </p>
           <h3 className="h3 font-black text-gray-800 mt-1">
-            {selectedClient?.name || `All Clients Data (${clients?.length})`}
+            {selectedClient?.name || `All Clients Data (${clients?.length || 0})`}
           </h3>
         </div>
 
         {user.role === "Admin" && (
           <div className="bg-white border border-gray-200 rounded-xl px-4 py-2.5 shadow-xs self-end sm:self-auto">
             <div className="flex items-center gap-2.5">
-              <label
-                htmlFor="client-select"
-                className="text-[10px] font-bold uppercase tracking-wider text-gray-400"></label>
               <select
                 id="client-select"
                 onChange={(e) => {
@@ -161,11 +147,10 @@ function AdminDashboard() {
         )}
       </div>
 
-
-      {/* overall / monthly toggle */}
+      {/* Date Toggle */}
       <div className="ml-auto bg-white outline outline-gray-600 rounded w-fit px-2 my-2 flex gap-2">
         <select
-          className="px-2 py-1 focus:outline-0"
+          className="px-2 py-1 focus:outline-0 text-sm font-semibold"
           value={selectedState.month}
           onChange={(e) => setSelectedState(prev => ({ ...prev, month: e.target.value }))}>
           <option value="overall">Overall</option>
@@ -173,115 +158,77 @@ function AdminDashboard() {
           <option value="weekly">Weekly</option>
           <option value="custom">Custom</option>
         </select>
-        {selectedState?.month !== "overall" &&
+        {selectedState?.month !== "overall" && (
           <div className="flex flex-col">
-            <label htmlFor="" className="text-xs">Choose Start Date</label>
+            <label className="text-xs">Choose Start Date</label>
             <input type="date" onChange={(e) => setSelectedState(prev => ({ ...prev, startDate: e.target.value }))} />
           </div>
-        }
+        )}
       </div>
 
       {/* Stat cards */}
       <div className="space-y-4">
-        <h3 className="text-gray-600 hidden font-semibold text-center mb-2">
-          Complaints
-        </h3>
-
-        {/* Container for all layout blocks */}
-        <div
-          className={`flex flex-col gap-3 ${admindashLoading ? "animate-pulse" : ""}`}>
+        <div className={`flex flex-col gap-3 ${admindashLoading ? "animate-pulse" : ""}`}>
           {/* Complaints Section */}
           <div className="flex flex-wrap gap-y-1 gap-x-2">
-            <StatCard
-              title="Open Complaints"
-              value={open || 0}
-              color="border-l-red-500"
-              textColor="text-red-500"
-            />
-            <StatCard
-              title="In Progress"
-              value={inProgress || 0}
-              color="border-l-amber-500"
-              textColor="text-amber-500 animate-pulse"
-            />
-            <StatCard
-              title="Closed Complaints"
-              value={closed || 0}
-              color="border-l-green-500"
-              textColor="text-green-500"
-            />
-            <StatCard
-              title="Total Complaints"
-              value={total || 0}
-              color="border-l-blue-500"
-              textColor="text-blue-500"
-            />
-            <StatCard
-              title="Re Opened"
-              value={reopenCount || 0}
-              color="border-l-blue-500"
-              textColor="text-blue-500"
-            />
-            <StatCard
-              title="Close Req"
-              value={closeReq || 0}
-              color="border-l-blue-500"
-              textColor="text-blue-500"
-            />
-            <StatCard
-              title="Casual Services"
-              value={casualCounts || 0}
-              color="border-l-gray-500"
-              textColor="text-gray-500"
-            />
-            <StatCard
-              title="Unscheduled Services"
-              value={unscheduledCounts || 0}
-              color="border-l-gray-500"
-              textColor="text-gray-500"
-            />
+            <StatCard title="Open Complaints" value={open || 0} color="border-l-red-500" textColor="text-red-500" />
+            <StatCard title="In Progress" value={inProgress || 0} color="border-l-amber-500" textColor="text-amber-500 animate-pulse" />
+            <StatCard title="Closed Complaints" value={closed || 0} color="border-l-emerald-500" textColor="text-emerald-500" />
+            <StatCard title="Total Complaints" value={total || 0} color="border-l-blue-500" textColor="text-blue-500" />
+            <StatCard title="Re Opened" value={reopenCount || 0} color="border-l-purple-500" textColor="text-purple-500" />
+            <StatCard title="Close Req" value={closeReq || 0} color="border-l-yellow-500" textColor="text-yellow-500" />
+            <StatCard title="Casual Services" value={casualCounts || 0} color="border-l-slate-500" textColor="text-slate-600" />
+            <StatCard title="Unscheduled Services" value={unscheduledCounts || 0} color="border-l-slate-500" textColor="text-slate-600" />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {/* Products Section */}
             {products?.scheduleCount?.length > 0 && (
-              <div title="products" className="bg-white">
-                <h3 className="font-semibold text-gray-600 text-center">
+              <div title="products" className="bg-white p-2 rounded-md">
+                <h3 className="font-semibold text-gray-600 text-center mb-1">
                   Products ({products?.total})
                 </h3>
-                <div className="flex flex-wrap gap-x-2 gap-y-1 outline-2 outline-indigo-600 pb-1 rounded-md">
-                  {products?.scheduleCount?.map(({ label, count }, i) => (
-                    <StatCard
-                      key={i}
-                      title={label}
-                      value={count}
-                      color="border-l-indigo-600"
-                      textColor="text-indigo-700"
-                    />
-                  ))}
+                <div className="flex flex-wrap gap-x-2 gap-y-1 outline-2 outline-purple-500/30 pb-1 rounded-md p-1">
+                  {products?.scheduleCount?.map(({ label, count }, i) => {
+                    const colors = getStatusColors(label, "product");
+                    return (
+                      <StatCard
+                        key={i}
+                        title={label}
+                        value={count}
+                        color={colors.border}
+                        textColor={colors.text}
+                      />
+                    );
+                  })}
                 </div>
               </div>
             )}
 
             {/* Services Section */}
             {services?.scheduleCount?.length > 0 && (
-              <div title="service" className="bg-white">
-                <h3 className="font-semibold text-gray-600 text-center">
+              <div title="service" className="bg-white p-2 rounded-md">
+                <h3 className="font-semibold text-gray-600 text-center mb-1">
                   Services ({services.total})
                 </h3>
-                <div className="flex flex-wrap gap-x-2 gap-y-1 rounded-md outline-2 outline-fuchsia-700 pb-1">
-                  {services?.scheduleCount?.map(
-                    ({ label, count }) =>
-                      label !== "Invalid" && (
-                        <StatCard
-                          key={label}
-                          title={label}
-                          value={count || 0}
-                          color="border-l-fuchsia-600"
-                          textColor="text-fuchsia-700"
-                        />
-                      ),
-                  )}
+                <div className="flex flex-wrap gap-x-2 gap-y-1 rounded-md outline-2 outline-blue-500/30 pb-1 p-1">
+                  {services?.scheduleCount?.map(({ label, count }) => {
+
+                    if (label === "Invalid") return null;
+
+                    const colors = getStatusColors(label, "service");
+
+                    return (
+                      <StatCard
+                        key={label}
+                        title={label}
+                        value={count || 0}
+                        color={colors?.border || "default-border-color"}
+                        textColor={colors?.text || "default-text-color"}
+                      />
+                    );
+                  })}
+
                 </div>
               </div>
             )}
@@ -289,56 +236,41 @@ function AdminDashboard() {
         </div>
       </div>
 
-      {/* charts  */}
+      {/* Charts */}
       <div className="my-2">
-        <div className="grid grid-cols-1 lg:grid-cols-6 gap-4 ">
-          {/* Multiline Chart — always shows the full monthly trend regardless of toggle */}
+        <div className="grid grid-cols-1 lg:grid-cols-6 gap-4">
           <div className="lg:col-span-6 rounded-2xl shadow-md p-2 bg-white min-w-0">
-            <div
-              className={`w-full overflow-x-auto ${admindashLoading ? "animate-pulse" : ""}`}>
-              <MultiLineChart
-                values={monthlyTrend}
-                toggle="values"
-              />
+            <div className={`w-full overflow-x-auto ${admindashLoading ? "animate-pulse" : ""}`}>
+              <MultiLineChart values={monthlyTrend} toggle="values" />
             </div>
           </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-2 mt-4">
-          {/* Product/Service Pie */}
-          <div
-            className={`rounded-2xl shadow-md p-4 bg-white flex items-center justify-center min-w-0 ${admindashLoading ? "animate-pulse" : ""}`}>
+          <div className={`rounded-2xl shadow-md p-4 bg-white flex items-center justify-center min-w-0 ${admindashLoading ? "animate-pulse" : ""}`}>
             <PieChart values={prObj} modelKey="Product Service" />
           </div>
-
-          {/* Complaint Pie */}
-          <div
-            className={`rounded-2xl shadow-md p-4 bg-white flex items-center justify-center min-w-0 ${admindashLoading ? "animate-pulse" : ""}`}>
+          <div className={`rounded-2xl shadow-md p-4 bg-white flex items-center justify-center min-w-0 ${admindashLoading ? "animate-pulse" : ""}`}>
             <PieChart values={pieChartComplaints} modelKey="Complaints" />
           </div>
-
-          {/* Regular Pie */}
-          <div
-            className={`rounded-2xl shadow-md p-4 bg-white flex items-center justify-center min-w-0 ${admindashLoading ? "animate-pulse" : ""}`}>
+          <div className={`rounded-2xl shadow-md p-4 bg-white flex items-center justify-center min-w-0 ${admindashLoading ? "animate-pulse" : ""}`}>
             <PieChart values={regObj} modelKey="Regular Service" />
           </div>
         </div>
       </div>
 
-      {/* pest counts  */}
+      {/* Pest Counts */}
       <div className="my-5 w-full outline outline-neutral-500 rounded-lg p-2">
-        <h3 className="text-lg font-semibold ">Pest Activity </h3>
-
-        <div className="flex gap-2">
+        <h3 className="text-lg font-semibold mb-2">Pest Activity</h3>
+        <div className="flex gap-2 flex-wrap">
           {pestCounts && Object.keys(pestCounts).length > 0 ? Object.entries(pestCounts)?.map(([name, count]) => (
-            <StatCard key={name} title={PEST_MAP[name]} value={count} color='text-rose-500 bg-green-200 border-rose-700' />
-          )) : <div className="text-center content-center w-full "><p>No Pest Activity Recorded {selectedState?.month}</p></div>}
+            <StatCard key={name} title={PEST_MAP[name] || name} value={count} color='text-rose-500 bg-green-200 border-rose-700' />
+          )) : <div className="text-center content-center w-full"><p>No Pest Activity Recorded {selectedState?.month}</p></div>}
         </div>
       </div>
 
-      {/* Table */}
+      {/* Table Tabs */}
       <div className="bg-white rounded-2xl shadow-xs border border-gray-200 overflow-hidden">
-        {/* Tabs */}
         <div className="bg-gray-300 px-4 py-3 flex gap-2">
           {["Complaint", "Regular", "Casuals", "Unschedules"].map((tab) => (
             <button
@@ -353,14 +285,8 @@ function AdminDashboard() {
           ))}
         </div>
 
-        {toggle === "Unschedules" && (
-          <UnScheduledList type={"Unschedule"} work={adminDash?.latestUnschedules} />
-        )}
-
-        {toggle === "Casuals" && (
-          <UnScheduledList type={"casual"} work={adminDash?.latestCasuals} />
-        )}
-
+        {toggle === "Unschedules" && <UnScheduledList type={"Unschedule"} work={adminDash?.latestUnschedules} />}
+        {toggle === "Casuals" && <UnScheduledList type={"casual"} work={adminDash?.latestCasuals} />}
         {toggle === "Complaint" && (
           <ComplaintTable
             rows={clientReq}
@@ -371,7 +297,6 @@ function AdminDashboard() {
             navigate={navigate}
           />
         )}
-
         {toggle === "Regular" && (
           <RegularServiceTable
             rows={clientReq}
@@ -387,17 +312,14 @@ function AdminDashboard() {
 
 export default AdminDashboard;
 
-// ---------------------------------------------------------------------------
-// Complaint table
-// ---------------------------------------------------------------------------
-
-const complaintStatusStyle = {
-  Open: "bg-red-50 text-red-700 ring-red-600/10",
-  "In Progress": "bg-amber-50 text-amber-800 ring-amber-600/10",
-  Close: "bg-green-50 text-green-700 ring-green-600/10",
-};
-
+// Subcomponents
 function ComplaintTable({ rows, loading, assignId, assignRef, setAssignId, navigate }) {
+  const complaintStatusStyle = {
+    Open: "bg-red-50 text-red-700 ring-red-600/10",
+    "In Progress": "bg-amber-50 text-amber-800 ring-amber-600/10",
+    Close: "bg-green-50 text-green-700 ring-green-600/10",
+  };
+
   return (
     <div className="w-full overflow-x-auto border border-gray-200">
       <table className="w-full min-w-[900px] border-collapse bg-white text-left text-sm text-gray-500">
@@ -411,14 +333,9 @@ function ComplaintTable({ rows, loading, assignId, assignRef, setAssignId, navig
             <th scope="col" className="px-4 py-3 max-w-16">Status</th>
           </tr>
         </thead>
-
         <tbody className="divide-y divide-gray-100 bg-white">
           {loading ? (
-            <tr>
-              <td colSpan={6} className="p-8 text-center text-gray-400 text-sm">
-                Loading records...
-              </td>
-            </tr>
+            <tr><td colSpan={6} className="p-8 text-center text-gray-400 text-sm">Loading records...</td></tr>
           ) : rows?.length ? (
             rows.map((item) => (
               <ComplaintRow
@@ -428,14 +345,11 @@ function ComplaintTable({ rows, loading, assignId, assignRef, setAssignId, navig
                 assignRef={assignRef}
                 setAssignId={setAssignId}
                 navigate={navigate}
+                complaintStatusStyle={complaintStatusStyle}
               />
             ))
           ) : (
-            <tr>
-              <td colSpan={6} className="p-8 text-center text-gray-400 text-sm">
-                No complaints found.
-              </td>
-            </tr>
+            <tr><td colSpan={6} className="p-8 text-center text-gray-400 text-sm">No complaints found.</td></tr>
           )}
         </tbody>
       </table>
@@ -443,18 +357,13 @@ function ComplaintTable({ rows, loading, assignId, assignRef, setAssignId, navig
   );
 }
 
-function ComplaintRow({ item, assignId, assignRef, setAssignId, navigate }) {
+function ComplaintRow({ item, assignId, assignRef, setAssignId, navigate, complaintStatusStyle }) {
   const latestUpdate = item?.complaintUpdate?.at(-1);
   const cd = item?.complaintDetails;
 
   return (
-    <tr
-      onClick={() => navigate(`/complaint/${item?._id}`)}
-      className="hover:bg-gray-50/80 transition-colors cursor-pointer text-xs">
-      <td className="px-2 text-center py-4 font-bold text-blue-600 whitespace-nowrap">
-        {cd?.number || "—"}
-      </td>
-
+    <tr onClick={() => navigate(`/complaint/${item?._id}`)} className="hover:bg-gray-50/80 transition-colors cursor-pointer text-xs">
+      <td className="px-2 text-center py-4 font-bold text-blue-600 whitespace-nowrap">{cd?.number || "—"}</td>
       <td className="px-4 py-4 whitespace-nowrap">
         <div
           ref={assignId === item._id ? assignRef : null}
@@ -463,9 +372,7 @@ function ComplaintRow({ item, assignId, assignRef, setAssignId, navigate }) {
             e.stopPropagation();
             setAssignId((prev) => (prev === item._id ? null : item._id));
           }}>
-          <p className="text-sm font-semibold">
-            {cd?.assignedTo?.userName || <span>Assign</span>}
-          </p>
+          <p className="text-sm font-semibold">{cd?.assignedTo?.userName || <span>Assign</span>}</p>
           {cd?.assignedBy?.userName && (
             <span className="px-2 py-0.5 rounded bg-gray-100 text-gray-600 text-[.6rem] md:text-xs font-bold capitalize outline">
               {cd?.assignedBy?.userName}
@@ -474,41 +381,23 @@ function ComplaintRow({ item, assignId, assignRef, setAssignId, navigate }) {
           {assignId === item._id && (
             <AssignWork
               complaintId={item._id}
-              currentAssgndVal={{
-                label: cd?.assignedTo?.userName,
-                value: cd?.assignedTo?.userName,
-              }}
+              currentAssgndVal={{ label: cd?.assignedTo?.userName, value: cd?.assignedTo?.userName }}
               show={() => setAssignId(null)}
             />
           )}
         </div>
       </td>
-
-      <td className="px-4 py-4 text-gray-600 text-sm whitespace-nowrap">
-        {dateFormat(item.createdAt)}
-      </td>
-
-
-      <td className="px-4 py-4 font-medium text-gray-700 truncate">
-        {cd?.status === "Open" ? cd?.userName : latestUpdate?.userName || "—"}
-      </td>
-
-      <td className="px-4 py-4 text-sm font-normal text-gray-900 truncate">
-        {item?.client?.name || cd?.clientName || "—"}
-      </td>
+      <td className="px-4 py-4 text-gray-600 text-sm whitespace-nowrap">{dateFormat(item.createdAt)}</td>
+      <td className="px-4 py-4 font-medium text-gray-700 truncate">{cd?.status === "Open" ? cd?.userName : latestUpdate?.userName || "—"}</td>
+      <td className="px-4 py-4 text-sm font-normal text-gray-900 truncate">{item?.client?.name || cd?.clientName || "—"}</td>
       <td className="px-4 py-4 whitespace-nowrap">
-        <span
-          className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs font-bold ring-1 ring-inset uppercase tracking-wide ${complaintStatusStyle[cd?.status] ?? ""}`}>
+        <span className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs font-bold ring-1 ring-inset uppercase tracking-wide ${complaintStatusStyle[cd?.status] ?? ""}`}>
           {cd?.status || "—"}
         </span>
       </td>
     </tr>
   );
 }
-
-// ---------------------------------------------------------------------------
-// Regular service table
-// ---------------------------------------------------------------------------
 
 function RegularServiceTable({ rows, loading, navigate, isModalOpen }) {
   return (
@@ -518,37 +407,22 @@ function RegularServiceTable({ rows, loading, navigate, isModalOpen }) {
           <tr>
             <th scope="col" className="px-2 py-3 text-center">Number</th>
             <th scope="col" className="px-4 py-3">Date</th>
-            <th scope="col" className="px-4 py-3 max-w-16">Pest Count</th>
+            <th scope="col" className="px-4 py-3 whitespace-nowrap">Pest Count</th>
             <th scope="col" className="px-4 py-3">Serviced by</th>
             <th scope="col" className="px-4 py-3">Client</th>
             <th scope="col" className="px-4 py-3">Service Name</th>
             <th scope="col" className="px-4 py-3">Images</th>
           </tr>
         </thead>
-
         <tbody className="divide-y divide-gray-100 bg-white">
           {loading ? (
-            <tr>
-              <td colSpan={7} className="p-8 text-center text-gray-400 text-sm">
-                Loading records...
-              </td>
-            </tr>
+            <tr><td colSpan={7} className="p-8 text-center text-gray-400 text-sm">Loading records...</td></tr>
           ) : rows?.length ? (
             rows.map((item, i) => (
-              <RegularServiceRow
-                key={item._id}
-                item={item}
-                index={i}
-                navigate={navigate}
-                isModalOpen={isModalOpen}
-              />
+              <RegularServiceRow key={item._id} item={item} index={i} navigate={navigate} isModalOpen={isModalOpen} />
             ))
           ) : (
-            <tr>
-              <td colSpan={7} className="p-8 text-center text-gray-400 text-sm">
-                No regular services found.
-              </td>
-            </tr>
+            <tr><td colSpan={7} className="p-8 text-center text-gray-400 text-sm">No regular services found.</td></tr>
           )}
         </tbody>
       </table>
@@ -561,35 +435,17 @@ function RegularServiceRow({ item, index, navigate, isModalOpen }) {
   const dispatch = useDispatch();
 
   return (
-    <tr
-      onClick={() => navigate(`/location/${item?.location?._id}`)}
-      className="hover:bg-gray-50/80 transition-colors cursor-pointer text-xs">
-      <td className="px-2 text-center py-4 font-bold text-blue-600 whitespace-nowrap">
-        {index + 1}
-      </td>
-
-      <td className="px-4 py-4 text-gray-600 text-sm whitespace-nowrap">
-        <div className="font-semibold">{dateFormat(regs?.completedAt)}</div>
-      </td>
-
+    <tr onClick={() => navigate(`/location/${item?.location?._id}`)} className="hover:bg-gray-50/80 transition-colors cursor-pointer text-xs">
+      <td className="px-2 text-center py-4 font-bold text-blue-600 whitespace-nowrap">{index + 1}</td>
+      <td className="px-4 py-4 text-gray-600 text-sm whitespace-nowrap"><div className="font-semibold">{dateFormat(regs?.completedAt)}</div></td>
       <td className="px-4 py-4 whitespace-nowrap">
         <span className="inline-flex items-center rounded-md bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-700 ring-1 ring-inset ring-blue-700/10">
           {regs?.pestCount ?? 0}
         </span>
       </td>
-
-      <td className="px-4 py-4 font-medium text-gray-700 truncate">
-        {regs?.userName || "—"}
-      </td>
-
-      <td className="px-4 py-4 text-sm font-normal text-gray-900 truncate">
-        {item?.client?.name || "—"}
-      </td>
-
-      <td className="px-4 py-4 text-sm font-normal text-gray-900 truncate">
-        {regs?.serviceName || "—"}
-      </td>
-
+      <td className="px-4 py-4 font-medium text-gray-700 truncate">{regs?.userName || "—"}</td>
+      <td className="px-4 py-4 text-sm font-normal text-gray-900 truncate">{item?.client?.name || "—"}</td>
+      <td className="px-4 py-4 text-sm font-normal text-gray-900 truncate">{regs?.serviceName || "—"}</td>
       <td className="px-4 py-4 text-sm font-normal text-gray-900 truncate">
         <div className="flex items-center gap-1">
           {regs?.image?.map((img, i) => {
@@ -605,9 +461,7 @@ function RegularServiceRow({ item, index, navigate, isModalOpen }) {
                   className="max-h-16"
                   alt=""
                 />
-                {isModalOpen?.[modalKey] && (
-                  <ImagesModal image={img} name={modalKey} />
-                )}
+                {isModalOpen?.[modalKey] && <ImagesModal image={img} name={modalKey} />}
               </div>
             );
           })}
@@ -617,20 +471,7 @@ function RegularServiceRow({ item, index, navigate, isModalOpen }) {
   );
 }
 
-// ---------------------------------------------------------------------------
-// Stat card
-// ---------------------------------------------------------------------------
-
-export function StatCard({
-  active,
-  title = "",
-  value,
-  color,
-  textColor,
-  arrkey = "",
-  pestCount,
-  onClick = () => { },
-}) {
+export function StatCard({ active, title = "", value, color, textColor, arrkey = "", pestCount, onClick = () => { } }) {
   const isActive = active === arrkey || active === title;
 
   return (
@@ -638,9 +479,7 @@ export function StatCard({
       title={title}
       className={`bg-gray-50 shadow flex-1 px-3 py-2 md:px-5 md:py-3 rounded-l-xl border border-gray-100 whitespace-nowrap border-l-4 transition-all duration-200 ease-in-out ${color} ${isActive ? "translate-y-1 shadow-md bg-white" : "translate-y-0 cursor-pointer"}`}
       onClick={() => onClick(arrkey || title)}>
-      <p className="text-[9px] md:text-xs uppercase tracking-wide text-gray-400 font-semibold">
-        {title}
-      </p>
+      <p className="text-[9px] md:text-xs uppercase tracking-wide text-gray-400 font-semibold">{title}</p>
       <p className={`text-lg flex justify-between md:text-2xl font-bold leading-tight ${textColor}`}>
         <span>{value}</span> {pestCount && <span>{pestCount}</span>}
       </p>

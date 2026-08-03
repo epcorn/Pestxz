@@ -32,8 +32,8 @@ function UnScheduledList({ work = [], type = "unschedule" }) {
             <tr className="bg-gray-700 text-white border-b border-gray-400 *:not-last:border-r">
               <th className="p-3 font-bold">Index</th>
               <th className="p-3 font-bold">Date</th>
-              <th className="p-3 font-bold">Pest Count</th>
-              <th className="p-3 font-bold">Raised By</th>
+              <th className="p-3 font-bold whitespace-nowrap">Pest Count</th>
+              <th className="p-3 font-bold whitespace-nowrap">Raised By</th>
               <th className="p-3 font-bold">Service</th>
               <th className="p-3 font-bold max-w-3xs min-w-3xs">Comment</th>
               <th className="p-3 font-bold">Status</th>
@@ -43,7 +43,7 @@ function UnScheduledList({ work = [], type = "unschedule" }) {
               {/* <th className="p-3 font-bold">Index</th> */}
               <th className="p-3 font-bold">Date</th>
               <th className="p-3 font-bold">Serviced By</th>
-              <th className="p-3 font-bold">Pest Count</th>
+              <th className="p-3 font-bold whitespace-nowrap">Pest Count</th>
               <th className="p-3 font-bold">Client Name</th>
               <th className="p-3 font-bold">Service</th>
               <th className="p-3 font-bold">Image</th>

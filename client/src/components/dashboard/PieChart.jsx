@@ -4,10 +4,14 @@ import { Doughnut } from 'react-chartjs-2'
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
-function PieChart({ values, line = false, modelKey }) {
-  const filteredKeys = Object.keys(values ?? []).filter(key => !["allcomplaints", "Invalid", "total", "completed"].includes(key))
-  const chartDataValues = filteredKeys.map(key => values[key])
+function PieChart({ values, line = false, modelKey = "" }) {
+  const filteredKeys = Object.keys(values ?? []).filter(
+    key => !["allcomplaints", "Invalid", "total", "completed"].includes(key)
+  );
+  
+  const chartDataValues = filteredKeys.map(key => values[key]);
 
+  // Standardized Labels
   const keyMapping = {
     open: "Open",
     Open: "Open",
@@ -15,14 +19,19 @@ function PieChart({ values, line = false, modelKey }) {
     inProgress: "In Progress",
     "In Progress": "In Progress",
 
-    closed: "Close",
-    Close: "Close",
+    closed: "Closed",
+    Close: "Closed",
+    closedComplaints: "Closed",
+
+    closeReq: "Close Req",
+    CloseReq: "Close Req",
 
     reOpenCount: "Reopened",
     reopenCount: "Reopened",
+    Reopened: "Reopened",
 
-    completedServices: "Done Regular Services",
-    completed: "Done Regular Services",
+    completedServices: "Done",
+    completed: "Done",
 
     "Done Products Services": "Done",
     "Pending Products Services": "Pending",
@@ -35,39 +44,41 @@ function PieChart({ values, line = false, modelKey }) {
     Invalid: "Invalid",
   };
 
+  // Color Definitions keyed directly by display labels
   const statusColors = {
-    // Complaints
-    complaints: {
-      "open": "#EF444480",
-      "Open": "#EF4444BF",
-      "inProgress": "#F59E0BBF",
-      "In Progress": "#F59E0BBF",
-      "Close": "#22C55EBF",
-      "Reopened": "#8B5CF6BF",
+    complaint: {
+      "Open": "#EF4444BF",        // Red
+      "In Progress": "#F59E0BBF", // Amber/Yellow
+      "Close Req": "#EAB308BF",   // Yellow-Green
+      "Closed": "#6B7280BF",      // Grey
+      "Reopened": "#8B5CF6BF",    // Purple
     },
-    // Regular Services
     regular: {
-      "Done": "#3B82F6BF",
-      "Pending": "#4b6b99BF",
-      "Missed": "#F97316BF",
+      "Done": "#3B82F6BF",        // Blue
+      "Pending": "#64748B33",     // Muted Slate Blue
+      "Missed": "#F97316BF",      // Orange
     },
-    // Product Services
     product: {
-      "Done": "#06B6D4BF",
-      "Pending": "#A855F7BF",
-      "Missed": "#EC4899BF",
+      "Done": "#06B6D4BF",        // Cyan
+      "Pending": "#A855F7BF",     // Purple
+      "Missed": "#EC4899BF",      // Pink
     }
   };
 
-  const newKeys = filteredKeys.map(f => keyMapping[f] || f)
-  const chartType = modelKey?.split(" ")?.[0].toLowerCase();
+  const newKeys = filteredKeys.map(f => keyMapping[f] || f);
 
-  // FIXED: Direct look up into the specific chart category color mapping
+  // Extract category type reliably ("product", "regular", "complaint" / "complaints")
+  const rawType = modelKey.split(" ")[0].toLowerCase();
+  const chartType = rawType.startsWith("complaint") ? "complaint" : rawType;
+
+  // Match colors using the mapped display keys
   const backgroundColor = newKeys.map(
     key => statusColors?.[chartType]?.[key] || "#9CA3AF"
   );
 
-  const borderColor = backgroundColor?.map(p => p.slice(0, 7));
+  const borderColor = backgroundColor.map(color => 
+    color.startsWith("#") && color.length === 9 ? color.slice(0, 7) : color
+  );
 
   const data = {
     labels: newKeys,
@@ -80,7 +91,7 @@ function PieChart({ values, line = false, modelKey }) {
         borderWidth: 1,
       },
     ],
-  }
+  };
 
   const options = {
     responsive: true,
@@ -90,14 +101,13 @@ function PieChart({ values, line = false, modelKey }) {
       tooltip: { position: "nearest" },
       title: { display: true, text: `Status of ${modelKey}` }
     }
-  }
-
+  };
 
   return (
     <div style={{ width: '100%', maxWidth: 400, height: 260, position: 'relative', margin: '0 auto' }}>
       <Doughnut data={data} options={options} />
     </div>
-  )
+  );
 }
 
-export default PieChart
+export default PieChart;
