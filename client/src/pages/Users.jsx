@@ -56,8 +56,6 @@ const Users = () => {
     )
     : data;
 
-  console.log(filteredUsers);
-
   return (
     <div className="p-4 md:p-8 bg-gray-50 min-h-screen">
       {(isLoading || isFetching) ? (
