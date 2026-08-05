@@ -2,16 +2,19 @@ import Client from "../models/clientModel.js";
 import exceljs from "exceljs";
 import {
   dateFormat,
-  dateTimeSplitter,
   removeOldQr,
-  sendEmail,
   uploadFile,
 } from "../utils/helperFunction.js";
 import fs from "fs/promises";
 import fsSync from "fs";
 import path from "path";
 import Location from "../models/locationModel.js";
-import { generateHtmlReport } from "../utils/html.js";
+// Import models directly for direct, high-performance indexed queries
+import Service from "../models/serviceModel.js";
+import Casual from "../models/casualServiceModel.js";
+import { Unscheduled } from "../models/unScheduleModel.js";
+// import Unschedule from "../models/unscheduleModel.js";
+// import Casual from "../models/casualModel.js";
 
 const PEST_MAP = {
   Ratrid: "Rodein",
@@ -40,48 +43,25 @@ export const dailyServiceReport = async (req, res) => {
     const isPestEmployee = req.user.type === "PestEmployee";
     const clientQuery =
       req.user.role === "ClientAdmin" ? { _id: req.user.client } : {};
-    const selectFields = req.user.client ? "" : "-adminPass";
+    const selectFields = req.user.client ? "" : "-adminPass -adminName";
 
     let matchCondition = {};
     let scheduleDateMatch = {};
     let prodScheduleDateMatch = {};
 
     if (value === "custom") {
-      matchCondition = { updatedAt: { $gte: todayStart, $lte: todayEnd } };
-      scheduleDateMatch = {
-        "service.schedule.date": { $gte: todayStart, $lte: todayEnd },
-      };
-      prodScheduleDateMatch = {
-        "product.schedule.date": { $gte: todayStart, $lte: todayEnd },
-      };
       startDate = todayStart;
       endDate = todayEnd;
     } else if (value === "weekly") {
       const weekEnd = new Date(todayStart);
       const weekStart = new Date(todayStart);
       weekStart.setUTCDate(weekStart.getUTCDate() - 7);
-      matchCondition = { updatedAt: { $gte: weekStart, $lt: weekEnd } };
-      scheduleDateMatch = {
-        "service.schedule.date": { $gte: weekStart, $lt: weekEnd },
-      };
-      prodScheduleDateMatch = {
-        "product.schedule.date": { $gte: weekStart, $lt: weekEnd },
-      };
       startDate = weekStart;
       endDate = weekEnd;
     } else if (value === "fortnightly") {
       const fortnightEnd = new Date(todayStart);
       const fortnightStart = new Date(todayStart);
       fortnightStart.setUTCDate(fortnightStart.getUTCDate() - 15);
-      matchCondition = {
-        updatedAt: { $gte: fortnightStart, $lt: fortnightEnd },
-      };
-      scheduleDateMatch = {
-        "service.schedule.date": { $gte: fortnightStart, $lt: fortnightEnd },
-      };
-      prodScheduleDateMatch = {
-        "product.schedule.date": { $gte: fortnightStart, $lt: fortnightEnd },
-      };
       startDate = fortnightStart;
       endDate = fortnightEnd;
     } else if (value === "monthly") {
@@ -95,28 +75,32 @@ export const dailyServiceReport = async (req, res) => {
       const monthEnd = new Date(
         Date.UTC(todayStart.getUTCFullYear(), todayStart.getUTCMonth(), 1),
       );
-
-      matchCondition = { updatedAt: { $gte: monthStart, $lt: monthEnd } };
-      scheduleDateMatch = {
-        "service.schedule.date": { $gte: monthStart, $lt: monthEnd },
-      };
-      prodScheduleDateMatch = {
-        "product.schedule.date": { $gte: monthStart, $lt: monthEnd },
-      };
       startDate = monthStart;
       endDate = monthEnd;
     }
 
-    // 1. PRE-LOAD EXCEL TEMPLATE IN MEMORY (DO NOT READ DISK PER CLIENT)
+    if (value !== "all") {
+      matchCondition = { updatedAt: { $gte: startDate, $lte: endDate } };
+      scheduleDateMatch = {
+        "service.schedule.date": { $gte: startDate, $lte: endDate },
+      };
+      prodScheduleDateMatch = {
+        "product.schedule.date": { $gte: startDate, $lte: endDate },
+      };
+    }
+
+    // 1. PRE-LOAD EXCEL TEMPLATE BUFFER ONCE
     const templatePath = isPestEmployee
       ? "./tmp/dailyReport_Pest.xlsx"
       : "./tmp/dailyReport_Client.xlsx";
     const templateBuffer = await fs.readFile(templatePath);
 
-    // 2. BATCH AGGREGATIONS FOR ALL CLIENTS AT ONCE (AVOID N+1 QUERIES)
+    console.time("service and product stats calculating...");
 
+    // 2. OPTIMIZED AGGREGATIONS ($match BEFORE $unwind TO USE INDEXES)
     const [allServiceStats, allProdStats] = await Promise.all([
       Location.aggregate([
+        ...(value !== "all" ? [{ $match: scheduleDateMatch }] : []),
         { $unwind: "$service" },
         { $unwind: "$service.schedule" },
         ...(value !== "all" ? [{ $match: scheduleDateMatch }] : []),
@@ -128,6 +112,7 @@ export const dailyServiceReport = async (req, res) => {
         },
       ]),
       Location.aggregate([
+        ...(value !== "all" ? [{ $match: prodScheduleDateMatch }] : []),
         { $unwind: "$product" },
         { $unwind: "$product.schedule" },
         ...(value !== "all" ? [{ $match: prodScheduleDateMatch }] : []),
@@ -139,8 +124,9 @@ export const dailyServiceReport = async (req, res) => {
         },
       ]),
     ]);
-
-    // Map aggregations by client ID for fast O(1) lookup
+    console.timeEnd("service and product stats calculating...");
+    console.time("products & service stats mapping...");
+    // Fast O(1) stats maps
     const serviceStatsMap = new Map();
     allServiceStats.forEach((s) => {
       const clientId = s._id.client?.toString();
@@ -159,33 +145,11 @@ export const dailyServiceReport = async (req, res) => {
       if (key) prodStatsMap.get(clientId)[key] = s.count;
     });
 
-    const populateOptions = [
-      {
-        path: "services",
-        match: { createdAt: { $gte: startDate, $lte: endDate } },
-        populate: { path: "location" },
-      },
-      { path: "locations" },
-      {
-        path: "unschedules",
-        match: matchCondition,
-        populate: { path: "location" },
-      },
-      {
-        path: "casuals",
-        match: matchCondition,
-        populate: { path: "location" },
-      },
-      {
-        path: "productservices",
-        match: matchCondition,
-        populate: { path: "location" },
-      },
-    ];
-
+    console.timeEnd("products & service stats mapping...");
+    console.time("finding clients...");
+    // 3. CURSOR OVER CLIENTS WITHOUT HEAVY NESTED VIRTUAL POPULATIONS
     const clientCursor = Client.find(clientQuery)
       .select(selectFields)
-      .populate(populateOptions)
       .lean()
       .cursor();
 
@@ -197,10 +161,37 @@ export const dailyServiceReport = async (req, res) => {
     if (!fsSync.existsSync(dir)) {
       await fs.mkdir(dir, { recursive: true });
     }
-    let dats = {};
 
+    console.timeEnd("finding clients...");
+    console.time("looping clients...");
     for await (let client of clientCursor) {
       const clientIdStr = client._id.toString();
+
+      console.log("sevices, unschedules, casuals fetching ...");
+      // Parallel direct-model queries for client relations (hits indexed fields directly)
+      const [services, unschedules, casuals] = await Promise.all([
+        Service.find({
+          client: client._id,
+          ...(value !== "all"
+            ? { createdAt: { $gte: startDate, $lte: endDate } }
+            : {}),
+        })
+          .populate("location")
+          .lean(),
+        Unscheduled.find({
+          client: client._id,
+          ...(value !== "all" ? matchCondition : {}),
+        })
+          .populate("location")
+          .lean(),
+        Casual.find({
+          client: client._id,
+          ...(value !== "all" ? matchCondition : {}),
+        })
+          .populate("location")
+          .lean(),
+      ]);
+
       const clientName = client.name
         .replace(/\./g, "")
         .replace(/[\\/:\*\?"<>\|]/g, "")
@@ -208,21 +199,16 @@ export const dailyServiceReport = async (req, res) => {
         .replace(/\s+/g, "_");
       const fileName = `${clientName}_Daily_Service_Report-${sufix}.xlsx`;
       const filePath = path.join(dir, fileName);
-      dats = { client };
-      // SINGLE PASS grouping for services by type
+
+      // Single pass grouping for regular and complaint services
       const regulars = [];
       const complaints = [];
 
-      const clientServices = client.services || [];
-      for (const s of clientServices) {
-        if (s.type === "Complaint") {
-          complaints.push(s);
-        }
-        if (s.type === "Regular") {
-          regulars.push(s);
-        }
+      for (let i = 0; i < services.length; i++) {
+        const s = services[i];
+        if (s.type === "Complaint") complaints.push(s);
+        if (s.type === "Regular") regulars.push(s);
       }
-      console.log(regulars.length, complaints.length);
 
       const clientServiceStats = serviceStatsMap.get(clientIdStr) || {};
       const clientProdStats = prodStatsMap.get(clientIdStr) || {};
@@ -231,7 +217,6 @@ export const dailyServiceReport = async (req, res) => {
         missed: clientServiceStats.missed || 0,
         done: clientServiceStats.done || 0,
         pending: clientServiceStats.pending || 0,
-        location: 0,
         pestCount: [],
       };
 
@@ -239,10 +224,9 @@ export const dailyServiceReport = async (req, res) => {
         missed: clientProdStats.missed || 0,
         done: clientProdStats.done || 0,
         pending: clientProdStats.pending || 0,
-        location: 0,
       };
 
-      // Group pest counts
+      // Group top pest counts
       const groupedPests = {};
       for (let i = 0; i < regulars.length; i++) {
         const reg = regulars[i];
@@ -274,7 +258,7 @@ export const dailyServiceReport = async (req, res) => {
         .sort((a, b) => b.count - a.count)
         .slice(0, 3);
 
-      // Complaint rollup
+      // Complaint counts
       const complaintData = complaints.reduce(
         (acc, complaint) => {
           const { status, reopenCount = 0 } = complaint.complaintDetails || {};
@@ -300,7 +284,8 @@ export const dailyServiceReport = async (req, res) => {
         await removeOldQr(client.reportUrl);
       }
 
-      // LOAD WORKBOOK FROM PRE-LOADED BUFFER
+      console.log("workbook initialised ...");
+      // Load pre-buffered template into ExcelJS
       const workbook = new exceljs.Workbook();
       await workbook.xlsx.load(templateBuffer);
 
@@ -309,8 +294,10 @@ export const dailyServiceReport = async (req, res) => {
       const complaintWorksheet = workbook.getWorksheet("Complaints");
       const unschWorksheet = workbook.getWorksheet("Unscheduled-Work");
       const casualWorksheet = workbook.getWorksheet("Casual-Work");
-      console.log("writing to overview sheet ...");
-      // Populate Overview
+
+      console.time("overviewsheet writing ...");
+
+      // Write Overview
       if (overviewWorkSheet) {
         const row1 = overviewWorkSheet.getRow(1);
         const displayEndDate =
@@ -339,10 +326,10 @@ export const dailyServiceReport = async (req, res) => {
         row4.commit();
 
         const row17 = overviewWorkSheet.getRow(17);
-        row17.getCell(2).value = client?.unschedules?.length ?? 0;
+        row17.getCell(2).value = unschedules.length;
 
         const row19 = overviewWorkSheet.getRow(19);
-        row19.getCell(2).value = client?.casuals?.length ?? 0;
+        row19.getCell(2).value = casuals.length;
 
         const startColumn = 7;
         let currentRowNum = 6;
@@ -377,7 +364,10 @@ export const dailyServiceReport = async (req, res) => {
         });
       }
 
-      // Populate Complaints
+      console.timeEnd("overviewsheet writing ...");
+      console.time("complaintsheet writing ...");
+
+      // Write Complaints
       if (complaintWorksheet) {
         let compRow = 4;
         for (let i = 0; i < complaints.length; i++) {
@@ -405,92 +395,91 @@ export const dailyServiceReport = async (req, res) => {
           compRow++;
         }
       }
+      console.timeEnd("complaintsheet writing ...");
+      console.time("regularsheet writing ...");
 
-      // Populate Regular Services
+      // Write Regular Services
       if (regularWorksheet) {
-        console.log("writing to regular sheet ...");
         let currRow = 4;
-        for (let i = 0; i < regulars?.length; i++) {
+
+        for (let i = 0; i < regulars.length; i++) {
           const reg = regulars[i];
           const regs = reg.regularService?.[0];
           if (!regs) continue;
           const loc = reg.location || {};
 
-          // Build flattened scope/consumable entries
-          const scopeEntries = [];
-          if (isPestEmployee && Array.isArray(regs?.scopes)) {
-            regs.scopes.forEach((sc) => {
-              if (Array.isArray(sc?.consumables) && sc.consumables.length > 0) {
-                sc.consumables.forEach((con) => {
-                  scopeEntries.push({
-                    scopeName: sc.scopeName || "",
-                    consumableName: con.consumableName || "",
-                    calibration: con.calibration || 0,
-                    usedCalibration: con.usedCalibration || 0,
-                    action: con.action || "",
-                  });
-                });
-              }
-            });
-          }
+          const serviceDate = dateFormat(regs.serviceDate);
+          const images = Array.isArray(regs?.image)
+            ? regs.image.join(", ")
+            : regs?.image || "";
 
-          const writeBaseColumns = (row) => {
-            row.height = 30;
-            row.getCell(1).value = dateFormat(regs.serviceDate).withoutTime;
-            row.getCell(2).value = dateFormat(regs.serviceDate).onlyTime;
-            row.getCell(3).value = regs?.frequency;
-            row.getCell(4).value = regs?.pestCount || 0;
-            row.getCell(5).value = regs?.userName;
-            row.getCell(6).value = loc?.floor;
-            row.getCell(7).value = loc?.location;
-            row.getCell(8).value = loc?.subLocation;
-            row.getCell(9).value = regs?.serviceName;
-          };
+          const baseColumns = [
+            serviceDate.withoutTime,
+            serviceDate.onlyTime,
+            regs?.frequency || "",
+            regs?.pestCount || 0,
+            regs?.userName || "",
+            loc?.floor || "",
+            loc?.location || "",
+            loc?.subLocation || "",
+            regs?.serviceName || "",
+          ];
 
           if (isPestEmployee) {
+            const scopeEntries = [];
+            if (Array.isArray(regs?.scopes)) {
+              for (const sc of regs.scopes) {
+                if (
+                  Array.isArray(sc?.consumables) &&
+                  sc.consumables.length > 0
+                ) {
+                  for (const con of sc.consumables) {
+                    scopeEntries.push([
+                      sc.scopeName || "",
+                      con.consumableName || "",
+                      con.calibration || 0,
+                      con.usedCalibration || 0,
+                      con.action || "",
+                    ]);
+                  }
+                }
+              }
+            }
+
             if (scopeEntries.length > 0) {
-              // one row per scope/consumable entry
-              for (const entry of scopeEntries) {
+              for (const scope of scopeEntries) {
                 const row = regularWorksheet.getRow(currRow);
-                writeBaseColumns(row);
-                row.getCell(10).value = entry.scopeName;
-                row.getCell(11).value = entry.consumableName;
-                row.getCell(12).value = entry.calibration;
-                row.getCell(13).value = entry.usedCalibration;
-                row.getCell(14).value = entry.action;
-                row.getCell(15).value = Array.isArray(regs?.image)
-                  ? regs?.image.join(", ")
-                  : regs?.image || "";
-                row.commit();
+                // Batch assign values starting at column 1 (1-indexed array)
+                row.values = [undefined, ...baseColumns, ...scope, images];
                 currRow++;
               }
             } else {
-              // no scopes/consumables — still write one base row
               const row = regularWorksheet.getRow(currRow);
-              writeBaseColumns(row);
-              row.getCell(15).value = Array.isArray(regs?.image)
-                ? regs?.image.join(", ")
-                : regs?.image || "";
-              row.commit();
+              row.values = [
+                undefined,
+                ...baseColumns,
+                "",
+                "",
+                "",
+                "",
+                "",
+                images,
+              ];
               currRow++;
             }
           } else {
             const row = regularWorksheet.getRow(currRow);
-            writeBaseColumns(row);
-            row.getCell(10).value = Array.isArray(regs?.image)
-              ? regs?.image.join(", ")
-              : regs?.image || "";
-            row.commit();
+            row.values = [undefined, ...baseColumns, images];
             currRow++;
           }
         }
       }
+      console.timeEnd("regularsheet writing ...");
+      console.time("unschsheet writing ...");
 
-      // Populate Unscheduled Work
+      // Write Unscheduled Work
       if (unschWorksheet) {
         let unschCount = 4;
-        const unschedules = client.unschedules || [];
-        console.log(unschedules.length);
         for (let i = 0; i < unschedules.length; i++) {
           const unsc = unschedules[i];
           const loc = unsc.location || {};
@@ -499,7 +488,7 @@ export const dailyServiceReport = async (req, res) => {
             ? dateFormat(unsc?.createdAt).withTime
             : "";
           row.getCell(2).value = unsc.updatedAt
-            ? dateFormat(unsc?.completedBy.date).withTime
+            ? dateFormat(unsc?.completedBy?.date).withTime
             : "";
           row.getCell(3).value = unsc?.pestCount || 0;
           row.getCell(4).value = loc?.floor || "-";
@@ -515,12 +504,15 @@ export const dailyServiceReport = async (req, res) => {
           unschCount++;
         }
       }
+
+      console.timeEnd("unschsheet writing ...");
+      console.time("casualsheet writing ...");
+
+      // Write Casual Work
       if (casualWorksheet) {
         let casualCount = 4;
-        const casualsWork = client.casuals || [];
-        console.log(casualsWork.length);
-        for (let i = 0; i < casualsWork.length; i++) {
-          const casual = casualsWork[i];
+        for (let i = 0; i < casuals.length; i++) {
+          const casual = casuals[i];
           const loc = casual?.location || {};
           const row = casualWorksheet.getRow(casualCount);
           row.getCell(1).value = casual.createdAt
@@ -532,44 +524,46 @@ export const dailyServiceReport = async (req, res) => {
           row.getCell(5).value = loc?.subLocation || "-";
           row.getCell(6).value =
             casual?.service?.map((s) => s?.serviceName).join(", ") || "";
-          row.getCell(7).value = casual?.user.name || "";
+          row.getCell(7).value = casual?.user?.name || "";
           row.getCell(8).value = casual?.status || "";
-          row.getCell(9).value = casual?.image.join(", ");
-          // row.getCell(11).value =
+          row.getCell(9).value = casual?.image?.join(", ") || "";
           row.commit();
           casualCount++;
         }
       }
+      console.timeEnd("casualsheet writing ...");
+      console.time("writing excel ...");
+      // Write workbook file and upload
+      const buffer = await workbook.xlsx.writeBuffer();
+      await fs.writeFile(filePath, buffer);
 
-      // Save file
-      console.log("writing to excel ...");
-      await workbook.xlsx.writeFile(filePath);
-
-      console.log("uploading excel ...");
       const uploadURL = await uploadFile({ filePath });
+
+      console.timeEnd("writing excel ...");
+      console.time("uploading excel ...");
       if (uploadURL) {
         await Client.findByIdAndUpdate(client._id, { reportURL: uploadURL });
         generatedFiles.push({ client: client.name, url: uploadURL });
       }
+      console.timeEnd("uploading excel ...");
 
-      // Async cleanup
-      console.log("cleaning excel ...");
+      console.log("removing file ...");
+      // Clean up temporary local file asynchronously
       if (fsSync.existsSync(filePath)) {
         try {
           await fs.unlink(filePath);
         } catch (err) {
-          // 2. Ignore ENOENT (file already deleted/moved by uploadFile or OneDrive)
           if (err.code !== "ENOENT") {
-            console.error("Unexpected cleanup error:", err);
+            console.error("Cleanup error:", err);
           }
         }
       }
     }
+    console.timeEnd("looping clients...");
 
     return res.json({
       msg: `Report generated for ${value}`,
       files: generatedFiles,
-      dats,
     });
   } catch (error) {
     console.error("Report generation error:", error);

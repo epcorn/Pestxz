@@ -642,80 +642,84 @@ export const formatProducts = async (
 };
 
 // ── diffing ────────────────────────────────────────────────
-export const diffServices = (oldServices, newServices) => {
-  const diff = {};
-  const oldNames = oldServices.map((s) => s.serviceName);
-  const newNames = newServices.map((s) => s.serviceName);
+// Helper to safely handle calibration values
+// const toArray = (val) => (Array.isArray(val) ? val : val ? [val] : []);
 
-  const added = newNames.filter((n) => !oldNames.includes(n));
-  const removed = oldNames.filter((n) => !newNames.includes(n));
+export const diffServices = (oldServices = [], newServices = []) => {
+  const diff = {};
+
+  const oldMap = new Map(oldServices.map((s) => [s.serviceId?.toString(), s]));
+  const newMap = new Map(newServices.map((s) => [s.serviceId?.toString(), s]));
+
+  // 1. Direct Additions & Removals
+  const added = newServices
+    .filter((s) => !oldMap.has(s.serviceId?.toString()))
+    .map((s) => s.serviceName);
+  const removed = oldServices
+    .filter((s) => !newMap.has(s.serviceId?.toString()))
+    .map((s) => s.serviceName);
+
   if (added.length) diff.servicesAdded = added;
   if (removed.length) diff.servicesRemoved = removed;
 
-  const freqChanges = newServices
-    .map((s) => {
-      const old = oldServices.find(
-        (o) => o.serviceId?.toString() === s.serviceId?.toString(),
-      );
-      return old && old.frequency !== s.frequency
-        ? { service: s.serviceName, from: old.frequency, to: s.frequency }
-        : null;
-    })
-    .filter(Boolean);
-  if (freqChanges.length) diff.frequencyChanges = freqChanges;
+  // Track deep scope and calibration changes for existing services
+  const scopesAdded = [];
+  const scopesRemoved = [];
+  const calibrationChanges = [];
 
-  const oldScopes = oldServices.flatMap(
-    (s) => s.scopes?.map((sc) => sc.scopeName) || [],
-  );
-  const newScopes = newServices.flatMap((s) =>
-    s.scopes.map((sc) => sc.scopeName),
-  );
-  const scopesAdded = newScopes.filter((s) => !oldScopes.includes(s));
-  const scopesRemoved = oldScopes.filter((s) => !newScopes.includes(s));
+  // 2. Deep Structural Changes on Matching Services
+  newServices.forEach((s) => {
+    const old = oldMap.get(s.serviceId?.toString());
+    if (!old) return; // Handled by additions
+
+    const serviceName = s.serviceName;
+
+    // Map scopes for nested comparison
+    const oldScopesMap = new Map(
+      (old.scopes || []).map((sc) => [sc.scopeName, sc]),
+    );
+    const newScopes = s.scopes || [];
+
+    // Scope level additions / removals
+    newScopes.forEach((sc) => {
+      if (!oldScopesMap.has(sc.scopeName)) {
+        scopesAdded.push({ service: serviceName, scope: sc.scopeName });
+      }
+    });
+
+    (old.scopes || []).forEach((sc) => {
+      if (!newScopes.some((nsc) => nsc.scopeName === sc.scopeName)) {
+        scopesRemoved.push({ service: serviceName, scope: sc.scopeName });
+      }
+    });
+
+    // Deep Calibration Check inside Scopes
+    newScopes.forEach((newScope) => {
+      const oldScope = oldScopesMap.get(newScope.scopeName);
+      if (!oldScope) return; // Handled by scopesAdded
+
+      const oldConsMap = new Map(
+        (oldScope.consumables || []).map((c) => [c.consumableName, c]),
+      );
+      const newCons = newScope.consumables || [];
+
+      newCons.forEach((c) => {
+        const oldC = oldConsMap.get(c.consumableName);
+        if (oldC && oldC.calibration !== c.calibration) {
+          calibrationChanges.push({
+            consumable: c.consumableName,
+            service: serviceName,
+            scope: newScope.scopeName,
+            from: oldC.calibration,
+            to: c.calibration,
+          });
+        }
+      });
+    });
+  });
+
   if (scopesAdded.length) diff.scopesAdded = scopesAdded;
   if (scopesRemoved.length) diff.scopesRemoved = scopesRemoved;
-
-  const flattenConsumables = (services) =>
-    services.flatMap(
-      (s) =>
-        s.scopes?.flatMap(
-          (sc) =>
-            sc.consumables?.map((c) => ({
-              consumableName: c.consumableName,
-              calibration: c.calibration,
-            })) || [],
-        ) || [],
-    );
-  const oldConsumables = flattenConsumables(oldServices);
-  const newConsumables = flattenConsumables(newServices);
-
-  const consumablesAdded = newConsumables
-    .filter(
-      (n) => !oldConsumables.find((o) => o.consumableName === n.consumableName),
-    )
-    .map((c) => c.consumableName);
-  const consumablesRemoved = oldConsumables
-    .filter(
-      (o) => !newConsumables.find((n) => n.consumableName === o.consumableName),
-    )
-    .map((c) => c.consumableName);
-  if (consumablesAdded.length) diff.consumablesAdded = consumablesAdded;
-  if (consumablesRemoved.length) diff.consumablesRemoved = consumablesRemoved;
-
-  const calibrationChanges = newConsumables
-    .map((n) => {
-      const old = oldConsumables.find(
-        (o) => o.consumableName === n.consumableName,
-      );
-      return old && old.calibration !== n.calibration
-        ? {
-            consumable: n.consumableName,
-            from: old.calibration,
-            to: n.calibration,
-          }
-        : null;
-    })
-    .filter(Boolean);
   if (calibrationChanges.length) diff.calibrationChanges = calibrationChanges;
 
   return diff;
@@ -726,50 +730,23 @@ export const diffProducts = async (oldProducts, newProducts) => {
   const matchById = (list, id) =>
     list.find((p) => p._id?.toString() === id?.toString());
 
-  const addedProducts = newProducts
-    .filter((p) => !matchById(oldProducts, p._id))
-    .map((p) => p.productName);
-  const removedRows = oldProducts.filter((p) => !matchById(newProducts, p._id));
-  if (addedProducts.length) diff.productsAdded = addedProducts;
-  if (removedRows.length)
-    diff.productsRemoved = removedRows.map((p) => p.productName);
-
-  await Promise.all(
-    removedRows.map((p) => releaseProductCounter(p.code, p.serialNo)),
+  const addedProducts = newProducts.filter(
+    (p) => !matchById(oldProducts, p._id),
   );
+  if (addedProducts.length) {
+    diff.productsAdded = addedProducts;
+  }
 
-  const versionChanges = [],
-    freqChanges = [],
-    calAdded = [],
-    calRemoved = [];
-  newProducts.forEach((p) => {
-    const old = matchById(oldProducts, p._id);
-    if (!old) return;
-    if (old.versionId?.toString() !== p.versionId)
-      versionChanges.push({
-        product: p.productName,
-        from: old.versionName,
-        to: p.versionName,
-      });
-    if (old.frequency !== p.frequency)
-      freqChanges.push({
-        product: p.productName,
-        from: old.frequency,
-        to: p.frequency,
-      });
+  const removedProducts = oldProducts.filter(
+    (p) => !matchById(newProducts, p._id),
+  );
+  if (removedProducts.length) {
+    diff.productsRemoved = removedProducts;
 
-    const newCal = toArray(p.calibrations),
-      oldCal = toArray(old.calibrations);
-    const added = newCal.filter((c) => !oldCal.includes(c));
-    const removed = oldCal.filter((c) => !newCal.includes(c));
-    if (added.length) calAdded.push({ product: p.productName, added });
-    if (removed.length) calRemoved.push({ product: p.productName, removed });
-  });
-
-  if (versionChanges.length) diff.versionChanges = versionChanges;
-  if (freqChanges.length) diff.productFrequencyChanges = freqChanges;
-  if (calAdded.length) diff.productCalibrationsAdded = calAdded;
-  if (calRemoved.length) diff.productCalibrationsRemoved = calRemoved;
+    await Promise.all(
+      removedProducts.map((p) => releaseProductCounter(p.code, p.serialNo)),
+    );
+  }
 
   return diff;
 };

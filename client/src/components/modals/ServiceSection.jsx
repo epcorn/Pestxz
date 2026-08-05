@@ -2,7 +2,7 @@ import React from 'react';
 import { useFieldArray } from 'react-hook-form';
 import { frequencies } from '../../utils/helperFunctions';
 
-function ServiceSection({ allServices, control, register, setValue, watch }) {
+function ServiceSection({ allServices, control, register, setValue, watch, locationDetails }) {
   const { fields: serviceFields, append, remove } = useFieldArray({
     control,
     name: "serviceReq"
@@ -60,7 +60,6 @@ function ServiceSection({ allServices, control, register, setValue, watch }) {
         calibration: "0"
       });
     } else {
-      // 💡 USER CAN DESELECT IT: Filter out this individual consumable item
       updatedScopes[scopeIndex].consumables = updatedScopes[scopeIndex].consumables.filter(
         (c) => c.consumableId !== consumable._id
       );
@@ -76,7 +75,7 @@ function ServiceSection({ allServices, control, register, setValue, watch }) {
         <button
           type="button"
           className="px-4 py-1.5 rounded-md bg-blue-800 hover:bg-blue-900 text-white font-medium text-sm transition shadow"
-          onClick={() => append({ serviceId: "", serviceName: "", frequency: "", scopes: [] })}
+          onClick={() => append({ serviceId: "", serviceName: "", frequency: "", scopes: [], isNew: true })}
         >
           + Add Service
         </button>
@@ -89,18 +88,21 @@ function ServiceSection({ allServices, control, register, setValue, watch }) {
           const scopes = selectedService?.scopes || [];
           const selectedScopesData = watch(`serviceReq.${index}.scopes`) || [];
 
+          const isDisabled = Boolean(locationDetails && !field.isNew)
+
           return (
             <div key={field.id} className="border border-gray-400 rounded-xl p-4 space-y-4 bg-white/80 shadow-sm">
 
               {/* TOP HEADER CONTROLS */}
-              <div className="grid md:grid-cols-3 gap-3 items-center">
+              <div className="grid md:grid-cols-3 gap-3 items-center ">
                 <div className="flex gap-2 items-center">
                   <span className="flex-shrink-0 w-6 h-6 flex items-center justify-center bg-gray-800 text-white rounded-full text-xs font-bold">
                     {index + 1}
                   </span>
                   <select
-                    className="border w-full bg-white h-10 border-gray-300 rounded-md px-2 text-sm focus:ring-2 focus:ring-blue-500"
+                    className="border w-full bg-white h-10 border-gray-300 rounded-md px-2 text-sm focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed"
                     value={currentServiceId || ""}
+                    disabled={isDisabled}
                     onChange={(e) => handleServiceChange(index, e.target.value)}
                   >
                     <option value="">Select Service</option>
@@ -114,7 +116,8 @@ function ServiceSection({ allServices, control, register, setValue, watch }) {
 
                 <select
                   {...register(`serviceReq.${index}.frequency`)}
-                  className="border bg-white h-10 border-gray-300 rounded-md px-2 text-sm capitalize focus:ring-2 focus:ring-blue-500"
+                  className="border bg-white h-10 border-gray-300 rounded-md px-2 text-sm capitalize focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-75"
+                  disabled={isDisabled}
                 >
                   <option value="">Select Frequency</option>
                   {frequencies.map((freq) => (

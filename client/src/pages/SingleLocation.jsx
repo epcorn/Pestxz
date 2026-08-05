@@ -48,7 +48,7 @@ const SingleLocation = () => {
   const dispatch = useDispatch();
   const [show, setShow] = useState(false);
   // const [date, setDate] = useState(getLocalString(new Date()));
-  const [date, setDate] = useState('2026-06-13T16:43');
+  const [date, setDate] = useState('2026-07-25T16:43');
 
   let today = new Date(date);
 

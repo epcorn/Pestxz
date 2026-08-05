@@ -244,8 +244,7 @@ const LocationModal = ({ clientId, locationDetails }) => {
       {type.includes("service") && (
         <ServiceSection
           allServices={allServices}
-          // defaultService={defaultService}
-          // serviceReq={serviceReq}
+          locationDetails={locationDetails}
           setValue={setValue}
           control={control}
           register={register}
@@ -255,6 +254,7 @@ const LocationModal = ({ clientId, locationDetails }) => {
 
       {type.includes("product") && (
         <ProductSection
+          locationDetails={locationDetails}
           allProducts={allProducts}
           control={control}
           errors={errors}

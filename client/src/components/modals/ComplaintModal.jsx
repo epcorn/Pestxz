@@ -50,7 +50,7 @@ const ComplaintModal = ({ locationId, mode = "create" }) => {
     value: c._id,
   }));
   const [addComplaint, { isLoading: addLoading }] = useNewComplaintMutation();
-
+console.log(clientsData)
   const [updateComplaint, { isLoading: updateLoading }] =
     useUpdateComplaintMutation();
 
@@ -84,7 +84,7 @@ const ComplaintModal = ({ locationId, mode = "create" }) => {
   const { data: clientLocations } = useAllLocationsQuery({
     id: locationQueryId,
   });
-  console.log(locationId, locationQueryId, clientLocations);
+  
   // SET INITIAL FLOOR
   useEffect(() => {
     if (!clientLocations?.floors?.length) return;

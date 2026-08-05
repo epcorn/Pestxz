@@ -7,7 +7,6 @@ dotenv.config();
 const convertapi = new ConvertAPI(process.env.CONVERTAPI);
 
 export const generateHtmlReport = async (regulars) => {
-
   const rows = regulars
     ?.map((reg) => {
       const regs = reg?.regularService?.[0];
