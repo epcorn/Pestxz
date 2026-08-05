@@ -48,9 +48,9 @@ const SingleLocation = () => {
   const dispatch = useDispatch();
   const [show, setShow] = useState(false);
   // const [date, setDate] = useState(getLocalString(new Date()));
-  const [date, setDate] = useState('2026-06-13T16:43');
+  const [date, setDate] = useState('2026-07-25T16:43');
 
-  let today = new Date(date);
+  let today = new Date();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -135,7 +135,7 @@ console.log(data)
             </p>
           </div>
 
-          <div className="space-x-2 outline p-3">
+          <div className="hidden space-x-2 outline p-3">
             <label htmlFor="date-picker">Change todays Date</label>
             <input
               id="date-picker"

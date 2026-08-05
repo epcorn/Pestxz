@@ -122,7 +122,6 @@ const Complaints = () => {
                 <FloorSelect value={location?.floor} onChange={(val) => setLocation(prev => ({ ...prev, floor: val }))} floors={clientLocations?.floors} />
               </>
 
-
               <Button type="submit" label="Search" color="bg-black" height="h-8" />
               {DBuser && DBuser.rights.raise &&
                 <button

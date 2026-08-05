@@ -51,23 +51,6 @@ const SingleClient = () => {
   const [qrCountInc] = useQrCounterMutation();
   const [makeQrDOCX, { isLoading: docQrLoading }] = useMakeQrDocxMutation();
 
-
-  // export function GetSchedulesForLocation({ service }) {
-
-  //     const dates = service.flatMap(ser => ser?.schedule?.filter(sch => sch?.date?.split("T")[0] === new Date(date).toISOString().split("T")[0]))
-
-  //     const completed = dates?.filter(d => d?.completed && d.status === "Done")
-
-  //     return (
-  //       <>
-  //         <div>{completed.length}/{dates?.length}</div>
-  //       </>
-  //     )
-  //   }
-
-  // console.log(schedules);
-
-  // handle edit model
   const handleEditModal = (location) => {
     setLocationDetails(location);
     dispatch(toggleModal({ name: "location", status: true }));
@@ -78,7 +61,8 @@ const SingleClient = () => {
     setLocationDetails(null);
     dispatch(toggleModal({ name: "location", status: true }));
   };
-console.log(data)
+
+
   const handleDelete = async () => {
     try {
       await deleteLocation(isModalOpen.delete.id).unwrap();
@@ -106,6 +90,11 @@ console.log(data)
       console.log(error)
       throw new Error("download error");
     }
+  };
+
+  const showAllLocations = async () => {
+    const all = await triggerFetchAll({ id }).unwrap();
+    console.log(all);
   };
 
   const handleDownloadAll = async () => {
@@ -330,7 +319,9 @@ console.log(data)
                       <button
                         className="px-2 py-1 rounded bg-blue-700 text-white hover:bg-blue-800 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
                         disabled={docQrLoading}
-                        onClick={handleDownloadAll}>
+                        // onClick={handleDownloadAll}
+                        onClick={showAllLocations}
+                      >
                         <PiDownloadSimpleBold className="w-4 h-4" />
                       </button>
                     </div>

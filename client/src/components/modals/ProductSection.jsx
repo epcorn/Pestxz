@@ -1,69 +1,101 @@
-import React from 'react'
-import Button from '../Button'
-import { Controller, useFieldArray, useWatch } from 'react-hook-form'
-import InputSelect from '../InputSelect'
-import InputRow from '../InputRow'
+import React from "react";
+import Button from "../Button";
+import { Controller, useFieldArray, useWatch } from "react-hook-form";
+import InputSelect from "../InputSelect";
+import InputRow from "../InputRow";
 
 const emptyProduct = {
   product: null,
   version: null,
-  code: '',
+  code: "",
   frequency: null,
-  specification: '',
+  specification: "",
   calibrations: [],
-}
+  isNew: true,
+};
 
-function ProductRow({ control, register, errors, setValue, index, products, allProducts, prFrequency, onRemove, canRemove }) {
-  const selectedProduct = useWatch({ control, name: `products.${index}.product` })
-  const selectedVersion = useWatch({ control, name: `products.${index}.version` })
+function ProductRow({
+  control,
+  register,
+  errors,
+  setValue,
+  index,
+  products,
+  allProducts,
+  prFrequency,
+  onRemove,
+  canRemove,
+  isNewProduct,
+}) {
+  const selectedProduct = useWatch({
+    control,
+    name: `products.${index}.product`,
+  });
+  const selectedVersion = useWatch({
+    control,
+    name: `products.${index}.version`,
+  });
   const versions = React.useMemo(() => {
-    if (!selectedProduct?.value) return selectedVersion ? [selectedVersion] : []
-    if (!selectedProduct?.value || !products) return []
-
+    if (!selectedProduct?.value)
+      return selectedVersion ? [selectedVersion] : [];
+    if (!selectedProduct?.value || !products) return [];
 
     const opts = products
       .filter((p) => String(p?._id) === String(selectedProduct.value))
-      .flatMap((p) => p.version?.map((ver) => ({ label: ver.name, value: ver._id })) || [])
+      .flatMap(
+        (p) =>
+          p.version?.map((ver) => ({ label: ver.name, value: ver._id })) || [],
+      );
 
-    if (selectedVersion?.value && !opts.some(o => String(o.value) === String(selectedVersion.value))) { opts.push(selectedVersion) }
+    if (
+      selectedVersion?.value &&
+      !opts.some((o) => String(o.value) === String(selectedVersion.value))
+    ) {
+      opts.push(selectedVersion);
+    }
 
-    return opts
-
-  }, [selectedProduct?.value, products])
+    return opts;
+  }, [selectedProduct?.value, products]);
 
   const productinfo = React.useMemo(() => {
-    if (!selectedProduct?.value || !selectedVersion?.value || !products) return null
-    const activeProduct = products.find((p) => p._id === selectedProduct.value)
-    const activeVersion = activeProduct?.version?.find((ver) => ver._id === selectedVersion.value)
-
+    if (!selectedProduct?.value || !selectedVersion?.value || !products)
+      return null;
+    const activeProduct = products.find((p) => p._id === selectedProduct.value);
+    const activeVersion = activeProduct?.version?.find(
+      (ver) => ver._id === selectedVersion.value,
+    );
 
     return {
       code: activeVersion?.code,
       specification: activeProduct?.specification,
       calibrations: activeVersion?.calibration,
-    }
-  }, [selectedProduct?.value, selectedVersion?.value, products])
+    };
+  }, [selectedProduct?.value, selectedVersion?.value, products]);
 
   // auto-fill code & specification when product+version selected, scoped to this row
   React.useEffect(() => {
-    if (!productinfo) return
-    setValue(`products.${index}.code`, productinfo.code ?? '')
-    setValue(`products.${index}.specification`, productinfo.specification ?? '')
-  }, [productinfo, setValue, index])
+    if (!productinfo) return;
+    setValue(`products.${index}.code`, productinfo.code ?? "");
+    setValue(
+      `products.${index}.specification`,
+      productinfo.specification ?? "",
+    );
+  }, [productinfo, setValue, index]);
 
-  const fieldError = errors?.products?.[index] || {}
+  const fieldError = errors?.products?.[index] || {};
 
   return (
     <div className="col-span-3 outline outline-gray-400 rounded m-1 p-1">
-
       <div className="flex justify-between pl-5 gap-2">
-        <span className='outline w-7 h-7 text-center content-center bg-white leading-none text-lg'>{index + 1}</span>
+        <span className="outline w-7 h-7 text-center content-center bg-white leading-none text-lg">
+          {index + 1}
+        </span>
         {canRemove && (
           <Button
             type="button"
-            label={'Remove'}
-            color={'bg-white'}
-            text={'text-red-600 border'}
+            label={"Remove"}
+            color={"bg-white"}
+            text={"text-red-600 border"}
             onClick={onRemove}
           />
         )}
@@ -80,13 +112,14 @@ function ProductRow({ control, register, errors, setValue, index, products, allP
                 isMulti={false}
                 options={allProducts}
                 onChange={(val) => {
-                  field.onChange(val)
+                  field.onChange(val);
                   // reset dependent fields when product changes
-                  setValue(`products.${index}.version`, null)
-                  setValue(`products.${index}.code`, '')
-                  setValue(`products.${index}.specification`, '')
-                  setValue(`products.${index}.calibrations`, [])
+                  setValue(`products.${index}.version`, null);
+                  setValue(`products.${index}.code`, "");
+                  setValue(`products.${index}.specification`, "");
+                  setValue(`products.${index}.calibrations`, []);
                 }}
+                disable={isNewProduct}
                 value={field.value}
                 label="Select Product"
               />
@@ -105,6 +138,7 @@ function ProductRow({ control, register, errors, setValue, index, products, allP
             render={({ field }) => (
               <InputSelect
                 isMulti={false}
+                disable={isNewProduct}
                 options={versions}
                 onChange={field.onChange}
                 value={field.value}
@@ -119,7 +153,7 @@ function ProductRow({ control, register, errors, setValue, index, products, allP
 
         <div>
           <InputRow
-            label={'Code'}
+            label={"Code"}
             id={`products.${index}.code`}
             register={register}
             disabled={true}
@@ -137,6 +171,7 @@ function ProductRow({ control, register, errors, setValue, index, products, allP
                 options={prFrequency}
                 onChange={field.onChange}
                 value={field.value}
+                disable={isNewProduct}
                 label="Product Frequency"
               />
             )}
@@ -149,16 +184,21 @@ function ProductRow({ control, register, errors, setValue, index, products, allP
         <div>
           <InputRow
             register={register}
-            label={'Specification'}
+            label={"Specification"}
             disabled={true}
             id={`products.${index}.specification`}
           />
         </div>
 
         <div className=" col-span-3 grid grid-cols-3 outline outline-gray-400 px-2 rounded mt-2 hidden">
-          <h3 className='col-span-3 font-semibold '>Calibrations<span className='text-red-600'>*</span></h3>
+          <h3 className="col-span-3 font-semibold ">
+            Calibrations<span className="text-red-600">*</span>
+          </h3>
           {productinfo?.calibrations?.map((cal, i) => (
-            <div key={`calibration.${index}.${i}`} className="flex items-center gap-2">
+            <div
+              key={`calibration.${index}.${i}`}
+              className="flex items-center gap-2"
+            >
               <input
                 type="checkbox"
                 id={`calibration.${index}.${i}`}
@@ -172,48 +212,60 @@ function ProductRow({ control, register, errors, setValue, index, products, allP
         </div>
       </div>
     </div>
-  )
+  );
 }
 
-function ProductSection({ control, register, errors, setValue, products, allProducts, prFrequency }) {
+function ProductSection({
+  control,
+  register,
+  errors,
+  setValue,
+  products,
+  allProducts,
+  prFrequency,
+  locationDetails,
+}) {
   const { fields, append, remove } = useFieldArray({
     control,
-    name: 'products',
-  })
+    name: "products",
+  });
 
   return (
     <div className="col-span-3 bg-emerald-200 mt-2 p-2">
-
       <div className="flex justify-between items-center">
         <h3 className="font-semibold text-lg">Products</h3>
         <Button
           type="button"
-          label={'Add Products'}
-          color={'bg-white'}
-          text={'text-black border'}
+          label={"Add Products"}
+          color={"bg-white"}
+          text={"text-black border"}
           onClick={() => append(emptyProduct)}
         />
       </div>
-      <div className='bg-gray-100 ml-0.5 max-h-72 overflow-y-auto'>
+      <div className="bg-gray-100 ml-0.5 max-h-72 overflow-y-auto">
+        {fields.map((field, index) => {
+          const isNewProduct = locationDetails && !field.isNew;
 
-        {fields.map((field, index) => (
-          <ProductRow
-            key={field.id}
-            index={index}
-            control={control}
-            register={register}
-            errors={errors}
-            setValue={setValue}
-            products={products}
-            allProducts={allProducts}
-            prFrequency={prFrequency}
-            onRemove={() => remove(index)}
-            canRemove={fields.length >= 0}
-          />
-        ))}
+          return (
+            <ProductRow
+              key={field.id}
+              index={index}
+              control={control}
+              register={register}
+              errors={errors}
+              setValue={setValue}
+              products={products}
+              isNewProduct={isNewProduct}
+              allProducts={allProducts}
+              prFrequency={prFrequency}
+              onRemove={() => remove(index)}
+              canRemove={fields.length >= 0}
+            />
+          );
+        })}
       </div>
     </div>
-  )
+  );
 }
 
-export default ProductSection
+export default ProductSection;
