@@ -11,7 +11,7 @@ import { frequencies } from "../../utils/helperFunctions";
 import History from "../History";
 import ProductSection from "./ProductSection";
 import ServiceSection from "./ServiceSection";
-import { version } from "mongoose";
+
 
 const defaultService = {
   serviceId: "",
