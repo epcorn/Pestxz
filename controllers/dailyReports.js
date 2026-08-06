@@ -9,12 +9,9 @@ import fs from "fs/promises";
 import fsSync from "fs";
 import path from "path";
 import Location from "../models/locationModel.js";
-// Import models directly for direct, high-performance indexed queries
 import Service from "../models/serviceModel.js";
 import Casual from "../models/casualServiceModel.js";
 import { Unscheduled } from "../models/unScheduleModel.js";
-// import Unschedule from "../models/unscheduleModel.js";
-// import Casual from "../models/casualModel.js";
 
 const PEST_MAP = {
   Ratrid: "Rodein",
@@ -97,7 +94,7 @@ export const dailyServiceReport = async (req, res) => {
 
     console.time("service and product stats calculating...");
 
-    // 2. OPTIMIZED AGGREGATIONS ($match BEFORE $unwind TO USE INDEXES)
+    // 2. OPTIMIZED AGGREGATIONS
     const [allServiceStats, allProdStats] = await Promise.all([
       Location.aggregate([
         ...(value !== "all" ? [{ $match: scheduleDateMatch }] : []),
@@ -126,6 +123,7 @@ export const dailyServiceReport = async (req, res) => {
     ]);
     console.timeEnd("service and product stats calculating...");
     console.time("products & service stats mapping...");
+
     // Fast O(1) stats maps
     const serviceStatsMap = new Map();
     allServiceStats.forEach((s) => {
@@ -147,7 +145,7 @@ export const dailyServiceReport = async (req, res) => {
 
     console.timeEnd("products & service stats mapping...");
     console.time("finding clients...");
-    // 3. CURSOR OVER CLIENTS WITHOUT HEAVY NESTED VIRTUAL POPULATIONS
+
     const clientCursor = Client.find(clientQuery)
       .select(selectFields)
       .lean()
@@ -164,11 +162,11 @@ export const dailyServiceReport = async (req, res) => {
 
     console.timeEnd("finding clients...");
     console.time("looping clients...");
+
     for await (let client of clientCursor) {
       const clientIdStr = client._id.toString();
 
       console.log("sevices, unschedules, casuals fetching ...");
-      // Parallel direct-model queries for client relations (hits indexed fields directly)
       const [services, unschedules, casuals] = await Promise.all([
         Service.find({
           client: client._id,
@@ -200,7 +198,6 @@ export const dailyServiceReport = async (req, res) => {
       const fileName = `${clientName}_Daily_Service_Report-${sufix}.xlsx`;
       const filePath = path.join(dir, fileName);
 
-      // Single pass grouping for regular and complaint services
       const regulars = [];
       const complaints = [];
 
@@ -226,7 +223,6 @@ export const dailyServiceReport = async (req, res) => {
         pending: clientProdStats.pending || 0,
       };
 
-      // Group top pest counts
       const groupedPests = {};
       for (let i = 0; i < regulars.length; i++) {
         const reg = regulars[i];
@@ -258,7 +254,6 @@ export const dailyServiceReport = async (req, res) => {
         .sort((a, b) => b.count - a.count)
         .slice(0, 3);
 
-      // Complaint counts
       const complaintData = complaints.reduce(
         (acc, complaint) => {
           const { status, reopenCount = 0 } = complaint.complaintDetails || {};
@@ -284,8 +279,8 @@ export const dailyServiceReport = async (req, res) => {
         await removeOldQr(client.reportUrl);
       }
 
-      console.log("workbook initialised ...");
-      // Load pre-buffered template into ExcelJS
+      console.log("workbook initialised...");
+      // Load template into standard ExcelJS Workbook
       const workbook = new exceljs.Workbook();
       await workbook.xlsx.load(templateBuffer);
 
@@ -297,7 +292,7 @@ export const dailyServiceReport = async (req, res) => {
 
       console.time("overviewsheet writing ...");
 
-      // Write Overview
+      // 1. Overview Sheet
       if (overviewWorkSheet) {
         const row1 = overviewWorkSheet.getRow(1);
         const displayEndDate =
@@ -323,7 +318,6 @@ export const dailyServiceReport = async (req, res) => {
         row4.getCell(1).value = prodStats.done;
         row4.getCell(2).value = prodStats.missed;
         row4.getCell(3).value = prodStats.pending;
-        row4.commit();
 
         const row17 = overviewWorkSheet.getRow(17);
         row17.getCell(2).value = unschedules.length;
@@ -333,8 +327,6 @@ export const dailyServiceReport = async (req, res) => {
 
         const startColumn = 7;
         let currentRowNum = 6;
-        row17.commit();
-        row19.commit();
 
         regStats.pestCount.forEach((p) => {
           const currentRow = overviewWorkSheet.getRow(currentRowNum);
@@ -359,7 +351,6 @@ export const dailyServiceReport = async (req, res) => {
             };
           });
 
-          currentRow.commit();
           currentRowNum++;
         });
       }
@@ -367,7 +358,7 @@ export const dailyServiceReport = async (req, res) => {
       console.timeEnd("overviewsheet writing ...");
       console.time("complaintsheet writing ...");
 
-      // Write Complaints
+      // 2. Complaints Sheet (Batch Row Assignment)
       if (complaintWorksheet) {
         let compRow = 4;
         for (let i = 0; i < complaints.length; i++) {
@@ -377,130 +368,131 @@ export const dailyServiceReport = async (req, res) => {
           const loc = com.location || {};
 
           const row = complaintWorksheet.getRow(compRow);
-          row.getCell(1).value = updt.date
-            ? dateFormat(updt?.date).withoutTime
-            : "N/A";
-          row.getCell(2).value = comp.number || "N/A";
-          row.getCell(3).value = Array.isArray(comp?.service)
-            ? comp?.service?.join(", ")
-            : "N/A";
-          row.getCell(4).value = comp.assignedTo?.userName || "Unassigned";
-          row.getCell(5).value = loc.floor || "-";
-          row.getCell(6).value = loc.location || "-";
-          row.getCell(7).value = loc.subLocation || "-";
-          row.getCell(8).value = comp?.comment || "-";
-          row.getCell(9).value = comp?.status || "-";
-          row.getCell(10).value = comp.reopenCount || "-";
-          row.commit();
+          row.values = [
+            undefined,
+            updt.date ? dateFormat(updt.date).withoutTime : "N/A",
+            comp.number || "N/A",
+            Array.isArray(comp?.service) ? comp.service.join(", ") : "N/A",
+            comp.assignedTo?.userName || "Unassigned",
+            loc.floor || "-",
+            loc.location || "-",
+            loc.subLocation || "-",
+            comp?.comment || "-",
+            comp?.status || "-",
+            comp.reopenCount || "-",
+          ];
           compRow++;
         }
       }
       console.timeEnd("complaintsheet writing ...");
-      console.time("regularsheet writing ...");
 
-      // Write Regular Services
+      // 3. Regular Services Sheet
       if (regularWorksheet) {
-        let currRow = 4;
+  console.time("regularsheet writing ...");
+  let currRow = 4;
 
-        for (let i = 0; i < regulars.length; i++) {
-          const reg = regulars[i];
-          const regs = reg.regularService?.[0];
-          if (!regs) continue;
-          const loc = reg.location || {};
+  for (let i = 0; i < regulars.length; i++) {
+    const reg = regulars[i];
+    const regs = reg.regularService?.[0];
+    if (!regs) continue;
+    const loc = reg.location || {};
 
-          const serviceDate = dateFormat(regs.serviceDate);
-          const images = Array.isArray(regs?.image)
-            ? regs.image.join(", ")
-            : regs?.image || "";
+    const serviceDate = dateFormat(regs.serviceDate);
+    const dateStr = serviceDate.withoutTime || "";
+    const timeStr = serviceDate.onlyTime || "";
+    const freq = regs.frequency || "";
+    const pestCount = regs.pestCount || 0;
+    const userName = regs.userName || "";
+    const floor = loc.floor || "";
+    const location = loc.location || "";
+    const subLocation = loc.subLocation || "";
+    const serviceName = regs.serviceName || "";
 
-          const baseColumns = [
-            serviceDate.withoutTime,
-            serviceDate.onlyTime,
-            regs?.frequency || "",
-            regs?.pestCount || 0,
-            regs?.userName || "",
-            loc?.floor || "",
-            loc?.location || "",
-            loc?.subLocation || "",
-            regs?.serviceName || "",
-          ];
+    const images = Array.isArray(regs.image)
+      ? regs.image.join(", ")
+      : regs.image || "";
 
-          if (isPestEmployee) {
-            const scopeEntries = [];
-            if (Array.isArray(regs?.scopes)) {
-              for (const sc of regs.scopes) {
-                if (
-                  Array.isArray(sc?.consumables) &&
-                  sc.consumables.length > 0
-                ) {
-                  for (const con of sc.consumables) {
-                    scopeEntries.push([
-                      sc.scopeName || "",
-                      con.consumableName || "",
-                      con.calibration || 0,
-                      con.usedCalibration || 0,
-                      con.action || "",
-                    ]);
-                  }
-                }
-              }
-            }
+    const baseCols = [
+      dateStr,      // Index 0 -> Column A
+      timeStr,      // Index 1 -> Column B
+      freq,         // Index 2 -> Column C
+      pestCount,
+      userName,
+      floor,
+      location,
+      subLocation,
+      serviceName,
+    ];
 
-            if (scopeEntries.length > 0) {
-              for (const scope of scopeEntries) {
-                const row = regularWorksheet.getRow(currRow);
-                // Batch assign values starting at column 1 (1-indexed array)
-                row.values = [undefined, ...baseColumns, ...scope, images];
-                currRow++;
-              }
-            } else {
+    if (isPestEmployee) {
+      const scopes = regs.scopes;
+      let hasScopeEntries = false;
+
+      if (Array.isArray(scopes) && scopes.length > 0) {
+        for (let s = 0; s < scopes.length; s++) {
+          const sc = scopes[s];
+          const consumables = sc?.consumables;
+
+          if (Array.isArray(consumables) && consumables.length > 0) {
+            hasScopeEntries = true;
+            for (let c = 0; c < consumables.length; c++) {
+              const con = consumables[c];
               const row = regularWorksheet.getRow(currRow);
+
+              // Removed undefined: baseCols[0] (dateStr) now goes directly to Column A
               row.values = [
-                undefined,
-                ...baseColumns,
-                "",
-                "",
-                "",
-                "",
-                "",
+                ...baseCols,
+                sc.scopeName || "",
+                con.consumableName || "",
+                con.calibration || 0,
+                con.usedCalibration || 0,
+                con.action || "",
                 images,
               ];
               currRow++;
             }
-          } else {
-            const row = regularWorksheet.getRow(currRow);
-            row.values = [undefined, ...baseColumns, images];
-            currRow++;
           }
         }
       }
-      console.timeEnd("regularsheet writing ...");
+
+      if (!hasScopeEntries) {
+        const row = regularWorksheet.getRow(currRow);
+        row.values = [...baseCols, "", "", "", "", "", images];
+        currRow++;
+      }
+    } else {
+      const row = regularWorksheet.getRow(currRow);
+      row.values = [...baseCols, images];
+      currRow++;
+    }
+  }
+  console.timeEnd("regularsheet writing ...");
+}
+
       console.time("unschsheet writing ...");
 
-      // Write Unscheduled Work
+      // 4. Unscheduled Work Sheet (Batch Row Assignment)
       if (unschWorksheet) {
         let unschCount = 4;
         for (let i = 0; i < unschedules.length; i++) {
           const unsc = unschedules[i];
           const loc = unsc.location || {};
           const row = unschWorksheet.getRow(unschCount);
-          row.getCell(1).value = unsc.createdAt
-            ? dateFormat(unsc?.createdAt).withTime
-            : "";
-          row.getCell(2).value = unsc.updatedAt
-            ? dateFormat(unsc?.completedBy?.date).withTime
-            : "";
-          row.getCell(3).value = unsc?.pestCount || 0;
-          row.getCell(4).value = loc?.floor || "-";
-          row.getCell(5).value = loc?.location || "-";
-          row.getCell(6).value = loc?.subLocation || "-";
-          row.getCell(7).value =
-            unsc?.service?.map((s) => s?.serviceName).join(", ") || "";
-          row.getCell(8).value = unsc.raisedBy?.user || "";
-          row.getCell(9).value = unsc.approval?.name || "";
-          row.getCell(10).value = unsc.comment || "";
-          row.getCell(11).value = unsc.update?.status || "";
-          row.commit();
+
+          row.values = [
+            undefined,
+            unsc.createdAt ? dateFormat(unsc.createdAt).withTime : "",
+            unsc.updatedAt ? dateFormat(unsc.completedBy?.date).withTime : "",
+            unsc?.pestCount || 0,
+            loc?.floor || "-",
+            loc?.location || "-",
+            loc?.subLocation || "-",
+            unsc?.service?.map((s) => s?.serviceName).join(", ") || "",
+            unsc.raisedBy?.user || "",
+            unsc.approval?.name || "",
+            unsc.comment || "",
+            unsc.update?.status || "",
+          ];
           unschCount++;
         }
       }
@@ -508,39 +500,44 @@ export const dailyServiceReport = async (req, res) => {
       console.timeEnd("unschsheet writing ...");
       console.time("casualsheet writing ...");
 
-      // Write Casual Work
+      // 5. Casual Work Sheet (Batch Row Assignment)
       if (casualWorksheet) {
         let casualCount = 4;
         for (let i = 0; i < casuals.length; i++) {
           const casual = casuals[i];
           const loc = casual?.location || {};
           const row = casualWorksheet.getRow(casualCount);
-          row.getCell(1).value = casual.createdAt
-            ? dateFormat(casual?.createdAt).withTime
-            : "";
-          row.getCell(2).value = casual?.pestCount || 0;
-          row.getCell(3).value = loc?.floor || "-";
-          row.getCell(4).value = loc?.location || "-";
-          row.getCell(5).value = loc?.subLocation || "-";
-          row.getCell(6).value =
-            casual?.service?.map((s) => s?.serviceName).join(", ") || "";
-          row.getCell(7).value = casual?.user?.name || "";
-          row.getCell(8).value = casual?.status || "";
-          row.getCell(9).value = casual?.image?.join(", ") || "";
-          row.commit();
+
+          row.values = [
+            undefined,
+            casual.createdAt ? dateFormat(casual.createdAt).withTime : "",
+            casual?.pestCount || 0,
+            loc?.floor || "-",
+            loc?.location || "-",
+            loc?.subLocation || "-",
+            casual?.service?.map((s) => s?.serviceName).join(", ") || "",
+            casual?.user?.name || "",
+            casual?.status || "",
+            casual?.image?.join(", ") || "",
+          ];
           casualCount++;
         }
       }
       console.timeEnd("casualsheet writing ...");
-      console.time("writing excel ...");
-      // Write workbook file and upload
-      const buffer = await workbook.xlsx.writeBuffer();
-      await fs.writeFile(filePath, buffer);
 
-      const uploadURL = await uploadFile({ filePath });
+      console.time("writing excel ...");
+
+      // Fast Zip Compression Option
+      const buffer = await workbook.xlsx.writeBuffer({
+        zip: { compression: "DEFLATE", compressionOptions: { level: 1 } },
+      });
+      await fs.writeFile(filePath, buffer);
 
       console.timeEnd("writing excel ...");
       console.time("uploading excel ...");
+
+      const uploadURL = await uploadFile({ filePath });
+
       if (uploadURL) {
         await Client.findByIdAndUpdate(client._id, { reportURL: uploadURL });
         generatedFiles.push({ client: client.name, url: uploadURL });
@@ -548,7 +545,6 @@ export const dailyServiceReport = async (req, res) => {
       console.timeEnd("uploading excel ...");
 
       console.log("removing file ...");
-      // Clean up temporary local file asynchronously
       if (fsSync.existsSync(filePath)) {
         try {
           await fs.unlink(filePath);
