@@ -355,8 +355,8 @@ export const dailyServiceReport = async (req, res) => {
         });
       }
 
-      console.timeEnd("overviewsheet writing ...");
-      console.time("complaintsheet writing ...");
+      console.timeEnd("overviewsheet writing...");
+      console.time("complaintsheet writing...");
 
       // 2. Complaints Sheet (Batch Row Assignment)
       if (complaintWorksheet) {
@@ -369,7 +369,7 @@ export const dailyServiceReport = async (req, res) => {
 
           const row = complaintWorksheet.getRow(compRow);
           row.values = [
-            undefined,
+            // undefined,
             updt.date ? dateFormat(updt.date).withoutTime : "N/A",
             comp.number || "N/A",
             Array.isArray(comp?.service) ? comp.service.join(", ") : "N/A",
@@ -388,86 +388,86 @@ export const dailyServiceReport = async (req, res) => {
 
       // 3. Regular Services Sheet
       if (regularWorksheet) {
-  console.time("regularsheet writing ...");
-  let currRow = 4;
+        console.time("regularsheet writing ...");
+        let currRow = 4;
 
-  for (let i = 0; i < regulars.length; i++) {
-    const reg = regulars[i];
-    const regs = reg.regularService?.[0];
-    if (!regs) continue;
-    const loc = reg.location || {};
+        for (let i = 0; i < regulars.length; i++) {
+          const reg = regulars[i];
+          const regs = reg.regularService?.[0];
+          if (!regs) continue;
+          const loc = reg.location || {};
 
-    const serviceDate = dateFormat(regs.serviceDate);
-    const dateStr = serviceDate.withoutTime || "";
-    const timeStr = serviceDate.onlyTime || "";
-    const freq = regs.frequency || "";
-    const pestCount = regs.pestCount || 0;
-    const userName = regs.userName || "";
-    const floor = loc.floor || "";
-    const location = loc.location || "";
-    const subLocation = loc.subLocation || "";
-    const serviceName = regs.serviceName || "";
+          const serviceDate = dateFormat(regs.serviceDate);
+          const dateStr = serviceDate.withoutTime || "";
+          const timeStr = serviceDate.onlyTime || "";
+          const freq = regs.frequency || "";
+          const pestCount = regs.pestCount || 0;
+          const userName = regs.userName || "";
+          const floor = loc.floor || "";
+          const location = loc.location || "";
+          const subLocation = loc.subLocation || "";
+          const serviceName = regs.serviceName || "";
 
-    const images = Array.isArray(regs.image)
-      ? regs.image.join(", ")
-      : regs.image || "";
+          const images = Array.isArray(regs.image)
+            ? regs.image.join(", ")
+            : regs.image || "";
 
-    const baseCols = [
-      dateStr,      // Index 0 -> Column A
-      timeStr,      // Index 1 -> Column B
-      freq,         // Index 2 -> Column C
-      pestCount,
-      userName,
-      floor,
-      location,
-      subLocation,
-      serviceName,
-    ];
+          const baseCols = [
+            dateStr, // Index 0 -> Column A
+            timeStr, // Index 1 -> Column B
+            freq, // Index 2 -> Column C
+            pestCount,
+            userName,
+            floor,
+            location,
+            subLocation,
+            serviceName,
+          ];
 
-    if (isPestEmployee) {
-      const scopes = regs.scopes;
-      let hasScopeEntries = false;
+          if (isPestEmployee) {
+            const scopes = regs.scopes;
+            let hasScopeEntries = false;
 
-      if (Array.isArray(scopes) && scopes.length > 0) {
-        for (let s = 0; s < scopes.length; s++) {
-          const sc = scopes[s];
-          const consumables = sc?.consumables;
+            if (Array.isArray(scopes) && scopes.length > 0) {
+              for (let s = 0; s < scopes.length; s++) {
+                const sc = scopes[s];
+                const consumables = sc?.consumables;
 
-          if (Array.isArray(consumables) && consumables.length > 0) {
-            hasScopeEntries = true;
-            for (let c = 0; c < consumables.length; c++) {
-              const con = consumables[c];
+                if (Array.isArray(consumables) && consumables.length > 0) {
+                  hasScopeEntries = true;
+                  for (let c = 0; c < consumables.length; c++) {
+                    const con = consumables[c];
+                    const row = regularWorksheet.getRow(currRow);
+
+                    // Removed undefined: baseCols[0] (dateStr) now goes directly to Column A
+                    row.values = [
+                      ...baseCols,
+                      sc.scopeName || "",
+                      con.consumableName || "",
+                      con.calibration || 0,
+                      con.usedCalibration || 0,
+                      con.action || "",
+                      images,
+                    ];
+                    currRow++;
+                  }
+                }
+              }
+            }
+
+            if (!hasScopeEntries) {
               const row = regularWorksheet.getRow(currRow);
-
-              // Removed undefined: baseCols[0] (dateStr) now goes directly to Column A
-              row.values = [
-                ...baseCols,
-                sc.scopeName || "",
-                con.consumableName || "",
-                con.calibration || 0,
-                con.usedCalibration || 0,
-                con.action || "",
-                images,
-              ];
+              row.values = [...baseCols, "", "", "", "", "", images];
               currRow++;
             }
+          } else {
+            const row = regularWorksheet.getRow(currRow);
+            row.values = [...baseCols, images];
+            currRow++;
           }
         }
+        console.timeEnd("regularsheet writing ...");
       }
-
-      if (!hasScopeEntries) {
-        const row = regularWorksheet.getRow(currRow);
-        row.values = [...baseCols, "", "", "", "", "", images];
-        currRow++;
-      }
-    } else {
-      const row = regularWorksheet.getRow(currRow);
-      row.values = [...baseCols, images];
-      currRow++;
-    }
-  }
-  console.timeEnd("regularsheet writing ...");
-}
 
       console.time("unschsheet writing ...");
 
@@ -480,7 +480,7 @@ export const dailyServiceReport = async (req, res) => {
           const row = unschWorksheet.getRow(unschCount);
 
           row.values = [
-            undefined,
+            // undefined,
             unsc.createdAt ? dateFormat(unsc.createdAt).withTime : "",
             unsc.updatedAt ? dateFormat(unsc.completedBy?.date).withTime : "",
             unsc?.pestCount || 0,
@@ -509,7 +509,7 @@ export const dailyServiceReport = async (req, res) => {
           const row = casualWorksheet.getRow(casualCount);
 
           row.values = [
-            undefined,
+            // undefined,
             casual.createdAt ? dateFormat(casual.createdAt).withTime : "",
             casual?.pestCount || 0,
             loc?.floor || "-",
@@ -524,7 +524,6 @@ export const dailyServiceReport = async (req, res) => {
         }
       }
       console.timeEnd("casualsheet writing ...");
-
       console.time("writing excel ...");
 
       // Fast Zip Compression Option
