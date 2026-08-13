@@ -119,7 +119,7 @@ function ProductRow({
                   setValue(`products.${index}.specification`, "");
                   setValue(`products.${index}.calibrations`, []);
                 }}
-                disable={isNewProduct}
+                disable={!isNewProduct}
                 value={field.value}
                 label="Select Product"
               />
@@ -138,7 +138,7 @@ function ProductRow({
             render={({ field }) => (
               <InputSelect
                 isMulti={false}
-                disable={isNewProduct}
+                disable={!isNewProduct}
                 options={versions}
                 onChange={field.onChange}
                 value={field.value}
@@ -171,7 +171,7 @@ function ProductRow({
                 options={prFrequency}
                 onChange={field.onChange}
                 value={field.value}
-                disable={isNewProduct}
+                disable={!isNewProduct}
                 label="Product Frequency"
               />
             )}
@@ -244,8 +244,8 @@ function ProductSection({
       </div>
       <div className="bg-gray-100 ml-0.5 max-h-72 overflow-y-auto">
         {fields.map((field, index) => {
-          const isNewProduct = locationDetails && !field.isNew;
-
+          const isNewProduct = field.isNew;
+          console.log(isNewProduct, field.isNew)
           return (
             <ProductRow
               key={field.id}

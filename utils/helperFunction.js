@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
 import QRCode from "qrcode";
 import fs from "fs";
+import fspromise from "fs/promises";
 import sharp from "sharp";
 import { v2 as cloudinary } from "cloudinary";
 import brevo from "@getbrevo/brevo";
@@ -9,6 +10,7 @@ import Client from "../models/clientModel.js";
 import { productCounter } from "../controllers/locationController.js";
 import mongoose from "mongoose";
 import Counter from "../models/counterModel.js";
+import path from "path";
 
 export const capitalLetter = (name) => {
   return name
@@ -16,6 +18,28 @@ export const capitalLetter = (name) => {
     .split(" ")
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(" ");
+};
+
+export const compressImage = async (file) => {
+  const inputPath = file.tempFilePath;
+
+  const originalName = path.parse(file.name).name;
+  const outputPath = path.join(path.dirname(inputPath), `${originalName}.webp`);
+
+  await sharp(inputPath)
+    .rotate()
+    .resize({
+      width: 1600,
+      height: 1600,
+      fit: "inside",
+      withoutEnlargement: true,
+    })
+    .webp({
+      quality: 75,
+    })
+    .toFile(outputPath);
+
+  return outputPath;
 };
 
 export const dateFormat = (date) => {
@@ -120,10 +144,10 @@ export const productQrCodeGenerator = async ({
   const loc = location.substring(0, 25);
   const subLoc = location.substring(25);
   try {
-    const width = 220; // was 100 — bigger for reliable scanning at print size
+    const width = 220;
     const qrSize = 220;
-    const topPadding = 34; // room for branding + serialNo
-    const bottomPadding = subLoc ? 65 : 55; // room for 4 lines: floor, location, sub-location, spacing
+    const topPadding = 34; 
+    const bottomPadding = subLoc ? 65 : 55;
     const totalHeight = topPadding + qrSize + bottomPadding;
 
     // 1. QR code buffer
@@ -251,16 +275,26 @@ export const convertSvgToPngBuffer = async (svgString) => {
   }
 };
 
-export const uploadFile = async ({ filePath }) => {
+export const uploadFile = async ({ filePath, remove = true }) => {
   try {
     const result = await cloudinary.uploader.upload(filePath, {
       use_filename: true,
       folder: "Pestxz",
       quality: "auto:low",
       resource_type: "auto",
+      transformation: [
+        {
+          width: 1600,
+          height: 1600,
+          crop: "limit",
+          angle: "auto",
+          quality: 75,
+          fetch_format: "webp",
+        },
+      ],
     });
 
-    fs.unlinkSync(filePath);
+    if (remove) fs.unlinkSync(filePath);
 
     return result.secure_url;
   } catch (error) {
@@ -308,21 +342,34 @@ export const sendEmail = async ({
 };
 
 export const removeOldQr = async (url) => {
-  if (!url) return null; // ✅ guard for new locations or missing QR
-
-  const parts = url.split("/upload/");
-  if (parts.length < 2) return null;
-
-  const pathWithVersion = parts[1].replace(/^v\d+\//, "");
-  const publicId = pathWithVersion.split(".").slice(0, -1).join(".");
+  if (!url) return null;
 
   try {
+    const match = url.match(
+      /cloudinary\.com\/[^/]+\/(image|video|raw)\/upload\/(?:v\d+\/)?(.+)$/,
+    );
+
+    if (!match) return null;
+
+    const resourceType = match[1];
+    let publicId = match[2];
+
+    // Remove extension
+    if (resourceType !== "raw") {
+      publicId = publicId.replace(/\.[^/.]+$/, "");
+    }
+
     const result = await cloudinary.uploader.destroy(publicId, {
+      resource_type: resourceType,
       invalidate: true,
     });
+
+    console.log("Old file removed:", result);
+
     return result;
   } catch (error) {
-    console.error("Error deleting asset: ", error);
+    console.error("Error deleting old file:", error);
+    return null;
   }
 };
 

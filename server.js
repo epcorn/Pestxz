@@ -18,17 +18,19 @@ import {
   authenticateUser,
   authorizeUser,
 } from "./middleware/authMiddleware.js";
-import { createAdmin } from "./models/userModel.js";
 import { createServer } from "http";
 import { Server } from "socket.io";
-import { autoMarkMissed } from "./utils/helperFunction.js";
-import Location from "./models/locationModel.js";
-import Counter from "./models/counterModel.js";
+import cronRouter from "./crons/cron.js";
+import { fileURLToPath } from "url";
 
 dotenv.config();
 const app = express();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 const httpServer = createServer(app);
-const io = new Server(httpServer, {
+export const io = new Server(httpServer, {
   cors: {
     origin:
       process.env.NODE_ENV === "production"
@@ -37,7 +39,6 @@ const io = new Server(httpServer, {
     credentials: true,
   },
   connectionStateRecovery: {
-    // ADD THIS BLOCK
     maxDisconnectionDuration: 2 * 60 * 1000,
     skipMiddlewares: true,
   },
@@ -47,66 +48,6 @@ cloudinary.config({
   cloud_name: process.env.CLOUD_NAME,
   api_key: process.env.CLOUD_KEY,
   api_secret: process.env.CLOUD_SECRET,
-});
-
-io.on("connection", (socket) => {
-  socket.on("join-admin", (role) => {
-    if (
-      [
-        "Admin",
-        "ClientAdmin",
-        "Operator",
-        "BranchAdmin",
-        "Supervisor",
-        "TeamLeader",
-      ].includes(role)
-    ) {
-      socket.join("admin-room");
-      console.log(`${role} joined Pestxz-room`); // helpful for debugging
-    }
-  });
-  //join client
-  socket.on("join-client", (clientId) => {
-    if (clientId) {
-      socket.join(`client-${clientId}`);
-      console.log(`socket joined client-${clientId}`);
-    }
-  });
-
-  // services
-  socket.on("services", (data) => {
-    io.to("admin-room").to(`client-${data.client}`).emit("services", data); // 👈 was broadcast.emit
-  });
-  socket.on("unscheduled-raised", (data) => {
-    io.to("admin-room").emit("new-unscheduled-work", data); // 👈 was broadcast.emit
-  });
-
-  // updated
-  socket.on("unscheduled-updated", (data) => {
-    io.to("admin-room").emit("work-status-changed", data); // 👈 was broadcast.emit
-  });
-
-  // approved
-  socket.on("unscheduled-approved", (data) => {
-    io.to("admin-room").emit("work-status-approved", data); // 👈 was broadcast.emit
-  });
-
-  // rejected
-  socket.on("unscheduled-rejected", (data) => {
-    io.to("admin-room").emit("work-status-rejected", data); // 👈 was broadcast.emit
-  });
-
-  // complaint raised
-  socket.on("complaint-raised", (data) => {
-    io.to("admin-room").emit("new-complaint", data);
-  });
-
-  socket.on("complaint-updated", (data) => {
-    io.to("admin-room").emit("complaint-updated", data);
-  });
-  socket.on("complaint-assigned", (data) => {
-    io.to("admin-room").emit("complaint-assigned", data);
-  });
 });
 
 app.use(express.json());
@@ -120,24 +61,10 @@ app.use(
     abortOnLimit: true,
   }),
 );
+
 if (process.env.NODE_ENV !== "production") app.use(morgan("dev"));
 
-// setup cron job
-app.post("/api/cron/auto-mark-missed", (req, res) => {
-  const authHeader = req.headers["x-cron-auth"];
-  if (authHeader !== "my_super_secret_password_123") {
-    return res.status(401).send("Unauthorized");
-  }
-  try {
-    console.log("Running schedule work via cron-job.org");
-    autoMarkMissed();
-    return res.status(200).send("Job executed successfully");
-  } catch (error) {
-    console.error("Cron failed:", error);
-    return res.status(500).send("Internal Server Error");
-  }
-});
-
+app.use("/api/cron", cronRouter);
 app.use("/api/user", userRoute);
 app.use("/api/products", authenticateUser, productRoute);
 app.use(
@@ -169,8 +96,7 @@ app.use("/api/location", authenticateUser, locationRoute);
 app.use("/api/service", authenticateUser, serviceRoute);
 
 if (process.env.NODE_ENV === "production") {
-  const __dirname = path.resolve();
-  app.use(express.static(path.join(__dirname, "/client/dist")));
+  app.use(express.static(path.join(__dirname, "client", "dist")));
   app.get("*", (req, res) =>
     res.sendFile(path.resolve(__dirname, "client", "dist", "index.html")),
   );
@@ -188,18 +114,20 @@ export const MONGOURL =
     ? process.env.MONGO_URI
     : process.env.MONGO_LOCAL;
 
-// createAdmin();
-// autoMarkMissed();
 const connectDB = async () => {
   try {
-    await mongoose
-      .connect(MONGOURL)
-      .then((conn) => console.log(conn.connection.host));
+    const conn = await mongoose.connect(MONGOURL, {
+      serverSelectionTimeoutMS: 5000, // Timeout after 5s if DB is unreachable
+    });
+    console.log(`MongoDB Connected: ${conn.connection.host}`);
 
-    httpServer.listen(port, () => console.log("server is listening", port));
+    httpServer.listen(port, () =>
+      console.log(`Server listening on port ${port}`),
+    );
   } catch (error) {
-    console.error(`Error: ${error.message}`);
+    console.error(`Database Connection Error: ${error.message}`);
     process.exit(1);
   }
 };
+
 connectDB();
