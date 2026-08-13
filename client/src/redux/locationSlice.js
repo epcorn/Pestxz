@@ -24,6 +24,12 @@ export const locationSlice = apiSlice.injectEndpoints({
       },
       providesTags: ["Location"],
     }),
+    getComplaintLocation: builder.query({
+      query: (id) => ({
+        url: `/api/location/complaintModal/${id}`,
+      }),
+      providesTags: ["Location"],
+    }),
     getSingleLocation: builder.query({
       query: (id) => ({
         url: `/api/location/${id}`,
@@ -58,7 +64,7 @@ export const locationSlice = apiSlice.injectEndpoints({
       }),
       invalidatesTags: ["Location"],
     }),
- 
+
     makeQrDocx: builder.mutation({
       query: (data) => ({
         url: `/api/location/makeQrDoc`,
@@ -96,6 +102,7 @@ export const {
   useAddLocationMutation,
   useAllLocationsQuery,
   useGetSingleLocationQuery,
+  useGetComplaintLocationQuery,
   useUpdateLocationMutation,
   useDeleteLocationMutation,
   useMakeQrDocxMutation,

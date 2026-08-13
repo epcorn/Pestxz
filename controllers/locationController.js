@@ -287,9 +287,32 @@ export const getAllLocations = async (req, res) => {
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
-    // =================================================================
+    if (id && id.length === 25) {
+      const clientId = id.slice(0, 24);
+      console.log("Processing 25-character appended ID. Extracted:", clientId);
+
+      if (!mongoose.Types.ObjectId.isValid(clientId)) {
+        return res.status(400).json({ msg: "Invalid location ID format" });
+      }
+
+      const client = await Client.findById(clientId)
+        .select("name locations")
+        .populate({
+          path: "locations",
+          select: "qr floor location service.serviceId product.qr",
+        });
+      if (!client) {
+        return res.status(404).json({
+          client,
+          msg: "Location document not found in database",
+        });
+      }
+      return res.status(200).json({ client, msg: "success" });
+    }
+
+    //=================================================================
     // CASE A: NO ID PARAMETER PASSED -> FETCH SYSTEM-WIDE LOCATIONS
-    // =================================================================
+    //=================================================================
     if (!id || id === "undefined") {
       let locations;
       let totalLocations;
@@ -300,7 +323,8 @@ export const getAllLocations = async (req, res) => {
           Location.find()
             .populate("client", "name email")
             .skip(skip)
-            .limit(limit),
+            .limit(limit)
+            .lean(),
           Location.countDocuments(),
         ]);
 
@@ -308,7 +332,9 @@ export const getAllLocations = async (req, res) => {
         totalLocations = count;
         totalPages = Math.ceil(count / limit);
       } else {
-        locations = await Location.find().populate("client", "name email");
+        locations = await Location.find()
+          .populate("client", "name email")
+          .lean();
         totalLocations = locations.length;
       }
 
@@ -316,7 +342,7 @@ export const getAllLocations = async (req, res) => {
         return res.status(404).json({ msg: "No locations found" });
       }
 
-      const floors = [...new Set(locations.map((l) => l.floor))];
+      const floors = await Location.distinct("floor", { client: clientId });
 
       return res.json({
         locations,
@@ -326,15 +352,16 @@ export const getAllLocations = async (req, res) => {
       });
     }
 
-    // =================================================================
+    //=================================================================
     // CASE B: CLIENT / EMPLOYEE ID PROVIDED -> ORIGINAL CLIENT FILTER WITH PAGINATION
-    // =================================================================
+    //=================================================================
     let clientId;
 
     if (id === "ClientEmployee") {
       clientId = req.user.client;
     } else if (id.length === 24) {
-      const location = await Location.findById(id).select("client");
+      const location = await Location.findById(id).select("client").lean();
+      console.log("this runs");
       if (location) {
         clientId = location.client;
       } else {
@@ -371,7 +398,7 @@ export const getAllLocations = async (req, res) => {
       totalLocations = locations.length;
     }
 
-    const floors = [...new Set(locations.map((l) => l.floor))];
+    const floors = await Location.distinct("floor", { client: clientId });
 
     return res.json({
       client,
@@ -584,7 +611,7 @@ export const getLocationDetails = async (req, res) => {
   const { id } = req.params;
 
   try {
-    const location = await Location.findById(id);
+    const location = await Location.findById(id).select("-changes").lean();
     if (!location)
       return res.status(404).json({ msg: "Location not found, contact admin" });
 
@@ -596,23 +623,37 @@ export const getLocationDetails = async (req, res) => {
     if (!isInternalUser && !isSameClient)
       return res.status(401).json({ msg: "You are not authorized" });
 
-    // location.service = [
-    //   ...(location.service || []),
-    //   ...(location.product || []),
-    // ];
+    const [
+      complaints,
+      services,
+      regularService,
+      unscheduled,
+      casuals,
+      productsService,
+    ] = await Promise.all([
+      Service.find({
+        type: "Complaint",
+        location: id,
+        "complaintDetails.status": { $ne: "Close" },
+      }).lean(),
 
-    const complaints = await Service.find({
-      type: "Complaint",
-      location: id,
-      "complaintDetails.status": { $ne: "Close" },
-    });
+      Service.find({ location: id }).sort({ createdAt: -1 }).limit(50).lean(),
+
+      Service.find({
+        type: "Regular",
+        location: id,
+      })
+        .sort({ createdAt: -1 })
+        .lean(),
+
+      Unscheduled.find({ location: id }).sort({ updatedAt: -1 }).lean(),
+
+      Casual.find({ location: id }).sort({ updatedAt: -1 }).lean(),
+
+      ProductService.find({ location: id }).sort({ updatedAt: -1 }).lean(),
+    ]);
 
     let lastServices = [];
-
-    const services = await Service.find({ location: id })
-      .sort("-createdAt")
-      .limit(50); // fetch more to guarantee 10 after filtering
-
     for (const service of services) {
       if (lastServices.length >= 10) break;
       if (service.type === "Regular") {
@@ -670,24 +711,6 @@ export const getLocationDetails = async (req, res) => {
     // trim in case regularService had multiple entries per doc
     lastServices = lastServices.slice(0, 10);
 
-    const regularService = await Service.find({
-      type: "Regular",
-      location: id,
-    }).sort("-createdAt");
-
-    const unscheduled = await Unscheduled.find({ location: location._id }).sort(
-      {
-        updatedAt: -1,
-      },
-    );
-    const casuals = await Casual.find({ location: location._id }).sort({
-      updatedAt: -1,
-    });
-
-    const productsService = await ProductService.find({
-      location: location._id,
-    }).sort({ updatedAt: -1 });
-
     return res.json({
       location,
       client: client?.name || "",
@@ -710,7 +733,7 @@ export const getSingleLocation = async (req, res) => {
     return res.status(404).json({ msg: "Location not found, contact admin" });
   }
   try {
-    const location = await Location.findById(id);
+    const location = await Location.findById(id).select("-changes").lean();
     if (!location)
       return res.status(404).json({ msg: "Location not found, contact admin" });
 
@@ -721,18 +744,48 @@ export const getSingleLocation = async (req, res) => {
   }
 };
 //get single location complaints
-export const getSingleLocComplaint = async (req, res) => {
+export const complaintLocation = async (req, res) => {
   const { id } = req.params;
+
   try {
-    const complaints = await Service.find({ location: id, type: "Complaint" });
-    
+    let clientId;
+
+    if (id === "ClientEmployee") {
+      clientId = req.user.client;
+    } else if (id?.length === 24) {
+      const [client, location] = await Promise.all([
+        Client.findById(id).select("_id").lean(),
+        Location.findById(id).select("client").lean(),
+      ]);
+
+      clientId = client ? id : location?.client;
+    }
+
+    if (!clientId) {
+      return res.status(400).json({
+        msg: "Invalid parameter format provided",
+      });
+    }
+
+    const [locations, floors] = await Promise.all([
+      Location.find({ client: clientId })
+        .select("floor location subLocation service")
+        .lean(),
+
+      Location.distinct("floor", { client: clientId }),
+    ]);
+
+    return res.status(200).json({
+      locations,
+      floors,
+    });
   } catch (error) {
-    res.status(500).json({ msg: "Server error, try again" });
+    console.error("Error in complaintLocation:", error);
+    return res.status(500).json({
+      msg: "Server error, try again",
+    });
   }
 };
-//get single location products services
-//get single location regular services
-//get single location services
 
 export const assignLocation = async (req, res) => {
   const { id, userId } = req.body.data;
@@ -748,4 +801,3 @@ export const assignLocation = async (req, res) => {
     res.status(500).json({ msg: "server error" });
   }
 };
-

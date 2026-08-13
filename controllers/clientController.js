@@ -106,7 +106,7 @@ export const getAllClient = async (req, res) => {
 export const getClient = async (req, res) => {
   const { id } = req.params;
   try {
-    const client = await Client.findById(id).select("-adminPass -adminName");
+    const client = await Client.findById(id).select("name address").lean();
     if (!client) return res.status(400).json({ msg: "client not found" });
     return res.status(200).json(client);
   } catch (error) {

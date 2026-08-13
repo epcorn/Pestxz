@@ -2,6 +2,7 @@ import express from "express";
 import {
   addLocation,
   assignLocation,
+  complaintLocation,
   deleteLocation,
   getAllLocations,
   getLocationDetails,
@@ -25,6 +26,7 @@ router.post("/unSchedule", unScheduleReport);
 router.get("/getUnscheduledReports/:id", getUnscheduledReports);
 router.patch("/statusUnschedule/:id", statusUnscheduled);
 
+router.get("/complaintModal/:id", complaintLocation);
 router.get("/allServices", getAllService);
 router.get("/client/:id?", getAllLocations);
 router.get("/convert", convertSvgToPngBuffer);

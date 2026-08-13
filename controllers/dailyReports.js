@@ -26,8 +26,8 @@ const PEST_MAP = {
 
 export const dailyServiceReport = async (req, res) => {
   try {
-    const { value = "monthly" } = req.params;
-    const { today } = req.query;
+    let { value = "monthly" } = req.params;
+    let { today } = req.query;
 
     const todayStart = today ? new Date(today) : new Date();
     todayStart.setUTCHours(0, 0, 0, 0);
@@ -37,7 +37,7 @@ export const dailyServiceReport = async (req, res) => {
     let startDate = "";
     let endDate = "";
 
-    const isPestEmployee = req.user.type === "PestEmployee";
+    const isPestEmployee = req?.user?.type === "PestEmployee";
     const clientQuery =
       req.user.role === "ClientAdmin" ? { _id: req.user.client } : {};
     const selectFields = req.user.client ? "" : "-adminPass -adminName";
@@ -275,8 +275,8 @@ export const dailyServiceReport = async (req, res) => {
         },
       );
 
-      if (client.reportUrl) {
-        await removeOldQr(client.reportUrl);
+      if (client.reportURL !== "") {
+        await removeOldQr(client.reportURL);
       }
 
       console.log("workbook initialised...");
@@ -290,7 +290,7 @@ export const dailyServiceReport = async (req, res) => {
       const unschWorksheet = workbook.getWorksheet("Unscheduled-Work");
       const casualWorksheet = workbook.getWorksheet("Casual-Work");
 
-      console.time("overviewsheet writing ...");
+      console.time("overviewsheet writing...");
 
       // 1. Overview Sheet
       if (overviewWorkSheet) {
@@ -384,7 +384,7 @@ export const dailyServiceReport = async (req, res) => {
           compRow++;
         }
       }
-      console.timeEnd("complaintsheet writing ...");
+      console.timeEnd("complaintsheet writing...");
 
       // 3. Regular Services Sheet
       if (regularWorksheet) {

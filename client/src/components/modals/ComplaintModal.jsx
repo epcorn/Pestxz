@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import { InputRow, InputSelect } from "..";
 import { toggleModal } from "../../redux/helperSlice";
-import { useAllLocationsQuery } from "../../redux/locationSlice";
+import { useAllLocationsQuery, useGetComplaintLocationQuery } from "../../redux/locationSlice";
 import {
   useNewComplaintMutation,
   useUpdateComplaintMutation,
@@ -17,40 +17,35 @@ import {
 import FormModal from "./FormModal";
 import { socket } from "../../socket";
 import { useAllClientsQuery } from "../../redux/clientSlice";
-import { useAllUserQuery } from "../../redux/adminSlice";
 import { useGetSingleUserQuery } from "../../redux/userSlice";
 
-const defaultComments = [
-  "Done",
-  "not Done",
-  "Incompleted",
-  "Incompleted",
-  "Incompleted",
-];
-
 const ComplaintModal = ({ locationId, mode = "create" }) => {
-  const [selectClient, setSelectClient] = useState("");
   const isCreate = mode === "create";
   const isUpdate = mode === "update";
   const isReview = mode === "review";
 
   const [images, setImages] = useState([]);
   const [floor, setFloor] = useState("");
+
   const dispatch = useDispatch();
   const { isModalOpen, user } = useSelector((store) => store.helper);
+  const isPestEmployee = user.type === "PestEmployee";
 
-  const { data: DBUser } = useGetSingleUserQuery(user._id, { skip: !user._id });
+  const { data: DBUser } = useGetSingleUserQuery(user._id, {
+    skip: !user._id,
+  });
+
+  // Client picker only applies to PestEmployee creating a fresh complaint.
   const { data: clientsData } = useAllClientsQuery(
-    { limit: 50, page: 1 },
-    { skip: user.type !== "PestEmployee" },
+    { limit: 100, page: 1 },
+    { skip: !isPestEmployee || !isCreate },
   );
-
   const clientOptions = clientsData?.clients?.map((c) => ({
     label: c.name,
     value: c._id,
   }));
+
   const [addComplaint, { isLoading: addLoading }] = useNewComplaintMutation();
-console.log(clientsData)
   const [updateComplaint, { isLoading: updateLoading }] =
     useUpdateComplaintMutation();
 
@@ -63,169 +58,152 @@ console.log(clientsData)
     watch,
     setValue,
   } = useForm({
-    defaultValues: {
-      location: null,
-      service: [],
-      comment: "",
-      status: null,
-    },
+    defaultValues: { location: null, service: [], comment: "", status: null },
   });
 
   const selectedLocation = watch("location");
   const watchedClient = watch("client");
-  const locationQueryId = locationId
-    ? locationId
-    : user.type === "PestEmployee"
-      ? watchedClient?.value
-      : user?.type === "ClientEmployee"
-        ? user?.type
-        : locationId;
+  const status = watch("status");
 
-  const { data: clientLocations } = useAllLocationsQuery({
-    id: locationQueryId,
-  });
-  
-  // SET INITIAL FLOOR
+  // Single source of truth for which client's locations to load:
+  // - PestEmployee: whichever client they picked in the form
+  // - everyone else: their own client
+  // - update/review: skip client resolution entirely, locationId already scopes it
+  const clientId = isPestEmployee ? watchedClient?.value : user?.client;
+  const locationQueryId = locationId || clientId;
+
+  const { data: clientLocations } = useGetComplaintLocationQuery(
+    locationQueryId,
+    { skip: !locationQueryId },
+  );
+
+  const floors = clientLocations?.floors || [];
+  const locationRecords = clientLocations?.locations || [];
+
+  // Default to the first available floor once loaded
   useEffect(() => {
-    if (!clientLocations?.floors?.length) return;
-    if (!floor) {
-      setFloor(clientLocations.floors[0]);
-    }
-  }, [clientLocations, floor]);
+    if (!floor && floors.length) setFloor(floors[0]);
+  }, [floors, floor]);
 
-  // LOCATION OPTIONS
-  const locationOptions = useMemo(() => {
-    if (!clientLocations?.locations) return [];
-
-    return clientLocations.locations
-      .filter((item) => !floor || item.floor === floor)
-      .map((item) => ({
-        label: `${item.location}${item.subLocation ? `, ${item.subLocation}` : ""
-          }`,
-        value: item._id,
-      }));
-  }, [clientLocations, floor]);
-
-  // PRESELECT LOCATION
-  useEffect(() => {
-    if (!locationId || !clientLocations?.locations) return;
-
-    const currentLocation = clientLocations.locations.find(
-      (loc) => loc._id?.toString() === locationId?.toString(),
-    );
-    if (!currentLocation) return;
-    setFloor(currentLocation.floor);
-
-    setValue("location", {
-      label: `${currentLocation.location}${currentLocation.subLocation ? `, ${currentLocation.subLocation}` : ""
-        }`,
-      value: currentLocation._id,
-    });
-  }, [locationId, clientLocations, setValue]);
-
-  // RESET ON FLOOR CHANGE
+  // Opened for a specific location (update/review) -> preselect it,
+  // otherwise clear location/service whenever the floor changes manually.
   useEffect(() => {
     if (!locationId) {
       setValue("location", null);
-      setValue("service", "");
+      setValue("service", []);
+      return;
     }
-  }, [floor, locationId, setValue]);
+    const match = locationRecords.find(
+      (loc) => loc._id?.toString() === locationId.toString(),
+    );
+    if (!match) return;
+    setFloor(match.floor);
+    setValue("location", {
+      label: `${match.location}${match.subLocation ? `, ${match.subLocation}` : ""}`,
+      value: match._id,
+    });
+  }, [floor, locationId, locationRecords, setValue]);
 
-  const currentSelectedId = selectedLocation?.value || locationId;
-
-  const targetedLocationRecord = clientLocations?.locations?.find(
-    (loc) => loc._id?.toString() === currentSelectedId?.toString(),
+  const locationOptions = useMemo(
+    () =>
+      locationRecords
+        .filter((loc) => !floor || loc.floor === floor)
+        .map((loc) => ({
+          label: `${loc.location}${loc.subLocation ? `, ${loc.subLocation}` : ""}`,
+          value: loc._id,
+        })),
+    [locationRecords, floor],
   );
-  // SERVICES
-  const serviceOptions = useMemo(() => {
-    const rawServices = targetedLocationRecord?.service || [];
 
-    return rawServices
-      .map((s) => {
-        if (typeof s === "string") {
-          return s.trim().replace(/,$/, "");
-        }
-        if (typeof s === "object") {
-          return (s.serviceName || s.service || s.name || "")
-            .trim()
-            .replace(/,$/, "");
-        }
-        return "";
-      })
+  const selectedLocationId = selectedLocation?.value || locationId;
+  const selectedLocationRecord = locationRecords.find(
+    (loc) => loc._id?.toString() === selectedLocationId?.toString(),
+  );
+
+  const serviceOptions = useMemo(() => {
+    const raw = selectedLocationRecord?.service || [];
+    return raw
+      .map((s) =>
+        typeof s === "string"
+          ? s.trim().replace(/,$/, "")
+          : (s.serviceName || s.service || s.name || "").trim().replace(/,$/, ""),
+      )
       .filter(Boolean);
-  }, [targetedLocationRecord]);
+  }, [selectedLocationRecord]);
 
   const submit = async (data) => {
     if (images.length > 2) {
-      return toast.error("Maximum 2 images are allowed");
+      toast.error("Maximum 2 images are allowed");
+      return;
     }
+
     const form = new FormData();
-    images.forEach((image) => {
-      form.append("images", image);
-    });
+    images.forEach((image) => form.append("images", image));
+
     try {
       let res;
-      // CREATE
+
       if (isCreate) {
-        form.set("comment", data.comment);
-
-        const selectedServices = data.service.map((s) => s.value);
-        selectedServices.forEach((s) => form.append("service", s));
-
         const locationToUse = data?.location?.value;
         if (!locationToUse) {
           toast.error("Location is required");
           return;
         }
 
+        form.set("comment", data.comment);
+        data.service.forEach((s) => form.append("service", s.value));
+
         res = await addComplaint({ id: locationToUse, form }).unwrap();
-        console.log(res);
         socket.emit("complaint-raised", {
           user: user.name,
           comment: data.comment,
           url: res.url,
         });
       }
-      // UPDATE
-      if (isUpdate) {
+
+      // Update (operator) and Review (client admin) hit the same endpoint
+      // with the same shape — only the status option list differs in the UI.
+      if (isUpdate || isReview) {
         form.set("status", data.status?.value || data.status);
         form.set("comment", data.comment?.value || data.comment);
-        res = await updateComplaint({ id: locationId, form }).unwrap();
 
+        res = await updateComplaint({ id: locationId, form }).unwrap();
         socket.emit("complaint-updated", {
           user: user.name,
-          status: status.label,
+          status: data.status?.label,
           url: res.url,
         });
-        console.log("complaint emmited");
-      }
 
-      // REVIEW
-      if (isReview) {
-        form.set("status", data.status?.value || data.status);
-        form.set("comment", data.comment);
-        res = await updateComplaint({ id: locationId, form }).unwrap();
-        toast.success(res?.msg || "Success");
-
-        socket.emit("complaint-updated", {
-          user: user.name,
-          url: res.url,
-        });
-        console.log("complaint emmited");
+        if (isReview) toast.success(res?.msg || "Success");
       }
 
       dispatch(toggleModal({ name: "complaint", status: false }));
-
       setImages([]);
       reset();
     } catch (error) {
-      console.log(error);
-
       toast.error(error?.data?.msg || error?.error || "Something went wrong");
     }
   };
 
-  const status = watch("status");
+  const imageInput = (label) => (
+    <div className="mt-2">
+      <label className="text-md font-medium leading-6 mr-2 text-gray-900">
+        {label}
+      </label>
+      <input
+        type="file"
+        multiple
+        accept="image/*"
+        onChange={(e) => setImages(Array.from(e.target.files))}
+        className="mt-0.5 block w-full text-sm text-slate-500
+        file:mr-4 file:py-2 file:px-4
+        file:rounded-md file:border-0
+        file:text-sm file:font-semibold
+        file:bg-zinc-100 file:text-zinc-700
+        hover:file:bg-zinc-200"
+      />
+    </div>
+  );
 
   const reviewFormBody = (
     <div className="grid gap-y-3 mb-4 ml-1">
@@ -244,63 +222,31 @@ console.log(clientsData)
             />
           )}
         />
-
-        <p className="text-xs text-red-500 pl-1 mt-1">
-          {errors.status?.message}
-        </p>
+        <p className="text-xs text-red-500 pl-1 mt-1">{errors.status?.message}</p>
       </div>
 
-      <div>
-        <InputRow
-          label="Comment"
-          id="comment"
-          errors={errors}
-          register={register}
-          placeholder="Add review comment"
-        />
-      </div>
+      <InputRow
+        label="Comment"
+        id="comment"
+        errors={errors}
+        register={register}
+        placeholder="Add review comment"
+      />
 
-      <div className={`${status?.value === "Reopen" ? "block" : "hidden"}`}>
-        <label className="text-md font-medium leading-6 mr-2 text-gray-900">
-          Images
-        </label>
-
-        <input
-          type="file"
-          multiple
-          accept="image/*"
-          onChange={(e) => setImages(Array.from(e.target.files))}
-          className="mt-0.5 block w-full text-sm text-slate-500
-          file:mr-4 file:py-2 file:px-4
-          file:rounded-md file:border-0
-          file:text-sm file:font-semibold
-          file:bg-zinc-100 file:text-zinc-700
-          hover:file:bg-zinc-200"
-        />
-      </div>
-
-      <div className="flex hidden gap-x-1 max-w-96 overflow-x-auto p-2">
-        {defaultComments.map((d) => (
-          <p key={d} className="text-sm whitespace-nowrap outline rounded-2xl px-2">
-            {d}
-          </p>
-        ))}
-      </div>
+      {status?.value === "Reopen" && imageInput("Images")}
     </div>
   );
 
   const clientFormBody = (
     <div className="grid grid-cols-2 gap-3 mb-4">
-      {DBUser.rights.raise && (
+      {DBUser?.rights?.raise && (
         <>
-          {!locationId && user.type === "PestEmployee" && (
+          {!locationId && isPestEmployee && (
             <div>
               <Controller
                 name="client"
                 control={control}
-                rules={{
-                  required: "Client is required",
-                }}
+                rules={{ required: "Client is required" }}
                 render={({ field }) => (
                   <InputSelect
                     isMulti={false}
@@ -321,12 +267,12 @@ console.log(clientsData)
             <label className="block text-md font-medium leading-6 text-gray-900">
               Floor
             </label>
-
             <select
               value={floor}
               onChange={(e) => setFloor(e.target.value)}
-              className="mr-2 mt-0.5 w-full py-1 px-2 border-2 rounded-md outline-none transition border-neutral-300 focus:border-black">
-              {clientLocations?.floors?.map((item, index) => (
+              className="mr-2 mt-0.5 w-full py-1 px-2 border-2 rounded-md outline-none transition border-neutral-300 focus:border-black"
+            >
+              {floors.map((item, index) => (
                 <option key={index} value={item}>
                   {item}
                 </option>
@@ -338,9 +284,7 @@ console.log(clientsData)
             <Controller
               name="location"
               control={control}
-              rules={{
-                required: "Location is required",
-              }}
+              rules={{ required: "Location is required" }}
               render={({ field }) => (
                 <InputSelect
                   isMulti={false}
@@ -351,7 +295,6 @@ console.log(clientsData)
                 />
               )}
             />
-
             <p className="text-xs text-red-500 pl-1 mt-1">
               {errors.location?.message}
             </p>
@@ -374,24 +317,7 @@ console.log(clientsData)
         )}
       />
 
-      <div className="mt-2">
-        <label className="text-md font-medium leading-6 mr-2 text-gray-900">
-          Images<span></span>
-        </label>
-
-        <input
-          type="file"
-          multiple
-          accept="image/*"
-          onChange={(e) => setImages(Array.from(e.target.files))}
-          className="mt-1 block w-full text-sm text-slate-500
-          file:mr-4 file:py-2 file:px-4 outline  rounded
-          file:rounded-md file:border-0
-          file:text-sm file:font-semibold
-          file:bg-zinc-100 file:text-zinc-700
-          hover:file:bg-zinc-200"
-        />
-      </div>
+      {imageInput("Images")}
 
       <div className="col-span-2">
         <InputRow
@@ -411,9 +337,7 @@ console.log(clientsData)
         <Controller
           name="comment"
           control={control}
-          rules={{
-            required: "Job comment is required",
-          }}
+          rules={{ required: "Job comment is required" }}
           render={({ field }) => (
             <InputSelect
               isMulti={false}
@@ -424,19 +348,14 @@ console.log(clientsData)
             />
           )}
         />
-
-        <p className="text-xs text-red-500 pl-1 mt-1">
-          {errors.comment?.message}
-        </p>
+        <p className="text-xs text-red-500 pl-1 mt-1">{errors.comment?.message}</p>
       </div>
 
       <div>
         <Controller
           name="status"
           control={control}
-          rules={{
-            required: "Complaint status is required",
-          }}
+          rules={{ required: "Complaint status is required" }}
           render={({ field }) => (
             <InputSelect
               options={
@@ -452,30 +371,10 @@ console.log(clientsData)
             />
           )}
         />
-
-        <p className="text-xs text-red-500 pl-1 mt-1">
-          {errors.status?.message}
-        </p>
+        <p className="text-xs text-red-500 pl-1 mt-1">{errors.status?.message}</p>
       </div>
 
-      <div>
-        <label className="text-md font-medium leading-6 mr-2 text-gray-900">
-          Images*
-        </label>
-
-        <input
-          type="file"
-          multiple
-          accept="image/*"
-          onChange={(e) => setImages(Array.from(e.target.files))}
-          className="mt-0.5 block w-full text-sm text-slate-500
-          file:mr-4 file:py-2 file:px-4
-          file:rounded-md file:border-0
-          file:text-sm file:font-semibold
-          file:bg-zinc-100 file:text-zinc-700
-          hover:file:bg-zinc-200"
-        />
-      </div>
+      {imageInput("Images*")}
     </div>
   );
 
@@ -483,25 +382,12 @@ console.log(clientsData)
     <FormModal
       onSubmit={handleSubmit(submit)}
       title={
-        isCreate
-          ? "New Complaint"
-          : isUpdate
-            ? "Update Complaint"
-            : "Reopen Complaint"
+        isCreate ? "New Complaint" : isUpdate ? "Update Complaint" : "Reopen Complaint"
       }
-      formBody={
-        isCreate ? clientFormBody : isUpdate ? operatorFormBody : reviewFormBody
-      }
-      submitLabel={
-        isCreate ? "Add Complaint" : isUpdate ? "Update" : "Reopen/Close"
-      }
+      formBody={isCreate ? clientFormBody : isUpdate ? operatorFormBody : reviewFormBody}
+      submitLabel={isCreate ? "Add Complaint" : isUpdate ? "Update" : "Reopen/Close"}
       handleClose={() =>
-        dispatch(
-          toggleModal({
-            name: "complaint",
-            status: false,
-          }),
-        )
+        dispatch(toggleModal({ name: "complaint", status: false }))
       }
       disabled={addLoading || updateLoading}
       isLoading={addLoading || updateLoading}

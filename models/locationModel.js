@@ -79,7 +79,7 @@ const locationSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
-locationSchema.index({ client: 1 });
+locationSchema.index({ client: 1, floor: 1, location: 1, subLocation: 1 });
 locationSchema.index({ "product.productId": 1 });
 locationSchema.index({ "product.schedule.date": 1 });
 locationSchema.index({ "service.schedule.date": 1 });

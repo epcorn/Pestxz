@@ -20,7 +20,6 @@ import Dashboard from './pages/Dashboard'
 const Landing = React.lazy(() => import("./pages/Landing"));
 const MainLayout = React.lazy(() => import("./pages/MainLayout"));
 const QrScanner = React.lazy(() => import("./components/dashboard/QrScanner"));
-// const Dashboard = React.lazy(() => import("./pages/Dashboard"));
 const Complaints = React.lazy(() => import("./pages/Complaints"));
 const SingleLocation = React.lazy(() => import("./pages/SingleLocation"));
 const SingleComplaint = React.lazy(() => import("./pages/SingleComplaint"));
@@ -38,7 +37,6 @@ const Layout = () => {
       <NotificationManager />
       <ToastContainer position="top-center" autoClose={2000} />
       <div>
-        {/* 2. Wrap Outlet in Suspense to prevent loading crashes */}
         <Suspense fallback={<Loading />}>
           <Outlet />
         </Suspense>

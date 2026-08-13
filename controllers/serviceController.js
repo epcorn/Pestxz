@@ -4,6 +4,7 @@ import Location from "../models/locationModel.js";
 import moment from "moment";
 import exceljs from "exceljs";
 import {
+  compressImage,
   removeOldQr,
   sendEmail,
   uploadFile,
@@ -12,6 +13,12 @@ import {
 import Casual from "../models/casualServiceModel.js";
 import ProductService from "../models/productService.js";
 import mongoose from "mongoose";
+import path from "path";
+import fs from "fs";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 export const newComplaint = async (req, res) => {
   const { id } = req.params;
@@ -66,8 +73,9 @@ export const newComplaint = async (req, res) => {
         : [req.files.images];
 
       for (const image of images) {
+        const uploadedFile = await compressImage(image);
         const link = await uploadFile({
-          filePath: image.tempFilePath,
+          filePath: uploadedFile,
         });
         if (!link) {
           return res.status(400).json({
@@ -75,6 +83,8 @@ export const newComplaint = async (req, res) => {
           });
         }
         imageLinks.push(link);
+        await fs.promises.unlink(image.tempFilePath);
+        await fs.promises.unlink(uploadedFile);
       }
     }
     const complaint = await Service.create({
@@ -89,12 +99,12 @@ export const newComplaint = async (req, res) => {
         raisedByRole: req.user.role,
         clientName: client.name,
         status: "Open",
-        image: imageLinks,
+        image: imageLinks || "",
         comment: req.body.comment,
       },
       complaintUpdate: [
         {
-          image: imageLinks,
+          image: imageLinks || "",
           comment: req.body.comment,
           userName: req.user.name,
           raisedBy: req.user.type,
@@ -109,10 +119,11 @@ export const newComplaint = async (req, res) => {
     });
     console.log("compliant id: ", complaint._id);
     return res.status(201).json({
-      msg: `Your complaint number is ${complaint.complaintDetails.number}`,
-      url: `/complaint/${complaint._id}`,
+      msg: `Your complaint number is ${complaint?.complaintDetails?.number || ""}`,
+      url: `/complaint/${complaint._id || ""}`,
     });
   } catch (error) {
+    console.log(error);
     return res.status(500).json({
       msg: "Server error, try again later",
     });
@@ -169,8 +180,9 @@ export const updateComplaint = async (req, res) => {
         images = [req.files.images];
       }
       for (const image of images) {
+        const uploadedFile = await compressImage(image);
         const link = await uploadFile({
-          filePath: image.tempFilePath,
+          filePath: uploadedFile,
         });
         if (!link) {
           return res.status(400).json({
@@ -179,6 +191,7 @@ export const updateComplaint = async (req, res) => {
         }
         imageLinks.push(link);
       }
+      await fs.promises.unlink(image.tempFilePath);
     }
     // REOPEN LOGIC
     if (status === "Reopen") {
@@ -289,13 +302,25 @@ export const newRegularService = async (req, res) => {
 
     // --- parallelize image uploads instead of sequential await ---
     let imageLink = [];
+
     if (req.files?.image) {
       const files = (
         Array.isArray(req.files.image) ? req.files.image : [req.files.image]
       ).slice(0, 2);
 
       imageLink = await Promise.all(
-        files.map((file) => uploadWithRetry(file.tempFilePath)),
+        files.map(async (file) => {
+          try {
+            const link = await uploadWithRetry(file.tempFilePath);
+            // Delete temp file after successful upload
+            await fs.promises.unlink(file.tempFilePath);
+            return link;
+          } catch (error) {
+            console.error(`Upload failed for ${file.name}:`, error);
+            // Don't delete the file if upload failed
+            throw error;
+          }
+        }),
       );
     }
 
@@ -486,15 +511,18 @@ export const casualServices = async (req, res) => {
 
     const imageUrl = [];
     if (req?.files?.image) {
-      const images = Array?.isArray(req?.files?.image)
+      const files = Array?.isArray(req?.files?.image)
         ? req.files.image
         : [req.files.image];
-      for (const image of images) {
-        const link = await uploadFile({ filePath: image.tempFilePath });
+      for (const file of files) {
+        const uploadedFile = await compressImage(file);
+        const link = await uploadFile({ filePath: file });
+
         if (!link) {
           return res.status(400).json({ msg: "Image upload error" });
         }
         imageUrl.push(link);
+        await fs.promises.unlink(file.tempFilePath);
       }
     }
 

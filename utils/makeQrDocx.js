@@ -161,7 +161,7 @@ export const makeQrFile = async (req, res) => {
         spacing: { after: 400 },
       }),
     ];
-    console.log("limit", data?.limit);
+    
     // Chunk images into rows of 3
     for (let i = 0; i < qrBuffers.length; i += data?.limit || 3) {
       const rowImages = [];

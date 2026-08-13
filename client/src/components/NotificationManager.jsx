@@ -118,7 +118,7 @@ function NotificationManager() {
 
       dispatch(apiSlice.util.invalidateTags(["Location", "product"]))
       if (user?.client === data?.client) {
-        notificationSound.play().catch(error => { console.warn("Browser blocked autoplay") })
+        // notificationSound.play().catch(error => { console.warn("Browser blocked autoplay") })
 
         sendNotification("Update on Services", `${data.msg} by ${data.user}`, data.url);
       }
@@ -130,7 +130,6 @@ function NotificationManager() {
       notificationSound.play().catch(err => console.warn("Browser blocked autoplay"))
       sendNotification("Complaint Assigned", `${data.user} assigned to ${data.status}`, data.url)
     }
-
 
     socket.on("complaint-assigned", onComplaintAssign)
     socket.on("complaint-updated", complaintUpdate)

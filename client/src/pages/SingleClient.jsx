@@ -23,10 +23,13 @@ import { saveAs } from "file-saver";
 import { useUpdateClientMutation } from "../redux/clientSlice";
 import { useGetSingleUserQuery } from "../redux/userSlice";
 import Pagination from "./Pagination";
-
+import FormModal from "../components/modals/FormModal";
 
 const SingleClient = () => {
-  const [page, setPage] = useState(() => { const savedPage = sessionStorage.getItem("clientLocationPage"); return savedPage ? Number(savedPage) : 1 });
+  const [page, setPage] = useState(() => {
+    const savedPage = sessionStorage.getItem("clientLocationPage");
+    return savedPage ? Number(savedPage) : 1;
+  });
   const [state, setState] = useState({ loading: false, text: "" });
   const { isModalOpen, user } = useSelector((store) => store.helper);
   const [locationDetails, setLocationDetails] = useState({});
@@ -34,7 +37,7 @@ const SingleClient = () => {
   const [selectedQr, setSelectedQr] = useState([]);
   const dispatch = useDispatch();
   const { id } = useParams();
-  const [date, setDate] = useState('2026-06-13')
+  const [date, setDate] = useState("2026-06-13");
 
   const { data: me } = useGetSingleUserQuery(user._id, { skip: !user._id });
   const limit = 30;
@@ -43,7 +46,8 @@ const SingleClient = () => {
     limit,
     page,
   });
-  const [triggerFetchAll] = useLazyAllLocationsQuery(); //for all qr docx
+  const [triggerFetchAll, { isLoading: fetchAllLoading }] =
+    useLazyAllLocationsQuery(); //for all qr docx
   const [deleteLocation, { isLoading: deleteLoading }] =
     useDeleteLocationMutation();
   const [updateClient, { isLoading: updateLoading }] =
@@ -61,7 +65,6 @@ const SingleClient = () => {
     setLocationDetails(null);
     dispatch(toggleModal({ name: "location", status: true }));
   };
-
 
   const handleDelete = async () => {
     try {
@@ -82,22 +85,30 @@ const SingleClient = () => {
     try {
       const qrs = [location.qr];
       const res = await makeQrDOCX({ qrs, client: data.clientName }).unwrap();
-      console.log(res)
+      console.log(res);
       saveAs(res?.qr, `QR-${data?.clientName}.docx`);
       saveAs(location?.qr, `QR-${location.location}`);
       await qrCountInc(id).unwrap();
     } catch (error) {
-      console.log(error)
+      console.log(error);
       throw new Error("download error");
     }
   };
 
-  const showAllLocations = async () => {
-    const all = await triggerFetchAll({ id }).unwrap();
-    console.log(all);
+  const showAllLocations = async (target) => {
+    const { client } = await triggerFetchAll({ id: `${id}l` }).unwrap();
+    let qrs = [], ids = [];
+    if (target === "product") {
+      const validLocations = client.locations.filter(
+        (l) => l.product !== [] && l.product
+      );
+      qrs = validLocations.flatMap((l) => l.product.map(pr => pr.qr));
+      ids = validLocations.map((l) => l._id);
+    }
+    console.log(qrs)
   };
 
-  const handleDownloadAll = async () => {
+  const handleDownloadAll = async (target) => {
     let qrs = [];
     let ids = [];
     const isValidQr = (qrValue) => {
@@ -109,17 +120,26 @@ const SingleClient = () => {
         qrs = validSelection.map((s) => s.qr);
         ids = validSelection.map((s) => s.id);
       } else {
-        const response = await triggerFetchAll({ id }).unwrap();
-
-        if (!response?.locations || response.locations.length === 0) {
+        const { client } = await triggerFetchAll({ id: `${id}l` }).unwrap();
+        console.log(client);
+        if (!client?.locations || client.locations.length === 0) {
           throw new Error("No locations found for this client.");
         }
 
-        const validLocations = response.locations.filter((l) =>
-          isValidQr(l.qr),
-        );
-        qrs = validLocations.map((l) => l.qr);
-        ids = validLocations.map((l) => l._id);
+        if (target === "product") {
+          const validLocations = client.locations.filter(
+            (l) => l.product,
+          );
+          qrs = validLocations.flatMap((l) => l.product.map(pr => pr.qr));
+          ids = validLocations.map((l) => l._id);
+        }
+        if (target === "regular") {
+          const validLocations = client.locations.filter(
+            (l) => l.service.length > 0 && isValidQr(l.qr),
+          );
+          qrs = validLocations.map((l) => l.qr);
+          ids = validLocations.map((l) => l._id);
+        }
       }
 
       if (qrs.length === 0) {
@@ -127,7 +147,6 @@ const SingleClient = () => {
       }
 
       const payload = { qrs: qrs, client: data?.clientName || "Client" };
-      // Execute database increments & Docx creation
 
       const res = await makeQrDOCX(payload).unwrap();
       saveAs(res?.qr, `${data?.clientName || "Client"}-Location.docx`);
@@ -295,9 +314,26 @@ const SingleClient = () => {
           </div>
 
           <div className="flex justify-between">
-            <input className="outline mx-2" type="date" name="" id="" value={date} onChange={(e) => setDate(e.target.value)} />
-            <p className="outline bg-white rounded w-fit  px-2 py-1">Total locations: {data.totalLocations}</p>
+            <input
+              className="outline mx-2"
+              type="date"
+              name=""
+              id=""
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+            />
+            <p className="outline bg-white rounded w-fit  px-2 py-1">
+              Total locations: {data.totalLocations}
+            </p>
           </div>
+          {isModalOpen.allqr &&
+            <QRDownload
+              dispatch={dispatch} isModalOpen={isModalOpen}
+              handleDownloadAll={handleDownloadAll}
+              docQrLoading={docQrLoading}
+              fetchAllLoading={fetchAllLoading}
+            />
+          }
           <div className="overflow-auto border border-neutral-300 rounded-lg max-h-[500px] my-2">
             <table className="w-full border-collapse whitespace-nowrap bg-white">
               <thead className="sticky top-0 bg-gray-300 z-10 shadow-[inset_0_-1px_0_rgba(0,0,0,0.1)]">
@@ -319,8 +355,8 @@ const SingleClient = () => {
                       <button
                         className="px-2 py-1 rounded bg-blue-700 text-white hover:bg-blue-800 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
                         disabled={docQrLoading}
-                        // onClick={handleDownloadAll}
-                        onClick={showAllLocations}
+                        onClick={() => { dispatch(toggleModal({ name: "allqr", status: true })) }}
+                        // onClick={() => showAllLocations('product')}
                       >
                         <PiDownloadSimpleBold className="w-4 h-4" />
                       </button>
@@ -407,7 +443,10 @@ const SingleClient = () => {
 
                     <td className="px-3 border border-neutral-200 text-center">
                       <div>
-                        <GetSchedulesForLocation service={location?.service} date={date} />
+                        <GetSchedulesForLocation
+                          service={location?.service}
+                          date={date}
+                        />
                       </div>
                     </td>
 
@@ -488,8 +527,12 @@ const SingleClient = () => {
             </table>
           </div>
 
-          <Pagination page={page} setPage={setPage} totalPages={data?.pages} sessionKey="clientLocationPage" />
-
+          <Pagination
+            page={page}
+            setPage={setPage}
+            totalPages={data?.pages}
+            sessionKey="clientLocationPage"
+          />
         </div>
       )}
     </>
@@ -497,10 +540,14 @@ const SingleClient = () => {
 };
 export default SingleClient;
 
-
-
-function ProductQrModal({ data, dispatch, toggleModal, makeQrDOCX, modalKey, clientName }) {
-
+function ProductQrModal({
+  data,
+  dispatch,
+  toggleModal,
+  makeQrDOCX,
+  modalKey,
+  clientName,
+}) {
   const [downloading, setDownloading] = useState({ id: null, loading: false });
 
   const InlineSpinner = () => (
@@ -514,7 +561,7 @@ function ProductQrModal({ data, dispatch, toggleModal, makeQrDOCX, modalKey, cli
 
       const payload = {
         qrs: [qrUrl],
-        client: `${data.floor}, ${data.location}, ${data.subLocation}`
+        client: `${data.floor}, ${data.location}, ${data.subLocation}`,
       };
 
       const res = await makeQrDOCX(payload).unwrap();
@@ -542,11 +589,14 @@ function ProductQrModal({ data, dispatch, toggleModal, makeQrDOCX, modalKey, cli
       const qrs = validProducts.map((p) => p.qr);
       const payload = {
         qrs: qrs,
-        client: `${data.floor}, ${data.location}, ${data.subLocation}`
+        client: `${data.floor}, ${data.location}, ${data.subLocation}`,
       };
 
       const res = await makeQrDOCX(payload).unwrap();
-      saveAs(res?.qr, `${clientName || "Client"}-${data.location || "Location"}-Products.docx`);
+      saveAs(
+        res?.qr,
+        `${clientName || "Client"}-${data.location || "Location"}-Products.docx`,
+      );
     })();
 
     toast.promise(downloadPromise, {
@@ -555,9 +605,11 @@ function ProductQrModal({ data, dispatch, toggleModal, makeQrDOCX, modalKey, cli
       error: {
         render({ data: err }) {
           console.error(err);
-          return err?.data?.msg || "Failed to generate bulk product QR document.";
-        }
-      }
+          return (
+            err?.data?.msg || "Failed to generate bulk product QR document."
+          );
+        },
+      },
     });
 
     try {
@@ -582,8 +634,7 @@ function ProductQrModal({ data, dispatch, toggleModal, makeQrDOCX, modalKey, cli
             className="text-neutral-400 hover:text-red-600 transition-colors text-lg font-bold w-6 h-6 flex items-center justify-center leading-none rounded-full border border-neutral-300 hover:border-red-600 focus:outline-none"
             onClick={() =>
               dispatch(toggleModal({ name: modalKey, status: false }))
-            }
-          >
+            }>
             &times;
           </button>
         </div>
@@ -621,8 +672,7 @@ function ProductQrModal({ data, dispatch, toggleModal, makeQrDOCX, modalKey, cli
             {data.product.map((prod, i) => (
               <div
                 key={prod._id}
-                className="grid grid-cols-12 items-center gap-2 p-3 text-sm hover:bg-neutral-50 transition-colors"
-              >
+                className="grid grid-cols-12 items-center gap-2 p-3 text-sm hover:bg-neutral-50 transition-colors">
                 {/* Index */}
                 <span className="col-span-1 text-center font-medium text-neutral-400">
                   {i + 1}
@@ -652,8 +702,7 @@ function ProductQrModal({ data, dispatch, toggleModal, makeQrDOCX, modalKey, cli
                     onClick={() => handleDownloadSingle(prod.qr, prod)}
                     disabled={downloading.loading}
                     className="p-1.5 rounded-md hover:bg-neutral-200 text-neutral-600 hover:text-blue-600 transition-all border border-neutral-200 disabled:cursor-not-allowed disabled:opacity-50"
-                    title={`Download QR for ${prod.serialNo}`}
-                  >
+                    title={`Download QR for ${prod.serialNo}`}>
                     {downloading.id === prod._id && downloading.loading ? (
                       <LoadingSpinner />
                     ) : (
@@ -670,15 +719,73 @@ function ProductQrModal({ data, dispatch, toggleModal, makeQrDOCX, modalKey, cli
   );
 }
 
-
 export function GetSchedulesForLocation({ service, date = new Date() }) {
-  const dates = service?.flatMap(ser => ser?.schedule?.filter(sch => sch?.date?.split("T")[0] === new Date(date).toISOString().split("T")[0]))
-  const completed = dates?.filter(d => d?.completed && d.status === "Done")
-  const missed = dates.filter(d => d.status === "Missed")
+  const dates = service?.flatMap((ser) =>
+    ser?.schedule?.filter(
+      (sch) =>
+        sch?.date?.split("T")[0] === new Date(date).toISOString().split("T")[0],
+    ),
+  );
+  const completed = dates?.filter((d) => d?.completed && d.status === "Done");
+  const missed = dates.filter((d) => d.status === "Missed");
 
   return (
     <>
-      <div>{completed.length}/{dates?.length} <span className="text-red-600 font-semibold">{missed.length > 0 ? missed.length : ""}</span></div>
+      <div>
+        {completed.length}/{dates?.length}{" "}
+        <span className="text-red-600 font-semibold">
+          {missed.length > 0 ? missed.length : ""}
+        </span>
+      </div>
     </>
-  )
+  );
+}
+
+function QRDownload({
+  isModalOpen,
+  dispatch,
+  handleDownloadAll,
+  docQrLoading,
+  fetchAllLoading,
+}) {
+  const formbody = (
+    <div
+      className={`outline m-1 grid grid-cols-2 gap-3 p-5 ${docQrLoading ? "cursor-not-allowed" : ""}`}>
+      <h3 className="text-2xl font-semibold col-span-full">
+        Select which Qr to download
+      </h3>
+      <div>
+        <button
+          className="bg-blue-500 px-2 py-1 rounded-lg flex items-center gap-2 text-white disabled:cursor-not-allowed"
+          disabled={docQrLoading || fetchAllLoading}
+          onClick={(e) => {
+            e.preventDefault();
+            handleDownloadAll("regular");
+          }}>
+          Regular Qr <PiDownloadSimpleBold />
+        </button>
+      </div>
+      <div>
+        <button
+          className="bg-blue-500 px-2 py-1 rounded-lg flex items-center gap-2 text-white disabled:cursor-not-allowed"
+          disabled={docQrLoading || fetchAllLoading}
+          onClick={(e) => {
+            e.preventDefault();
+            handleDownloadAll("product");
+          }}>
+          Product Qr <PiDownloadSimpleBold />
+        </button>
+      </div>
+    </div>
+  );
+  return (
+    <FormModal
+      formBody={formbody}
+      open={"allqr"}
+      onSubmit={(e) => e.preventDefault()}
+      handleClose={() =>
+        dispatch(toggleModal({ name: "allqr", status: false }))
+      }
+    />
+  );
 }

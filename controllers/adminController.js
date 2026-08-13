@@ -4,7 +4,11 @@ import Client from "../models/clientModel.js";
 import Frequency from "../models/frequencyModal.js";
 import Location from "../models/locationModel.js";
 import Service from "../models/serviceModel.js";
-import { capitalLetter, uploadFile } from "../utils/helperFunction.js";
+import {
+  capitalLetter,
+  compressImage,
+  uploadFile,
+} from "../utils/helperFunction.js";
 import Product from "../models/productModel.js";
 import ProductService from "../models/productService.js";
 import Casual from "../models/casualServiceModel.js";
@@ -15,7 +19,8 @@ export const imageUploader = async (req, res) => {
     if (!req.files || !req.files.image)
       return res.status(400).json({ msg: "No images provided" });
 
-    const url = await uploadFile({ filePath: req.files.image.tempFilePath });
+    const uploadedFile = await compressImage(req.files.image.tempFilePath);
+    const url = await uploadFile({ filePath: uploadedFile });
     if (!url) return res.status(502).json({ msg: "Image upload failed" });
     res.status(200).json({ msg: "Image Uploaded", url });
   } catch (error) {
