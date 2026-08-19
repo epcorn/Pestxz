@@ -84,15 +84,27 @@ export const getAllClient = async (req, res) => {
     const skip = (page - 1) * limit;
     const isFetchAll = limit >= 50;
 
+    if (!req.query.limit) {
+      console.log("this runs");
+      const clients = await Client.find({})
+        .select("")
+        .populate({
+          path: "locations",
+          select: "floor location subLocation service product",
+        });
+      return res.status(200).json(clients);
+    }
     const [clients, totalClients] = await Promise.all([
       isFetchAll
-        ? Client.find().select("-adminPass -adminName")
-        : Client.find().select("-adminPass -adminName").skip(skip).limit(limit),
+        ? Client.find({}).select("-adminPass -adminName")
+        : Client.find({})
+            .select("-adminPass -adminName")
+            .skip(skip)
+            .limit(limit),
       Client.countDocuments(),
     ]);
     if (!clients || clients.length === 0)
       return res.status(400).json({ msg: "clients not found" });
-
     return res.json({
       clients,
       pages: Math.ceil(totalClients / limit),

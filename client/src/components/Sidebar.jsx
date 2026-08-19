@@ -70,7 +70,7 @@ const navList = [
     icon: <AiOutlineAudit className="w-6 h-6" />,
     name: "Auditor",
     to: "/audit",
-    role: ["Admin", "Auditor"],
+    role: ["Admin", "Auditor","BranchAdmin"],
   },
 ];
 

@@ -1,6 +1,7 @@
 const InputRow = ({
   label,
   register,
+  name,
   id,
   onchange,
   placeholder,
@@ -8,13 +9,15 @@ const InputRow = ({
   type = "text",
   disabled = false,
   cls = "mt-2",
-  min
+  inputCls,
+  min,
+  defaultValue = '',
 }) => {
 
   return (
     <div className={`relative ${cls}`}>
       <label
-        htmlFor={id}
+        htmlFor={type === "radio" ? name : id}
         className="block text-md font-medium leading-6 text-gray-900"
       >
         {label}
@@ -24,11 +27,12 @@ const InputRow = ({
       </label>
       <input
         type={type}
-        id={id}
+        id={type === "radio" ? name : id}
         disabled={disabled}
         min={min}
-        className="mt-0.5 w-full py-0.5 px-2 border-2 rounded-md outline-none transition border-neutral-400 focus:border-black disabled:bg-slate-100"
+        className={`mt-0.5 w-full py-0.5 px-2 border-2 rounded-md outline-none transition border-neutral-400 focus:border-black disabled:bg-slate-100 ${inputCls}`}
         placeholder={placeholder}
+        defaultValue={defaultValue}
         {...register(id, { required: required, onChange: onchange })}
       />
     </div>

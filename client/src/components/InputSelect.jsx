@@ -15,7 +15,7 @@ const InputSelect = ({
   const getSelectValue = () => {
     if (!value) return isMulti ? [] : null;
     if (isMulti) return Array.isArray(value) ? value : [];
-    return options?.find((c) => c.value === value?.value) || null;
+    return options?.find((c) => c.value === value?.value) || [{ value: "", label: "" }];
   };
 
   const sharedStyles = {

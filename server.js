@@ -32,6 +32,12 @@ const app = express();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// red console
+const originalConsoleError = console.error;
+console.error = function (...args) {
+  originalConsoleError("\x1b[31m" + args.join(" ") + "\x1b[0m");
+};
+
 const httpServer = createServer(app);
 export const io = new Server(httpServer, {
   cors: {

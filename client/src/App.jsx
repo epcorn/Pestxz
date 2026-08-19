@@ -70,7 +70,7 @@ const Router = createBrowserRouter(
           <Route path="dashboard/reports" element={<Reports />} />
           <Route path="dashboard/locations" element={<Locations />} />
         </Route>
-        <Route element={<ProtectedRoute roles={["Admin", 'Auditor',]} />}>
+        <Route element={<ProtectedRoute roles={["Admin", 'Auditor', "BranchAdmin"]} />}>
           <Route path="/audit" element={<Auditor />} />
         </Route>
         <Route path="*" element={<Navigate to={'/'} replace />} />
