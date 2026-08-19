@@ -57,7 +57,7 @@ const Users = () => {
     : data;
 
   return (
-    <div className="p-4 md:p-8 bg-gray-50 min-h-screen">
+    <div className="p-2 bg-gray-50 min-h-screen">
       {(isLoading || isFetching) ? (
         <Loading />
       ) : (
@@ -83,7 +83,7 @@ const Users = () => {
                 <thead>
                   <tr className="bg-gray-300 border-b border-gray-200 text-sm uppercase tracking-wide text-gray-700 ">
                     <th className="px-5 py-3.5 text-left font-semibold">Name</th>
-                    <th className="px-5 py-3.5 text-left font-semibold">Email</th>
+                    {/* <th className="px-5 py-3.5 text-left font-semibold">Email</th> */}
                     <th className="px-5 py-3.5 text-left font-semibold whitespace-nowrap">Phone Number</th>
                     <th className="px-5 py-3.5 text-left font-semibold">Role</th>
 
@@ -119,13 +119,15 @@ const Users = () => {
                   {filteredUsers?.map((item) => (
                     <tr key={item._id} className="hover:bg-gray-50 transition-colors *:not-last:border-r *:not-last:border-gray-300">
                       {/* Name */}
-                      <td className="px-5 py-3.5">
+                      <td className="px-5 py-3.5 flex flex-col">
                         <span className="font-medium whitespace-nowrap text-gray-800">{item?.name}
                         </span>
+                        <span>{item.email}</span>
                       </td>
 
                       {/* Email */}
-                      <td className="px-5 py-3.5 text-gray-500">{item?.email}</td>
+                      {/* <td className="px-5 py-3.5 text-gray-500">{item?.email}</td> */}
+
                       <td className="px-5 py-3.5 text-gray-500" onClick={() => setReveal({ name: item._id, status: true })} >{reveal.name === item._id ? item?.phone ? item?.phone : "No Number" : "**********"}</td>
 
                       {/* Role */}
@@ -133,9 +135,9 @@ const Users = () => {
                         {user.role === "Admin" ? (
                           <div className="flex flex-col gap-1">
                             <span className="font-medium text-gray-700">{item?.role}</span>
-                            <span className="inline-flex w-fit items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-gray-100 text-gray-500 whitespace-nowrap">
+                            {/* <span className="inline-flex w-fit items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-gray-100 text-gray-500 whitespace-nowrap">
                               {item?.client?.name || item?.type || "—"}
-                            </span>
+                            </span> */}
                           </div>
                         ) : (
                           <span className="font-medium text-gray-700">
@@ -149,7 +151,7 @@ const Users = () => {
                         <td className="px-5 py-3.5 text-gray-500">
                           {item?.type === "ClientEmployee"
                             ? item?.client?.name
-                            : "Employee"}
+                            : "Pest Employee"}
                         </td>
                       )}
 

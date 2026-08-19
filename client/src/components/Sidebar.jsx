@@ -3,6 +3,7 @@ import { AiOutlineMenuFold, AiOutlineMenuUnfold } from "react-icons/ai";
 import { BsBarChartFill, BsDatabaseFillAdd } from "react-icons/bs";
 import { FaBuilding, FaFileAlt, FaPowerOff, FaUser } from "react-icons/fa";
 import { FaBug } from "react-icons/fa6";
+import { AiOutlineAudit } from "react-icons/ai";
 import { MdLocationOn } from "react-icons/md";
 import { useDispatch, useSelector } from "react-redux";
 import { useMatch, useNavigate } from "react-router-dom";
@@ -65,6 +66,12 @@ const navList = [
     to: "/reports",
     role: ["Admin", "ClientAdmin"],
   },
+  {
+    icon: <AiOutlineAudit className="w-6 h-6" />,
+    name: "Auditor",
+    to: "/audit",
+    role: ["Admin", "Auditor"],
+  },
 ];
 
 const Sidebar = () => {
@@ -91,6 +98,7 @@ const Sidebar = () => {
       toast.error(error?.data?.msg || error.error);
     }
   };
+  console.log(secondRoute)
 
   useEffect(() => {
     if (secondRoute) {
@@ -100,7 +108,8 @@ const Sidebar = () => {
 
   const handleNavigate = (to) => {
     setShow(!show);
-    navigate(`/dashboard${to}`);
+    if (to === '/audit') navigate(to);
+    else navigate(`/dashboard${to}`);
   };
 
   return (

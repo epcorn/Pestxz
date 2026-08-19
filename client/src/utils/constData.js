@@ -32,6 +32,7 @@ export const pestRoles = [
   { label: "TeamLeader", value: "TeamLeader" },
   { label: "Supervisor", value: "Supervisor" },
   { label: "Operator", value: "Operator" },
+  { label: "Auditor", value: "Auditor" },
 ];
 
 export const clientRoles = [

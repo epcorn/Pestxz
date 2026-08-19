@@ -767,17 +767,19 @@ export const complaintLocation = async (req, res) => {
       });
     }
 
-    const [locations, floors] = await Promise.all([
+    const [locations, floors, clients] = await Promise.all([
       Location.find({ client: clientId })
         .select("floor location subLocation service")
         .lean(),
 
       Location.distinct("floor", { client: clientId }),
+      Client.find({}).select("name contractNo phone").lean(),
     ]);
 
     return res.status(200).json({
       locations,
       floors,
+      clients,
     });
   } catch (error) {
     console.error("Error in complaintLocation:", error);

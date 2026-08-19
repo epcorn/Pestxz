@@ -15,6 +15,7 @@ import { socket } from "./socket";
 import NotificationManager from "./components/NotificationManager";
 import React from "react";
 import Dashboard from './pages/Dashboard'
+import Auditor from "./pages/Auditor";
 
 // 1. Lazy load ALL page components individually
 const Landing = React.lazy(() => import("./pages/Landing"));
@@ -49,8 +50,8 @@ const Router = createBrowserRouter(
   createRoutesFromElements(
     <Route path="/" element={<Layout />}>
       <Route index={true} path="/" element={<Landing />} />
-      <Route path="" element={<MainLayout />}>
-        <Route path="" element={<ProtectedRoute />}>
+      <Route element={<MainLayout />}>
+        <Route element={<ProtectedRoute />}>
           <Route path="dashboard/scan" element={<QrScanner />} />
           <Route index={true} path="dashboard/stats" element={<Dashboard />} />
           <Route path="dashboard/complaints" element={<Complaints />} />
@@ -58,16 +59,19 @@ const Router = createBrowserRouter(
           <Route path="/complaint/:id" element={<SingleComplaint />} />
           <Route path="/unschedule/:id" element={<SingleUnschedule />} />
         </Route>
-        <Route path="" element={<ProtectedRoute roles={["Admin", "Supervisor", "TeamLeader", "BranchAdmin"]} />}>
+        <Route element={<ProtectedRoute roles={["Admin", "Supervisor", "TeamLeader", "BranchAdmin"]} />}>
           <Route path="dashboard/clients" element={<Clients />} />
           <Route path="dashboard/services" element={<Services />} />
           <Route path="dashboard/client/:id" element={<SingleClient />} />
         </Route>
 
-        <Route path="" element={<ProtectedRoute roles={["Admin", "ClientAdmin"]} />} >
+        <Route element={<ProtectedRoute roles={["Admin", "ClientAdmin"]} />} >
           <Route path="dashboard/users" element={<Users />} />
           <Route path="dashboard/reports" element={<Reports />} />
           <Route path="dashboard/locations" element={<Locations />} />
+        </Route>
+        <Route element={<ProtectedRoute roles={["Admin", 'Auditor',]} />}>
+          <Route path="/audit" element={<Auditor />} />
         </Route>
         <Route path="*" element={<Navigate to={'/'} replace />} />
       </Route>

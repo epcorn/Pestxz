@@ -13,7 +13,10 @@ import adminRoute from "./routes/adminRoute.js";
 import productRoute from "./routes/productRoutes.js";
 import locationRoute from "./routes/locationRoute.js";
 import serviceRoute from "./routes/serviceRoute.js";
+import auditorRoute from "./routes/auditorRoute.js";
+
 import { notFound } from "./middleware/notFound.js";
+
 import {
   authenticateUser,
   authorizeUser,
@@ -94,6 +97,7 @@ app.use(
 );
 app.use("/api/location", authenticateUser, locationRoute);
 app.use("/api/service", authenticateUser, serviceRoute);
+app.use("/api/auditor", authenticateUser, auditorRoute);
 
 if (process.env.NODE_ENV === "production") {
   app.use(express.static(path.join(__dirname, "client", "dist")));
