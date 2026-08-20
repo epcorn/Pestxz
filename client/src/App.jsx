@@ -1,4 +1,4 @@
-import { toast, ToastContainer } from "react-toastify";
+import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import {
   Navigate,
@@ -9,12 +9,10 @@ import {
   createRoutesFromElements,
 } from "react-router-dom";
 import { Loading, ProtectedRoute } from "./components";
-import { useSelector } from "react-redux";
-import { useEffect, Suspense } from "react";
-import { socket } from "./socket";
+import { Suspense } from "react";
 import NotificationManager from "./components/NotificationManager";
 import React from "react";
-import Dashboard from './pages/Dashboard'
+import Dashboard from './pages/Dashboard';
 import Auditor from "./pages/Auditor";
 
 // 1. Lazy load ALL page components individually
@@ -80,7 +78,6 @@ const Router = createBrowserRouter(
 );
 
 function App() {
-  // Service Worker registration logic remains identical
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", () => {
       navigator.serviceWorker

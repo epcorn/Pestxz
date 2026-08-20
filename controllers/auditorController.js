@@ -1,23 +1,22 @@
-import Client from "../models/clientModel.js";
-import Location from "../models/locationModel.js";
+import { Audit } from "../models/auditor/auditModal.js";
 
-export const getClientInfo = async (req, res) => {
-  const { id } = req.params;
-
+export const createAuditReport = async (req, res) => {
+  const data = req.body;
   try {
-    if (id) {
-      const data = await Client.findById(id).populate({
-        path: "locations",
-        select: "floor location subLocations",
-      });
+    console.log(data);
+    const { meta, sections } = data;
+    const audit = await Audit.create({
+      ...meta,
+      auditor: req.user._id,
+      inspectionDate: new Date(),
+      sections: [...sections],
+    });
 
-      if (!data) return res.status(404).json({ message: "Client not found" });
-      return res.status(200).json(data);
-    }
-
-    const data = await Client.find({}).select("name");
-    return res.status(200).json(data);
+    res.status(200).json(audit);
   } catch (error) {
-    return res.status(500).json({ message: error.message });
+    console.error(error);
+    res
+      .status(500)
+      .json({ error: error.message, msg: "Internal server error" });
   }
 };

@@ -3,36 +3,37 @@ export const questions = {
     {
       id: "mall1",
       section: "Documentation & Records",
-      questns: [
+      sectionId:"arsm1",
+      questions: [
         {
           id: "mdr1",
-          question: "Is there a copy of The Contract  not available onsite?",
-          comments: "Contract copy not available onsite.",
-          recommnds:
+          question: "Is there a copy of The Contract not available onsite?",
+          comment: "Contract copy not available onsite.",
+          recommendation:
             "Maintain a signed copy of the current pest control contract onsite.",
         },
         {
           id: "mdr2",
           question:
             "Is there a latest service done record not available on site?",
-          comments:
+          comment:
             "Latest pest control service record was not available onsite.",
-          recommnds:
+          recommendation:
             "Maintain updated pest control service records/service reports onsite.",
         },
         {
           id: "mdr3",
           question:
             "Is there a Certificate of Pest Control  not available onsite?",
-          comments: "Valid Pest Control Certificate was not available onsite",
-          recommnds:
+          comment: "Valid Pest Control Certificate was not available onsite",
+          recommendation:
             "Obtain and maintain a valid Pest Control Certificate onsite",
         },
         {
           id: "mdr4",
           question: "Is there a Bait Map  not available onsite?",
-          comments: "Bait map was not available onsite to verify the location.",
-          recommnds:
+          comment: "Bait map was not available onsite to verify the location.",
+          recommendation:
             "Prepare and maintain an updated bait map indicating all bait stations.",
         },
       ],
@@ -40,97 +41,98 @@ export const questions = {
     {
       id: "mall2",
       section: "Pest Activity & Control",
-      questns: [
+      sectionId:"arsm2",
+      questions: [
         {
           id: "pac1",
           question: "Any live cockroaches observed?",
-          comments: "Live Cockroaches were crawling near Bar area",
-          recommnds:
+          comment: "Live Cockroaches were crawling near Bar area",
+          recommendation:
             "Carry out an immediate intensive cockroach treatment, identify harbourage points, and strengthen sanitation and monitoring to eliminate the infestation.",
         },
         {
           id: "pac2",
           question: "Any cockroach egg cases found on the premises?",
-          comments:
+          comment:
             "Cockroach egg cases were observed onsite, indicating potential breeding activity.",
-          recommnds:
+          recommendation:
             "Conduct targeted cockroach treatment, remove egg cases safely, inspect surrounding areas for harbourage, and implement regular monitoring.",
         },
         {
           id: "pac3",
           question: "Any Rodent droppings observed on-site?",
-          comments:
+          comment:
             "Rodent droppings were observed onsite, indicating possible rodent activity.",
-          recommnds:
+          recommendation:
             "Conduct a detailed rodent inspection and control treatment, identify entry points, improve housekeeping, and seal all potential gaps/openings.",
         },
         {
           id: "pac4",
           question: "Are live rodents observed on the premises?",
-          comments: "Fresh footprint of rodent were observed.",
-          recommnds: "Conduct an emergency rodent control program.",
+          comment: "Fresh footprint of rodent were observed.",
+          recommendation: "Conduct an emergency rodent control program.",
         },
         {
           id: "pac5",
           question: "Are dead pests found?",
-          comments:
+          comment:
             "dead cockroaches were found inside the corners of food storage compartment.",
-          recommnds:
+          recommendation:
             "Remove all dead insects immediately, thoroughly clean and sanitize the area.",
         },
         {
           id: "pac6",
           question:
             "Any flying insects (flies, mosquitoes, moths, etc.) present?",
-          comments: "Flying insect activity was observed onsite.",
-          recommnds:
+          comment: "Flying insect activity was observed onsite.",
+          recommendation:
             "Identify and eliminate breeding/attraction sources, improve waste management and sanitation, ensure doors/windows are properly screened, and strengthen flying-insect monitoring and control.",
         },
         {
           id: "pac7",
           question: "Are critical pest control devices missing from the site?",
-          comments: "Critical pest control devices missing",
-          recommnds:
+          comment: "Critical pest control devices missing",
+          recommendation:
             "Install all required pest monitoring devices (rodent stations, glue boards, insect monitors, etc.)",
         },
         {
           id: "pac8",
           question:
             "Is insect activity observed near waste disposal or garbage storage areas?",
-          comments:
+          comment:
             "Insect activity was observed around the waste disposal/garbage storage area.",
-          recommnds:
+          recommendation:
             "Improve waste handling and housekeeping, ensure garbage bins remain covered, clean the surrounding area regularly, and implement targeted insect control treatment.",
         },
         {
           id: "pac9",
           question: "Any Visible Lizard infestation",
-          comments:
+          comment:
             "Lizard activity was observed onsite, indicating potential access and availability of food sources.",
-          recommnds:
+          recommendation:
             "Identify and seal potential entry points, reduce insect activity that may serve as a food source, improve housekeeping, and implement suitable monitoring/control measures.",
         },
         {
           id: "pac10",
           question: "is there any Cockroach trap not available  onsite?",
-          comments:
+          comment:
             "Cockroach monitoring traps were not observed in the inspected area.",
-          recommnds:
+          recommendation:
             "Install suitable cockroach monitoring traps at identified high-risk areas and maintain a monitoring schedule to track pest activity.",
         },
         {
           id: "pac11",
           question: "is there any Lizard trap not available onsite?",
-          comments: "No lizard monitoring/control traps were observed onsite.",
-          recommnds:
+          comment: "No lizard monitoring/control traps were observed onsite.",
+          recommendation:
             "Assess high-risk areas and implement suitable monitoring/control measures for lizard activity, along with sealing of potential entry points.",
         },
         {
           id: "pac12",
           question: "is there any Rodent trap not available onsite?",
-          comments:
+          comment:
             "Rodent monitoring/trapping devices were not observed in the inspected area.",
-          recommnds:
+          recommendation:
             "Install appropriate rodent monitoring devices at strategic locations based on the site risk assessment and maintain regular inspection and servicing records.",
         },
       ],
@@ -138,104 +140,105 @@ export const questions = {
     {
       id: "mall3",
       section: "Infrastructure Condition",
-      questns: [
+      sectionId:"arsm3",
+      questions: [
         {
           id: "ic1",
-          questio: "Are there any cracks or gaps in the walls?",
-          comments:
+          question: "Are there any cracks or gaps in the walls?",
+          comment:
             "Crack in wall found in kitchen area and broken plugging point in strage area.",
-          recommnds:
+          recommendation:
             "Repair and seal all wall cracks using suitable pest-proof materials to eliminate pest harbourage.",
         },
         {
           id: "ic2",
           question: "Are there any cracks or gaps in the flooring?",
-          comments:
+          comment:
             "Gaps/cracks were observed in the flooring, which may provide potential pest harbourage.",
-          recommnds:
+          recommendation:
             "Repair and seal all floor cracks and gaps using suitable durable materials to prevent pest entry and harbourage.",
         },
         {
           id: "ic3",
           question: "Are there any cracks or gaps in the ceiling?",
-          comments: "Gap found on the corner of the ceiling in storage room",
-          recommnds:
+          comment: "Gap found on the corner of the ceiling in storage room",
+          recommendation:
             "Seal ceiling gaps and damaged areas to prevent pest entry and nesting.",
         },
         {
           id: "ic4",
           question: "Are there gaps around doors that could allow pest entry?",
-          comments:
+          comment:
             "Gaps were observed around the door area, providing potential access points for pests.",
-          recommnds:
+          recommendation:
             "Install/repair door sweeps and properly seal gaps around door frames to minimize pest entry.",
         },
         {
           id: "ic5",
           question: "Are windows improperly sealed or damaged?",
-          comments:
+          comment:
             "Gaps/damaged sealing were observed around the window area, creating a potential pest entry point.",
-          recommnds:
+          recommendation:
             "Repair damaged window fittings and seal all gaps. Install/maintain suitable insect mesh where required.",
         },
         {
           id: "ic6",
           question:
             "Are service entry points (pipes, cables, ducts, etc.) inadequately sealed?",
-          comments:
+          comment:
             "Gaps were observed around service entry points, providing potential pest entry and harbourage points.",
-          recommnds:
+          recommendation:
             "Seal all gaps around pipes, cables, ducts and other service penetrations using appropriate pest-proof sealing materials.",
         },
         {
           id: "ic7",
           question: "Is ventilation inadequate or poorly maintained?",
-          comments:
+          comment:
             "Ventilation areas require improvement/maintenance and may provide potential pest entry points.",
-          recommnds:
+          recommendation:
             "Ensure ventilation systems are properly maintained and fitted with suitable protective mesh/screens to prevent pest entry.",
         },
         {
           id: "ic8",
           question:
             "Are drainage covers damaged, missing, or improperly fitted?",
-          comments:
+          comment:
             "Drainage covers were found to be damaged/improperly fitted, creating a potential pest entry route.",
-          recommnds:
+          recommendation:
             "Repair or replace damaged drainage covers and ensure all drains are properly covered and securely fitted.",
         },
         {
           id: "ic9",
           question:
             "Are utility penetrations (electrical, plumbing, gas lines) unsealed?",
-          comments:
+          comment:
             "Unsealed gaps were observed around utility/service penetrations.",
-          recommnds:
+          recommendation:
             "Seal all utility penetrations using suitable pest-proof materials to prevent pest entry and harbourage.",
         },
         {
           id: "ic10",
           question:
             "Is there evidence of water leakage from walls, ceilings, or pipes?  ",
-          comments:
+          comment:
             "Signs of water leakage/dampness were observed in the inspected area, which may contribute to pest activity.",
-          recommnds:
+          recommendation:
             "Identify and rectify the source of leakage at the earliest. Keep affected areas dry and repair damaged surfaces to prevent moisture-related pest activity.",
         },
         {
           id: "ic11",
           question: "Are there any rodent entry points present?",
-          comments:
+          comment:
             "Potential rodent entry points were identified in the inspected area.",
-          recommnds:
+          recommendation:
             "Immediately seal all identified rodent entry points using durable rodent-proof materials and conduct regular inspection to ensure the seals remain intact.",
         },
         {
           id: "ic12",
           question: "is there any Rodent trap not available onsite?",
-          comments:
+          comment:
             "Rodent monitoring/trapping devices were not observed in the inspected area.",
-          recommnds:
+          recommendation:
             "Install appropriate rodent monitoring devices at strategic locations based on the site risk assessment and maintain regular inspection and servicing records.",
         },
       ],
@@ -243,96 +246,97 @@ export const questions = {
     {
       id: "mall4",
       section: "Sanitation & Housekeeping",
-      questns: [
+      sectionId:"arsm4",
+      questions: [
         {
           id: "sh1",
           question: "Are there any cracks or gaps in the walls?",
-          comments:
+          comment:
             "Crack in wall found in kitchen area and broken plugging point in strage area.",
-          recommnds:
+          recommendation:
             "Repair and seal all wall cracks using suitable pest-proof materials to eliminate pest harbourage.",
         },
         {
           id: "sh2",
           question: "Are there any cracks or gaps in the flooring?",
-          comments:
+          comment:
             "Gaps/cracks were observed in the flooring, which may provide potential pest harbourage.",
-          recommnds:
+          recommendation:
             "Repair and seal all floor cracks and gaps using suitable durable materials to prevent pest entry and harbourage.",
         },
         {
           id: "sh3",
           question: "Are there any cracks or gaps in the ceiling?",
-          comments: "Gap found on the corner of the ceiling in storage room",
-          recommnds:
+          comment: "Gap found on the corner of the ceiling in storage room",
+          recommendation:
             "Seal ceiling gaps and damaged areas to prevent pest entry and nesting.",
         },
         {
           id: "sh4",
           question: "Are there gaps around doors that could allow pest entry?",
-          comments:
+          comment:
             "Gaps were observed around the door area, providing potential access points for pests.",
-          recommnds:
+          recommendation:
             "Install/repair door sweeps and properly seal gaps around door frames to minimize pest entry.",
         },
         {
           id: "sh5",
           question: "Are windows improperly sealed or damaged?",
-          comments:
+          comment:
             "Gaps/damaged sealing were observed around the window area, creating a potential pest entry point.",
-          recommnds:
+          recommendation:
             "Repair damaged window fittings and seal all gaps. Install/maintain suitable insect mesh where required.",
         },
         {
           id: "sh6",
           question:
             "Are service entry points (pipes, cables, ducts, etc.) inadequately sealed?",
-          comments:
+          comment:
             "Gaps were observed around service entry points, providing potential pest entry and harbourage points.",
-          recommnds:
+          recommendation:
             "Seal all gaps around pipes, cables, ducts and other service penetrations using appropriate pest-proof sealing materials.",
         },
         {
           id: "sh7",
           question: "Is ventilation inadequate or poorly maintained?",
-          comments:
+          comment:
             "Ventilation areas require improvement/maintenance and may provide potential pest entry points.",
-          recommnds:
+          recommendation:
             "Ensure ventilation systems are properly maintained and fitted with suitable protective mesh/screens to prevent pest entry.",
         },
         {
           id: "sh8",
           question:
             "Are drainage covers damaged, missing, or improperly fitted?",
-          comments:
+          comment:
             "Drainage covers were found to be damaged/improperly fitted, creating a potential pest entry route.",
-          recommnds:
+          recommendation:
             "Repair or replace damaged drainage covers and ensure all drains are properly covered and securely fitted.",
         },
         {
           id: "sh9",
           question:
             "Are utility penetrations (electrical, plumbing, gas lines) unsealed?",
-          comments:
+          comment:
             "Unsealed gaps were observed around utility/service penetrations.",
-          recommnds:
+          recommendation:
             "Seal all utility penetrations using suitable pest-proof materials to prevent pest entry and harbourage.",
         },
         {
           id: "sh10",
           question:
             "Is there evidence of water leakage from walls, ceilings, or pipes?",
-          comments:
+          comment:
             "Signs of water leakage/dampness were observed in the inspected area, which may contribute to pest activity.",
-          recommnds:
+          recommendation:
             "Identify and rectify the source of leakage at the earliest. Keep affected areas dry and repair damaged surfaces to prevent moisture-related pest activity.",
         },
         {
           id: "sh11",
           question: "Are there any rodent entry points present?",
-          comments:
+          comment:
             "Potential rodent entry points were identified in the inspected area.",
-          recommnds:
+          recommendation:
             "Immediately seal all identified rodent entry points using durable rodent-proof materials and conduct regular inspection to ensure the seals remain intact.",
         },
       ],
@@ -340,56 +344,57 @@ export const questions = {
     {
       id: "mall5",
       section: "Food Safety Practices ",
-      questns: [
+      sectionId:"arsm5",
+      questions: [
         {
           id: "fsp1",
           question: "Are there any hygiene violations by food handlers?",
-          comments:
+          comment:
             "Gaps in food handler hygiene practices were observed during the inspection.",
-          recommnds:
+          recommendation:
             "Reinforce personal hygiene requirements through regular training, supervision, and routine hygiene checks.",
         },
         {
           id: "fsp2",
           question: "Are food items and utensils stored improperly?",
-          comments:
+          comment:
             "Food items and/or utensils were observed to be improperly stored, increasing the risk of contamination and pest exposure.",
-          recommnds:
+          recommendation:
             "Store food items in clean, covered and designated areas. Keep utensils properly protected and elevated from the floor.",
         },
         {
           id: "fsp3",
           question:
             "Is the food preparation area unhygienic or inadequately maintained?",
-          comments:
+          comment:
             "Inadequate cleanliness and housekeeping were observed in the food preparation area.",
-          recommnds:
+          recommendation:
             "Thoroughly clean and sanitize the food preparation area and maintain a documented cleaning and sanitation schedule.",
         },
         {
           id: "fsp4",
           question: "Are any expired, damaged, or spoiled food items present?",
-          comments:
+          comment:
             "Expired/damaged or potentially unsuitable food items were observed during the inspection.",
-          recommnds:
+          recommendation:
             "Immediately segregate and dispose of affected items as per the site's food disposal procedure. Implement regular stock and expiry-date checks.",
         },
         {
           id: "fsp5",
           question:
             "Are food handlers not wearing appropriate protective clothing (hairnets, gloves, aprons, etc.)?",
-          comments:
+          comment:
             "Food handlers were observed without the required protective clothing during food handling activities.",
-          recommnds:
+          recommendation:
             "Ensure all food handlers wear appropriate protective clothing, including hairnets, aprons and gloves where required, and conduct regular compliance monitoring.",
         },
         {
           id: "fsp6",
           question:
             "Are cleaning chemicals stored near food items or food-contact materials?",
-          comments:
+          comment:
             "Cleaning chemicals were stored in proximity to food items/food-contact materials, creating a potential contamination risk.",
-          recommnds:
+          recommendation:
             "Store all cleaning chemicals in a designated, labelled area away from food items and food-contact surfaces. Ensure chemicals are properly closed and segregated.",
         },
       ],
@@ -397,7 +402,7 @@ export const questions = {
     {
       id: "mall6",
       section: "Audit Risk Scoring Matrix",
-      questns: [
+      questions: [
         {
           id: "arsm1",
           category: "Documentation & Records",

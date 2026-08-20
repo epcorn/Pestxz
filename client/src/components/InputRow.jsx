@@ -11,7 +11,7 @@ const InputRow = ({
   cls = "mt-2",
   inputCls,
   min,
-  defaultValue = '',
+  ...args
 }) => {
 
   return (
@@ -32,8 +32,8 @@ const InputRow = ({
         min={min}
         className={`mt-0.5 w-full py-0.5 px-2 border-2 rounded-md outline-none transition border-neutral-400 focus:border-black disabled:bg-slate-100 ${inputCls}`}
         placeholder={placeholder}
-        defaultValue={defaultValue}
         {...register(id, { required: required, onChange: onchange })}
+        {...args}
       />
     </div>
   );

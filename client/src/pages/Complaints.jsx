@@ -1,7 +1,5 @@
-import { Link } from "react-router-dom";
-import { AlertMessage, Button, ComplaintTable, InputSelect, Loading } from "../components";
+import { AlertMessage, Button, ComplaintTable, Loading } from "../components";
 import { useAllComplaintsQuery, useAssignWorkMutation } from "../redux/serviceSlice";
-import { dateFormat, progress } from "../utils/helperFunctions";
 import { useSelector } from "react-redux";
 import { useDispatch } from "react-redux";
 import { toggleModal } from "../redux/helperSlice";
@@ -58,7 +56,7 @@ const Complaints = () => {
     setSearch("");
     setLocation({ client: "", floor: "" });
   };
-  const complaints = data?.complaints?.filter(d => d?.type !== "Regular") ?? []
+  const complaints = data?.complaints?.filter(d => d?.type !== "Regular") ?? [];
 
   return (
     <>

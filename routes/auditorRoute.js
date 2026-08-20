@@ -1,8 +1,8 @@
-import express from 'express';
-import { getClientInfo } from '../controllers/auditorController.js';
+import express from "express";
+import { createAuditReport } from "../controllers/auditorController.js";
 
 const router = express.Router();
 
-router.get('/clients', getClientInfo)
+router.post("/create", createAuditReport);
 
 export default router;

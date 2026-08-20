@@ -98,7 +98,7 @@ const Sidebar = () => {
       toast.error(error?.data?.msg || error.error);
     }
   };
-  console.log(secondRoute)
+  
 
   useEffect(() => {
     if (secondRoute) {

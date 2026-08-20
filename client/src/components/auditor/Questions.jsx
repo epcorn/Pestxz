@@ -1,57 +1,58 @@
-import React from "react";
 import InputRow from "../InputRow";
 
-function Questions({ register, watch, control, data }) {
+function Questions({ register, watch, data, scoreBySectionId }) {
+  const isMatrix = data.section === "Audit Risk Scoring Matrix";
+  const sectionScore = scoreBySectionId?.[data.sectionId];
 
-  const getScoreChecked = ({ outOf, total, checked }) => {
-    // const score = (total / outOf) + checked
-    return 'score';
-  }
+  const matrixCategories = isMatrix ? Object.values(scoreBySectionId) : [];
+
+  const total = matrixCategories.reduce((acc, val) => {
+    return acc + (val.achieved || 0);
+  }, 0)
 
   return (
-    <section className=" bg-white border border-slate-400 rounded-b-2xl shadow-sm">
-      {/* Section Header */}
-      <div className="sticky top-40 z-2 [corner-shape:scoop] rounded-b-2xl bg-slate-800 px-4 py-3 border-b border-slate-700 flex items-center justify-between">
-        <h3 className="text-base sm:text-lg font-bold text-white tracking-wide uppercase">
-          {data.section}
-        </h3>
-        <span className="text-xs bg-slate-700 text-slate-200 px-2 py-0.5 rounded font-mono">
-          {data.questns.length} Checkpoints
-        </span>
+    <section className=" border border-slate-400 rounded-b-2xl shadow-sm">
+      <div className="sticky top-40 z-5 rounded-b-2xl [corner-shape:scoop] bg-slate-800 px-4 py-3 border-b border-slate-700 flex items-center justify-between">
+        <h3 className="text-white font-semibold text-lg">{data.section}</h3>
+        <p className="flex items-center gap-5">
+          <span className="text-slate-300 text-sm">{data.questions?.length || 0} Checkpoints</span>
+          {sectionScore && <span className="text-white ">{sectionScore?.achieved} - Scores</span>}
+        </p>
       </div>
 
-      {/* Questions Container */}
-      {data.id.endsWith("6") && data.section === "Audit Risk Scoring Matrix" ? <div>
-        <table className="table-auto min-w-full">
-          <thead className="table-header-group *:not-last:border-r text-center border-b">
-            <tr>
-              <th>Sr. No.</th>
-              <th>Categories</th>
-              <th>Audit Points</th>
-              <th>Score Achived</th>
+      {/* Render Questions or Matrix Table */}
+      {/* <div className="p-4 space-y-4"> */}
+      {isMatrix ? (
+        <table className="w-full text-left text-sm">
+          <thead>
+            <tr className="border-b">
+              <th className="py-2 text-center">Sr. No.</th>
+              <th className="py-2">Category</th>
+              <th className="py-2 text-center">Points</th>
+              <th className="py-2 text-center">Achieved</th>
             </tr>
           </thead>
           <tbody>
-            {data.questns.map((qn, i) => (
-              <tr key={qn.id} className="*:not-last:border-r text-center border-b border-b-gray-300 hover:bg-gray-200">
-                <td>{i + 1}</td>
-                <td>{qn.category}</td>
-                <td>{qn.points}</td>
-                <td>{getScoreChecked({ outOf: qn.points, total: data.questns.length })}</td>
+            {matrixCategories.map((cat, i) => (
+              <tr key={cat.id} className="border-b">
+                <td className="py-2 text-center">{i + 1}</td>
+                <td className="py-2">{cat.category}</td>
+                <td className="py-2 text-center">{cat.points}</td>
+                <td className="py-2 text-center">{cat.achieved}</td>
               </tr>
             ))}
-            <tr className="text-center font-bold border-t">
-              <td></td>
-              <td className="">Total</td>
-              <td className=""></td>
-              <td className=""></td>
+            <tr>
+              <th></th>
+              <th className="text-right pr-10 text-lg">Total </th>
+              <th className="text-center">100</th>
+              <th className="text-center">{total}</th>
             </tr>
           </tbody>
         </table>
-      </div>
+      )
         :
-        <div className="p-3 sm:p-4 space-y-4 bg-slate-50">
-          {data.questns.map((que, i) => {
+        <div className="p-3 sm:p-4 space-y-4 bg-slate-300">
+          {data.questions.map((que, i) => {
             const checks = watch(`${que.id}_checks`);
             const isCheckYes = checks === "Yes";
             const isCheckNo = checks === "No";
@@ -69,7 +70,7 @@ function Questions({ register, watch, control, data }) {
                 {/* Question Text */}
                 <InputRow
                   defaultValue={que.question}
-                  id={`${que.id}_questn`}
+                  id={`${que.id}_question`}
                   label={`Check #${i + 1}`}
                   register={register}
                   inputCls="bg-slate-500 text-lg text-white font-semibold"
@@ -78,19 +79,19 @@ function Questions({ register, watch, control, data }) {
                 {/* Action Controls */}
                 <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
                   {/* Answer Selector */}
-                  <div className="bg-slate-100 p-2 rounded-lg border border-slate-200">
-                    <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5">
-                      Observation Result <span className="text-red-500">*</span>
+                  <div className="bg-slate-100 p-2 rounded-lg border border-slate-500">
+                    <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">
+                      Observation<span className="text-red-500">*</span>
                     </label>
-                    <div className="grid grid-cols-2 gap-2">
-                      <InputRadio 
+                    <div className="grid grid-cols-2 gap-2 *:outline *:rounded-lg *:outline-gray-400">
+                      <InputAuditRadio
                         id={`${que.id}_yes`}
                         label="Yes (Issue)"
                         value="Yes"
                         name={`${que.id}_checks`}
                         register={register}
                       />
-                      <InputRadio
+                      <InputAuditRadio
                         id={`${que.id}_no`}
                         label="No (Pass)"
                         value="No"
@@ -103,6 +104,7 @@ function Questions({ register, watch, control, data }) {
                   {/* Evidence Upload */}
                   <div className="md:col-span-2">
                     <InputRow
+                      multiple accept="image/*"
                       type="file"
                       register={register}
                       id={`${que.id}_images`}
@@ -120,7 +122,7 @@ function Questions({ register, watch, control, data }) {
                       label="Auditor's Findings / Comment"
                       register={register}
                       id={`${que.id}_comment`}
-                      defaultValue={isCheckYes ? que.comments : ""}
+                      defaultValue={isCheckYes ? que?.comment : ""}
                       required={false}
                       placeholder="Describe severity or condition..."
                       inputCls=''
@@ -130,7 +132,7 @@ function Questions({ register, watch, control, data }) {
                       register={register}
                       required={false}
                       id={`${que.id}_recommends`}
-                      defaultValue={isCheckYes ? que.recommnds : ""}
+                      defaultValue={isCheckYes ? que?.recommendation : ""}
                       placeholder="Action required by client..."
                     />
                   </div>
@@ -145,7 +147,7 @@ function Questions({ register, watch, control, data }) {
 
 export default Questions;
 
-function InputRadio({ register, label, value, id, name }) {
+export function InputAuditRadio({ register, label, value, id, name }) {
   const isYes = value === "Yes";
 
   return (
