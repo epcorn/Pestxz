@@ -17,7 +17,11 @@ const clientSchema = new mongoose.Schema(
     adminName: { type: String },
     adminPass: { type: String },
 
-    reportURL: { type: String },
+    report: {
+      type: { type: String },
+      date: { type: String },
+      url: { type: String },
+    },
   },
   {
     timestamps: true,

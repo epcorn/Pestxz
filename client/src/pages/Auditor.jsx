@@ -4,7 +4,6 @@ import { questions } from "../utils/auditorConstData";
 import { useFormPersist } from "../components/auditor/useFormPersist";
 import Button from "../components/Button";
 import { useCreateAuditReportMutation } from "../redux/auditorSlice";
-import { useDispatch, useSelector } from "react-redux";
 
 function Auditor() {
   const { register, control, setValue, watch, reset, getValues, handleSubmit } =
@@ -18,10 +17,11 @@ function Auditor() {
   const onSubmit = async (formData) => {
     const confirmation = confirm("Are your sure want to submit");
     if (!confirmation && confirmation === false) return 0;
+    const isNew = formData.client === 'new'
 
-    const siteKey = formData.siteType.value.toLowerCase();
+    const siteKey = formData.siteType.value;
+
     const siteData = questions?.[siteKey] || [];
-    
     const meta = {
       client: formData.clientName.value,
       site: `${formData.floor.value}-${formData?.location?.value}`,
@@ -94,9 +94,9 @@ function Auditor() {
     <form
       id="audit-form"
       onSubmit={handleSubmit(onSubmit)}
-      className="max-w-6xl bg-gray-100 mx-auto space-y-4">
+      className="max-w-6xl mx-auto space-y-4 bg-white">
       {/* Header */}
-      <div className="sticky top-22 bg-gray-100 z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-gray-200 py-3">
+      <div className="sticky top-22 z-10 flex flex-col sm:flex-row sm:items-center bg-white justify-between gap-2 border-b border-gray-200 py-3 px-3">
         <div>
           <h1 className="text-2xl font-bold text-gray-800">Audit Assessment</h1>
 

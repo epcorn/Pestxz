@@ -20,3 +20,21 @@ export const createAuditReport = async (req, res) => {
       .json({ error: error.message, msg: "Internal server error" });
   }
 };
+
+export const getAuditReports = async (req, res) => {
+  try {
+    const limit = req.query.limit || 15;
+    const skip = req.query.skip || 15;
+    const page = req.query.page || 1;
+
+    const audits = await Audit.find({})
+      .populate([
+        { path: "auditor", select: "name" },
+        { path: "client", select: "name" },
+      ])
+      .lean();
+    res.status(200).json(audits);
+  } catch (error) {
+    res.status(500).json(error);
+  }
+};

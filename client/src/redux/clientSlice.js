@@ -13,9 +13,8 @@ export const clientSlice = apiSlice.injectEndpoints({
     allClients: builder.query({
       query: (params = {}) => {
         const { limit, page, auditor } = params;
-        const queryString =
-          limit && page ? `?limit=${limit}&page=${page}`: "";
-   
+        const queryString = limit && page ? `?limit=${limit}&page=${page}` : "";
+
         return {
           url: `/api/client${queryString}`,
         };

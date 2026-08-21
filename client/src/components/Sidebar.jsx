@@ -16,7 +16,7 @@ import { MdOutlineQrCodeScanner } from "react-icons/md";
 import TickerTape from "./TickerTape";
 
 
-const roles = ["Admin", "Operator", "Supervisor", "TeamLeader", "BranchAdmin", "PestAdmin", "ClientAdmin", "ClientEmployee"]
+const roles = ["Admin", "Auditor", "Operator", "Supervisor", "TeamLeader", "BranchAdmin", "PestAdmin", "ClientAdmin", "ClientEmployee"]
 const navList = [
   {
     icon: <MdOutlineQrCodeScanner className="w-6 h-6 " />,
@@ -28,13 +28,13 @@ const navList = [
     icon: <BsBarChartFill className="w-6 h-6 " />,
     name: "Dashboard",
     to: "/stats",
-    role: ["Admin", "ClientAdmin", "Operator", "BranchAdmin"],
+    role: ["Admin", "Auditor", "ClientAdmin", "Operator", "BranchAdmin"],
   },
   {
     icon: <FaBuilding className="w-6 h-6" />,
     name: "Clients",
     to: "/clients",
-    role: ["Admin", "Supervisor", "TeamLeader", "BranchAdmin",],
+    role: ["Admin", "Supervisor", "TeamLeader", "BranchAdmin"],
   },
   {
     icon: <BsDatabaseFillAdd className="w-6 h-6" />,
@@ -66,12 +66,12 @@ const navList = [
     to: "/reports",
     role: ["Admin", "ClientAdmin"],
   },
-  {
-    icon: <AiOutlineAudit className="w-6 h-6" />,
-    name: "Auditor",
-    to: "/audit",
-    role: ["Admin", "Auditor","BranchAdmin"],
-  },
+  // {
+  //   icon: <AiOutlineAudit className="w-6 h-6" />,
+  //   name: "Auditor",
+  //   to: "/auditor",
+  //   role: ["Admin", "Auditor"],
+  // },
 ];
 
 const Sidebar = () => {
@@ -85,7 +85,7 @@ const Sidebar = () => {
   const navigate = useNavigate();
 
   const [logout, { isLoading }] = useLogoutMutation();
-  const { data: client = {} } = useGetSingleClientQuery(user?.client, { skip: !user?.client });
+  const { data: client = {} } = useGetSingleClientQuery(user?.client, { skip: user.type === "PestEmployee" });
 
   const handleLogout = async () => {
     try {
@@ -98,7 +98,7 @@ const Sidebar = () => {
       toast.error(error?.data?.msg || error.error);
     }
   };
-  
+
 
   useEffect(() => {
     if (secondRoute) {
@@ -180,21 +180,18 @@ const Sidebar = () => {
           </div>
 
         </div>
-        <div className="block lg:hidden absolute  left-0 right-0 top-[4rem] px-3 z-40">
+        <div className="block lg:hidden absolute  left-0 right-0 top-16 px-3 z-40">
           <TickerTape />
         </div>
       </nav>
 
       <aside
-        className={`fixed top-[4rem] md:top-[4rem] lg:top-0 left-0 w-60 z-50 h-[calc(100dvh-4rem)] md:h-[calc(100dvh-4rem)] lg:h-dvh transition-transform pb-2 duration-300 border-r-2 bg-slate-800 border-gray-500 ${show
+        className={`fixed top-16 md:top-top-16 lg:top-0 left-0 w-60 z-50 h-[calc(100dvh-4rem)] md:h-[calc(100dvh-4rem)] lg:h-dvh transition-transform pb-2 duration-300 border-r-2 bg-slate-800 border-gray-500 ${show
           ? "translate-x-0"
           : "-translate-x-full lg:translate-x-0"
           }`}
       >
-        {/* Added h-full and removed absolute bottom from inside the list */}
         <div className="h-full flex flex-col pl-4 overflow-y-auto">
-
-          {/* Navigation Links Group */}
           <div className="flex-1">
             <ul className="space-y-2 mt-5 lg:mt-20">
               {navList.map((item) => {

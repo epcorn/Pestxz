@@ -413,9 +413,9 @@ export const dailyReportClient = async (req = {}, res) => {
         continue;
       }
 
-      if (client.reportUrl) {
+      if (client?.report?.url) {
         try {
-          await removeOldQr(client.reportUrl);
+          await removeOldQr(client?.report?.url);
         } catch (e) {
           console.warn("Failed to delete previous report asset:", e.message);
         }
@@ -424,7 +424,13 @@ export const dailyReportClient = async (req = {}, res) => {
       const uploadURL = await uploadFile({ filePath, remove: false });
 
       if (uploadURL) {
-        await Client.findByIdAndUpdate(clientId, { reportUrl: uploadURL });
+        await Client.findByIdAndUpdate(clientId, {
+          report: {
+            type: value,
+            date: `${startDate} - ${endDate}`,
+            url: uploadURL,
+          },
+        });
         generatedFiles.push({ client: client.name, url: uploadURL });
       }
 

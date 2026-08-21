@@ -1,6 +1,6 @@
 import React from 'react'
 
-function InputRadio({ disabled, label, name, register, id, value, onchange, placeholder, status, block = true }) {
+function InputRadio({ disabled, label, name, register, id, value, onchange, placeholder, status, block = true, args }) {
   return (
     <div className={`${block ? "grid " : "flex items-center "} w-fit`}>
       <input
@@ -9,9 +9,9 @@ function InputRadio({ disabled, label, name, register, id, value, onchange, plac
         value={value}
         disabled={disabled}
         {...register(name, { onChange: onchange })}
+        {...args}
       />
       <label htmlFor={id} className='ml-1 wrap-break-word'>{label}
-        {/* {required && <span className='text-red-600'>*</span>} */}
       </label>
     </div>
 

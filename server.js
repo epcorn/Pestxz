@@ -81,6 +81,7 @@ app.use(
   authenticateUser,
   authorizeUser(
     "Admin",
+    "Auditor",
     "Operator",
     "Supervisor",
     "TeamLeader",
@@ -94,6 +95,7 @@ app.use(
   authenticateUser,
   authorizeUser(
     "Admin",
+    "Auditor",
     "ClientAdmin",
     "Operator",
     "BranchAdmin",

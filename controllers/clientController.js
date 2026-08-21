@@ -86,12 +86,11 @@ export const getAllClient = async (req, res) => {
 
     if (!req.query.limit) {
       console.log("this runs");
-      const clients = await Client.find({})
-        .select("")
-        .populate({
-          path: "locations",
-          select: "floor location subLocation service product",
-        });
+      const clients = await Client.find({}).select("").populate({
+        path: "locations",
+        select:
+          "floor location subLocation service.serviceName serviceId productId productName",
+      });
       return res.status(200).json(clients);
     }
     const [clients, totalClients] = await Promise.all([

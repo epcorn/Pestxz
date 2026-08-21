@@ -9,7 +9,6 @@ export function useFormPersist({ watch, reset, getValues }) {
   useEffect(() => {
     if (hasRestored.current) return;
     hasRestored.current = true;
-
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {

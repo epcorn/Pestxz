@@ -9,7 +9,13 @@ export const auditorSlice = apiSlice.injectEndpoints({
         body: data,
       }),
     }),
+    getAuditReport: builder.query({
+      query: () => ({
+        url: `/api/auditor`,
+      }),
+    }),
   }),
 });
 
-export const { useCreateAuditReportMutation } = auditorSlice;
+export const { useCreateAuditReportMutation, useGetAuditReportQuery } =
+  auditorSlice;

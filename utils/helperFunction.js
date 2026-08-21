@@ -146,7 +146,7 @@ export const productQrCodeGenerator = async ({
   try {
     const width = 220;
     const qrSize = 220;
-    const topPadding = 34; 
+    const topPadding = 34;
     const bottomPadding = subLoc ? 65 : 55;
     const totalHeight = topPadding + qrSize + bottomPadding;
 
@@ -336,7 +336,11 @@ export const sendEmail = async ({
     await apiInstance.sendTransacEmail(sendSmtpEmail);
     return true;
   } catch (error) {
-    console.log(error);
+    console.error("Brevo API Status Code:", error.response?.statusCode);
+    console.error(
+      "Brevo Error Body:",
+      JSON.stringify(error.response?.body, null, 2),
+    );
     return false;
   }
 };

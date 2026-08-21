@@ -47,21 +47,6 @@ export const dateFormat = (date) => {
   // return formattedDate;
 };
 
-export function decodeBase64Svg(base64String) {
-  if (!base64String) return "";
-
-  try {
-    let cleanedString = base64String.replace(/\s/g, "");
-    cleanedString = cleanedString.replace(/-/g, "+").replace(/_/g, "/");
-    while (cleanedString.length % 4 !== 0) {
-      cleanedString += "=";
-    }
-    return atob(cleanedString);
-  } catch (error) {
-    console.error("Failed to decode SVG string:", error);
-    return "";
-  }
-}
 
 export function compareDates(schedules, today) {
   today.setHours(0, 0, 0, 0);

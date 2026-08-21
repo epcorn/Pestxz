@@ -9,7 +9,10 @@ import { useSelector } from "react-redux";
 import InputRadio from "../InputRadio";
 
 function AuditorForm({ register, watch, control, setValue }) {
-  const { data = [] } = useAllClientsQuery();
+  const isNew = watch("client");
+
+  const { data = [] } = useAllClientsQuery({ skip: isNew !== "old" || !isNew });
+
   const { user } = useSelector((store) => store.helper);
 
   const siteOptions = [
@@ -25,7 +28,6 @@ function AuditorForm({ register, watch, control, setValue }) {
   const selectedFloor = watch("floor");
   const selectedLocation = watch("location");
   const selectedSite = watch("siteType");
-  const isNew = watch("client");
 
   useEffect(() => { setValue("client", null) }, [])
   const siteData = questions?.[selectedSite?.value?.toLowerCase()] || [];
@@ -117,25 +119,29 @@ function AuditorForm({ register, watch, control, setValue }) {
             </h2>
           </div>
 
-          {isNew === null && <div className="flex items-center gap-3 outline px-2 bg-white/40 text-black rounded-sm">
-            <InputRadio
-              register={register}
-              id={"old"}
-              block={false}
-              value="old"
-              name="client"
-              label={"Exisitng"}
-            />
-            <InputRadio
-              register={register}
-              id={"new"}
-              value="new"
-              name="client"
-              block={false}
-              label={"New"}
-            />
-          </div>}
-          <span className="text-xs bg-slate-800 text-slate-300 px-2.5 py-1 rounded-md font-mono border border-slate-700">
+          {[null, undefined, "null", "undefined"].includes(isNew) && (
+            <div className="flex items-center gap-3 outline px-2 bg-white/40 text-black rounded-sm hidden">
+              <InputRadio
+                register={register}
+                id="old"
+                block={false}
+                value="old"
+                // args={{ checked: true }}
+                name="client"
+                label="Existing"
+              />
+              <InputRadio
+                register={register}
+                id="new"
+                value="new"
+                name="client"
+                block={false}
+                label="New"
+              />
+            </div>
+          )}
+
+          <span className="text-xs bg-slate-800 text-slate-300 px-2.5 py-1 rounded-md font-mono border border-slate-500">
             INSPECTION MODE
           </span>
         </div>
@@ -148,6 +154,7 @@ function AuditorForm({ register, watch, control, setValue }) {
                 id={"clientName"}
                 label="Client Name"
                 placeholder="ex. Nanavati Hospital"
+                required={true}
               />
             ) : (
               <Controller
@@ -159,7 +166,7 @@ function AuditorForm({ register, watch, control, setValue }) {
                     onChange={onChange}
                     value={value}
                     options={clientOptions}
-                    required={false}
+                    required={true}
                   />
                 )}
               />
@@ -172,6 +179,7 @@ function AuditorForm({ register, watch, control, setValue }) {
               id={"floor"}
               label="Site Location (Primary)"
               placeholder="ex. 2nd floor"
+              required={true}
             />
           ) : (
             <Controller
@@ -195,6 +203,7 @@ function AuditorForm({ register, watch, control, setValue }) {
               id={"location"}
               label="Site Location (secondary)"
               placeholder="ex. operation theater"
+              required={true}
             />
           ) : (
             <Controller

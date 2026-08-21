@@ -12,10 +12,11 @@ import { Loading, ProtectedRoute } from "./components";
 import { Suspense } from "react";
 import NotificationManager from "./components/NotificationManager";
 import React from "react";
-import Dashboard from './pages/Dashboard';
+// import Dashboard from './pages/Dashboard';
 import Auditor from "./pages/Auditor";
 
 // 1. Lazy load ALL page components individually
+const Dashboard = React.lazy(() => import('./pages/Dashboard'));
 const Landing = React.lazy(() => import("./pages/Landing"));
 const MainLayout = React.lazy(() => import("./pages/MainLayout"));
 const QrScanner = React.lazy(() => import("./components/dashboard/QrScanner"));
@@ -69,7 +70,7 @@ const Router = createBrowserRouter(
           <Route path="dashboard/locations" element={<Locations />} />
         </Route>
         <Route element={<ProtectedRoute roles={["Admin", 'Auditor', "BranchAdmin"]} />}>
-          <Route path="/audit" element={<Auditor />} />
+          <Route path="/auditor/form" element={<Auditor />} />
         </Route>
         <Route path="*" element={<Navigate to={'/'} replace />} />
       </Route>

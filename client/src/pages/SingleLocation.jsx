@@ -1,21 +1,14 @@
 import { useEffect, useState } from "react";
-import { Controller, useFieldArray, useForm } from "react-hook-form";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useParams } from "react-router-dom";
-import { toast } from "react-toastify";
-import { AlertMessage, Button, InputSelect, Loading } from "../components";
+import { AlertMessage, Button, Loading } from "../components";
 import { ComplaintModal } from "../components/modals";
 import { toggleModal } from "../redux/helperSlice";
 import { useSingleLocationDetailsQuery } from "../redux/locationSlice";
 import { useRegularServiceMutation } from "../redux/serviceSlice";
-import { serviceActions } from "../utils/constData";
 import {
-  dateFormat,
-  decodeBase64Svg,
-  progress,
+  dateFormat, progress
 } from "../utils/helperFunctions";
-import SingleServiceForm from "../components/SingleServiceForm";
-import ImagesModal from "../components/modals/ImagesModal";
 import RegularForm from "../components/modals/RegularForm";
 import ServiceShow from "../components/single_location/ServiceShow";
 import AllScheduleService from "../components/single_location/AllScheduleService";

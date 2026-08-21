@@ -73,7 +73,7 @@ function Questions({ register, watch, data, scoreBySectionId }) {
                   id={`${que.id}_question`}
                   label={`Check #${i + 1}`}
                   register={register}
-                  inputCls="bg-slate-500 text-lg text-white font-semibold"
+                  inputCls="bg-[#2e5791] text-lg text-white font-semibold"
                 />
 
                 {/* Action Controls */}
