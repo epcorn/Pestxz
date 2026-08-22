@@ -107,6 +107,12 @@ app.use("/api/location", authenticateUser, locationRoute);
 app.use("/api/service", authenticateUser, serviceRoute);
 app.use("/api/auditor", authenticateUser, auditorRoute);
 
+// Express health check route for your ping service
+app.get("/healthz", (req, res) => {
+  console.log('Ping OK Tested');
+  res.status(200).send("Ping OK Tested");
+});
+
 if (process.env.NODE_ENV === "production") {
   app.use(express.static(path.join(__dirname, "client", "dist")));
   app.get("*", (req, res) =>

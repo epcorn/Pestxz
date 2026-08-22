@@ -85,7 +85,6 @@ export const getAllClient = async (req, res) => {
     const isFetchAll = limit >= 50;
 
     if (!req.query.limit) {
-      console.log("this runs");
       const clients = await Client.find({}).select("").populate({
         path: "locations",
         select:

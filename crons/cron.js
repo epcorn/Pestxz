@@ -19,6 +19,7 @@ export const markMissedCron = async (req, res) => {
   }
 };
 
+
 export const dailyReport = async (req, res) => {
   const authHeader = req.headers["x-cron-auth"];
   if (authHeader !== "my_super_secret_password_123") {

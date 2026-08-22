@@ -6,7 +6,7 @@ import { FaBug } from "react-icons/fa6";
 import { AiOutlineAudit } from "react-icons/ai";
 import { MdLocationOn } from "react-icons/md";
 import { useDispatch, useSelector } from "react-redux";
-import { useMatch, useNavigate } from "react-router-dom";
+import { NavLink, useMatch, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import logo from "../assets/logo12.png";
 import { removeCredentials } from "../redux/helperSlice";
@@ -74,6 +74,8 @@ const navList = [
   // },
 ];
 
+const year = new Date().getFullYear();
+
 const Sidebar = () => {
   const [show, setShow] = useState(false);
   const [active, setActive] = useState("");
@@ -85,7 +87,7 @@ const Sidebar = () => {
   const navigate = useNavigate();
 
   const [logout, { isLoading }] = useLogoutMutation();
-  const { data: client = {} } = useGetSingleClientQuery(user?.client, { skip: user.type === "PestEmployee" });
+  const { data: client = {} } = useGetSingleClientQuery(user?.client, { skip: user?.type === "PestEmployee" });
 
   const handleLogout = async () => {
     try {
@@ -186,7 +188,7 @@ const Sidebar = () => {
       </nav>
 
       <aside
-        className={`fixed top-16 md:top-top-16 lg:top-0 left-0 w-60 z-50 h-[calc(100dvh-4rem)] md:h-[calc(100dvh-4rem)] lg:h-dvh transition-transform pb-2 duration-300 border-r-2 bg-slate-800 border-gray-500 ${show
+        className={`fixed top-16 md:top-top-16 lg:top-0 left-0 w-60 z-50 h-[calc(100dvh-4rem)] md:h-[calc(100dvh-4rem)] lg:h-dvh transition-transform pb-2 duration-300 bg-slate-800 ${show
           ? "translate-x-0"
           : "-translate-x-full lg:translate-x-0"
           }`}
@@ -228,7 +230,7 @@ const Sidebar = () => {
             </button>
 
             {/* Brand Logo Card */}
-            <div className="w-full max-w-[180px] mx-auto flex items-center justify-center gap-3 px-4 py-2 rounded-xl border bg-slate-50 border-slate-100 shadow-sm">
+            <div className="w-full max-w-40 mx-auto flex items-center justify-center gap-3 px-4 py-2 rounded-xl border bg-slate-50 border-slate-100 shadow-sm">
               <div className="flex flex-col items-start justify-center order-2">
                 <span className="text-sm font-extrabold tracking-tight text-slate-900 leading-none">
                   PestXZ
@@ -239,11 +241,14 @@ const Sidebar = () => {
               </div>
               <img src={logo} className="h-5 w-auto object-contain order-1" alt="PestXZ Logo" />
             </div>
+            <p className="text-[0.6rem] text-white text-center ">&copy; 2023 - {year} Pestxz. All rights reserved</p>
           </div>
+          <NavLink to='/about' className={`text-[0.6rem] text-white underline hidden`}>About</NavLink>
 
         </div>
       </aside>
     </aside>
   );
 };
+
 export default Sidebar;

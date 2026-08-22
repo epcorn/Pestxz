@@ -20,6 +20,7 @@ export const apiSlice = createApi({
     "User",
     "Client",
     "Admin",
+    "Audit",
     "assign",
     "Casual",
     "unscheduled",

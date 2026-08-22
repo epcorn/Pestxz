@@ -361,7 +361,6 @@ export const getAllLocations = async (req, res) => {
       clientId = req.user.client;
     } else if (id.length === 24) {
       const location = await Location.findById(id).select("client").lean();
-      console.log("this runs");
       if (location) {
         clientId = location.client;
       } else {

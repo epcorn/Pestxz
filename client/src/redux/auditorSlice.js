@@ -8,11 +8,13 @@ export const auditorSlice = apiSlice.injectEndpoints({
         method: "POST",
         body: data,
       }),
+      invalidatesTags: ["Audit"],
     }),
     getAuditReport: builder.query({
       query: () => ({
         url: `/api/auditor`,
       }),
+      providesTags: ["Audit"],
     }),
   }),
 });
