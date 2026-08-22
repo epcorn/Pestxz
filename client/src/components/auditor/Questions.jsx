@@ -1,14 +1,39 @@
+import { useImgUploaderMutation } from "@/redux/adminSlice";
 import InputRow from "../InputRow";
 
-function Questions({ register, watch, data, scoreBySectionId }) {
+function Questions({ register, watch, data, setValue, scoreBySectionId }) {
   const isMatrix = data.section === "Audit Risk Scoring Matrix";
   const sectionScore = scoreBySectionId?.[data.sectionId];
+  const [upload, { isLoading: uploading }] = useImgUploaderMutation();
 
   const matrixCategories = isMatrix ? Object.values(scoreBySectionId) : [];
 
   const total = matrixCategories.reduce((acc, val) => {
     return acc + (val.achieved || 0);
   }, 0)
+
+  const handleImgChange = async (e, questionId) => {
+    const files = Array.from(e.target.files);
+    if (!files || files.length === 0) return;
+
+    const formData = new FormData();
+    Array.from(files).forEach(file => {
+      formData.append('image', file)
+    });
+    try {
+      const res = await upload(formData).unwrap()
+      const currentImgs = watch(`${questionId}_images`) || []
+      if (res?.urls) {
+        setValue(`${questionId}_uploadedImages`, [...currentImgs, ...res.urls]);
+      }
+      else if (res?.url) {
+        setValue(`${questionId}_uploadedImages`, [...currentImgs, res.url]);
+      }
+      console.log(watch(`${questionId}_uploadedImages`))
+    } catch (error) {
+      console.error("Upload failed", error);
+    }
+  }
 
   return (
     <section className=" border border-slate-400 rounded-b-2xl shadow-sm">
@@ -51,12 +76,13 @@ function Questions({ register, watch, data, scoreBySectionId }) {
         </table>
       )
         :
-        <div className="p-3 sm:p-4 space-y-4 bg-slate-300">
+        <div className="p-3 sm:p-4 space-y-4">
           {data.questions.map((que, i) => {
             const checks = watch(`${que.id}_checks`);
+            const imgs = watch(`${que.id}_images`);
             const isCheckYes = checks === "Yes";
             const isCheckNo = checks === "No";
-
+            // console.log(imgs)
             return (
               <div
                 key={que.id}
@@ -108,9 +134,11 @@ function Questions({ register, watch, data, scoreBySectionId }) {
                       type="file"
                       register={register}
                       id={`${que.id}_images`}
-                      label="Attach Evidence / Photo"
+                      label={uploading ? "Uploading..." : "Attach Evidence / Photo"}
                       required={false}
-                      inputCls="file:bg-slate-700 file:hover:bg-slate-800 file:text-white file:px-3 file:py-1 file:rounded-md file:border-0 file:cursor-pointer text-xs text-slate-600"
+                      onchange={(e) => handleImgChange(e, que?.id)}
+                      disabled={uploading}
+                      inputCls="file:bg-slate-700 file:hover:bg-slate-800 file:text-white file:px-3 file:py-1 file:rounded-md file:border-0 file:cursor-pointer text-xs text-slate-600 disabled:opacity-80 "
                     />
                   </div>
                 </div>
@@ -159,7 +187,6 @@ export function InputAuditRadio({ register, label, value, id, name }) {
         {...register(name)}
         className="peer hidden"
       />
-
       <label
         role="button"
         htmlFor={id}

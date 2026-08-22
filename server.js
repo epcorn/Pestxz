@@ -23,7 +23,7 @@ import {
 } from "./middleware/authMiddleware.js";
 import { createServer } from "http";
 import { Server } from "socket.io";
-import cronRouter from "./crons/cron.js";
+import cronRouter, { dailyReportCron } from "./crons/cron.js";
 import { fileURLToPath } from "url";
 
 dotenv.config();
@@ -109,7 +109,7 @@ app.use("/api/auditor", authenticateUser, auditorRoute);
 
 // Express health check route for your ping service
 app.get("/healthz", (req, res) => {
-  console.log('Ping OK Tested');
+  console.log("Ping OK Tested");
   res.status(200).send("Ping OK Tested");
 });
 
@@ -123,7 +123,7 @@ if (process.env.NODE_ENV === "production") {
     res.send("API is running....");
   });
 }
-
+dailyReportCron();
 app.use(notFound);
 
 const port = process.env.PORT || 5000;

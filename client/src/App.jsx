@@ -71,6 +71,7 @@ const Router = createBrowserRouter(
         </Route>
         <Route element={<ProtectedRoute roles={["Admin", 'Auditor', "BranchAdmin"]} />}>
           <Route path="/auditor/form" element={<Auditor />} />
+          <Route path="/auditor/client/:id" element={<Auditor />} />
         </Route>
         <Route path="*" element={<Navigate to={'/'} replace />} />
       </Route>

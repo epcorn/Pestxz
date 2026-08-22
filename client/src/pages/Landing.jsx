@@ -9,6 +9,7 @@ import { useLoginMutation } from "../redux/userSlice";
 
 const roleRoutes = {
   Admin: "/dashboard/stats",
+  Auditor: "/dashboard/stats",
   PestAdmin: "/dashboard/stats",
   ClientAdmin: "/dashboard/stats",
 

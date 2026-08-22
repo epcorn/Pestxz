@@ -47,7 +47,6 @@ export const dateFormat = (date) => {
   // return formattedDate;
 };
 
-
 export function compareDates(schedules, today) {
   today.setHours(0, 0, 0, 0);
 

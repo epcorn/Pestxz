@@ -101,7 +101,6 @@ function AuditorForm({ register, watch, control, setValue }) {
       const achieved = questionsList.length
         ? Math.round((checkedCount / questionsList.length) * q.points)
         : 0;
-
       acc[q.id] = { ...q, achieved };
       return acc;
     }, {});
@@ -266,6 +265,7 @@ function AuditorForm({ register, watch, control, setValue }) {
               watch={watch}
               control={control}
               data={data}
+              setValue={setValue}
               allSections={siteData}
               register={register}
               scoreBySectionId={scoreBySectionId}

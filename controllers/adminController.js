@@ -16,13 +16,23 @@ import { Unscheduled } from "../models/unScheduleModel.js";
 
 export const imageUploader = async (req, res) => {
   try {
-    if (!req.files || !req.files.image)
-      return res.status(400).json({ msg: "No images provided" });
+    const rawFiles = req.files.image || req.files.images || req.files;
+    if (!rawFiles) return res.status(400).json({ msg: "No images provided" });
+    if (Array.isArray(rawFiles)) {
+      const uploadPromises = rawFiles.map((file) =>
+        uploadFile({ filePath: file.tempFilePath || file.path }),
+      );
+      const urls = await Promise.all(uploadPromises);
 
-    const uploadedFile = await compressImage(req.files.image.tempFilePath);
-    const url = await uploadFile({ filePath: uploadedFile });
+      return res
+        .status(200)
+        .json({ msg: "images uploaded successfully", urls });
+    }
+    const url = await uploadFile({
+      filePath: rawFiles.tempFilePath || rawFiles.path,
+    });
     if (!url) return res.status(502).json({ msg: "Image upload failed" });
-    res.status(200).json({ msg: "Image Uploaded", url });
+    return res.status(200).json({ msg: "Image Uploaded", url });
   } catch (error) {
     console.log("Image upload error: ", error);
     res

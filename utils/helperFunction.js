@@ -289,7 +289,7 @@ export const uploadFile = async ({ filePath, remove = true }) => {
           crop: "limit",
           angle: "auto",
           quality: 75,
-          fetch_format: "webp",
+          fetch_format: "jpg",
         },
       ],
     });
