@@ -1,39 +1,58 @@
+import { useState } from "react";
 import { useImgUploaderMutation } from "@/redux/adminSlice";
+import { toast } from "react-toastify";
 import InputRow from "../InputRow";
 
 function Questions({ register, watch, data, setValue, scoreBySectionId }) {
   const isMatrix = data.section === "Audit Risk Scoring Matrix";
-  const sectionScore = scoreBySectionId?.[data.sectionId];
-  const [upload, { isLoading: uploading }] = useImgUploaderMutation();
+  const [upload] = useImgUploaderMutation();
+  const [uploadingIds, setUploadingIds] = useState({}); // per-question loading state
 
   const matrixCategories = isMatrix ? Object.values(scoreBySectionId) : [];
-
-  const total = matrixCategories.reduce((acc, val) => {
-    return acc + (val.achieved || 0);
-  }, 0)
+  const total = matrixCategories.reduce((acc, val) => acc + (val.achieved || 0), 0);
 
   const handleImgChange = async (e, questionId) => {
-    const files = Array.from(e.target.files);
-    if (!files || files.length === 0) return;
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    setUploadingIds(prev => ({ ...prev, [questionId]: true }));
 
     const formData = new FormData();
-    Array.from(files).forEach(file => {
-      formData.append('image', file)
-    });
+    files.forEach(file => formData.append("image", file));
+
     try {
-      const res = await upload(formData).unwrap()
-      const currentImgs = watch(`${questionId}_images`) || []
-      if (res?.urls) {
-        setValue(`${questionId}_uploadedImages`, [...currentImgs, ...res.urls]);
+      const res = await upload(formData).unwrap();
+      // Correct accumulator: read from the field we actually WRITE to
+      const currentUrls = watch(`${questionId}_uploadedImages`) || [];
+
+      const newUrls = res?.urls
+        ? res.urls
+        : res?.url
+          ? [res.url]
+          : [];
+
+      if (newUrls.length) {
+        setValue(`${questionId}_uploadedImages`, [...currentUrls, ...newUrls]);
+      } else {
+        toast.error("Upload succeeded but no image URL was returned.");
       }
-      else if (res?.url) {
-        setValue(`${questionId}_uploadedImages`, [...currentImgs, res.url]);
-      }
-      console.log(watch(`${questionId}_uploadedImages`))
     } catch (error) {
       console.error("Upload failed", error);
+      toast.error("Image upload failed. Please try again.");
+    } finally {
+      setUploadingIds(prev => ({ ...prev, [questionId]: false }));
+      // Reset the native input so re-selecting the same file re-fires onChange
+      e.target.value = "";
     }
-  }
+  };
+
+  const handleRemoveImage = (questionId, urlToRemove) => {
+    const currentUrls = watch(`${questionId}_uploadedImages`) || [];
+    setValue(
+      `${questionId}_uploadedImages`,
+      currentUrls.filter(url => url !== urlToRemove)
+    );
+  };
 
   return (
     <section className=" border border-slate-400 rounded-b-2xl shadow-sm">
@@ -41,12 +60,12 @@ function Questions({ register, watch, data, setValue, scoreBySectionId }) {
         <h3 className="text-white font-semibold text-lg">{data.section}</h3>
         <p className="flex items-center gap-5">
           <span className="text-slate-300 text-sm">{data.questions?.length || 0} Checkpoints</span>
-          {sectionScore && <span className="text-white ">{sectionScore?.achieved} - Scores</span>}
+          {scoreBySectionId?.[data.sectionId] && (
+            <span className="text-white">{scoreBySectionId[data.sectionId]?.achieved} - Scores</span>
+          )}
         </p>
       </div>
 
-      {/* Render Questions or Matrix Table */}
-      {/* <div className="p-4 space-y-4"> */}
       {isMatrix ? (
         <table className="w-full text-left text-sm">
           <thead>
@@ -68,21 +87,21 @@ function Questions({ register, watch, data, setValue, scoreBySectionId }) {
             ))}
             <tr>
               <th></th>
-              <th className="text-right pr-10 text-lg">Total </th>
+              <th className="text-right pr-10 text-lg">Total</th>
               <th className="text-center">100</th>
               <th className="text-center">{total}</th>
             </tr>
           </tbody>
         </table>
-      )
-        :
+      ) : (
         <div className="p-3 sm:p-4 space-y-4">
           {data.questions.map((que, i) => {
             const checks = watch(`${que.id}_checks`);
-            const imgs = watch(`${que.id}_images`);
+            const uploadedImages = watch(`${que.id}_uploadedImages`) || [];
+            const isUploading = !!uploadingIds[que.id];
             const isCheckYes = checks === "Yes";
             const isCheckNo = checks === "No";
-            // console.log(imgs)
+
             return (
               <div
                 key={que.id}
@@ -93,7 +112,6 @@ function Questions({ register, watch, data, setValue, scoreBySectionId }) {
                     : "border-slate-200"
                   }`}
               >
-                {/* Question Text */}
                 <InputRow
                   defaultValue={que.question}
                   id={`${que.id}_question`}
@@ -102,9 +120,7 @@ function Questions({ register, watch, data, setValue, scoreBySectionId }) {
                   inputCls="bg-[#2e5791] text-lg text-white font-semibold"
                 />
 
-                {/* Action Controls */}
                 <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
-                  {/* Answer Selector */}
                   <div className="bg-slate-100 p-2 rounded-lg border border-slate-500">
                     <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">
                       Observation<span className="text-red-500">*</span>
@@ -127,23 +143,44 @@ function Questions({ register, watch, data, setValue, scoreBySectionId }) {
                     </div>
                   </div>
 
-                  {/* Evidence Upload */}
-                  <div className="md:col-span-2">
+                  <div className="md:col-span-2 grid grid-cols-2 gap-2 w-full">
                     <InputRow
                       multiple accept="image/*"
                       type="file"
                       register={register}
                       id={`${que.id}_images`}
-                      label={uploading ? "Uploading..." : "Attach Evidence / Photo"}
+                      label={isUploading ? "Uploading..." : "Attach Evidence / Photo"}
                       required={false}
-                      onchange={(e) => handleImgChange(e, que?.id)}
-                      disabled={uploading}
-                      inputCls="file:bg-slate-700 file:hover:bg-slate-800 file:text-white file:px-3 file:py-1 file:rounded-md file:border-0 file:cursor-pointer text-xs text-slate-600 disabled:opacity-80 "
+                      onChange={(e) => handleImgChange(e, que.id)}
+                      disabled={isUploading}
+                      inputCls="shrink-0 file:bg-slate-700 max-w-52 file:hover:bg-slate-800 file:text-white file:px-3 file:py-1 file:rounded-md file:border-0 file:cursor-pointer text-xs text-slate-600 disabled:opacity-80"
                     />
+
+                    {/* Uploaded image previews */}
+                    {uploadedImages.length > 0 && (
+                      <div className="mt-2 flex w-full gap-2 overflow-x-auto overflow-y-visible">
+                        {uploadedImages?.map((url, idx) => (
+                          <div key={idx} className="relative group">
+                            <img
+                              src={url}
+                              alt={`evidence-${idx}`}
+                              className="w-16 h-16 object-cover rounded border border-slate-300"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveImage(que.id, url)}
+                              className="absolute -top-1.5 -right-1.5 bg-red-600 text-white rounded-full w-5 h-5 text-xs leading-none flex items-center justify-center opacity-0 group-hover:opacity-100 transition"
+                              aria-label="Remove image"
+                            >
+                              ×
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
 
-                {/* Detailed Auditor Remarks */}
                 {checks && (
                   <div className="mt-3 pt-3 border-t border-slate-100 grid grid-cols-1 md:grid-cols-2 gap-3 bg-slate-50/80 p-3 rounded-lg">
                     <InputRow
@@ -153,7 +190,7 @@ function Questions({ register, watch, data, setValue, scoreBySectionId }) {
                       defaultValue={isCheckYes ? que?.comment : ""}
                       required={false}
                       placeholder="Describe severity or condition..."
-                      inputCls=''
+                      inputCls=""
                     />
                     <InputRow
                       label="Corrective Action / Recommendation"
@@ -168,7 +205,8 @@ function Questions({ register, watch, data, setValue, scoreBySectionId }) {
               </div>
             );
           })}
-        </div>}
+        </div>
+      )}
     </section>
   );
 }
@@ -177,16 +215,9 @@ export default Questions;
 
 export function InputAuditRadio({ register, label, value, id, name }) {
   const isYes = value === "Yes";
-
   return (
     <div className="flex items-center">
-      <input
-        type="radio"
-        id={id}
-        value={value}
-        {...register(name)}
-        className="peer hidden"
-      />
+      <input type="radio" id={id} value={value} {...register(name)} className="peer hidden" />
       <label
         role="button"
         htmlFor={id}

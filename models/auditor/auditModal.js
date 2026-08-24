@@ -1,30 +1,69 @@
 import mongoose from "mongoose";
 
+// 1. Schema for ARSM (Audit Risk Scoring Matrix) Categories
+const arsmCategorySchema = new mongoose.Schema({
+  category: { type: String },
+  points: { type: Number },
+  achieved: { type: Number },
+});
+
+// 2. Schema for Individual Questions
+const questionSchema = new mongoose.Schema({
+  id: { type: String },
+  question: { type: String },
+  checks: { type: String, default: null }, // "Yes" or "No"
+  comment: { type: String, default: "" },
+  recommendation: { type: String, default: "" },
+  images: [{ type: String }],
+});
+
+// 3. Schema for Sections (Handles regular question sections + ARSM section)
 const sectionSchema = new mongoose.Schema({
-  sectionId: String,
-  section: String,
-  questions: [
-    { id: String, question: String, comment: String, recommendation: String },
-  ],
+  id: { type: String },
+  sectionId: { type: String },
+  section: { type: String },
+
+  // Standard Question Sections
+  questions: [questionSchema],
+
+  // ARSM Matrix Specific Fields
+  categories: [arsmCategorySchema],
+  totalPoints: { type: Number },
+  totalAchieved: { type: Number },
+
+  // Section Summary
   summary: {
-    yes: { type: Number },
-    no: { type: Number },
-    total: { type: Number },
+    yes: { type: Number, default: 0 },
+    no: { type: Number, default: 0 },
+    total: { type: Number, default: 0 },
   },
 });
 
+// 4. Main Audit Schema
 const auditAssessSchema = new mongoose.Schema(
   {
+    // Client Reference ID (populatable via 'Client' model)
     client: {
       type: mongoose.Schema.Types.ObjectId,
-      name: String,
       ref: "Client",
+      default: null,
     },
-    site: { type: String },
-    siteType: { type: String },
-    auditor: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    clientName: { type: String, default: null },
+    site: { type: String, required: true },
+    siteType: { type: String, required: true },
+    auditor: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
     inspectionDate: { type: Date },
     sections: [sectionSchema],
+
+    // Overall Audit Summary
+    summary: {
+      yes: { type: Number, default: 0 },
+      no: { type: Number, default: 0 },
+      total: { type: Number, default: 0 },
+    },
   },
   { timestamps: true },
 );

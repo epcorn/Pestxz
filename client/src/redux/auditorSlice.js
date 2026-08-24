@@ -11,8 +11,9 @@ export const auditorSlice = apiSlice.injectEndpoints({
       invalidatesTags: ["Audit"],
     }),
     getAuditReport: builder.query({
-      query: () => ({
+      query: ({ limit, page }) => ({
         url: `/api/auditor`,
+        params: { limit, page },
       }),
       providesTags: ["Audit"],
     }),

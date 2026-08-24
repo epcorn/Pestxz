@@ -1,41 +1,76 @@
 import { Audit } from "../models/auditor/auditModal.js";
 
 export const createAuditReport = async (req, res) => {
-  const data = req.body;
   try {
-    console.log(data);
-    const { meta, sections } = data;
-    // const 
-    const audit = await Audit.create({
-      ...meta,
+    const { meta, sections, summary } = req.body;
+
+    const auditPayload = {
+      clientType: meta.clientType,
+      site: meta.site,
+      siteType: meta.siteType,
       auditor: req.user._id,
       inspectionDate: new Date(),
-      sections: [...sections],
-    });
+      sections,
+      summary,
+    };
 
-    res.status(200).json(audit);
+    if (meta.clientType === "new") {
+      auditPayload.clientName = meta.client;
+      auditPayload.client = null;
+    } else {
+      auditPayload.client = meta.client;
+      auditPayload.clientName = "";
+    }
+
+    const audit = await Audit.create(auditPayload);
+
+    return res.status(201).json({
+      msg: "Audit created successfully",
+      audit,
+    });
   } catch (error) {
-    console.error(error);
-    res
-      .status(500)
-      .json({ error: error.message, msg: "Internal server error" });
+    console.error("Create Audit Error:", error);
+    return res.status(500).json({
+      msg: "Failed to create audit report",
+      error: error.message,
+    });
   }
 };
 
 export const getAuditReports = async (req, res) => {
   try {
-    const limit = req.query.limit || 15;
-    const skip = req.query.skip || 15;
-    const page = req.query.page || 1;
+    const limit = parseInt(req.query.limit, 10) || 15;
+    const page = parseInt(req.query.page, 10) || 1;
+    const skip = (page - 1) * limit;
 
-    const audits = await Audit.find({})
-      .populate([
-        { path: "auditor", select: "name" },
-        { path: "client", select: "name" },
-      ])
-      .lean();
-    res.status(200).json(audits);
+    const [totalItems, audits] = await Promise.all([
+      Audit.countDocuments({}),
+      Audit.find({})
+        .populate([
+          { path: "auditor", select: "name" },
+          { path: "client", select: "name" },
+        ])
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+    ]);
+
+    const totalPage = Math.ceil(totalItems / limit);
+
+    res.status(200).json({
+      success: true,
+      audits,
+      totalPage,
+      totalItems,
+      page,
+      limit,
+    });
   } catch (error) {
-    res.status(500).json(error);
+    res.status(500).json({
+      success: false,
+      msg: "Failed to fetch audit reports",
+      error: error.message,
+    });
   }
 };

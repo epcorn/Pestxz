@@ -6,6 +6,7 @@ import Button from "../components/Button";
 import { useCreateAuditReportMutation } from "../redux/auditorSlice";
 import { MoveLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 
 
 function Auditor() {
@@ -27,12 +28,14 @@ function Auditor() {
 
     const siteData = questions?.[siteKey] || [];
     const meta = {
-      client: formData.clientName.value,
-      site: `${formData.floor.value}-${formData?.location?.value}`,
+      clientType: formData.client,
+      client: isNew ? formData.clientName : formData.clientName.value,
+      site: isNew ? `${formData.floor}-${formData?.location}` : `${formData.floor.value}-${formData?.location?.value}`,
       siteType: formData.siteType.value,
     };
 
     const sections = siteData.map((section) => {
+
       if (section.section === "Audit Risk Scoring Matrix") {
         const categories = section.questions.map((qn) => {
           const linkedSection = siteData.find((s) => s.sectionId === qn.id);
@@ -48,9 +51,10 @@ function Auditor() {
 
           return { category: qn.category, points: qn.points, achieved, };
         });
-        
+
         return {
           id: section.id,
+          sectionId: "arsm6",
           section: section.section,
           categories,
           totalPoints: categories.reduce((sum, c) => sum + c.points, 0),
@@ -58,7 +62,7 @@ function Auditor() {
           summary: { yes: 0, no: 0, total: 0 }
         };
       }
-console.log(formData)
+
       const answeredqstns = section.questions.map((que) => ({
         id: que.id,
         question: formData[`${que.id}_question`] ?? que.question,
@@ -87,16 +91,18 @@ console.log(formData)
       return acc;
     }, { yes: 0, no: 0, total: 0 })
     const payload = { meta, sections, summary };
-    console.log(payload)
-    // clearDraft();
+    console.log(payload, formData)
+    clearDraft();
 
-    // try {
-    //   const res = await submitReport(payload).unwrap();
-
-    //   console.log(res, payload);
-    // } catch (error) {
-    //   console.log(error);
-    // }
+    try {
+      const res = await submitReport(payload).unwrap();
+      toast.success("Audit inspection report successful")
+      navigate("/dashboard/stats")
+      console.log(res, payload);
+    } catch (error) {
+      toast.error("Audit inspection report error")
+      console.log(error);
+    }
   };
 
   const resetForm = (e) => {

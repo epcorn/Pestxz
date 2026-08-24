@@ -250,100 +250,140 @@ export const questions = {
       questions: [
         {
           id: "sh1",
-          question: "Are there any cracks or gaps in the walls?",
+          question: "Is there grease accumulation on equipment?",
           comment:
-            "Crack in wall found in kitchen area and broken plugging point in strage area.",
+            "Grease accumulation was observed on equipment, which may attract cockroaches and other pests.",
           recommendation:
-            "Repair and seal all wall cracks using suitable pest-proof materials to eliminate pest harbourage.",
+            "Grease accumulation was observed on equipment, which may attract cockroaches and other pests.",
         },
         {
           id: "sh2",
-          question: "Are there any cracks or gaps in the flooring?",
+          question: "Grease accumulation was observed on equipment, which may attract cockroaches and other pests.",
           comment:
-            "Gaps/cracks were observed in the flooring, which may provide potential pest harbourage.",
+            "Grease accumulation was observed on equipment, which may attract cockroaches and other pests.",
           recommendation:
-            "Repair and seal all floor cracks and gaps using suitable durable materials to prevent pest entry and harbourage.",
+            "Remove grease deposits through deep cleaning and implement a scheduled wall cleaning program.",
         },
         {
           id: "sh3",
-          question: "Are there any cracks or gaps in the ceiling?",
-          comment: "Gap found on the corner of the ceiling in storage room",
+          question: "Is there grease accumulation on floors?",
+          comment: "Thoroughly degrease floor surfaces and maintain regular cleaning, particularly around cooking and food preparation areas.",
           recommendation:
-            "Seal ceiling gaps and damaged areas to prevent pest entry and nesting.",
+            "Thoroughly degrease floor surfaces and maintain regular cleaning, particularly around cooking and food preparation areas.",
         },
         {
           id: "sh4",
-          question: "Are there gaps around doors that could allow pest entry?",
+          question: "Is there grease accumulation on other surfaces?",
           comment:
-            "Gaps were observed around the door area, providing potential access points for pests.",
+            "Grease deposits were observed on other surfaces within the food preparation/operational area.",
           recommendation:
-            "Install/repair door sweeps and properly seal gaps around door frames to minimize pest entry.",
+            "Deep clean affected surfaces and include them in the routine cleaning and degreasing schedule.",
         },
         {
           id: "sh5",
-          question: "Are windows improperly sealed or damaged?",
+          question: "Is cardboard being stored excessively?",
           comment:
-            "Gaps/damaged sealing were observed around the window area, creating a potential pest entry point.",
+            "Excessive cardboard storage was observed, providing potential harbourage for cockroaches and rodents.",
           recommendation:
-            "Repair damaged window fittings and seal all gaps. Install/maintain suitable insect mesh where required.",
+            "Remove unnecessary cardboard promptly and minimize accumulation. Store required cartons in an organized manner away from food areas.",
         },
         {
           id: "sh6",
           question:
-            "Are service entry points (pipes, cables, ducts, etc.) inadequately sealed?",
+            "Is cardboard being stored improperly?",
           comment:
-            "Gaps were observed around service entry points, providing potential pest entry and harbourage points.",
+            "Improper cardboard storage provides harbourage for cockroaches and rodents.",
           recommendation:
-            "Seal all gaps around pipes, cables, ducts and other service penetrations using appropriate pest-proof sealing materials.",
+            "Minimize cardboard storage and keep cartons elevated and away from food areas.",
         },
         {
           id: "sh7",
-          question: "Is ventilation inadequate or poorly maintained?",
+          question: "Is there food debris present ?",
           comment:
-            "Ventilation areas require improvement/maintenance and may provide potential pest entry points.",
+            "Food residues provide a food source for pests.",
           recommendation:
-            "Ensure ventilation systems are properly maintained and fitted with suitable protective mesh/screens to prevent pest entry.",
+            "Clean food debris immediately and improve cleaning frequency throughout operations.",
         },
         {
           id: "sh8",
           question:
-            "Are drainage covers damaged, missing, or improperly fitted?",
+            "Are floor corners dirty or inadequately cleaned?",
           comment:
-            "Drainage covers were found to be damaged/improperly fitted, creating a potential pest entry route.",
+            "Dirt accumulation was observed in inaccessible floor corners.",
           recommendation:
-            "Repair or replace damaged drainage covers and ensure all drains are properly covered and securely fitted.",
+            "Include corners in the daily cleaning schedule and verify cleaning effectiveness.",
         },
         {
           id: "sh9",
           question:
-            "Are utility penetrations (electrical, plumbing, gas lines) unsealed?",
+            "Is the waste disposal area poorly maintained?",
           comment:
-            "Unsealed gaps were observed around utility/service penetrations.",
+            "Waste area cleanliness was below the required standard and may attract pests.",
           recommendation:
-            "Seal all utility penetrations using suitable pest-proof materials to prevent pest entry and harbourage.",
+            "Clean and sanitize the waste area regularly, keep bins covered, and dispose of waste frequently.",
         },
         {
           id: "sh10",
           question:
-            "Is there evidence of water leakage from walls, ceilings, or pipes?",
+            "Is the storage area cluttered?",
           comment:
-            "Signs of water leakage/dampness were observed in the inspected area, which may contribute to pest activity.",
+            "Excessive clutter creates pest harbourage.",
           recommendation:
-            "Identify and rectify the source of leakage at the earliest. Keep affected areas dry and repair damaged surfaces to prevent moisture-related pest activity.",
+            "Organize the storage area, remove unnecessary materials, and maintain proper spacing from walls.",
         },
         {
           id: "sh11",
-          question: "Are there any rodent entry points present?",
+          question: "Is the kitchen platform/work surface dirty or inadequately sanitized?",
           comment:
-            "Potential rodent entry points were identified in the inspected area.",
+            "Food residues and dirt were observed on kitchen work surfaces, indicating inadequate cleaning/sanitation.",
           recommendation:
-            "Immediately seal all identified rodent entry points using durable rodent-proof materials and conduct regular inspection to ensure the seals remain intact.",
+            "Thoroughly clean and sanitize work surfaces after operations and maintain a documented cleaning schedule.",
+        },
+        {
+          id: "sh12",
+          question: "Are there any hygiene protocol violations by staff?",
+          comment:
+            "Gaps in staff hygiene practices were observed during the inspection.",
+          recommendation:
+            "Reinforce staff hygiene protocols through regular training, supervision, and periodic compliance checks.",
+        },
+        {
+          id: "sh13",
+          question: "Are there any gaps in maintaining the cleaning and sanitation schedule/chart?",
+          comment:
+            "Cleaning and sanitation schedule/chart was not being consistently maintained or updated.",
+          recommendation:
+            "Ensure the cleaning schedule is followed, documented, and regularly verified by the responsible supervisor.",
+        },
+        {
+          id: "sh14",
+          question: "Are food storage shelves dirty or contaminated?",
+          comment:
+            "Dirt/food residue accumulation was observed on food storage shelves.",
+          recommendation:
+            "Thoroughly clean and sanitize storage shelves and maintain a regular cleaning schedule. Ensure food items are stored properly and protected from contamination.",
+        },
+        {
+          id: "sh15",
+          question: "Are drains dirty, blocked, or emitting foul odors?",
+          comment:
+            "Dirty drains increase the risk of pest breeding and unpleasant odours.",
+          recommendation:
+            "Deep clean drains regularly and implement preventive drain treatment and maintenance.",
+        },
+        {
+          id: "sh16",
+          question: "Are refrigerators, freezers, or cold rooms inadequately cleaned?",
+          comment:
+            "Dirt and residue accumulation was observed inside/around cold storage equipment, indicating inadequate cleaning.",
+          recommendation:
+            "Deep clean and sanitize refrigerators, freezers, and cold rooms regularly, including corners, shelves, door gaskets, and concealed areas.",
         },
       ],
     },
     {
       id: "mall5",
-      section: "Food Safety Practices ",
+      section: "Food Safety Practices",
       sectionId:"arsm5",
       questions: [
         {

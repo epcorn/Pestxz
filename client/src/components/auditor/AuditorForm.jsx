@@ -119,7 +119,7 @@ function AuditorForm({ register, watch, control, setValue }) {
           </div>
 
           {[null, undefined, "null", "undefined"].includes(isNew) && (
-            <div className="flex items-center gap-3 outline px-2 bg-white/40 text-black rounded-sm hidden">
+            <div className="flex items-center gap-3 outline px-2 bg-white/40 text-black text-sm rounded-sm">
               <InputRadio
                 register={register}
                 id="old"
