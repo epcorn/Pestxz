@@ -30,7 +30,7 @@ class ErrorBoundary extends React.Component {
             </p>
             {this.state.error?.message && (
               <div className="bg-slate-100 text-slate-800 text-xs font-mono p-3 rounded text-left overflow-x-auto">
-                {this.state.error.message}
+                {"Something went wrong " || this.state.error.message}
               </div>
             )}
             <button

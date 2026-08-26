@@ -11,8 +11,8 @@ import { toast } from "react-toastify";
 
 function Auditor() {
   const navigate = useNavigate();
-  const { register, control, setValue, watch, reset, getValues, handleSubmit } =
-    useForm();
+  const { register, control, setValue, watch, reset, formState: { errors }, getValues, handleSubmit } =
+    useForm({ defaultValues: { client: "" } });
 
   const { clearDraft } = useFormPersist({ watch, reset, getValues });
 
@@ -22,13 +22,17 @@ function Auditor() {
   const onSubmit = async (formData) => {
     const confirmation = confirm("Are your sure want to submit");
     if (!confirmation && confirmation === false) return 0;
+    if (formData.client === "" || formData.client === null) { toast.error("Select Client Type"); return };
+    console.log(formData.client)
     const isNew = formData.client === 'new'
 
     const siteKey = formData.siteType.value;
 
-    const siteData = questions?.[siteKey] || [];
+    const siteData = questions?.['mall'] || [];
     const meta = {
       clientType: formData.client,
+      siteAddrss: formData.addrss,
+      meetUp: formData.meetUp,
       client: isNew ? formData.clientName : formData.clientName.value,
       site: isNew ? `${formData.floor}-${formData?.location}` : `${formData.floor.value}-${formData?.location?.value}`,
       siteType: formData.siteType.value,
@@ -116,7 +120,9 @@ function Auditor() {
     <section className="max-w-6xl mx-auto">
       <form
         id="audit-form"
-        onSubmit={handleSubmit(onSubmit)}
+        onSubmit={handleSubmit(onSubmit, (errors) => {
+          console.error(errors);
+        })}
         className="mx-auto space-y-4 bg-white">
         {/* Header */}
         <div className="sticky top-22 z-10 flex flex-col sm:flex-row sm:items-center bg-white justify-between gap-2 border-b border-gray-200 py-3 px-3">
@@ -142,7 +148,7 @@ function Auditor() {
               form="audit-form"
               disabled={submitting}
               type="submit"
-              className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white text-sm font-semibold rounded-md transition">
+              className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white disabled:opacity-60 text-sm font-semibold rounded-md transition">
               {submitting ? "Submitting..." : "Submit Audit"}
             </button>
           </div>
@@ -154,6 +160,7 @@ function Auditor() {
           watch={watch}
           setValue={setValue}
           control={control}
+          errors={errors}
         />
       </form>
     </section>

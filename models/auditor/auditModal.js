@@ -48,17 +48,18 @@ const auditAssessSchema = new mongoose.Schema(
       ref: "Client",
       default: null,
     },
+    clientType: { type: String, default: "old" },
     clientName: { type: String, default: null },
     site: { type: String, required: true },
     siteType: { type: String, required: true },
+    inspectionDate: { type: Date },
+    siteAddrss: { type: String },
+    meetUp: { type: String },
     auditor: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
     },
-    inspectionDate: { type: Date },
     sections: [sectionSchema],
-
-    // Overall Audit Summary
     summary: {
       yes: { type: Number, default: 0 },
       no: { type: Number, default: 0 },

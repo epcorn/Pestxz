@@ -3,9 +3,10 @@ import { useImgUploaderMutation } from "@/redux/adminSlice";
 import { toast } from "react-toastify";
 import InputRow from "../InputRow";
 
-function Questions({ register, watch, data, setValue, scoreBySectionId }) {
+function Questions({ register, watch, data, setValue, scoreBySectionId, errors }) {
   const isMatrix = data.section === "Audit Risk Scoring Matrix";
   const [upload] = useImgUploaderMutation();
+  const [readonly, setReadOnly] = useState(null)
   const [uploadingIds, setUploadingIds] = useState({}); // per-question loading state
 
   const matrixCategories = isMatrix ? Object.values(scoreBySectionId) : [];
@@ -41,7 +42,7 @@ function Questions({ register, watch, data, setValue, scoreBySectionId }) {
       toast.error("Image upload failed. Please try again.");
     } finally {
       setUploadingIds(prev => ({ ...prev, [questionId]: false }));
-      // Reset the native input so re-selecting the same file re-fires onChange
+
       e.target.value = "";
     }
   };
@@ -77,7 +78,7 @@ function Questions({ register, watch, data, setValue, scoreBySectionId }) {
             </tr>
           </thead>
           <tbody>
-            {matrixCategories.map((cat, i) => (
+            {matrixCategories?.map((cat, i) => (
               <tr key={cat.id} className="border-b">
                 <td className="py-2 text-center">{i + 1}</td>
                 <td className="py-2">{cat.category}</td>
@@ -101,6 +102,7 @@ function Questions({ register, watch, data, setValue, scoreBySectionId }) {
             const isUploading = !!uploadingIds[que.id];
             const isCheckYes = checks === "Yes";
             const isCheckNo = checks === "No";
+            const isReadOnly = que.id !== readonly
 
             return (
               <div
@@ -117,7 +119,11 @@ function Questions({ register, watch, data, setValue, scoreBySectionId }) {
                   id={`${que.id}_question`}
                   label={`Check #${i + 1}`}
                   register={register}
-                  inputCls="bg-[#2e5791] text-lg text-white font-semibold"
+                  inputCls="bg-[#2e5791] text-lg text-white font-semibold font-mono"
+                  readOnly={isReadOnly}
+                  required={false}
+                  onDoubleClick={(e) => setReadOnly(que.id)}
+                  onBlur={() => setReadOnly(null)}
                 />
 
                 <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-3 items-end">

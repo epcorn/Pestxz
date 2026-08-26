@@ -17,6 +17,8 @@ export const createAuditReport = async (req, res) => {
       site: meta.site,
       siteType: meta.siteType,
       auditor: req.user._id,
+      meetUp: meta.meetUp,
+      siteAddrss: meta.siteAddrss,
       inspectionDate: new Date(),
       sections,
       summary,
@@ -156,24 +158,29 @@ export const createAuditPPTX = async (req, res) => {
       audit.clientType === "new"
         ? audit?.clientName
         : audit?.client?.name || audit?.clientName;
+    console.log(clientName);
+    const getSectionScore = (sections, sectionId, maxScore) => {
+      const section = sections?.find((f) => f?.sectionId === sectionId);
+      const yesCount = section?.summary?.yes;
 
+      return yesCount !== undefined && yesCount !== null
+        ? `${yesCount}/${maxScore}`
+        : "";
+    };
 
     doc.render({
-      client: clientName,
-      siteType: audit.siteType,
-      inspectionDate: dateFormat(audit.inspectionDate).withTime,
-      auditor: audit.auditor.name,
-      Oscore: "",
-      Pscore:
-        `${audit?.sections?.find((f) => f.sectionId === "arsm2")?.summary?.yes} / 30` ||
-        "",
-      Iscore:
-        `${audit?.sections?.find((f) => f?.sectionId === "arsm3")?.summary?.yes}/20` ||
-        "",
-      Sscore:
-        `${audit?.sections?.find((f) => f?.sectionId === "arsm4")?.summary?.yes}/20` ||
-        "",
+      CLIENT: clientName || "",
+      SITETYPE: audit?.siteType || "",
+      INSPECTIONDATE: dateFormat(audit?.inspectionDate).withTime || "",
+      AUDITOR: audit?.auditor?.name || "",
+      MEETUP: audit?.meetUp || "",
+      ADDRESS: audit?.siteAddrss || "",
+      Oscore: audit?.summary?.total ?? "",
+      Pscore: getSectionScore(audit?.sections, "arsm2", 30),
+      Iscore: getSectionScore(audit?.sections, "arsm3", 20),
+      Sscore: getSectionScore(audit?.sections, "arsm4", 20),
     });
+
     const buffer = doc
       .getZip()
       .generate({ type: "nodebuffer", compression: "DEFLATE" });
