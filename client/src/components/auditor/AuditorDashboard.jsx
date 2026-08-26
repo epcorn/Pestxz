@@ -1,40 +1,39 @@
 import React, { useEffect, useState } from "react";
 import { Button } from "../ui/button";
 import { useNavigate } from "react-router-dom";
-import { useGetAuditReportQuery } from "@/redux/auditorSlice";
-import { Card } from "../ui/card";
+import { useGetAuditReportQuery, useLazyGeneratePPTXQuery } from "@/redux/auditorSlice";
 import { dateFormat } from "@/utils/helperFunctions";
-import {
-  Calendar,
-  User,
-  CheckSquare,
-  MapPin,
-  Building2,
-  X,
-} from "lucide-react";
+import { Building2, Eye, FileChartLine, LoaderCircle, X } from "lucide-react";
 import Pagination from "@/pages/Pagination";
 import { useDispatch, useSelector } from "react-redux";
 import { toggleModal } from "@/redux/helperSlice";
 import { AlertMessage } from "..";
 import { Skeleton } from "../ui/skeleton";
 
+
 function AuditorDashboard() {
   const [page, setPage] = useState(1);
   const dispatch = useDispatch();
+  const [id, setId] = useState(null);
   const { isModalOpen } = useSelector((store) => store.helper);
 
   const limit = 15;
   const navigate = useNavigate();
   const { data, error, isLoading } = useGetAuditReportQuery({ limit, page });
+  const [generatePPt, { isLoading: pptLoading, error: pptError }] = useLazyGeneratePPTXQuery()
 
-  console.log(data)
-  if (error) return <AlertMessage>{error.data.msg || error.msg}</AlertMessage>
-
-
+  if (error) {
+    return (
+      <AlertMessage>
+        {error?.data?.msg || error?.msg || "Failed to fetch dashboard records"}
+      </AlertMessage>
+    );
+  }
 
   return (
-    <div className="max-w-7xl h-full mx-auto space-y-6 p-4">
-      <header className="flex items-center justify-between border-b pb-4">
+    <div className="max-w-7xl mx-auto space-y-6 p-4 min-h-screen">
+      {/* Dashboard Header */}
+      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900">
             AUDIT DASHBOARD
@@ -46,97 +45,162 @@ function AuditorDashboard() {
         <Button
           type="button"
           onClick={() => navigate("/auditor/form")}
-          className="bg-slate-900 hover:bg-slate-800 text-white shadow">
-          New Inspection
+          className="bg-slate-900 hover:bg-slate-800 text-white shadow font-semibold"
+        >
+          + New Inspection
         </Button>
       </header>
 
-      <div className="space-y-3 h-full">
-        <h2 className="text-sm font-semibold text-slate-600 uppercase tracking-wider">
+      {/* Main Content Area */}
+      <div className="space-y-4">
+        <h2 className="text-xs font-bold text-slate-500 uppercase tracking-wider">
           Recent Audit Logs
         </h2>
 
-        {isLoading ?
+        {isLoading ? (
           <div className="flex flex-col gap-3">
             {Array.from({ length: 5 }, (_, index) => (
-              <Skeleton key={index} className="h-32 bg-black" />
+              <Skeleton key={index} className="h-14 w-full bg-slate-200 rounded-lg" />
             ))}
-          </div> :
-          data.success && data?.audits?.map((d) => {
-            const modalKey = `audit_${d._id}`;
+          </div>
+        ) : (
+          <div className="border border-slate-300 rounded-lg overflow-hidden bg-white shadow-sm">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm border-collapse">
+                <thead className="bg-slate-900 text-white text-xs uppercase tracking-wider">
+                  <tr>
+                    <th className="p-3 font-semibold">Date</th>
+                    <th className="p-3 font-semibold">Client Info</th>
+                    <th className="p-3 font-semibold text-center">Compliance</th>
+                    <th className="p-3 font-semibold">Auditor</th>
+                    <th className="p-3 font-semibold text-center">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200 text-slate-800 font-medium">
+                  {data?.success && data?.audits?.length > 0 ? (
+                    data.audits.map((d) => {
+                      if (!d) return null;
+                      const modalKey = `audit_${d._id}`;
+                      const clientDisplayName =
+                        d?.clientType === "new"
+                          ? d?.clientName
+                          : d?.client?.name || d?.clientName || "N/A";
+                      const passRate =
+                        d?.summary?.total || 0;
+                      const isPPtLoading = pptLoading && id === d._id
 
-            return (
-              <React.Fragment key={d?._id}>
-                <Card
-                  onClick={() =>
-                    dispatch(toggleModal({ name: modalKey, status: true }))
-                  }
-                  className="bg-neutral-900 border border-slate-200 hover:border-slate-300 shadow-sm group transition-all duration-200 overflow-hidden hover:bg-neutral-800">
+                      return (
+                        <React.Fragment key={d._id}>
+                          <tr className="hover:bg-slate-50 transition-colors" onClick={() =>
+                            dispatch(
+                              toggleModal({ name: modalKey, status: true })
+                            )
+                          }>
+                            <td className="p-3 text-slate-600 whitespace-nowrap">
+                              {dateFormat(d?.inspectionDate)}
+                            </td>
+                            <td className="p-3">
+                              <div className="flex items-center gap-2.5">
+                                <div className="p-1.5 bg-slate-100 rounded text-slate-700">
+                                  <Building2 className="w-4 h-4" />
+                                </div>
+                                <div className="text-sm">
+                                  <span className="font-bold text-slate-900 block">
+                                    {clientDisplayName}
+                                  </span>
+                                  <span className="text-xs text-slate-500">
+                                    {d?.site || "N/A"}{" "}
+                                    {d?.siteType && (
+                                      <span className="ml-1.5 bg-slate-800 text-white text-[10px] px-1.5 py-0.5 rounded uppercase font-semibold">
+                                        {d?.siteType || ""}
+                                      </span>
+                                    )}
+                                  </span>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="p-3 text-center">
+                              <div className="w-24 bg-slate-200 h-3 rounded-full overflow-hidden mx-auto flex items-center">
+                                <div
+                                  className={`h-full ${passRate >= 75
+                                    ? "bg-emerald-600"
+                                    : passRate >= 50
+                                      ? "bg-amber-500"
+                                      : "bg-red-600"
+                                    }`}
+                                  style={{ width: `${passRate}%` }}
+                                />
+                              </div>
+                              <span className="text-[11px] font-bold text-slate-600 mt-1 block">
+                                {passRate}% Passed
+                              </span>
+                            </td>
+                            <td className="p-3 font-semibold text-slate-700">
+                              {d?.auditor?.name || "N/A"}
+                            </td>
+                            <td className="p-3 text-center">
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                disabled={isPPtLoading}
+                                onClick={async (e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  try {
+                                    setId(d._id)
+                                    await generatePPt(d._id).unwrap();
+                                  } catch (error) {
+                                    console.error("PPT generation error")
+                                  } finally {
+                                    setId(d._id)
+                                  }
+                                }}
+                              >
+                                {isPPtLoading ?
+                                  <LoaderCircle className="animate-spin" />
+                                  :
+                                  <>
+                                    <FileChartLine className="w-3.5 h-3.5" /> PPT
+                                  </>
+                                }
+                              </Button>
+                            </td>
+                          </tr>
 
-                  <div className="p-4 grid grid-cols-1 md:grid-cols-12 gap-4 items-center transition-all">
-                    {/* 1. Date & Time */}
-                    <div className="md:col-span-3 flex items-center gap-2 text-white">
-                      <Calendar className="w-4 h-4 text-white shrink-0" />
-                      <span className="text-sm font-medium">
-                        {dateFormat(d?.inspectionDate) || "N/A"}
-                      </span>
-                    </div>
-
-                    {/* 2. Client & Site Info */}
-                    <div className="md:col-span-4 space-y-1">
-                      <div className="flex items-center gap-2">
-                        <Building2 className="w-4 h-4 text-white shrink-0" />
-                        <h3 className="font-semibold text-white text-sm transition-all">
-                          {d?.clientName || d?.client?.name}
-                        </h3>
-                      </div>
-                      <div className="flex flex-col items-start gap-2 text-xs text-slate-500">
-                        <p className="capitalize flex items-center gap-2">
-                          <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                          {d?.site || "N/A"}
-                        </p>
-                        {d?.siteType && (
-                          <p className="bg-slate-100 text-slate-600 border px-1.5 py-0.5 rounded text-[0.7rem] uppercase font-mono">
-                            {d?.siteType}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* 3. Auditor Name */}
-                    <div className="md:col-span-3 flex items-center gap-2 text-white font-semibold text-center">
-                      <User className="w-4 h-4 text-white shrink-0" />
-                      <span>{d?.auditor?.name || ""}</span>
-                    </div>
-
-                    {/* 4. Checkpoints Stat Badge */}
-                    <div className="md:col-span-2 flex justify-start md:justify-end">
-                      <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-lg">
-                        <CheckSquare className="w-4 h-4 text-emerald-600" />
-                        <div className="text-right">
-                          <div className="text-xs font-bold text-slate-800">
-                            {d.summary.total} Checkpoints
-                          </div>
-                          <div className="text-[10px] text-slate-500">
-                            {d.summary.yes} Issues / {d.summary.no} Passes
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </Card>
-                {/* Modal sibling to Card */}
-                {isModalOpen?.[modalKey] && (
-                  <AuditDetails
-                    isOpen={Boolean(isModalOpen?.[modalKey])}
-                    onClose={() => dispatch(toggleModal({ name: modalKey, status: false }))}
-                    data={d}
-                  />
-                )}
-              </React.Fragment>
-            );
-          })}
+                          {/* Detail Modal Component */}
+                          {isModalOpen?.[modalKey] && (
+                            <AuditDetails
+                              isOpen={Boolean(isModalOpen?.[modalKey])}
+                              onClose={() =>
+                                dispatch(
+                                  toggleModal({ name: modalKey, status: false })
+                                )
+                              }
+                              data={d}
+                            />
+                          )}
+                        </React.Fragment>
+                      );
+                    })
+                  ) : (
+                    <tr>
+                      <td
+                        colSpan="5"
+                        className="p-6 text-center text-slate-500 text-sm font-medium"
+                      >
+                        No audit reports available.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
       </div>
+
+      {/* Pagination Footer */}
       <Pagination
         page={page}
         setPage={setPage}
@@ -306,12 +370,12 @@ function AuditDetails({ isOpen, onClose, data }) {
                           </td>
                           <td className="p-3 align-top border-r border-slate-200">
                             <span
-                              className={`inline-block px-2 py-0.5 text-xs font-bold uppercase rounded ${que?.checks === "yes"
+                              className={`inline-block px-2 py-0.5 text-xs font-bold uppercase rounded ${que?.checks === "No"
                                 ? "bg-emerald-100 text-emerald-800 border border-emerald-600"
                                 : "bg-red-100 text-red-800 border border-red-600"
                                 }`}
                             >
-                              {que?.checks === "yes" ? "Passed" : "Failed"}
+                              {que?.checks === "No" ? "Passed" : "Failed"}
                             </span>
                           </td>
                           <td className="p-3 align-top border-r border-slate-200">

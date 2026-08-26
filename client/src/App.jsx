@@ -7,6 +7,7 @@ import {
   RouterProvider,
   createBrowserRouter,
   createRoutesFromElements,
+  useRouteError,
 } from "react-router-dom";
 import { Loading, ProtectedRoute } from "./components";
 import { Suspense } from "react";
@@ -14,6 +15,7 @@ import NotificationManager from "./components/NotificationManager";
 import React from "react";
 // import Dashboard from './pages/Dashboard';
 import Auditor from "./pages/Auditor";
+import ErrorBoundary from "./components/ErrorBoundary";
 
 // 1. Lazy load ALL page components individually
 const Dashboard = React.lazy(() => import('./pages/Dashboard'));
@@ -31,16 +33,41 @@ const Users = React.lazy(() => import("./pages/Users"));
 const Reports = React.lazy(() => import("./pages/Reports"));
 const Locations = React.lazy(() => import("./pages/Locations"));
 
+const RouteErrorFallback = () => {
+  const error = useRouteError();
+  console.error("Route Error", error)
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-slate-100 p-4">
+      <div className="max-w-md w-full bg-white border border-slate-300 rounded-lg shadow-lg p-6 text-center space-y-4">
+        <h2 className="text-xl font-bold text-red-600">Navigation Error</h2>
+        <p className="text-sm text-slate-600">
+          {error?.statusText || error?.message || "Failed to load page."}
+        </p>
+        <button
+          onClick={() => window.location.assign("/")}
+          className="w-full py-2 bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded text-sm transition-colors"
+        >
+          Return to Home
+        </button>
+      </div>
+    </div>
+  )
+}
+
 const Layout = () => {
   return (
     <>
       <NotificationManager />
       <ToastContainer position="top-center" autoClose={2000} />
-      <div>
-        <Suspense fallback={<Loading />}>
-          <Outlet />
-        </Suspense>
-      </div>
+      <ErrorBoundary>
+        <NotificationManager />
+        <ToastContainer position="top-center" autoClose={2000} />
+        <div>
+          <Suspense fallback={<Loading />}>
+            <Outlet />
+          </Suspense>
+        </div>
+      </ErrorBoundary>
     </>
   );
 };
@@ -93,7 +120,11 @@ function App() {
     });
   }
 
-  return <RouterProvider router={Router} />;
+  return (
+    <ErrorBoundary>
+      <RouterProvider router={Router} />
+    </ErrorBoundary>
+  );
 }
 
 export default App;

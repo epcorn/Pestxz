@@ -1,4 +1,12 @@
 import { Audit } from "../models/auditor/auditModal.js";
+import ExcelJS from "exceljs";
+import { dateFormat } from "../utils/helperFunction.js";
+import path from "path";
+import fs from "fs/promises";
+import PizZip from "pizzip";
+import Docxtemplater from "docxtemplater";
+
+const __dirname = import.meta.dirname;
 
 export const createAuditReport = async (req, res) => {
   try {
@@ -72,5 +80,115 @@ export const getAuditReports = async (req, res) => {
       msg: "Failed to fetch audit reports",
       error: error.message,
     });
+  }
+};
+
+export const createAuditXLSX = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const auditor_report_path = path.join(
+      __dirname,
+      "../tmp",
+      "auditor_report",
+    );
+
+    const audit = await Audit.findById(id).populate([
+      { path: "client", select: "name" },
+      { path: "auditor", select: "name" },
+    ]);
+
+    if (!audit) {
+      return res
+        .status(404)
+        .json({ success: false, msg: "Audit record not found" });
+    }
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("audit data");
+
+    worksheet.columns = [
+      { header: "Client Name", key: "client" },
+      { header: "auditor Name", key: "auditor" },
+      { header: "Site", key: "site" },
+      { header: "Site Type", key: "siteType" },
+      { header: "Inspection Date", key: "inspectDate" },
+    ];
+    const rows = {
+      client: audit?.clientName || audit?.client?.name,
+      auditor: audit.auditor.name,
+      site: audit.site,
+      siteType: audit.siteType,
+      inspectDate: dateFormat(audit.inspectionDate).withoutTime,
+    };
+    worksheet.addRow(rows);
+
+    // await fs.mkdir(auditor_report_path, { recursive: true });
+    const safeClientName = rows.client.replace(/[^a-zA-Z0-9\s-_]/g, "").trim();
+    const filename = `audit-${safeClientName}.xlsx`;
+    const filePath = path.join(auditor_report_path, filename);
+
+    await workbook.xlsx.writeFile(filePath);
+
+    res.status(200).json({ success: true, filename });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error, msg: "Internal Server error" });
+  }
+};
+
+export const createAuditPPTX = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const audit = await Audit.findById(id).populate([
+      { path: "client", select: "name" },
+      { path: "auditor", select: "name" },
+    ]);
+    if (!audit) return res.status(404).json({ msg: "Audit not found" });
+
+    const templatePath = path.join(__dirname, "..", "tmp/client.pptx");
+
+    const file = await fs.readFile(templatePath);
+    const zip = new PizZip(file);
+    const doc = new Docxtemplater(zip, {
+      paragraphLoop: true,
+      linebreaks: true,
+    });
+    const clientName =
+      audit.clientType === "new"
+        ? audit?.clientName
+        : audit?.client?.name || audit?.clientName;
+
+
+    doc.render({
+      client: clientName,
+      siteType: audit.siteType,
+      inspectionDate: dateFormat(audit.inspectionDate).withTime,
+      auditor: audit.auditor.name,
+      Oscore: "",
+      Pscore:
+        `${audit?.sections?.find((f) => f.sectionId === "arsm2")?.summary?.yes} / 30` ||
+        "",
+      Iscore:
+        `${audit?.sections?.find((f) => f?.sectionId === "arsm3")?.summary?.yes}/20` ||
+        "",
+      Sscore:
+        `${audit?.sections?.find((f) => f?.sectionId === "arsm4")?.summary?.yes}/20` ||
+        "",
+    });
+    const buffer = doc
+      .getZip()
+      .generate({ type: "nodebuffer", compression: "DEFLATE" });
+
+    const outputDir = path.resolve("./tmp/auditor_report");
+    await fs.mkdir(outputDir, { recursive: true });
+    const cleanClientName = clientName.replace(/[^a-zA-Z0-9_-]/g, "_");
+    const filePath = path.join(outputDir, `Audit_${cleanClientName}.pptx`);
+
+    await fs.writeFile(filePath, buffer);
+
+    console.log(filePath, outputDir, "templatePath " + templatePath);
+    res.status(200).json({ msg: "file saved" });
+  } catch (error) {
+    console.error("error:", error);
+    res.status(500).json({ msg: "Internal server error" });
   }
 };

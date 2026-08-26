@@ -123,6 +123,7 @@ if (process.env.NODE_ENV === "production") {
     res.send("API is running....");
   });
 }
+
 dailyReportCron();
 app.use(notFound);
 

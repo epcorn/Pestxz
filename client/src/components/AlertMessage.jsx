@@ -19,7 +19,7 @@ const AlertMessage = ({ children }) => {
           </p>
           <div className="mt-2">
             <Link
-              to={["ClientAdmin", "Admin"].includes(user.role)
+              to={["ClientAdmin", "Admin", "Operator", "Auditor"].includes(user.role)
                 ? "/dashboard/stats"
                 : "/dashboard/complaints"
               }

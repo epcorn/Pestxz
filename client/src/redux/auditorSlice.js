@@ -17,8 +17,22 @@ export const auditorSlice = apiSlice.injectEndpoints({
       }),
       providesTags: ["Audit"],
     }),
+    generateXLSX: builder.query({
+      query: (id) => ({
+        url: `/api/auditor/createExcel/${id}`,
+      }),
+    }),
+    generatePPTX: builder.query({
+      query: (id) => ({
+        url: `/api/auditor/createPPTX/${id}`,
+      }),
+    }),
   }),
 });
 
-export const { useCreateAuditReportMutation, useGetAuditReportQuery } =
-  auditorSlice;
+export const {
+  useCreateAuditReportMutation,
+  useGetAuditReportQuery,
+  useLazyGenerateXLSXQuery,
+  useLazyGeneratePPTXQuery,
+} = auditorSlice;
