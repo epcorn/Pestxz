@@ -26,6 +26,7 @@ import { Server } from "socket.io";
 import cronRouter, { dailyReportCron } from "./crons/cron.js";
 import { fileURLToPath } from "url";
 
+
 dotenv.config();
 const app = express();
 
@@ -124,6 +125,7 @@ if (process.env.NODE_ENV === "production") {
     res.send("API is running....");
   });
 }
+
 
 dailyReportCron();
 app.use(notFound);

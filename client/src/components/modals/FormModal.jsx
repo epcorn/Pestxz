@@ -37,7 +37,8 @@ const FormModal = ({ title, formBody, height, submitLabel, onSubmit, handleClose
         <form onSubmit={onSubmit} className="flex flex-col flex-1 min-h-0">
           <div className="overflow-y-auto flex-1 pr-1">{formBody}</div>
           <div className="grid grid-cols-2 gap-2 mt-4 shrink-0">
-            <Button type="submit" label={submitLabel} disabled={disabled} color="bg-green-500" isLoading={isLoading} />
+            {submitLabel !== "" && <Button type="submit" label={submitLabel} disabled={disabled} color="bg-green-500" isLoading={isLoading} />
+            }
             <Button label="Cancel" disabled={disabled} color="bg-red-500" onClick={handleClose} />
           </div>
         </form>

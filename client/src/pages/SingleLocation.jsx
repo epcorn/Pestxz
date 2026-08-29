@@ -5,7 +5,6 @@ import { AlertMessage, Button, Loading } from "../components";
 import { ComplaintModal } from "../components/modals";
 import { toggleModal } from "../redux/helperSlice";
 import { useSingleLocationDetailsQuery } from "../redux/locationSlice";
-import { useRegularServiceMutation } from "../redux/serviceSlice";
 import {
   dateFormat, progress
 } from "../utils/helperFunctions";
@@ -57,14 +56,9 @@ const SingleLocation = () => {
 
   const { data: DBUser } = useGetSingleUserQuery(user._id, { skip: !user?._id })
   const { data, isLoading, error } = useSingleLocationDetailsQuery(id);
-  const [regularService, { isLoading: regularLoading }] =
-    useRegularServiceMutation();
 
-  const handleCancel = () => {
-    setRegular(false);
-    reset();
-  };
-console.log(data)
+
+
   const servicesIds = data?.location?.service?.map(s => s.serviceId);
 
   const tabs = [
@@ -101,7 +95,7 @@ console.log(data)
                 <p className="text-[11px] uppercase tracking-wide text-neutral-400 font-semibold">Floor</p>
                 <p className="text-neutral-800 font-medium truncate">{data.location.floor}</p>
               </div>
-              <div className="bg-neutral-50 rounded-lg px-3 py-2 border border-neutral-200">
+              <div className="sm:col-span-2 bg-neutral-50 rounded-lg px-3 py-2 border border-neutral-200">
                 <p className="text-[11px] uppercase tracking-wide text-neutral-400 font-semibold">Location</p>
                 <p className="text-neutral-800 font-medium truncate">{data.location.location}</p>
               </div>
