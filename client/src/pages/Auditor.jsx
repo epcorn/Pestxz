@@ -65,6 +65,7 @@ function Auditor() {
           totalAchieved: categories.reduce((sum, c) => sum + c.achieved, 0),
           summary: { yes: 0, no: 0, total: 0 }
         };
+        console.log(categories)
       }
 
       const answeredqstns = section.questions.map((que) => ({
@@ -77,36 +78,28 @@ function Auditor() {
       }));
       const yesCount = answeredqstns.filter((q) => q.checks === "Yes").length;
       const noCount = answeredqstns.filter((q) => q.checks === "No").length;
+
       return {
         id: section.id,
         section: section.section,
         sectionId: section.sectionId,
         questions: answeredqstns,
-        summary: { yes: yesCount, no: noCount, total: answeredqstns.length },
+        summary: { yes: yesCount, no: noCount, total: answeredqstns.length, },
       };
     });
-    const summary = sections.reduce((acc, val) => {
-      if (val.summary) {
-        acc.yes += val.summary.yes
-        acc.no += val.summary.no
-        acc.total += val.summary.total
-      }
+    const payload = { meta, sections, };
+    console.log(payload)
+    // clearDraft();
 
-      return acc;
-    }, { yes: 0, no: 0, total: 0 })
-    const payload = { meta, sections, summary };
-    console.log(payload, formData)
-    clearDraft();
-
-    try {
-      const res = await submitReport(payload).unwrap();
-      toast.success("Audit inspection report successful")
-      navigate("/dashboard/stats")
-      console.log(res, payload);
-    } catch (error) {
-      toast.error("Audit inspection report error")
-      console.log(error);
-    }
+    // try {
+    //   const res = await submitReport(payload).unwrap();
+    //   toast.success("Audit inspection report successful")
+    //   navigate("/dashboard/stats")
+    //   console.log(res, payload);
+    // } catch (error) {
+    //   toast.error("Audit inspection report error")
+    //   console.log(error);
+    // }
   };
 
   const resetForm = (e) => {

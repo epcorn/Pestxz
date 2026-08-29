@@ -3,26 +3,52 @@ import { Button } from "../ui/button";
 import { useNavigate } from "react-router-dom";
 import { useGetAuditReportQuery, useLazyGeneratePPTXQuery } from "@/redux/auditorSlice";
 import { dateFormat } from "@/utils/helperFunctions";
-import { Building2, Eye, FileChartLine, LoaderCircle, X } from "lucide-react";
+import { Building2, FileChartLine, LoaderCircle, X } from "lucide-react";
 import Pagination from "@/pages/Pagination";
 import { useDispatch, useSelector } from "react-redux";
 import { toggleModal } from "@/redux/helperSlice";
 import { AlertMessage } from "..";
 import { Skeleton } from "../ui/skeleton";
+import { toast } from "react-toastify";
 
 
 function AuditorDashboard() {
   const [page, setPage] = useState(1);
   const dispatch = useDispatch();
-  const [id, setId] = useState(null);
   const { isModalOpen } = useSelector((store) => store.helper);
+  const [activeId, setActiveId] = useState(null);
 
   const limit = 15;
   const navigate = useNavigate();
   const { data, error, isLoading } = useGetAuditReportQuery({ limit, page });
   const [generatePPt, { isLoading: pptLoading, error: pptError }] = useLazyGeneratePPTXQuery()
 
+  const handleGeneratePPT = async (e, auditId) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    setActiveId(auditId);
+
+    // Pass the actual promise execution to toast.promise
+    const res = await toast.promise(
+      generatePPt(auditId).unwrap(),
+      {
+        pending: "Generating presentation...",
+        success: "PPT generated successfully!",
+        error: "Failed to generate PPT presentation.",
+      }
+    ).catch((error) => {
+      console.error("PPT generation error:", error);
+    }).finally(() => {
+      setActiveId(null);
+    });
+    if(res.url){
+      window.open(res.url,"_blank")
+    }
+  };
+
   if (error) {
+    
     return (
       <AlertMessage>
         {error?.data?.msg || error?.msg || "Failed to fetch dashboard records"}
@@ -78,7 +104,7 @@ function AuditorDashboard() {
                 </thead>
                 <tbody className="divide-y divide-slate-200 text-slate-800 font-medium">
                   {data?.success && data?.audits?.length > 0 ? (
-                    data.audits.map((d) => {
+                    data?.audits?.map((d) => {
                       if (!d) return null;
                       const modalKey = `audit_${d._id}`;
                       const clientDisplayName =
@@ -86,8 +112,7 @@ function AuditorDashboard() {
                           ? d?.clientName
                           : d?.client?.name || d?.clientName || "N/A";
                       const passRate =
-                        d?.summary?.total || 0;
-                      const isPPtLoading = pptLoading && id === d._id
+                        d?.sections[5]?.totalAchieved || 0
 
                       return (
                         <React.Fragment key={d._id}>
@@ -143,27 +168,11 @@ function AuditorDashboard() {
                                 type="button"
                                 size="sm"
                                 variant="outline"
-                                disabled={isPPtLoading}
-                                onClick={async (e) => {
-                                  e.preventDefault();
-                                  e.stopPropagation();
-                                  try {
-                                    setId(d._id)
-                                    await generatePPt(d._id).unwrap();
-                                  } catch (error) {
-                                    console.error("PPT generation error")
-                                  } finally {
-                                    setId(d._id)
-                                  }
-                                }}
+                                disabled={pptLoading && activeId === d._id}
+                                onClick={(e) => handleGeneratePPT(e, d._id)}
+                                className="border-slate-300 text-slate-700 hover:bg-slate-900 hover:text-white transition-colors gap-1 text-xs"
                               >
-                                {isPPtLoading ?
-                                  <LoaderCircle className="animate-spin" />
-                                  :
-                                  <>
-                                    <FileChartLine className="w-3.5 h-3.5" /> PPT
-                                  </>
-                                }
+                                {activeId === d._id ? <LoaderCircle className="animate-spin" /> : <span className="flex items-center gap-2"><FileChartLine /> PPT</span>}
                               </Button>
                             </td>
                           </tr>

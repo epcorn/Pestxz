@@ -36,6 +36,7 @@ const sectionSchema = new mongoose.Schema({
     yes: { type: Number, default: 0 },
     no: { type: Number, default: 0 },
     total: { type: Number, default: 0 },
+    score: { type: Number, default: 0 },
   },
 });
 

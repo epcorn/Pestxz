@@ -33,6 +33,7 @@ const Users = React.lazy(() => import("./pages/Users"));
 const Reports = React.lazy(() => import("./pages/Reports"));
 const Locations = React.lazy(() => import("./pages/Locations"));
 
+
 const RouteErrorFallback = () => {
   const error = useRouteError();
   console.error("Route Error", error)

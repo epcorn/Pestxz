@@ -137,7 +137,7 @@ export const createAuditXLSX = async (req, res) => {
   }
 };
 
-export const createAuditPPTX = async (req, res) => {
+export const createAuditPPTX_OG = async (req, res) => {
   try {
     const { id } = req.params;
     const audit = await Audit.findById(id).populate([
@@ -175,7 +175,7 @@ export const createAuditPPTX = async (req, res) => {
       AUDITOR: audit?.auditor?.name || "",
       MEETUP: audit?.meetUp || "",
       ADDRESS: audit?.siteAddrss || "",
-      Oscore: audit?.summary?.total ?? "",
+      Oscore: audit?.sections?.[5]?.totalAchieved || 0,
       Pscore: getSectionScore(audit?.sections, "arsm2", 30),
       Iscore: getSectionScore(audit?.sections, "arsm3", 20),
       Sscore: getSectionScore(audit?.sections, "arsm4", 20),
@@ -191,9 +191,81 @@ export const createAuditPPTX = async (req, res) => {
     const filePath = path.join(outputDir, `Audit_${cleanClientName}.pptx`);
 
     await fs.writeFile(filePath, buffer);
+    
 
     console.log(filePath, outputDir, "templatePath " + templatePath);
     res.status(200).json({ msg: "file saved" });
+  } catch (error) {
+    console.error("error:", error);
+    res.status(500).json({ msg: "Internal server error" });
+  }
+};
+
+export const createAuditPPTX = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const audit = await Audit.findById(id).populate([
+      { path: "client", select: "name" },
+      { path: "auditor", select: "name" },
+    ]);
+
+    if (!audit) return res.status(404).json({ msg: "Audit not found" });
+
+    const templatePath = path.join(__dirname, "..", "tmp/client.pptx");
+    const file = await fs.readFile(templatePath);
+    const zip = new PizZip(file);
+    const doc = new Docxtemplater(zip, {
+      paragraphLoop: true,
+      linebreaks: true,
+    });
+
+    const clientName = audit.clientType === "new" ? audit?.clientName : audit?.client?.name || audit?.clientName;
+
+    const getSectionScore = (sections, sectionId, maxScore) => {
+      const section = sections?.find((f) => f?.sectionId === sectionId);
+      const yesCount = section?.summary?.yes;
+      return yesCount !== undefined && yesCount !== null ? `${yesCount}/${maxScore}` : "";
+    };
+
+    doc.render({
+      CLIENT: clientName || "",
+      SITETYPE: audit?.siteType || "",
+      INSPECTIONDATE: dateFormat(audit?.inspectionDate).withTime || "",
+      AUDITOR: audit?.auditor?.name || "",
+      MEETUP: audit?.meetUp || "",
+      ADDRESS: audit?.siteAddrss || "",
+      Oscore: audit?.sections?.[5]?.totalAchieved || 0,
+      Pscore: getSectionScore(audit?.sections, "arsm2", 30),
+      Iscore: getSectionScore(audit?.sections, "arsm3", 20),
+      Sscore: getSectionScore(audit?.sections, "arsm4", 20),
+    });
+
+    const buffer = doc.getZip().generate({ type: "nodebuffer", compression: "DEFLATE" });
+    
+    // 1. Define folder and ensure it exists
+    const outputDir = path.resolve("./tmp/auditor_report");
+    await fs.mkdir(outputDir, { recursive: true });
+
+    // 2. Generate file name and absolute disk save path
+    const cleanClientName = clientName ? clientName.replace(/[^a-zA-Z0-9_-]/g, "_") : "Report";
+    const fileName = `Audit_${cleanClientName}_${Date.now()}.pptx`; // Added timestamp to prevent cache issues
+    const filePath = path.join(outputDir, fileName);
+
+    // 3. Write file data to disk safely
+    await fs.writeFile(filePath, buffer);
+
+    // 4. Construct web accessible URL link dynamically
+    // In production, replace req.get('host') with your actual domain e.g., 'https://myapi.com'
+    const protocol = req.protocol; // http or https
+    const host = req.get('host'); // localhost:5000 or yourdomain.com
+    const url = `${protocol}://${host}/reports/${fileName}`;
+
+    // 5. Send download link to your frontend client
+    res.status(200).json({ 
+      msg: "File generated and saved successfully", 
+      url: url 
+    });
+
   } catch (error) {
     console.error("error:", error);
     res.status(500).json({ msg: "Internal server error" });

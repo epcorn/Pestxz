@@ -7,7 +7,7 @@ function Questions({ register, watch, data, setValue, scoreBySectionId, errors }
   const isMatrix = data.section === "Audit Risk Scoring Matrix";
   const [upload] = useImgUploaderMutation();
   const [readonly, setReadOnly] = useState(null)
-  const [uploadingIds, setUploadingIds] = useState({}); // per-question loading state
+  const [uploadingIds, setUploadingIds] = useState({});
 
   const matrixCategories = isMatrix ? Object.values(scoreBySectionId) : [];
   const total = matrixCategories.reduce((acc, val) => acc + (val.achieved || 0), 0);

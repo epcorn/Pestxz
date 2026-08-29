@@ -70,6 +70,7 @@ app.use(
     abortOnLimit: true,
   }),
 );
+app.use("/reports", express.static(path.resolve("./tmp/auditor_report")));
 
 if (process.env.NODE_ENV !== "production") app.use(morgan("dev"));
 
