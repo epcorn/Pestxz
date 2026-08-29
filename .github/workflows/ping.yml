@@ -1,0 +1,31 @@
+name: Render Uptime Monitor
+
+on:
+  schedule:
+    # Runs exactly at 02:25 UTC (7:55 AM IST) every day
+    - cron: "5 6 * * *"
+  workflow_dispatch: # Allows you to trigger it manually anytime
+
+jobs:
+  check-uptime:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Test Endpoint and Log Failures
+        run: |
+          URL="https://www.pestxz.com/api/ping"
+          STATUS_CODE=$(curl -s -L -D headers.txt -o body.txt -w "%{http_code}" --max-time 90 "$URL")
+
+          if [ "$STATUS_CODE" != "200" ]; then
+            echo "::error::Endpoint failed with status code $STATUS_CODE"
+            echo "### :x: Render Alert: Request Failed" >> $GITHUB_STEP_SUMMARY
+            echo "**Timestamp:** $(date -u) (UTC)" >> $GITHUB_STEP_SUMMARY
+            echo "**Status Code:** \`$STATUS_CODE\`" >> $GITHUB_STEP_SUMMARY
+            echo "#### Response Headers:" >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`text" >> $GITHUB_STEP_SUMMARY
+            cat headers.txt >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          else
+            echo "### :white_check_mark: Render Status: OK" >> $GITHUB_STEP_SUMMARY
+            echo "Endpoint returned 200 OK at $(date -u) (UTC)" >> $GITHUB_STEP_SUMMARY
+          fi

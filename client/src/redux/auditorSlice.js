@@ -25,6 +25,8 @@ export const auditorSlice = apiSlice.injectEndpoints({
     generatePPTX: builder.query({
       query: (id) => ({
         url: `/api/auditor/createPPTX/${id}`,
+        method: "GET",
+        responseHandler: (response) => response.blob(),
       }),
     }),
   }),

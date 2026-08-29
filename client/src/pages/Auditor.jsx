@@ -89,17 +89,17 @@ function Auditor() {
     });
     const payload = { meta, sections, };
     console.log(payload)
-    // clearDraft();
+    clearDraft();
 
-    // try {
-    //   const res = await submitReport(payload).unwrap();
-    //   toast.success("Audit inspection report successful")
-    //   navigate("/dashboard/stats")
-    //   console.log(res, payload);
-    // } catch (error) {
-    //   toast.error("Audit inspection report error")
-    //   console.log(error);
-    // }
+    try {
+      const res = await submitReport(payload).unwrap();
+      toast.success("Audit inspection report successful")
+      navigate("/dashboard/stats")
+      console.log(res, payload);
+    } catch (error) {
+      toast.error("Audit inspection report error")
+      console.log(error);
+    }
   };
 
   const resetForm = (e) => {

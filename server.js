@@ -26,7 +26,6 @@ import { Server } from "socket.io";
 import cronRouter, { dailyReportCron } from "./crons/cron.js";
 import { fileURLToPath } from "url";
 
-
 dotenv.config();
 const app = express();
 
@@ -110,7 +109,7 @@ app.use("/api/service", authenticateUser, serviceRoute);
 app.use("/api/auditor", authenticateUser, auditorRoute);
 
 // Express health check route for your ping service
-app.get("/healthz", (req, res) => {
+app.get("/api/ping", (req, res) => {
   console.log("Ping OK Tested");
   res.status(200).send("Ping OK Tested");
 });
@@ -126,7 +125,6 @@ if (process.env.NODE_ENV === "production") {
   });
 }
 
-
 dailyReportCron();
 app.use(notFound);
 
@@ -136,20 +134,20 @@ export const MONGOURL =
     ? process.env.MONGO_URI
     : process.env.MONGO_LOCAL;
 
-const connectDB = async () => {
-  try {
-    const conn = await mongoose.connect(MONGOURL, {
-      serverSelectionTimeoutMS: 5000, // Timeout after 5s if DB is unreachable
+httpServer.listen(port, () => {
+  console.log(`🚀 Server started on port ${port}`);
+
+  mongoose
+    .connect(MONGOURL, {
+      serverSelectionTimeoutMS: 5000,
+    })
+    .then((conn) => {
+      console.log(`🔌 MongoDB Connected Successfully: ${conn.connection.host}`);
+    })
+    .catch((err) => {
+      console.error("❌ MongoDB Connection Initial Failure:", err.message);
+      console.warn(
+        "🔄 Mongoose will automatically attempt to reconnect in the background...",
+      );
     });
-    console.log(`MongoDB Connected: ${conn.connection.host}`);
-
-    httpServer.listen(port, () =>
-      console.log(`Server listening on port ${port}`),
-    );
-  } catch (error) {
-    console.error(`Database Connection Error: ${error.message}`);
-    process.exit(1);
-  }
-};
-
-connectDB();
+});

@@ -28,27 +28,35 @@ function AuditorDashboard() {
     e.stopPropagation();
 
     setActiveId(auditId);
-
-    // Pass the actual promise execution to toast.promise
-    const res = await toast.promise(
-      generatePPt(auditId).unwrap(),
-      {
-        pending: "Generating presentation...",
-        success: "PPT generated successfully!",
-        error: "Failed to generate PPT presentation.",
-      }
-    ).catch((error) => {
+    try {
+      // 1. Unwrap the raw Blob response
+      const blob = await toast.promise(
+        generatePPt(auditId).unwrap(),
+        {
+          pending: "Generating presentation...",
+          success: "PPT generated successfully!",
+          error: "Failed to generate PPT presentation.",
+        }
+      );
+      // 2. Create a download link for the Blob
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `Audit_Report_${auditId}.pptx`);
+      document.body.appendChild(link);
+      link.click();
+      // 3. Clean up memory
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
       console.error("PPT generation error:", error);
-    }).finally(() => {
+    } finally {
       setActiveId(null);
-    });
-    if(res.url){
-      window.open(res.url,"_blank")
     }
   };
 
   if (error) {
-    
+
     return (
       <AlertMessage>
         {error?.data?.msg || error?.msg || "Failed to fetch dashboard records"}
