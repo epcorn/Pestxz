@@ -3,7 +3,7 @@ export const questions = {
     {
       id: "mall1",
       section: "Documentation & Records",
-      sectionId:"arsm1",
+      sectionId: "arsm1",
       questions: [
         {
           id: "mdr1",
@@ -41,7 +41,7 @@ export const questions = {
     {
       id: "mall2",
       section: "Pest Activity & Control",
-      sectionId:"arsm2",
+      sectionId: "arsm2",
       questions: [
         {
           id: "pac1",
@@ -122,13 +122,6 @@ export const questions = {
         },
         {
           id: "pac11",
-          question: "is there any Lizard trap not available onsite?",
-          comment: "No lizard monitoring/control traps were observed onsite.",
-          recommendation:
-            "Assess high-risk areas and implement suitable monitoring/control measures for lizard activity, along with sealing of potential entry points.",
-        },
-        {
-          id: "pac12",
           question: "is there any Rodent trap not available onsite?",
           comment:
             "Rodent monitoring/trapping devices were not observed in the inspected area.",
@@ -140,7 +133,7 @@ export const questions = {
     {
       id: "mall3",
       section: "Infrastructure Condition",
-      sectionId:"arsm3",
+      sectionId: "arsm3",
       questions: [
         {
           id: "ic1",
@@ -233,20 +226,12 @@ export const questions = {
           recommendation:
             "Immediately seal all identified rodent entry points using durable rodent-proof materials and conduct regular inspection to ensure the seals remain intact.",
         },
-        {
-          id: "ic12",
-          question: "is there any Rodent trap not available onsite?",
-          comment:
-            "Rodent monitoring/trapping devices were not observed in the inspected area.",
-          recommendation:
-            "Install appropriate rodent monitoring devices at strategic locations based on the site risk assessment and maintain regular inspection and servicing records.",
-        },
       ],
     },
     {
       id: "mall4",
       section: "Sanitation & Housekeeping",
-      sectionId:"arsm4",
+      sectionId: "arsm4",
       questions: [
         {
           id: "sh1",
@@ -258,7 +243,8 @@ export const questions = {
         },
         {
           id: "sh2",
-          question: "Grease accumulation was observed on equipment, which may attract cockroaches and other pests.",
+          question:
+            "Grease accumulation was observed on equipment, which may attract cockroaches and other pests.",
           comment:
             "Grease accumulation was observed on equipment, which may attract cockroaches and other pests.",
           recommendation:
@@ -267,7 +253,8 @@ export const questions = {
         {
           id: "sh3",
           question: "Is there grease accumulation on floors?",
-          comment: "Thoroughly degrease floor surfaces and maintain regular cleaning, particularly around cooking and food preparation areas.",
+          comment:
+            "Thoroughly degrease floor surfaces and maintain regular cleaning, particularly around cooking and food preparation areas.",
           recommendation:
             "Thoroughly degrease floor surfaces and maintain regular cleaning, particularly around cooking and food preparation areas.",
         },
@@ -289,8 +276,7 @@ export const questions = {
         },
         {
           id: "sh6",
-          question:
-            "Is cardboard being stored improperly?",
+          question: "Is cardboard being stored improperly?",
           comment:
             "Improper cardboard storage provides harbourage for cockroaches and rodents.",
           recommendation:
@@ -299,15 +285,13 @@ export const questions = {
         {
           id: "sh7",
           question: "Is there food debris present ?",
-          comment:
-            "Food residues provide a food source for pests.",
+          comment: "Food residues provide a food source for pests.",
           recommendation:
             "Clean food debris immediately and improve cleaning frequency throughout operations.",
         },
         {
           id: "sh8",
-          question:
-            "Are floor corners dirty or inadequately cleaned?",
+          question: "Are floor corners dirty or inadequately cleaned?",
           comment:
             "Dirt accumulation was observed in inaccessible floor corners.",
           recommendation:
@@ -315,8 +299,7 @@ export const questions = {
         },
         {
           id: "sh9",
-          question:
-            "Is the waste disposal area poorly maintained?",
+          question: "Is the waste disposal area poorly maintained?",
           comment:
             "Waste area cleanliness was below the required standard and may attract pests.",
           recommendation:
@@ -324,16 +307,15 @@ export const questions = {
         },
         {
           id: "sh10",
-          question:
-            "Is the storage area cluttered?",
-          comment:
-            "Excessive clutter creates pest harbourage.",
+          question: "Is the storage area cluttered?",
+          comment: "Excessive clutter creates pest harbourage.",
           recommendation:
             "Organize the storage area, remove unnecessary materials, and maintain proper spacing from walls.",
         },
         {
           id: "sh11",
-          question: "Is the kitchen platform/work surface dirty or inadequately sanitized?",
+          question:
+            "Is the kitchen platform/work surface dirty or inadequately sanitized?",
           comment:
             "Food residues and dirt were observed on kitchen work surfaces, indicating inadequate cleaning/sanitation.",
           recommendation:
@@ -349,7 +331,8 @@ export const questions = {
         },
         {
           id: "sh13",
-          question: "Are there any gaps in maintaining the cleaning and sanitation schedule/chart?",
+          question:
+            "Are there any gaps in maintaining the cleaning and sanitation schedule/chart?",
           comment:
             "Cleaning and sanitation schedule/chart was not being consistently maintained or updated.",
           recommendation:
@@ -373,7 +356,8 @@ export const questions = {
         },
         {
           id: "sh16",
-          question: "Are refrigerators, freezers, or cold rooms inadequately cleaned?",
+          question:
+            "Are refrigerators, freezers, or cold rooms inadequately cleaned?",
           comment:
             "Dirt and residue accumulation was observed inside/around cold storage equipment, indicating inadequate cleaning.",
           recommendation:
@@ -384,7 +368,7 @@ export const questions = {
     {
       id: "mall5",
       section: "Food Safety Practices",
-      sectionId:"arsm5",
+      sectionId: "arsm5",
       questions: [
         {
           id: "fsp1",

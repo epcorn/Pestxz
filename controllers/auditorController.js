@@ -230,6 +230,23 @@ export const createAuditPPTX = async (req, res) => {
         ? `${yesCount}/${maxScore}`
         : "";
     };
+    const pestdata = audit?.sections?.find((f) => f.sectionId === "arsm2");
+    const infradata = audit?.sections?.find((f) => f.sectionId === "arsm3");
+
+    const pestsActivity =
+      pestdata?.questions?.reduce((acc, q, i) => {
+        acc[`COMMENT${i}`] = q.comment || "No activity found";
+        acc[`SPECIFICATION${i}`] = q.recommendation || "All Ok";
+        return acc;
+      }, {}) || {};
+
+    const infraActivity = infradata?.questions?.reduce((acc, q, i) => {
+      acc[`INFRACOM${i}`] = q?.comment || "";
+      acc[`INFRASP${i}`] = q?.recommendation || "";
+      return acc;
+    }, {} || {});
+
+    const images = ''
 
     doc.render({
       CLIENT: clientName || "",
@@ -242,6 +259,8 @@ export const createAuditPPTX = async (req, res) => {
       Pscore: getSectionScore(audit?.sections, "arsm2", 30),
       Iscore: getSectionScore(audit?.sections, "arsm3", 20),
       Sscore: getSectionScore(audit?.sections, "arsm4", 20),
+      ...pestsActivity,
+      ...infraActivity,
     });
 
     const buffer = doc

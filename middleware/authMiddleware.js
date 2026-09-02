@@ -23,7 +23,7 @@ export const authenticateUser = async (req, res, next) => {
   } else {
     res.status(401).json({ msg: "Authentication Invalid" });
   }
-};
+} ;
 
 export const authorizeUser = (...roles) => {
   return (req, res, next) => {
