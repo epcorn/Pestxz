@@ -315,6 +315,7 @@ export async function uploadWithRetry(filePath, retries = 1) {
 
 export const sendEmail = async ({
   attachment,
+  ccList,
   dynamicData,
   emailList,
   templateId,
@@ -330,17 +331,20 @@ export const sendEmail = async ({
       email: process.env.NO_REPLY_EMAIL,
     };
     sendSmtpEmail.to = emailList;
+
+    if (ccList && ccList.length > 0) {
+      sendSmtpEmail.cc = ccList;
+    }
+
     sendSmtpEmail.params = dynamicData;
     sendSmtpEmail.templateId = templateId;
     if (attachment) sendSmtpEmail.attachment = attachment;
-    await apiInstance.sendTransacEmail(sendSmtpEmail);
+    const result = await apiInstance.sendTransacEmail(sendSmtpEmail);
+    // console.log(result);
     return true;
   } catch (error) {
     console.error("Brevo API Status Code:", error.response?.statusCode);
-    console.error(
-      "Brevo Error Body:",
-      JSON.stringify(error.response?.body, null, 2),
-    );
+
     return false;
   }
 };

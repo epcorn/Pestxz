@@ -45,7 +45,7 @@ export function dailyReportCron() {
         await dailyReportClient();
         console.log("Daily report process completed successfully.");
       } catch (error) {
-        console.error("Error executing scheduled daily report:", error);
+        console.error("Error executing scheduled daily report:", error.body);
       }
     },
     {

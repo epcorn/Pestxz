@@ -447,9 +447,11 @@ export const dailyReportClient = async (req = {}, res) => {
             },
           ];
 
-          const emailList = [{ email: client.email, name: client.name }];
+          const emailList = [
+            { email: client?.email, name: client?.name },
+          ];
           const dynamicData = {
-            CLIENT_NAME: client.name,
+            CLIENT_NAME: client?.name,
             REPORT_TYPE: value,
             REPORT_URL: uploadURL,
             DATE: dateFormat(todayStart).withoutTime,
@@ -460,6 +462,9 @@ export const dailyReportClient = async (req = {}, res) => {
 
           sendEmail({
             emailList,
+            ccList: [
+              { email: "exteam.epcorn@gmail.com", name: "Exteam Epcorn" },
+            ],
             templateId: BREVO_TEMPLATE_ID,
             dynamicData,
             attachment,
@@ -468,7 +473,7 @@ export const dailyReportClient = async (req = {}, res) => {
             else console.warn(`Failed to send report to ${client.email}`);
           });
         } catch (error) {
-          console.error("Email preparation error:", error.message || error);
+          console.error("Email preparation error:", error.message || "");
         }
       }
 

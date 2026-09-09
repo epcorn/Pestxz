@@ -88,7 +88,7 @@ function Auditor() {
       };
     });
     const payload = { meta, sections, };
-    console.log(payload)
+    // console.log(payload)
     clearDraft();
 
     try {
