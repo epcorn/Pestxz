@@ -877,3 +877,12 @@ export const autoMarkMissed = async () => {
     );
   }
 };
+
+// for auditor pptx --> Utility to split array into smaller chunks (e.g., 3 items per slide)
+export const chunkArray = (array, chunkSize) => {
+  const results = [];
+  for (let i = 0; i < array.length; i += chunkSize) {
+    results.push(array.slice(i, i + chunkSize));
+  }
+  return results;
+};

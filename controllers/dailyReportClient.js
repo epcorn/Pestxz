@@ -447,12 +447,10 @@ export const dailyReportClient = async (req = {}, res) => {
             },
           ];
 
-          const emailList = [
-            { email: client?.email, name: client?.name },
-          ];
+          const emailList = [{ email: client?.email, name: client?.name }];
           const dynamicData = {
             CLIENT_NAME: client?.name,
-            REPORT_TYPE: value,
+            REPORT_TYPE: value.toUpperCase(),
             REPORT_URL: uploadURL,
             DATE: dateFormat(todayStart).withoutTime,
           };

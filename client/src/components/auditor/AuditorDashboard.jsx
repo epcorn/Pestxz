@@ -54,6 +54,10 @@ function AuditorDashboard() {
       setActiveId(null);
     }
   };
+  // const sectionss = data?.audits
+  //   ?.map(a => a?.sections?.map(s => s?.questions?.map(q => q?.images)))
+  //   ?.flat(Infinity);
+  // console.log(sectionss);
 
   if (error) {
 

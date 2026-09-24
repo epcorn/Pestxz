@@ -61,7 +61,7 @@ function AllPremise({ today }) {
     const r = rows[index];
 
     return (
-      <Link to={`/location/${r.id}`} replace>
+      // <Link to={`/location/${r.id}`} replace>
         <div
           style={style}
           // onClick={() => navigate(`/location/${r.id}`, { replace: true })}
@@ -83,7 +83,7 @@ function AllPremise({ today }) {
             </div>
           </div>
         </div>
-      </Link >
+      // </Link >
     );
   };
 

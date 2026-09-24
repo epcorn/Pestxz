@@ -329,22 +329,27 @@ const SingleLocation = () => {
             )}
 
             {/* ===== REGULAR SERVICE FORM + PREMISE HISTORY ===== */}
-            {data?.location?.service.length > 0 && DBUser && DBUser?.rights?.scan_Scheduled && (
-              <div className="space-y-6">
+            <div className="space-y-6">
+              {data?.location?.service.length > 0 && DBUser && DBUser?.rights?.scan_Scheduled && (
                 <div className="bg-neutral-50 rounded-xl border border-neutral-200 shadow-inner p-1">
                   <RegularForm serviceData={data?.location?.service} id={data?.location?._id} locationName={data?.location?.floor} type={'regular'} setRegular={setRegular} today={today} />
                 </div>
+              )}
 
-                <div className="bg-slate-500 rounded-2xl p-4 ">
-                  <h2 className="font-bold text-lg text-white px-1 mb-2">
-                    All Premise Services
-                  </h2>
+              <div className="bg-slate-500 rounded-2xl p-4 ">
+                <h2 className="font-bold text-lg text-white px-1 mb-2">
+                  All Premise Services
+                </h2>
+                {data?.location?.service.length > 0 && DBUser && DBUser?.rights?.scan_Scheduled ?
                   <div className="overflow-auto w-full">
                     <AllPremise today={date} />
+                  </div> : 
+                  <div className="py-10 text-center bg-white">
+                    No services Pending for today
                   </div>
-                </div>
+                }
               </div>
-            )}
+            </div>
           </div>
         </div>
       )}
