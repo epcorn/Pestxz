@@ -15,7 +15,6 @@ import {
   generateSchedule,
   productQrCodeGenerator,
   qrCodeGenerator,
-  qrCodeGeneratorSVG,
   releaseProductCounter,
   removeOldQr,
   uploadFile,
@@ -243,13 +242,14 @@ export const addLocation = async (req, res) => {
 
     newLocation.service = formattedServices;
     newLocation.product = formattedProduct;
-
+console.log(client, client.contractNo);
     let qrLink = "";
     if (type.includes("service")) {
       const qrData = await qrCodeGenerator({
         link: `https://pestxz.com/location/${locationId}`,
         floor: newLocation.floor,
         location: `${newLocation.location}, ${newLocation.subLocation}`,
+        cn: client.contractNo,
       });
       if (!qrData) {
         await Location.findByIdAndDelete(locationId);
@@ -258,7 +258,7 @@ export const addLocation = async (req, res) => {
           .json({ msg: "QR generation error. Try again later" });
       }
       fs.writeFileSync("./tmp/qr.jpeg", qrData);
-      qrLink = await uploadFile({ filePath: "./tmp/qr.jpeg" });
+      qrLink = await uploadFile({ filePath: "./tmp/qr.jpeg", remove: false });
       if (!qrLink) {
         await Location.findByIdAndDelete(locationId);
         return res

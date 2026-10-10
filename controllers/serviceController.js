@@ -312,8 +312,8 @@ export const newRegularService = async (req, res) => {
         files.map(async (file) => {
           try {
             const link = await uploadWithRetry(file.tempFilePath);
-            // Delete temp file after successful upload
-            await fs.promises.unlink(file.tempFilePath);
+            // Delete temp file after successful upload ?? file auto deling from uploadFile()
+            // await fs.promises.unlink(file.tempFilePath);
             return link;
           } catch (error) {
             console.error(`Upload failed for ${file.name}:`, error);

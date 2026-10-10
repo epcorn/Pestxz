@@ -76,7 +76,7 @@ export const generateToken = (res, userId) => {
 };
 
 //using sharp
-export const qrCodeGenerator = async ({ link, floor, location }) => {
+export const qrCodeGenerator = async ({ link, floor, location, cn }) => {
   let loc = location.substring(0, 25);
   let subLoc = location.substring(25);
 
@@ -102,6 +102,7 @@ export const qrCodeGenerator = async ({ link, floor, location }) => {
         
         <!-- Top Branding -->
         <text x="50%" y="30" text-anchor="middle" class="branding">Powered By PestXZ</text> 
+        <text x="50%" y="55" text-anchor="middle" class="">ContractNo: ${cn}</text> 
         
         <!-- Bottom Details -->
         <text x="2" y="${qrHeight + 42}" class="details">Floor: ${floor}</text>
@@ -280,18 +281,8 @@ export const uploadFile = async ({ filePath, remove = true }) => {
     const result = await cloudinary.uploader.upload(filePath, {
       use_filename: true,
       folder: "Pestxz",
-      quality: "auto:low",
       resource_type: "auto",
-      transformation: [
-        {
-          width: 1600,
-          height: 1600,
-          crop: "limit",
-          angle: "auto",
-          quality: 75,
-          fetch_format: "jpg",
-        },
-      ],
+      transformation: [{ quality: 75 }],
     });
 
     if (remove) fs.unlinkSync(filePath);
