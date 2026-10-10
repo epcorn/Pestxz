@@ -258,7 +258,7 @@ console.log(client, client.contractNo);
           .json({ msg: "QR generation error. Try again later" });
       }
       fs.writeFileSync("./tmp/qr.jpeg", qrData);
-      qrLink = await uploadFile({ filePath: "./tmp/qr.jpeg", remove: false });
+      qrLink = await uploadFile({ filePath: "./tmp/qr.jpeg", remove: true });
       if (!qrLink) {
         await Location.findByIdAndDelete(locationId);
         return res
@@ -546,6 +546,7 @@ export const updateLocation = async (req, res) => {
         link: `https://pestxz.onrender.com/location/${id}`,
         floor,
         location: `${location}, ${subLocation}`,
+        cn:client.contractNo
       });
       fs.writeFileSync("./tmp/qr.jpeg", qrData);
 
