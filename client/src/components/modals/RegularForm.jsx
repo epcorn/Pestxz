@@ -19,6 +19,29 @@ const todayShort = (d) => {
   return `${day}-${months[d.getMonth()]}`;
 };
 
+// Helper utility to convert a File to Base64 string
+const fileToBase64 = (file) => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = (error) => reject(error);
+  });
+};
+
+// Helper utility to convert a Base64 string back to a File object
+const base64ToFile = (base64String, filename) => {
+  const arr = base64String.split(",");
+  const mime = arr[0].match(/:(.*?);/)[1];
+  const bstr = atob(arr[1]);
+  let n = bstr.length;
+  const u8arr = new Uint8Array(n);
+  while (n--) {
+    u8arr[n] = bstr.charCodeAt(n);
+  }
+  return new File([u8arr], filename, { type: mime });
+};
+
 function RegularForm({ serviceData, id, type, locationName, setRegular, today }) {
   const { isModalOpen } = useSelector(store => store.helper);
   const dispatch = useDispatch();
@@ -45,7 +68,19 @@ function RegularForm({ serviceData, id, type, locationName, setRegular, today })
     if (!saved) return;
     try {
       const parsed = JSON.parse(saved);
-      Object.entries(parsed).forEach(([key, value]) => setValue(key, value));
+      Object.entries(parsed).forEach(([key, value]) => {
+        if (key === "imageBase64") {
+          Object.entries(value).forEach(([serviceName, fileArray]) => {
+            if (Array.isArray(fileArray)) {
+              const fileObjects = fileArray.map((imgObj) =>
+                base64ToFile(imgObj.base64, imgObj.name))
+              const dataTransfer = new DataTransfer();
+              fileObjects.forEach(file => dataTransfer.items.add(file))
+              setValue(`image.${serviceName}`, dataTransfer.files)
+            }
+          })
+        } else setValue(key, value)
+      });
     } catch (err) {
       console.log(err);
     }
@@ -55,15 +90,32 @@ function RegularForm({ serviceData, id, type, locationName, setRegular, today })
 
   useEffect(() => { }, [rerender])
 
-  const saveLocally = (serviceName) => {
+  const saveLocally = async (serviceName) => {
     const values = getValues();
     let existing = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
-    ["usedCalibration", "action", "comment"].forEach((field) => {
+
+    ["usedCalibration", "action", "comment", ""].forEach((field) => {
       existing[field] = {
         ...existing[field],
         [serviceName]: values?.[field]?.[serviceName] || {},
       };
     });
+    const files = values?.image?.[serviceName];
+    if (files && files.length > 0) {
+      try {
+        const filePromises = Array.from(files).slice(0, 2).map(async (file) => { const base64 = await fileToBase64(file); return { name: file.name, base64 } });
+
+        const base64Images = await Promise.all(filePromises);
+        existing["imagesBase64"] = {
+          ...existing["imagesBase64"],
+          [serviceName]: base64Images
+        }
+
+      } catch (error) {
+        console.error("faild to parse image", error);
+      }
+    }
+
     localStorage.setItem(STORAGE_KEY, JSON.stringify(existing));
     toast.success("Progress Saved 🚀");
   };
